@@ -1,5 +1,6 @@
 const Encore = require('@symfony/webpack-encore');
 const path = require('path');
+const selectedEntry = process.env.APP_ENTRY;
 
 // Manually configure the runtime environment if not already configured yet by the "encore" command.
 // It's useful when you use tools that rely on webpack.config.js file.
@@ -11,20 +12,25 @@ Encore
     // directory where compiled assets will be stored
     .setOutputPath('public/build/')
     // public path used by the web server to access the output path
-    .setPublicPath('/build')
-    // only needed for CDN's or subdirectory deploy
-    //.setManifestKeyPrefix('build/')
+    .setPublicPath('/build');
+// only needed for CDN's or subdirectory deploy
+//.setManifestKeyPrefix('build/')
 
-    /*
-     * ENTRY CONFIG
-     *
-     * Each entry will result in one JavaScript file (e.g. app.js)
-     * and one CSS file (e.g. app.css) if your JavaScript imports CSS.
-     */
-    // removed default app entry
-    .addEntry('admin', './assets/admin/admin.ts')
-    .addEntry('catalog', './assets/catalog/catalog.js')
+/*
+ * ENTRY CONFIG
+ *
+ * Each entry will result in one JavaScript file (e.g. app.js)
+ * and one CSS file (e.g. app.css) if your JavaScript imports CSS.
+ */
+// removed default app entry
+if (!selectedEntry || selectedEntry === 'admin') {
+    Encore.addEntry('admin', './assets/admin/admin.ts');
+}
+if (!selectedEntry || selectedEntry === 'catalog') {
+    Encore.addEntry('catalog', './assets/catalog/catalog.js');
+}
 
+Encore
     // When enabled, Webpack "splits" your files into smaller pieces for greater optimization.
     .splitEntryChunks()
 

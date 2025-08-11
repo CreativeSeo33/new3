@@ -1,12 +1,22 @@
 {
   "devDependencies": {
+    "@rollup/rollup-win32-x64-msvc": "^4.46.2",
+    "@storybook/addon-a11y": "^8.6.14",
+    "@storybook/addon-essentials": "^8.6.14",
+    "@storybook/html-vite": "^8.6.14",
+    "@storybook/vue3-vite": "^8.6.14",
     "@symfony/webpack-encore": "^5.1.0",
+    "@tailwindcss/forms": "^0.5.10",
+    "@tailwindcss/typography": "^0.5.16",
     "@vue/compiler-sfc": "^3.5.18",
     "autoprefixer": "^10.4.21",
     "core-js": "^3.45.0",
+    "cross-env": "^7.0.3",
     "postcss": "^8.5.6",
     "postcss-loader": "^8.1.0",
     "regenerator-runtime": "^0.14.1",
+    "storybook": "^8.6.14",
+    "vite": "^5.4.10",
     "tailwindcss": "^3.4.17",
     "ts-loader": "^9.0.0",
     "vue-loader": "^17.4.2",
@@ -25,6 +35,14 @@
   "scripts": {
     "dev": "encore dev",
     "watch": "encore dev --watch",
-    "build": "encore production"
+    "build": "encore production",
+    "dev:admin": "cross-env APP_ENTRY=admin encore dev --watch",
+    "build:admin": "cross-env APP_ENTRY=admin encore production",
+    "dev:catalog": "cross-env APP_ENTRY=catalog encore dev --watch",
+    "build:catalog": "cross-env APP_ENTRY=catalog encore production",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build",
+    "storybook:catalog": "storybook dev -p 6007 -c assets/catalog/.storybook",
+    "build-storybook:catalog": "storybook build -c assets/catalog/.storybook -o public/storybook-catalog"
   }
 }

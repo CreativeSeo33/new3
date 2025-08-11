@@ -10,14 +10,8 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/admin', name: 'admin_')]
 final class DashboardController extends AbstractController
 {
-    #[Route('{vueRouting?}', name: 'dashboard', requirements: ['vueRouting' => '.*'], methods: ['GET'])]
+    #[Route('/{vueRouting}', name: 'dashboard', requirements: ['vueRouting' => '.*'], defaults: ['vueRouting' => ''], methods: ['GET'])]
     public function dashboard(): Response
-    {
-        return $this->render('admin/base.html.twig');
-    }
-
-    #[Route('/', name: 'dashboard', methods: ['GET'])]
-    public function index(): Response
     {
         return $this->render('admin/base.html.twig');
     }
