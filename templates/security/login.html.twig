@@ -1,0 +1,36 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Вход — {{ parent() }}{% endblock %}
+
+{% block styles %}
+  {{ parent() }}
+  {{ encore_entry_link_tags('admin') }}
+{% endblock %}
+
+{% block body %}
+  <div class="min-h-screen flex items-center justify-center bg-gray-100 px-6 py-12">
+    <form method="post" class="w-full max-w-md rounded-xl border border-gray-200 bg-white p-8 shadow-lg space-y-5">
+      <h1 class="text-2xl font-semibold tracking-tight text-slate-800">Вход</h1>
+      {% if error %}
+        <div class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+      {% endif %}
+      <div class="space-y-1.5">
+        <label class="block text-sm font-medium text-slate-600" for="username">Логин</label>
+        <input class="block w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-slate-900 placeholder-slate-400 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition" type="text" id="username" name="_username" value="{{ last_username }}" autocomplete="username" required />
+      </div>
+      <div class="space-y-1.5">
+        <label class="block text-sm font-medium text-slate-600" for="password">Пароль</label>
+        <input class="block w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-slate-900 placeholder-slate-400 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition" type="password" id="password" name="_password" autocomplete="current-password" required />
+      </div>
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+      <button class="w-full inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-3 font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-100 transition" type="submit">Войти</button>
+    </form>
+  </div>
+{% endblock %}
+
+{% block javascripts %}
+  {{ parent() }}
+  {{ encore_entry_script_tags('admin') }}
+{% endblock %}
+
+

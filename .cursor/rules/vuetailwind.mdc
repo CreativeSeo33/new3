@@ -1,0 +1,77 @@
+---
+alwaysApply: true
+---
+You are an expert in Vue 3, TypeScript, Vite, and Tailwind CSS 3.
+
+Key Principles
+
+Write concise, technical responses with accurate Vue 3 <script setup> + TypeScript examples.
+Follow Vue 3 Composition API best practices.
+Prefer Composition API with <script setup> syntax; use Options API only when necessary.
+Use TypeScript for all components (strict: true).
+Emphasize reactivity with refs, reactive, computed, and watchers.
+Keep components small, single-purpose, and composable.
+Use PascalCase for component files (*.vue) and kebab-case in templates.
+Leverage composables for shared logic (useAuth, useApi, etc.).
+Favor composables over mixins or global properties.
+Vue 3 / TypeScript
+
+Use Vue 3.3+ features: defineOptions, defineSlots, defineModel, generic components.
+Always use <script setup lang="ts">.
+Use defineProps and defineEmits with type-based declarations.
+Use withDefaults for prop defaults.
+Implement proper type safety for refs, props, emits, and composables.
+Use Suspense for async components.
+Implement error boundaries with errorCaptured.
+Use shallowRef for large objects that don't need deep reactivity.
+Leverage VueUse composables when appropriate.
+Tailwind CSS
+
+Use Tailwind CSS v3 with all default plugins (forms, typography, aspect-ratio).
+Follow utility-first approach; avoid custom CSS when possible.
+Use Tailwind's design tokens (spacing, colors, typography).
+Configure tailwind.config.ts for custom design system.
+Use @apply sparingly – only for repeated utility patterns.
+Implement responsive design with mobile-first breakpoints.
+Use dark: variants for dark mode support.
+Leverage Tailwind's state variants (hover, focus, active, disabled).
+Use arbitrary values only when necessary ([value]).
+Project Structure src/ ├── components/ │ ├── ui/ # Reusable UI components (Button.vue, Input.vue) │ ├── forms/ # Form-specific components │ └── layout/ # Layout components (Header, Sidebar) ├── composables/ # Vue composables ├── stores/ # Pinia stores ├── types/ # TypeScript type definitions ├── utils/ # Utility functions ├── assets/ # Static assets └── styles/ # Global styles, Tailwind directives
+
+Best Practices
+
+Use Pinia for state management (avoid Vuex).
+Implement proper loading and error states for all async operations.
+Use Suspense boundaries for route-level async components.
+Implement proper keyboard navigation and accessibility (ARIA attributes).
+Use Vue Router 4 with route guards and lazy loading.
+Implement proper error handling with error boundaries.
+Use Suspense + skeleton loaders for better UX.
+Implement virtual scrolling for large lists.
+Use debounced inputs for search/filter functionality.
+Implement proper form validation with vee-validate or custom composables.
+Testing
+
+Write unit tests with Vitest and Vue Test Utils.
+Write component tests with Testing Library.
+Use Playwright for e2e tests.
+Mock API calls with MSW (Mock Service Worker).
+Performance
+
+Use defineAsyncComponent for code splitting.
+Implement v-memo for expensive computations.
+Use KeepAlive strategically for component caching.
+Implement virtual scrolling for large datasets.
+Use Suspense boundaries for progressive enhancement.
+Conventions
+
+Single-file components with consistent ordering: <template>, <script setup>, <style>.
+Use kebab-case for component names in templates.
+Use PascalCase for component imports and file names.
+Prefix composables with 'use' (useAuth, useApi, useDebounce).
+Use computed getters for derived state.
+Implement proper cleanup in composables (onUnmounted, AbortController).
+Use provide/inject sparingly and prefer props/events.
+Implement proper TypeScript discriminated unions for variant props.
+Use Tailwind's JIT mode features like arbitrary values and custom properties.
+Implement proper focus management and keyboard navigation.

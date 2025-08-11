@@ -1,0 +1,20 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admin — {{ parent() }}{% endblock %}
+
+{% block styles %}
+  {{ parent() }}
+  {{ encore_entry_link_tags('admin') }}
+{% endblock %}
+
+{% block body %}
+  <div id="admin-app"></div>
+  {% block admin_body %}{% endblock %}
+{% endblock %}
+
+{% block javascripts %}
+  {{ parent() }}
+  {{ encore_entry_script_tags('admin') }}
+{% endblock %}
+
+

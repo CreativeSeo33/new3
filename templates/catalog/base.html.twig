@@ -1,0 +1,20 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Catalog — {{ parent() }}{% endblock %}
+
+{% block styles %}
+  {{ parent() }}
+  {{ encore_entry_link_tags('catalog') }}
+{% endblock %}
+
+{% block body %}
+  <div id="catalog-app"></div>
+  {% block catalog_body %}{% endblock %}
+{% endblock %}
+
+{% block javascripts %}
+  {{ parent() }}
+  {{ encore_entry_script_tags('catalog') }}
+{% endblock %}
+
+

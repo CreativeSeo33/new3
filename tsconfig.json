@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "esnext",
+    "strict": true,
+    "jsx": "preserve",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@admin/*": ["assets/admin/*"]
+    },
+    "types": ["vue-router", "@vue/runtime-dom"]
+  },
+  "include": ["assets/**/*.ts", "assets/**/*.tsx", "assets/**/*.vue", "assets/types/vue.d.ts"],
+  "exclude": ["node_modules"]
+}

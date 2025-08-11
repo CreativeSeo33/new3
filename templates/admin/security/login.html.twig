@@ -1,0 +1,36 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Вход — {{ parent() }}{% endblock %}
+
+{% block styles %}
+  {{ parent() }}
+  {{ encore_entry_link_tags('admin') }}
+{% endblock %}
+
+{% block body %}
+  <div class="min-h-screen flex items-center justify-center bg-slate-50 py-12 px-4">
+    <form method="post" class="bg-white shadow rounded p-6 w-full max-w-sm">
+      <h1 class="text-xl font-bold mb-4">Вход в админку</h1>
+      {% if error %}
+        <div class="mb-3 text-sm text-red-600">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+      {% endif %}
+      <div class="mb-3">
+        <label class="block text-sm mb-1" for="username">Логин</label>
+        <input class="border rounded w-full px-3 py-2" type="text" id="username" name="_username" value="{{ last_username }}" autocomplete="username" required />
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm mb-1" for="password">Пароль</label>
+        <input class="border rounded w-full px-3 py-2" type="password" id="password" name="_password" autocomplete="current-password" required />
+      </div>
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+      <button class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 rounded" type="submit">Войти</button>
+    </form>
+  </div>
+{% endblock %}
+
+{% block javascripts %}
+  {{ parent() }}
+  {{ encore_entry_script_tags('admin') }}
+{% endblock %}
+
+
