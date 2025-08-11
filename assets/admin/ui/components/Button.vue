@@ -5,7 +5,7 @@
       base,
       variants[variant],
       sizes[size],
-      { 'opacity-50 pointer-events-none': isDisabled },
+      isDisabled ? 'opacity-50 pointer-events-none' : undefined,
       $attrs.class as string
     )"
     v-bind="{ ...$attrs, class: undefined }"
@@ -52,10 +52,10 @@ const sizes: Record<Size, string> = {
   icon: 'h-9 w-9',
 }
 
-const isDisabled = computed(() => props.disabled)
-const variant = computed(() => props.variant)
-const size = computed(() => props.size)
-const type = computed(() => props.type)
+const isDisabled = computed<boolean>(() => props.disabled)
+const variant = computed<Variant>(() => props.variant)
+const size = computed<Size>(() => props.size)
+const type = computed<'button' | 'submit' | 'reset'>(() => props.type)
 </script>
 
 
