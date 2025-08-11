@@ -65,6 +65,26 @@
         </template>
       </Card>
     </section>
+
+    <section class="rounded-xl border bg-card text-card-foreground p-6 shadow-sm">
+      <h2 class="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Modal</h2>
+      <div class="flex gap-3">
+        <Button @click="isModalOpen = true">Открыть модалку</Button>
+      </div>
+
+      <Modal v-model="isModalOpen" title="Подтвердите действие" subtitle="Это демо модального окна">
+        <div class="space-y-3 text-sm text-muted-foreground">
+          <p>Содержимое модалки. Используйте для подтверждений, форм и т.п.</p>
+          <p class="text-neutral-700 dark:text-neutral-300">Поддерживаются слоты: header, default, footer.</p>
+        </div>
+        <template #footer>
+          <div class="flex justify-end gap-3">
+            <Button variant="outline" @click="isModalOpen = false">Отмена</Button>
+            <Button variant="secondary" @click="isModalOpen = false">Подтвердить</Button>
+          </div>
+        </template>
+      </Modal>
+    </section>
   </div>
 </template>
 
@@ -73,12 +93,14 @@ import { ref, computed } from 'vue'
 import Button from '@admin/ui/components/Button.vue'
 import Input from '@admin/ui/components/Input.vue'
 import Card from '@admin/ui/components/Card.vue'
+import Modal from '@admin/ui/components/Modal.vue'
 import { useTheme } from '@admin/composables/useTheme'
 
 const { toggleTheme } = useTheme()
 
 const email = ref('')
 const name = ref('')
+const isModalOpen = ref(false)
 
 const colorTokens = computed(() => [
   { key: 'background', css: 'hsl(var(--background))' },
