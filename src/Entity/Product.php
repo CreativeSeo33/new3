@@ -84,7 +84,7 @@ class Product
     #[Assert\Regex(pattern: '/^[a-z0-9]+(?:-[a-z0-9]+)*$/i', message: 'Slug format is invalid')]
     private ?string $slug = null;
 
-    #[ORM\Embedded(class: ProductPrice::class)]
+    #[ORM\Embedded(class: ProductPrice::class, columnPrefix: false)]
     private ProductPrice $pricing;
 
     #[ORM\Column(nullable: true)]
@@ -114,7 +114,7 @@ class Product
 
     // H1 перенесено в ProductSeo. Оставляем прокси-методы ниже.
 
-    #[ORM\Embedded(class: ProductTimestamps::class)]
+    #[ORM\Embedded(class: ProductTimestamps::class, columnPrefix: false)]
     private ProductTimestamps $timestamps;
 
 
@@ -393,6 +393,16 @@ class Product
         $slug = strtolower($slug);
         $slug = preg_replace('/[^a-z0-9]+/i', '-', $slug) ?? $slug;
         return trim($slug, '-');
+    }
+
+    /**
+     * Replaces the embedded pricing to ensure Doctrine detects changes reliably.
+     */
+    public function setPricingValues(?int $price, ?int $salePrice): self
+    {
+        $currency = $this->pricing->getCurrency();
+        $this->pricing = new ProductPrice($price, $salePrice, $currency);
+        return $this;
     }
 
     /**

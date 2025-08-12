@@ -14,7 +14,12 @@
     <div class="flex-1 flex flex-col md:pl-64 min-w-0">
       <AppHeader @toggle-sidebar="isSidebarOpen = !isSidebarOpen" />
       <main class="px-4 sm:px-6 lg:px-8 py-6">
-        <router-view />
+        <ToastProvider>
+          <Card>
+            <router-view />
+          </Card>
+          <ToastViewport />
+        </ToastProvider>
       </main>
       <AppFooter />
     </div>
@@ -27,6 +32,8 @@ import { useRoute } from 'vue-router'
 import AppHeader from '@admin/components/layout/AppHeader.vue'
 import AppSidebar from '@admin/components/layout/AppSidebar.vue'
 import AppFooter from '@admin/components/layout/AppFooter.vue'
+import Card from '@admin/ui/components/Card.vue'
+import { ToastProvider, ToastViewport } from 'reka-ui'
 
 const isSidebarOpen = ref(false)
 const route = useRoute()

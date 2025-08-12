@@ -19,6 +19,12 @@ export const adminRoutes: RouteRecordRaw[] = [
         meta: { requiresAuth: true }
       },
       {
+        path: 'products/:id',
+        name: 'admin-product-form',
+        component: () => import(/* webpackChunkName: "admin-product-form" */ '@admin/views/ProductForm.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
         path: 'attributes',
         name: 'admin-attributes',
         component: () => import(/* webpackChunkName: "admin-attributes" */ '@admin/views/Attributes.vue'),

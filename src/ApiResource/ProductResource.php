@@ -21,7 +21,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
         new GetCollection(provider: ProductStateProvider::class),
         new Post(processor: ProductStateProcessor::class),
         new Patch(processor: ProductStateProcessor::class),
-        new Delete(processor: ProductStateProcessor::class)
+        new Delete(processor: ProductStateProcessor::class, read: false, output: false)
     ],
     normalizationContext: ['groups' => ['product:read']],
     denormalizationContext: ['groups' => ['product:write']]
@@ -51,6 +51,9 @@ class ProductResource
 
     #[Groups(['product:read', 'product:write'])]
     public ?int $quantity = null;
+
+    #[Groups(['product:read', 'product:write'])]
+    public ?int $sortOrder = null;
 
     #[Groups(['product:read', 'product:write'])]
     public ?string $description = null;

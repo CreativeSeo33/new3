@@ -45,6 +45,7 @@ class ProductStateProvider implements ProviderInterface
         $r->effectivePrice = $entity->getEffectivePrice();
         $r->status = $entity->getStatus();
         $r->quantity = $entity->getQuantity();
+        $r->sortOrder = $entity->getSortOrder();
         $r->description = $entity->getDescription();
         $r->metaTitle = $entity->getMetaTitle();
         $r->metaDescription = $entity->getMetaDescription();

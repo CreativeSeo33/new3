@@ -1,0 +1,117 @@
+<template>
+  <form class="grid grid-cols-1 md:grid-cols-2 gap-4" @submit.prevent>
+    <Input
+      v-model="form.name"
+      label="Название"
+      placeholder="Например, iPhone 15"
+      :error="errors.name"
+      @blur="() => validateField('name')"
+    />
+
+    <Input
+      v-model="form.slug"
+      label="Slug"
+      placeholder="iphone-15"
+      :error="errors.slug"
+      @blur="() => validateField('slug')"
+    />
+
+    <Input
+      v-model="priceModel"
+      label="Цена"
+      type="number"
+      placeholder="19990"
+      :error="errors.price"
+      @blur="() => validateField('price')"
+    />
+
+    <Input
+      v-model="salePriceModel"
+      label="Цена со скидкой"
+      type="number"
+      placeholder="14990"
+      :error="errors.salePrice"
+      @blur="() => validateField('salePrice')"
+    />
+
+    <div class="grid gap-1.5">
+      <label class="text-sm font-medium text-foreground/80">Статус</label>
+      <select v-model="form.status" class="h-9 rounded-md border bg-background px-3 text-sm">
+        <option :value="true">Активен</option>
+        <option :value="false">Выключен</option>
+      </select>
+    </div>
+
+    <Input
+      v-model="quantityModel"
+      label="Количество"
+      type="number"
+      placeholder="0"
+      :error="errors.quantity"
+      @blur="() => validateField('quantity')"
+    />
+
+    <Input v-model="form.h1" label="H1" placeholder="Заголовок страницы" />
+    <Input v-model="form.description" label="Описание" placeholder="Короткое описание (до 255 символов)" :error="errors.description" @blur="() => validateField('description')" />
+    <Input v-model="form.metaTitle" label="Meta Title" />
+    <Input v-model="form.metaDescription" label="Meta Description" />
+
+    <Input
+      v-model="sortOrderModel"
+      label="Сортировка"
+      type="number"
+      placeholder="0"
+      :error="errors.sortOrder"
+      @blur="() => validateField('sortOrder')"
+    />
+  </form>
+</template>
+
+<script setup lang="ts">
+import Input from '@admin/ui/components/Input.vue'
+import type { ProductFormModel, ProductFormErrors } from '@admin/types/product'
+import { computed } from 'vue'
+
+interface Props {
+  form: ProductFormModel
+  errors: ProductFormErrors
+  validateField: (field: keyof ProductFormModel) => boolean
+}
+
+const props = defineProps<Props>()
+
+// локальные computed-обертки, работают и без внешних пропсов
+const priceModel = computed<string>({
+  get: () => (props.form.price != null ? String(props.form.price) : ''),
+  set: (v: string) => {
+    if (v === '') props.form.price = null
+    else if (!Number.isNaN(Number(v))) props.form.price = Math.trunc(Number(String(v).replace(',', '.')))
+  },
+})
+
+const salePriceModel = computed<string>({
+  get: () => (props.form.salePrice != null ? String(props.form.salePrice) : ''),
+  set: (v: string) => {
+    if (v === '') props.form.salePrice = null
+    else if (!Number.isNaN(Number(v))) props.form.salePrice = Math.trunc(Number(String(v).replace(',', '.')))
+  },
+})
+
+const quantityModel = computed<string>({
+  get: () => (props.form.quantity != null ? String(props.form.quantity) : ''),
+  set: (v: string) => {
+    if (v === '') props.form.quantity = null
+    else if (!Number.isNaN(Number(v))) props.form.quantity = Math.trunc(Number(String(v).replace(',', '.')))
+  },
+})
+
+const sortOrderModel = computed<string>({
+  get: () => (props.form.sortOrder != null ? String(props.form.sortOrder) : ''),
+  set: (v: string) => {
+    if (v === '') props.form.sortOrder = null
+    else if (!Number.isNaN(Number(v))) props.form.sortOrder = Math.trunc(Number(String(v).replace(',', '.')))
+  },
+})
+</script>
+
+
