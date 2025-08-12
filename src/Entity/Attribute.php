@@ -7,6 +7,8 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Patch;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -18,7 +20,13 @@ use Symfony\Component\Serializer\Annotation\Groups;
         new GetCollection(),
         new Post(
             denormalizationContext: ['groups' => ['attribute:post']]
-        )
+        ),
+        new Put(
+            denormalizationContext: ['groups' => ['attribute:post']]
+        ),
+        new Patch(
+            denormalizationContext: ['groups' => ['attribute:post']]
+        ),
     ],
     normalizationContext: ['groups' => ['attribute:get']]
 )]
