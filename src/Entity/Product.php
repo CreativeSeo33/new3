@@ -25,14 +25,18 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Uid\Ulid;
 use Symfony\Component\Validator\Constraints as Assert;
+use App\Entity\ProductSeo;
+use App\Entity\Embeddable\ProductPrice;
+use App\Entity\Embeddable\ProductTimestamps;
+use App\Entity\Manufacturer;
 
 #[ORM\Entity(repositoryClass: ProductRepository::class)]
 #[ORM\Index(columns: ["name"], name: 'name')]
 #[ORM\Index(columns: ["status"], name: 'product_status_idx')]
-#[ORM\Index(columns: ["manufacturer"], name: 'product_manufacturer_idx')]
 #[ORM\Index(columns: ["date_added"], name: 'product_date_added_idx')]
 #[ORM\Index(columns: ["sort_order"], name: 'product_sort_order_idx')]
-#[ORM\HasLifecycleCallbacks]
+#[ORM\Index(columns: ["status", "date_added"], name: 'idx_product_status_created')]
+#[ORM\Index(columns: ["effective_price"], name: 'product_effective_price_idx')]
 #[UniqueEntity(fields: ['code'], message: 'Product code must be unique')]
 #[UniqueEntity(fields: ['slug'], message: 'Slug must be unique')]
 #[Assert\Expression(
@@ -41,24 +45,20 @@ use Symfony\Component\Validator\Constraints as Assert;
 )]
 #[ApiResource(
     operations: [
-        new Get(),
-        new Post(
-            denormalizationContext: ['groups' => ['product:post']]
-        ),
+        new Get(normalizationContext: ['groups' => ['product:read']]),
+        new Post(denormalizationContext: ['groups' => ['product:create']], validationContext: ['groups' => ['product:create']]),
         new Delete(),
-        new Patch(
-            denormalizationContext: ['groups' => ['product:patch']]
-        ),
-        new GetCollection()
+        new Patch(denormalizationContext: ['groups' => ['product:update']], validationContext: ['groups' => ['product:update']]),
+        new GetCollection(normalizationContext: ['groups' => ['product:list']])
     ],
-    normalizationContext: ['groups' => ['product:get']]
+    normalizationContext: ['groups' => ['product:read']]
 )]
 #[ApiFilter(OrderFilter::class,
-    properties: ['dateAdded','status','manufacturer','sortOrder'],
+    properties: ['dateAdded','status','sortOrder','effectivePrice'],
     arguments: ['orderParameterName' => 'order']
 )]
 #[ApiFilter(SearchFilter::class,
-    properties: ['name' => 'partial','manufacturer' => 'exact']
+    properties: ['name' => 'partial','manufacturerRef' => 'exact','manufacturerRef.name' => 'partial']
 )]
 #[ApiFilter(BooleanFilter::class,
     properties: ['status' => 'exact']
@@ -69,111 +69,93 @@ class Product
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['product:get', 'product_option:post'])]
+    #[Groups(['product:read', 'product:list', 'product_option:post'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['product:get', 'product:patch', 'product:post'])]
-    #[Assert\NotBlank(groups: ['product:post'])]
+    #[Groups(['product:read', 'product:update', 'product:create', 'product:list'])]
+    #[Assert\NotBlank(groups: ['product:create'])]
     #[Assert\Length(max: 255)]
     private ?string $name = null;
 
     #[ORM\Column(length: 255, nullable: true, unique: true)]
-    #[Groups(['product:get', 'product:patch', 'product:post'])]
+    #[Groups(['product:read', 'product:update', 'product:create', 'product:list'])]
     #[Assert\Length(max: 255)]
     #[Assert\Regex(pattern: '/^[a-z0-9]+(?:-[a-z0-9]+)*$/i', message: 'Slug format is invalid')]
     private ?string $slug = null;
 
-    #[ORM\Column(nullable: true)]
-    #[Groups(['product:get', 'product:patch', 'product:post'])]
-    #[Assert\PositiveOrZero]
-    private ?int $price = null;
+    #[ORM\Embedded(class: ProductPrice::class)]
+    private ProductPrice $pricing;
 
     #[ORM\Column(nullable: true)]
-    #[Groups(['product:get', 'product:patch', 'product:post'])]
-    #[Assert\PositiveOrZero]
-    private ?int $salePrice = null;
-
-    #[ORM\Column(nullable: true)]
-    #[Groups(['product:get', 'product:patch', 'product:post'])]
+    #[Groups(['product:read', 'product:update', 'product:create', 'product:list'])]
     private ?int $sortOrder = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['product:get', 'product:patch', 'product:post'])]
-    #[Assert\Length(max: 255)]
-    private ?string $metaTitle = null;
+    // SEO перенесено в ProductSeo. Оставляем прокси-методы ниже.
 
-    #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['product:get', 'product:patch', 'product:post'])]
-    #[Assert\Length(max: 255)]
-    private ?string $metaDescription = null;
+    // Новая ссылка на производителя
+    #[ORM\ManyToOne(targetEntity: Manufacturer::class)]
+    #[ORM\JoinColumn(name: 'manufacturer_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
+    #[Groups(['product:read', 'product:update', 'product:create'])]
+    private ?Manufacturer $manufacturerRef = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['product:get', 'product:patch', 'product:post'])]
-    #[Assert\Length(max: 255)]
-    private ?string $metaKeywords = null;
-
-    #[ORM\Column(nullable: true)]
-    #[Groups(['product:get', 'product:patch', 'product:post'])]
-    private ?int $manufacturer = null;
+    #[ORM\Column(name: 'effective_price', nullable: true)]
+    #[Groups(['product:read', 'product:list'])]
+    private ?int $effectivePrice = null;
 
     #[ORM\Column(options: ['default' => false])]
-    #[Groups(['product:get', 'product:patch', 'product:post'])]
+    #[Groups(['product:read', 'product:update', 'product:create', 'product:list'])]
     private ?bool $status = false;
 
     #[ORM\Column(nullable: true)]
-    #[Groups(['product:get', 'product:patch', 'product:post'])]
+    #[Groups(['product:read', 'product:update', 'product:create'])]
     #[Assert\PositiveOrZero]
     private ?int $quantity = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['product:get', 'product:patch', 'product:post'])]
-    #[Assert\Length(max: 255)]
-    private ?string $metaH1 = null;
+    // H1 перенесено в ProductSeo. Оставляем прокси-методы ниже.
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    #[Groups(['product:get', 'product:patch', 'product:post'])]
-    private ?\DateTimeInterface $dateAdded = null;
+    #[ORM\Embedded(class: ProductTimestamps::class)]
+    private ProductTimestamps $timestamps;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $date_edited = null;
 
+    #[ORM\OneToOne(mappedBy: 'product', targetEntity: ProductSeo::class, cascade: ['persist', 'remove'])]
+    private ?ProductSeo $seo = null;
 
     #[ORM\OneToMany(mappedBy: 'product', targetEntity: ProductAttributeGroup::class, cascade: ['persist', 'remove'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
-    #[Groups(['product:get', 'product:post'])]
+    #[Groups(['product:read', 'product:create'])]
     private Collection $productAttributeGroups;
 
     #[ORM\OneToMany(mappedBy: 'product', targetEntity: ProductToCategory::class, cascade: ['persist', 'remove'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
-    #[Groups(['product:get', 'product:post'])]
+    #[Groups(['product:read', 'product:create'])]
     #[ApiFilter(SearchFilter::class,
         properties: ['category.category' => 'exact']
     )]
     private Collection $category;
 
     #[ORM\OneToMany(mappedBy: 'product', targetEntity: ProductImage::class, cascade: ['persist', 'remove'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
-    #[Groups(['product:get', 'product:post', 'order:get'])]
+    #[Groups(['product:read', 'product:create', 'order:get'])]
     #[OrderBy(['sortOrder' => 'ASC'])]
     private Collection $image;
 
     #[ORM\Column(type: Types::JSON, nullable: true)]
-    #[Groups(['product:get', 'product:patch', 'product_option:post', 'product:post'])]
+    #[Groups(['product:read', 'product:update', 'product_option:post', 'product:create'])]
     private ?array $optionsJson = [];
 
     #[ORM\Column(type: Types::JSON, nullable: true)]
-    #[Groups(['product:get', 'product:patch', 'product_option:post', 'product:post'])]
+    #[Groups(['product:read', 'product:update', 'product_option:post', 'product:create'])]
     private ?array $attributeJson = [];
 
     #[Assert\Ulid]
     #[ORM\Column(type: UlidType::NAME, unique: true, nullable: true)]
-    #[Groups(['product:get'])]
+    #[Groups(['product:read'])]
     private ?Ulid $code = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['product:get', 'product:patch'])]
+    #[Groups(['product:read', 'product:update'])]
     private ?string $description = null;
 
     #[ORM\OneToMany(mappedBy: 'product', targetEntity: Carousel::class, cascade: ['persist', 'remove'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
-    #[Groups(['product:get', 'product:post', 'order:get'])]
+    #[Groups(['product:read', 'product:create', 'order:get'])]
     #[OrderBy(['sort' => 'ASC'])]
     private Collection $carousels;
 
@@ -183,6 +165,8 @@ class Product
         $this->category = new ArrayCollection();
         $this->image = new ArrayCollection();
         $this->carousels = new ArrayCollection();
+        $this->pricing = new ProductPrice();
+        $this->timestamps = new ProductTimestamps();
     }
 
     public function getId(): ?int
@@ -216,27 +200,27 @@ class Product
 
     public function getPrice(): ?int
     {
-        return $this->price;
+        return $this->pricing->getPrice();
     }
 
     public function setPrice(?int $price): self
     {
-        $this->price = $price;
-
+        $this->pricing->setPrice($price);
         return $this;
     }
 
     public function getSalePrice(): ?int
     {
-        return $this->salePrice;
+        return $this->pricing->getSalePrice();
     }
 
     public function setSalePrice(?int $salePrice): self
     {
-        $this->salePrice = $salePrice;
-
+        $this->pricing->setSalePrice($salePrice);
         return $this;
     }
+
+    
 
     public function getSortOrder(): ?int
     {
@@ -250,51 +234,73 @@ class Product
         return $this;
     }
 
+    #[Groups(['product:read', 'product:list'])]
     public function getMetaTitle(): ?string
     {
-        return $this->metaTitle;
+        return $this->seo?->getMetaTitle();
     }
 
+    #[Groups(['product:update','product:create'])]
     public function setMetaTitle(?string $metaTitle): self
     {
-        $this->metaTitle = $metaTitle;
-
+        if ($metaTitle === null && $this->seo === null) {
+            return $this;
+        }
+        $this->ensureSeo()->setMetaTitle($metaTitle);
         return $this;
     }
 
+    #[Groups(['product:read', 'product:list'])]
     public function getMetaDescription(): ?string
     {
-        return $this->metaDescription;
+        return $this->seo?->getMetaDescription();
     }
 
+    #[Groups(['product:update','product:create'])]
     public function setMetaDescription(?string $metaDescription): self
     {
-        $this->metaDescription = $metaDescription;
-
+        if ($metaDescription === null && $this->seo === null) {
+            return $this;
+        }
+        $this->ensureSeo()->setMetaDescription($metaDescription);
         return $this;
     }
 
+    #[Groups(['product:read', 'product:list'])]
     public function getMetaKeywords(): ?string
     {
-        return $this->metaKeywords;
+        return $this->seo?->getMetaKeywords();
     }
 
+    #[Groups(['product:update','product:create'])]
     public function setMetaKeywords(?string $metaKeywords): self
     {
-        $this->metaKeywords = $metaKeywords;
-
+        if ($metaKeywords === null && $this->seo === null) {
+            return $this;
+        }
+        $this->ensureSeo()->setMetaKeywords($metaKeywords);
         return $this;
     }
 
-    public function getManufacturer(): ?int
+    public function getManufacturerRef(): ?Manufacturer
     {
-        return $this->manufacturer;
+        return $this->manufacturerRef;
     }
 
-    public function setManufacturer(?int $manufacturer): self
+    public function setManufacturerRef(?Manufacturer $manufacturer): self
     {
-        $this->manufacturer = $manufacturer;
+        $this->manufacturerRef = $manufacturer;
+        return $this;
+    }
 
+    public function getEffectivePrice(): ?int
+    {
+        return $this->effectivePrice ?? ($this->pricing->getSalePrice() ?? $this->pricing->getPrice());
+    }
+
+    public function setEffectivePrice(?int $price): self
+    {
+        $this->effectivePrice = $price;
         return $this;
     }
 
@@ -322,51 +328,58 @@ class Product
         return $this;
     }
 
+    #[Groups(['product:read', 'product:list'])]
     public function getMetaH1(): ?string
     {
-        return $this->metaH1;
+        return $this->seo?->getH1();
     }
 
+    #[Groups(['product:update','product:create'])]
     public function setMetaH1(?string $metaH1): self
     {
-        $this->metaH1 = $metaH1;
-
+        if ($metaH1 === null && $this->seo === null) {
+            return $this;
+        }
+        $this->ensureSeo()->setH1($metaH1);
         return $this;
+    }
+
+    private function ensureSeo(): ProductSeo
+    {
+        if ($this->seo === null) {
+            $this->seo = new ProductSeo($this);
+        }
+        return $this->seo;
     }
 
     public function getDateAdded(): ?\DateTimeInterface
     {
-        return $this->dateAdded;
+        return $this->timestamps->getCreatedAt();
     }
 
-    #[ORM\PrePersist]
     public function setDateAdded(): void
     {
-        if ($this->dateAdded === null) {
-            $this->dateAdded = new \DateTime();
+        if ($this->timestamps->getCreatedAt() === null) {
+            $this->timestamps->setCreatedAt(new \DateTime());
         }
     }
 
     public function getDateEdited(): ?\DateTimeInterface
     {
-        return $this->date_edited;
+        return $this->timestamps->getUpdatedAt();
     }
 
     public function setDateEdited(?\DateTimeInterface $date_edited): self
     {
-        $this->date_edited = $date_edited;
-
+        $this->timestamps->setUpdatedAt($date_edited);
         return $this;
     }
 
-    #[ORM\PreUpdate]
     public function touchUpdatedAt(): void
     {
-        $this->date_edited = new \DateTime();
+        $this->timestamps->setUpdatedAt(new \DateTime());
     }
 
-    #[ORM\PrePersist]
-    #[ORM\PreUpdate]
     public function ensureSlug(): void
     {
         if (($this->slug === null || $this->slug === '') && $this->name) {
@@ -504,7 +517,6 @@ class Product
         return $this->code;
     }
 
-    #[ORM\PrePersist]
     public function setCode(): void
     {
         if ($this->code === null) {
@@ -520,6 +532,21 @@ class Product
     public function setDescription(?string $description): self
     {
         $this->description = $description;
+
+        return $this;
+    }
+
+    public function getSeo(): ?ProductSeo
+    {
+        return $this->seo;
+    }
+
+    public function setSeo(?ProductSeo $seo): self
+    {
+        $this->seo = $seo;
+        if ($seo !== null && $seo->getProduct() !== $this) {
+            $seo->setProduct($this);
+        }
 
         return $this;
     }
