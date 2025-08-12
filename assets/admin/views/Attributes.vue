@@ -47,28 +47,48 @@
       </div>
     </div>
 
-    <Modal v-model="openCreate" :title="isEditing ? 'Редактировать атрибут' : 'Новый атрибут'">
-      <form class="space-y-4" @submit.prevent="submit">
-        <Input v-model="form.name" label="Название" placeholder="Например: Цвет" />
+    <DialogRoot v-model:open="openCreate">
+      <DialogPortal>
+        <DialogOverlay class="fixed inset-0 bg-black/50 backdrop-blur-[1px]" />
+        <DialogContent
+          class="fixed left-1/2 top-1/2 w-[92vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-md border bg-white p-4 shadow-lg focus:outline-none dark:border-neutral-800 dark:bg-neutral-900"
+        >
+          <div class="mb-2">
+            <DialogTitle class="text-base font-semibold text-neutral-900 dark:text-neutral-100">
+              {{ isEditing ? 'Редактировать атрибут' : 'Новый атрибут' }}
+            </DialogTitle>
+            <DialogDescription class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+              Заполните поля ниже и сохраните изменения
+            </DialogDescription>
+          </div>
 
-        <div class="flex justify-end gap-2 pt-2">
-          <button type="button" class="h-9 rounded-md px-3 text-sm hover:bg-neutral-100 dark:hover:bg-white/10" @click="openCreate = false">Отмена</button>
-          <button
-            type="submit"
-            :disabled="submitting || !form.name.trim()"
-            class="inline-flex h-9 items-center rounded-md bg-neutral-900 px-3 text-sm font-medium text-white shadow hover:bg-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100"
-          >
-            {{ submitting ? 'Сохранение…' : (isEditing ? 'Обновить' : 'Сохранить') }}
-          </button>
-        </div>
-      </form>
-    </Modal>
+          <form class="space-y-4" @submit.prevent="submit">
+            <Input v-model="form.name" label="Название" placeholder="Например: Цвет" />
+
+            <div class="flex justify-end gap-2 pt-2">
+              <button type="button" class="h-9 rounded-md px-3 text-sm hover:bg-neutral-100 dark:hover:bg-white/10" @click="openCreate = false">Отмена</button>
+              <button
+                type="submit"
+                :disabled="submitting || !form.name.trim()"
+                class="inline-flex h-9 items-center rounded-md bg-neutral-900 px-3 text-sm font-medium text-white shadow hover:bg-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100"
+              >
+                {{ submitting ? 'Сохранение…' : (isEditing ? 'Обновить' : 'Сохранить') }}
+              </button>
+            </div>
+          </form>
+
+          <DialogClose as-child>
+            <button aria-label="Закрыть" class="sr-only">Закрыть</button>
+          </DialogClose>
+        </DialogContent>
+      </DialogPortal>
+    </DialogRoot>
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue'
-import Modal from '@admin/ui/components/Modal.vue'
+import { DialogRoot, DialogPortal, DialogOverlay, DialogContent, DialogTitle, DialogDescription, DialogClose } from 'reka-ui'
 import Input from '@admin/ui/components/Input.vue'
 import { useCrud } from '@admin/composables/useCrud'
 import { AttributeRepository, type Attribute } from '@admin/repositories/AttributeRepository'
