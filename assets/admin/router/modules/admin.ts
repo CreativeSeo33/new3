@@ -19,6 +19,18 @@ export const adminRoutes: RouteRecordRaw[] = [
         meta: { requiresAuth: true }
       },
       {
+        path: 'categories',
+        name: 'admin-categories',
+        component: () => import(/* webpackChunkName: "admin-categories" */ '@admin/views/Categories.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
+        path: 'categories/:id',
+        name: 'admin-category-form',
+        component: () => import(/* webpackChunkName: "admin-category-form" */ '@admin/views/CategoryForm.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
         path: 'products/:id',
         name: 'admin-product-form',
         component: () => import(/* webpackChunkName: "admin-product-form" */ '@admin/views/ProductForm.vue'),

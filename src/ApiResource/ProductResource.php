@@ -20,7 +20,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
         new Get(provider: ProductStateProvider::class),
         new GetCollection(provider: ProductStateProvider::class),
         new Post(processor: ProductStateProcessor::class),
-        new Patch(processor: ProductStateProcessor::class),
+        new Patch(processor: ProductStateProcessor::class, read: false),
         new Delete(processor: ProductStateProcessor::class, read: false, output: false)
     ],
     normalizationContext: ['groups' => ['product:read']],
@@ -30,6 +30,9 @@ class ProductResource
 {
     #[Groups(['product:read'])]
     public ?int $id = null;
+
+    #[Groups(['product:read'])]
+    public ?string $code = null;
 
     #[Groups(['product:read', 'product:write'])]
     public ?string $name = null;

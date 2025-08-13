@@ -152,6 +152,9 @@
     <ToastRoot v-for="n in toastCount" :key="n" type="foreground" :duration="3000">
       <ToastDescription>{{ lastToastMessage }}</ToastDescription>
     </ToastRoot>
+
+    <!-- Delete confirmation -->
+    <ConfirmDialog v-model="deleteDialogOpen" title="Удалить товар?" description="Это действие необратимо. Товар будет удалён навсегда." confirm-text="Удалить" :danger="true" @confirm="performDelete" />
   </div>
 </template>
 
@@ -159,6 +162,7 @@
 import { computed, onMounted, reactive } from 'vue'
 import { RouterLink } from 'vue-router'
 import { ToastDescription, ToastRoot } from 'reka-ui'
+import ConfirmDialog from '@admin/components/ConfirmDialog.vue'
 import { useCrud } from '@admin/composables/useCrud'
 import { ProductRepository, type ProductDto } from '@admin/repositories/ProductRepository'
 
@@ -198,16 +202,24 @@ async function applyFilters() {
 }
 
 // Delete with confirmation + toast
+import { ref as vueRef } from 'vue'
+import { AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogOverlay, AlertDialogPortal, AlertDialogRoot, AlertDialogTitle, AlertDialogTrigger } from 'reka-ui'
+const deleteDialogOpen = vueRef(false)
+const pendingDeleteId = vueRef<number | null>(null)
+
 async function confirmDelete(p: ProductDto) {
   if (!p.id) return
-  const ok = window.confirm(`Удалить товар #${p.id}?`)
-  if (!ok) return
-  await crud.remove(p.id)
+  pendingDeleteId.value = Number(p.id)
+  deleteDialogOpen.value = true
+}
+async function performDelete() {
+  if (pendingDeleteId.value == null) return
+  await crud.remove(pendingDeleteId.value)
+  pendingDeleteId.value = null
   publishToast('Товар удалён')
 }
 
 // Imperative toast publisher (per Reka UI)
-import { ref as vueRef } from 'vue'
 const toastCount = vueRef(0)
 const lastToastMessage = vueRef('')
 function publishToast(message: string) {

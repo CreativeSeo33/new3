@@ -24,6 +24,14 @@
         Товары
       </router-link>
       <router-link
+        to="/categories"
+        class="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
+        active-class="bg-gray-100 text-slate-900"
+      >
+        <span class="inline-block w-1.5 h-1.5 rounded-full bg-cyan-500"></span>
+        Категории
+      </router-link>
+      <router-link
         to="/attributes"
         class="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
         active-class="bg-gray-100 text-slate-900"

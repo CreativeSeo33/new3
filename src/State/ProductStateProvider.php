@@ -38,6 +38,7 @@ class ProductStateProvider implements ProviderInterface
     {
         $r = new ProductResource();
         $r->id = $entity->getId();
+        $r->code = $entity->getCode()?->toRfc4122();
         $r->name = $entity->getName();
         $r->slug = $entity->getSlug();
         $r->price = $entity->getPrice();

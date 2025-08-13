@@ -3,6 +3,7 @@ import { BaseRepository } from './BaseRepository';
 
 export interface ProductDto extends ApiResource {
   id?: number;
+  code?: string | null;
   name: string | null;
   slug: string | null;
   price: number | null;
