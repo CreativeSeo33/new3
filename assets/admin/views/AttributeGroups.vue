@@ -187,8 +187,8 @@ async function createSubmit() {
       name: createForm.name.trim(),
       sortOrder: createForm.sortOrderStr === '' ? null : Number(createForm.sortOrderStr),
     } as Partial<AttributeGroupDto>)
-    // отобразим сразу
-    rows.value.unshift({ id: Number(created.id), nameProxy: created.name ?? '', sortOrderProxy: created.sortOrder == null ? '' : String(created.sortOrder) })
+    // элементы уже добавлены в state.items внутри useCrud.create; синхронизируем прокси-строки
+    syncRows()
     openCreate.value = false
     createForm.name = ''
     createForm.sortOrderStr = ''

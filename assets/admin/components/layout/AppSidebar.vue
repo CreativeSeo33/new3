@@ -48,12 +48,28 @@
         Группы атрибутов
       </router-link>
       <router-link
+        to="/options"
+        class="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
+        active-class="bg-gray-100 text-slate-900"
+      >
+        <span class="inline-block w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+        Опции
+      </router-link>
+      <router-link
         to="/design-system"
         class="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
         active-class="bg-gray-100 text-slate-900"
       >
         <span class="inline-block w-1.5 h-1.5 rounded-full bg-amber-500"></span>
         Design System
+      </router-link>
+      <router-link
+        to="/option-values"
+        class="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
+        active-class="bg-gray-100 text-slate-900"
+      >
+        <span class="inline-block w-1.5 h-1.5 rounded-full bg-sky-500"></span>
+        Значения опций
       </router-link>
     </nav>
   </div>

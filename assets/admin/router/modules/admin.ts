@@ -49,6 +49,18 @@ export const adminRoutes: RouteRecordRaw[] = [
         meta: { requiresAuth: true }
       },
       {
+        path: 'options',
+        name: 'admin-options',
+        component: () => import(/* webpackChunkName: "admin-options" */ '@admin/views/Options.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
+        path: 'option-values',
+        name: 'admin-option-values',
+        component: () => import(/* webpackChunkName: "admin-option-values" */ '@admin/views/OptionValues.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
         path: 'design-system',
         name: 'admin-design-system',
         component: () => import(/* webpackChunkName: "admin-design-system" */ '@admin/views/DesignSystem.vue'),

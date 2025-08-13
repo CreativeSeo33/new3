@@ -244,12 +244,8 @@ async function createSubmit() {
       attributeGroup: createForm.groupIri || null,
       sortOrder: createForm.sortOrderStr === '' ? null : Number(createForm.sortOrderStr),
     } as Partial<Attribute>)
-    rows.value.unshift({
-      id: Number(created.id),
-      nameProxy: created.name ?? '',
-      groupProxy: normalizeGroupIri((created as any).attributeGroup),
-      sortOrderProxy: (created as any).sortOrder == null ? '' : String((created as any).sortOrder),
-    })
+    // элемент уже добавлен в state.items внутри useCrud.create; синхронизируем строки
+    syncRows()
     openCreate.value = false
     Object.assign(createForm, { name: '', groupIri: '', sortOrderStr: '' })
     publishToast('Атрибут добавлен')
