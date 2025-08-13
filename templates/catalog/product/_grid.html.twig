@@ -13,15 +13,15 @@
               {% set rel = raw|replace({'/img/':''})|trim('/') %}
               {% set imgSrc = path('media_image_cache', { size: '500x500', path: rel }) %}
             {% endif %}
-            <a href="#"><img src="{{ imgSrc }}" alt="{{ p.name }}" class="w-full h-auto"></a>
+            <a href="{{ path('catalog_product_show', { slug: p.slug }) }}"><img src="{{ imgSrc }}" alt="{{ p.name }}" class="w-full h-auto"></a>
           {% else %}
-            <a href="#"><img src="https://via.placeholder.com/500" alt="{{ p.name }}" class="w-full h-auto"></a>
+            <a href="{{ path('catalog_product_show', { slug: p.slug }) }}"><img src="https://via.placeholder.com/500" alt="{{ p.name }}" class="w-full h-auto"></a>
           {% endif %}
         </div>
 
         <div class="flex flex-col gap-3 mt-3">
           <div class="flex flex-col gap-2">
-            <h3 class="text-base truncate"><a href="#">{{ p.name }}</a></h3>
+            <h3 class="text-base truncate"><a href="{{ path('catalog_product_show', { slug: p.slug }) }}">{{ p.name }}</a></h3>
           </div>
 
           <div class="flex justify-between items-center">

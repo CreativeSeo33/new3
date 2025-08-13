@@ -1,0 +1,52 @@
+{% extends 'catalog/base.html.twig' %}
+
+{% block title %}
+  {{ product.metaTitle ?? product.name }} — {{ parent() }}
+{% endblock %}
+
+{% block catalog_body %}
+  <div class="container mx-auto px-4 py-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        {% set firstImage = product.image|sort((a,b) => a.sortOrder <=> b.sortOrder)|first %}
+        {% if firstImage %}
+          {% set raw = firstImage.imageUrl %}
+          {% if raw starts with '/media/cache/' %}
+            {% set imgSrc = raw %}
+          {% else %}
+            {% set rel = raw|replace({'/img/':''})|trim('/') %}
+            {% set imgSrc = path('media_image_cache', { size: '500x500', path: rel }) %}
+          {% endif %}
+          <img src="{{ imgSrc }}" alt="{{ product.name }}" class="w-full h-auto rounded-md shadow" />
+        {% else %}
+          <img src="https://via.placeholder.com/500" alt="{{ product.name }}" class="w-full h-auto rounded-md shadow" />
+        {% endif %}
+      </div>
+
+      <div class="flex flex-col gap-4">
+        <h1 class="text-2xl font-semibold">{{ product.metaH1 ?? product.name }}</h1>
+
+        {% if product.getEffectivePrice() %}
+          <div class="text-xl font-bold text-gray-900">{{ product.getEffectivePrice() }}</div>
+        {% endif %}
+
+        {% if product.description %}
+          <div class="prose max-w-none">{{ product.description }}</div>
+        {% endif %}
+
+        <div class="mt-4">
+          <button type="button" class="btn inline-flex items-center gap-x-2 bg-green-600 text-white border-green-600 disabled:opacity-50 disabled:pointer-events-none hover:text-white hover:bg-green-700 hover:border-green-700 active:bg-green-700 active:border-green-700 focus:outline-none focus:ring-4 focus:ring-green-300">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-plus" width="18" height="18" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+              <path d="M12 5l0 14"></path>
+              <path d="M5 12l14 0"></path>
+            </svg>
+            <span>Добавить в корзину</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+
