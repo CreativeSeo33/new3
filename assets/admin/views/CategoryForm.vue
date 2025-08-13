@@ -119,6 +119,7 @@ import Button from '@admin/ui/components/Button.vue'
 import { ToastDescription, ToastRoot, SelectContent, SelectIcon, SelectItem, SelectItemIndicator, SelectItemText, SelectPortal, SelectRoot, SelectTrigger, SelectValue, SelectViewport } from 'reka-ui'
 import { useCrud } from '@admin/composables/useCrud'
 import { CategoryRepository, type CategoryDto } from '@admin/repositories/CategoryRepository'
+import { translit } from '@admin/utils/translit'
 
 const route = useRoute()
 const router = useRouter()
@@ -160,6 +161,25 @@ const form = reactive<CategoryForm>({
   footerVisibility: true,
 })
 
+// Автогенерация slug из name
+const shouldAutoGenerateSlug = vueRef(true)
+watch(
+  () => form.name,
+  (newName) => {
+    if (!shouldAutoGenerateSlug.value) return
+    form.slug = translit(String(newName || ''))
+  }
+)
+watch(
+  () => form.slug,
+  (newSlug) => {
+    // как только пользователь начинает менять slug вручную — перестаём автогенерировать
+    if (newSlug && newSlug !== translit(String(form.name || ''))) {
+      shouldAutoGenerateSlug.value = false
+    }
+  }
+)
+
 const repo = new CategoryRepository()
 const crud = useCrud<CategoryDto>(repo)
 const state = crud.state
@@ -197,6 +217,8 @@ const hydrateForm = (dto: CategoryDto) => {
   if (dto.id && form.parentCategoryId === dto.id) {
     form.parentCategoryId = null
   }
+  // если у существующей категории уже есть slug — отключим автогенерацию
+  shouldAutoGenerateSlug.value = !(form.slug && form.slug.trim().length > 0)
 }
 
 onMounted(async () => {

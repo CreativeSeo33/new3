@@ -52,7 +52,22 @@
     </div>
 
     <div class="mb-2 text-sm font-medium">Текущие фото товара</div>
-    <div v-if="isCreating" class="text-sm text-neutral-500">Сохраните товар, чтобы добавлять и видеть фотографии.</div>
+    <div v-if="isCreating">
+      <div class="text-sm text-neutral-600">
+        Вы можете выбрать изображения сейчас — они будут автоматически добавлены после первого сохранения товара.
+      </div>
+      <div v-if="pendingRelatives.length" class="mt-3">
+        <div class="mb-2 text-sm font-medium">Ожидают добавления ({{ pendingRelatives.length }})</div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          <div v-for="rel in pendingRelatives" :key="rel" class="rounded border overflow-hidden">
+            <div class="aspect-square bg-neutral-50 select-none">
+              <img :src="'/img/' + rel" class="h-full w-full object-cover pointer-events-none" loading="lazy" />
+            </div>
+            <div class="px-2 py-1 text-xs text-neutral-600 truncate">{{ rel }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
     <div v-else>
       <div v-if="productImagesLoading" class="text-sm text-neutral-500">Загрузка фото...</div>
       <div v-else-if="productImagesError" class="text-sm text-red-600">{{ productImagesError }}</div>
@@ -118,6 +133,20 @@ const imagesLoading = ref(false)
 const imagesError = ref<string>('')
 const selectedImages = ref<Set<string>>(new Set())
 const attachLoading = ref(false)
+
+// Pending images storage for a new product
+const PENDING_KEY = 'new-product-pending-images'
+const pendingRelatives = ref<string[]>([])
+function readPendingFromStorage() {
+  try {
+    const raw = localStorage.getItem(PENDING_KEY)
+    const arr = raw ? JSON.parse(raw) : []
+    pendingRelatives.value = Array.isArray(arr) ? arr.filter((v: any) => typeof v === 'string') : []
+  } catch {
+    pendingRelatives.value = []
+  }
+}
+readPendingFromStorage()
 
 async function fetchFolderTree() {
   const res = await fetch('/api/admin/media/tree', { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
@@ -231,13 +260,49 @@ async function fetchProductImages() {
   }
 }
 
-onMounted(() => fetchProductImages())
-watch(() => props.productId, () => fetchProductImages())
+async function attachPendingIfAny() {
+  readPendingFromStorage()
+  if (!pendingRelatives.value.length) return
+  try {
+    const res = await fetch(`/api/admin/media/product/${props.productId}/images`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ items: pendingRelatives.value })
+    })
+    if (res.ok) {
+      try { localStorage.removeItem(PENDING_KEY) } catch {}
+      pendingRelatives.value = []
+      publishToast('Изображения добавлены')
+    }
+  } catch {}
+}
+
+onMounted(async () => {
+  if (!props.isCreating) {
+    await attachPendingIfAny()
+    await fetchProductImages()
+  }
+})
+watch(() => props.productId, async () => {
+  if (!props.isCreating) {
+    await attachPendingIfAny()
+    await fetchProductImages()
+  }
+})
 
 async function attachSelected() {
   if (selectedImages.value.size === 0) return
   if (props.isCreating) {
-    publishToast('Сначала сохраните товар')
+    // Accumulate selections until the product is saved first time
+    const existing = new Set<string>(pendingRelatives.value)
+    for (const r of selectedImages.value) existing.add(r)
+    const next = Array.from(existing)
+    try { localStorage.setItem(PENDING_KEY, JSON.stringify(next)) } catch {}
+    pendingRelatives.value = next
+    publishToast('Изображения будут добавлены после сохранения товара')
+    selectedImages.value = new Set()
+    photosModalOpen.value = false
     return
   }
   attachLoading.value = true

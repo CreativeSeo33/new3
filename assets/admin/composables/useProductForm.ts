@@ -1,4 +1,5 @@
 import { computed, reactive, ref, watch } from 'vue'
+import { translit } from '@admin/utils/translit'
 import type { ProductFormModel, ProductFormErrors } from '@admin/types/product'
 
 export function useProductForm(initialData?: Partial<ProductFormModel>) {
@@ -116,13 +117,7 @@ export function useProductForm(initialData?: Partial<ProductFormModel>) {
     () => form.name,
     (newName) => {
       if (!shouldAutoGenerateSlug.value || !newName) return
-      const newSlug = newName
-        .toLowerCase()
-        .trim()
-        .replace(/\s+/g, '-')
-        .replace(/[^a-z0-9а-яё-]+/g, '')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '')
+      const newSlug = translit(String(newName || ''))
       if (!form.slug) {
         form.slug = newSlug
       }

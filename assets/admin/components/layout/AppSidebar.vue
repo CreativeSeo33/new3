@@ -71,6 +71,14 @@
         <span class="inline-block w-1.5 h-1.5 rounded-full bg-sky-500"></span>
         Значения опций
       </router-link>
+      <router-link
+        to="/users"
+        class="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
+        active-class="bg-gray-100 text-slate-900"
+      >
+        <span class="inline-block w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+        Пользователи
+      </router-link>
     </nav>
   </div>
 </template>

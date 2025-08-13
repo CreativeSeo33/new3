@@ -1,0 +1,21 @@
+{% extends 'catalog/base.html.twig' %}
+
+{% block title %}Категория {{ category.name ?? category.slug }} — {{ parent() }}{% endblock %}
+
+{% block catalog_body %}
+  <section>
+    <h1>Категория: {{ category.name ?? category.slug }}</h1>
+    {% if category.description %}
+      <p>{{ category.description }}</p>
+    {% endif %}
+
+    <h2>Товары</h2>
+    {% if products is defined and products is not empty %}
+      {% include 'catalog/product/_grid.html.twig' with { products: products } %}
+    {% else %}
+      <p>Товаров нет.</p>
+    {% endif %}
+  </section>
+{% endblock %}
+
+

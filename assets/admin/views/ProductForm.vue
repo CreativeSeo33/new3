@@ -292,7 +292,7 @@ const handleSave = async () => {
     // показать toast + редирект
     publishToast('Товар сохранён')
     const newId = (result.result as any)?.id ?? id.value
-    router.push({ name: 'admin-product-form', params: { id: newId } })
+    router.push({ name: 'admin-product-form', params: { id: newId }, query: { ...route.query } })
   }
 }
 

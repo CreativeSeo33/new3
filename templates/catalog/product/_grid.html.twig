@@ -1,0 +1,50 @@
+{# Сетка товаров: ожидает переменную `products` #}
+<div class="grid lg:grid-cols-5 md:grid-cols-3 gap-4 mb-6">
+  {% for p in products %}
+    <div class="relative rounded-lg break-words border bg-white border-gray-300 card-product">
+      <div class="flex-auto p-4">
+        <div class="text-center relative flex justify-center">
+          {% set firstImage = p.image|sort((a,b) => a.sortOrder <=> b.sortOrder)|first %}
+          {% if firstImage %}
+            {% set raw = firstImage.imageUrl %}
+            {% if raw starts with '/media/cache/' %}
+              {% set imgSrc = raw %}
+            {% else %}
+              {% set rel = raw|replace({'/img/':''})|trim('/') %}
+              {% set imgSrc = path('media_image_cache', { size: '500x500', path: rel }) %}
+            {% endif %}
+            <a href="#"><img src="{{ imgSrc }}" alt="{{ p.name }}" class="w-full h-auto"></a>
+          {% else %}
+            <a href="#"><img src="https://via.placeholder.com/500" alt="{{ p.name }}" class="w-full h-auto"></a>
+          {% endif %}
+        </div>
+
+        <div class="flex flex-col gap-3 mt-3">
+          <div class="flex flex-col gap-2">
+            <h3 class="text-base truncate"><a href="#">{{ p.name }}</a></h3>
+          </div>
+
+          <div class="flex justify-between items-center">
+            <div>
+              {% if p.getEffectivePrice() %}
+                <span class="text-gray-900 font-semibold">{{ p.getEffectivePrice() }}</span>
+              {% endif %}
+            </div>
+            <div>
+              <button type="button" class="btn inline-flex items-center gap-x-1 bg-green-600 text-white border-green-600 disabled:opacity-50 disabled:pointer-events-none hover:text-white hover:bg-green-700 hover:border-green-700 active:bg-green-700 active:border-green-700 focus:outline-none focus:ring-4 focus:ring-green-300 btn-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-plus" width="14" height="14" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                  <path d="M12 5l0 14"></path>
+                  <path d="M5 12l14 0"></path>
+                </svg>
+                <span>Add</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+

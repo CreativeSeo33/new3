@@ -8,8 +8,10 @@
 {% endblock %}
 
 {% block body %}
-  <div id="catalog-app"></div>
   {% block catalog_body %}{% endblock %}
+  {% if app.request.get('_route') == 'catalog_index' %}
+    <div id="catalog-app"></div>
+  {% endif %}
 {% endblock %}
 
 {% block javascripts %}

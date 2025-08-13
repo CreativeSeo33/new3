@@ -1,0 +1,22 @@
+{% extends 'catalog/base.html.twig' %}
+
+{% block title %}Категории — {{ parent() }}{% endblock %}
+
+{% block catalog_body %}
+  <section>
+    <h1>Категории</h1>
+    {% if categories is not empty %}
+      <ul>
+        {% for category in categories %}
+          <li>
+            <a href="{{ path('catalog_category_show', { slug: category.slug }) }}">{{ category.name ?? category.slug }}</a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>Категории не найдены.</p>
+    {% endif %}
+  </section>
+{% endblock %}
+
+
