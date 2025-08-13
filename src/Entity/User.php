@@ -44,9 +44,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?int $id = null;
 
     #[ORM\Column(type: 'string', length: 180, unique: true)]
-    #[Groups(['user:get'])]
-    #[Assert\Email]
-    private string $email = '';
+    #[Groups(['user:get','user:post','user:patch'])]
+    #[Assert\Length(min: 2)]
+    private string $name = '';
 
     /**
      * @var list<string>
@@ -57,10 +57,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(type: 'string')]
     private string $password = '';
-
-    #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    #[Groups(['user:get','user:post','user:patch'])]
-    private ?string $name = null;
 
     // Не маппится в БД, используется только для приема пароля из API
     #[Groups(['user:post','user:patch'])]
@@ -74,26 +70,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getUserIdentifier(): string
     {
-        return $this->email;
+        return $this->name;
     }
 
-    public function getEmail(): string
-    {
-        return $this->email;
-    }
 
-    public function setEmail(string $email): self
-    {
-        $this->email = mb_strtolower($email);
-        return $this;
-    }
-
-    public function getName(): ?string
+    public function getName(): string
     {
         return $this->name;
     }
 
-    public function setName(?string $name): self
+    public function setName(string $name): self
     {
         $this->name = $name;
         return $this;

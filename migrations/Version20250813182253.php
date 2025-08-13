@@ -19,10 +19,19 @@ final class Version20250813182253 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        // this up() migration is auto-generated, please modify it to your needs
-        $this->addSql('CREATE TABLE `option` (id INT AUTO_INCREMENT NOT NULL, name VARCHAR(255) NOT NULL, sort_order INT NOT NULL, PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
-        $this->addSql('CREATE TABLE option_value (id INT AUTO_INCREMENT NOT NULL, option_type_id INT DEFAULT NULL, value VARCHAR(255) NOT NULL, sort_order INT NOT NULL, INDEX IDX_249CE55CDDB89BE6 (option_type_id), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
-        $this->addSql('ALTER TABLE option_value ADD CONSTRAINT FK_249CE55CDDB89BE6 FOREIGN KEY (option_type_id) REFERENCES `option` (id) ON DELETE SET NULL');
+        // Make migration idempotent to avoid failures when tables already exist
+        $optionExists = $schema->hasTable('option');
+        $optionValueExists = $schema->hasTable('option_value');
+
+        if (!$optionExists) {
+            $this->addSql('CREATE TABLE `option` (id INT AUTO_INCREMENT NOT NULL, name VARCHAR(255) NOT NULL, sort_order INT NOT NULL, PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
+        }
+
+        if (!$optionValueExists) {
+            $this->addSql('CREATE TABLE option_value (id INT AUTO_INCREMENT NOT NULL, option_type_id INT DEFAULT NULL, value VARCHAR(255) NOT NULL, sort_order INT NOT NULL, INDEX IDX_249CE55CDDB89BE6 (option_type_id), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
+            // Only add FK if both tables exist now
+            $this->addSql('ALTER TABLE option_value ADD CONSTRAINT FK_249CE55CDDB89BE6 FOREIGN KEY (option_type_id) REFERENCES `option` (id) ON DELETE SET NULL');
+        }
     }
 
     public function down(Schema $schema): void

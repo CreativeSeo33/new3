@@ -10,7 +10,18 @@ use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 
 final class SecurityController extends AbstractController
 {
-    // Deprecated: login moved to /login
+    #[Route('/admin/login', name: 'admin_login_redirect_get', methods: ['GET'])]
+    public function loginRedirectGet(): Response
+    {
+        return $this->redirectToRoute('app_login');
+    }
+
+    #[Route('/admin/login', name: 'admin_login_redirect_post', methods: ['POST'])]
+    public function loginRedirectPost(): Response
+    {
+        // Preserve POST method for Symfony Security to handle credentials on /login
+        return $this->redirectToRoute('app_login', [], 307);
+    }
 }
 
 

@@ -9,8 +9,11 @@ security:
         app_user_provider:
             entity:
                 class: App\Entity\User
-                property: email
+                property: name
     firewalls:
+        api:
+            pattern: ^/api
+            security: false
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
@@ -38,8 +41,9 @@ security:
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
-        #- { path: ^/login$, roles: PUBLIC_ACCESS }
-        #- { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/api, roles: PUBLIC_ACCESS }
+        - { path: ^/login$, roles: PUBLIC_ACCESS }
+        - { path: ^/admin, roles: ROLE_ADMIN }
         # - { path: ^/profile, roles: ROLE_USER }
 
 when@test:

@@ -26,26 +26,26 @@ final class UserCreateCommand extends Command
     protected function configure(): void
     {
         $this
-            ->addArgument('email', InputArgument::REQUIRED, 'Email пользователя')
+            ->addArgument('name', InputArgument::REQUIRED, 'Имя пользователя (логин)')
             ->addArgument('password', InputArgument::REQUIRED, 'Пароль (будет захэширован)')
             ->addOption('admin', null, InputOption::VALUE_NONE, 'Выдать роль ROLE_ADMIN');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $email = (string) $input->getArgument('email');
+        $name = (string) $input->getArgument('name');
         $plainPassword = (string) $input->getArgument('password');
         $makeAdmin = (bool) $input->getOption('admin');
 
         $userRepo = $this->entityManager->getRepository(User::class);
-        $existing = $userRepo->findOneBy(['email' => mb_strtolower($email)]);
+        $existing = $userRepo->findOneBy(['name' => $name]);
         if ($existing instanceof User) {
-            $output->writeln('<error>Пользователь с таким email уже существует</error>');
+            $output->writeln('<error>Пользователь с таким name уже существует</error>');
             return Command::FAILURE;
         }
 
         $user = (new User())
-            ->setEmail($email)
+            ->setName($name)
             ->setRoles($makeAdmin ? ['ROLE_ADMIN'] : []);
 
         $hashed = $this->passwordHasher->hashPassword($user, $plainPassword);
@@ -54,7 +54,7 @@ final class UserCreateCommand extends Command
         $this->entityManager->persist($user);
         $this->entityManager->flush();
 
-        $output->writeln(sprintf('<info>Создан пользователь %s%s</info>', $email, $makeAdmin ? ' (ROLE_ADMIN)' : ''));
+        $output->writeln(sprintf('<info>Создан пользователь %s%s</info>', $name, $makeAdmin ? ' (ROLE_ADMIN)' : ''));
         return Command::SUCCESS;
     }
 }

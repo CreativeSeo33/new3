@@ -68,8 +68,29 @@
           </div>
 
           <form class="space-y-4" @submit.prevent="createSubmit">
-            <Input v-model="createForm.name" label="Имя" placeholder="Иван Иванов" />
-            <Input v-model="createForm.password" label="Пароль" type="password" placeholder="минимум 6 символов" />
+            <Input
+              v-model="createForm.name"
+              label="Имя"
+              placeholder="Иван Иванов"
+              :error="nameError"
+              @blur="nameTouched = true"
+            />
+            <Input
+              v-model="createForm.password"
+              label="Пароль"
+              type="password"
+              placeholder="минимум 6 символов"
+              :error="passwordError"
+              @blur="passwordTouched = true"
+            />
+            <Input
+              v-model="createForm.passwordConfirm"
+              label="Подтвердите пароль"
+              type="password"
+              placeholder="повторите пароль"
+              :error="passwordConfirmError"
+              @blur="confirmTouched = true"
+            />
             <div class="text-sm">
               <div class="mb-1 text-neutral-600 dark:text-neutral-300">Роли</div>
               <div class="flex flex-wrap gap-3">
@@ -85,7 +106,7 @@
               <button type="button" class="h-9 rounded-md px-3 text-sm hover:bg-neutral-100 dark:hover:bg-white/10" @click="openCreate = false">Отмена</button>
               <button
                 type="submit"
-                :disabled="submitting || !createForm.email.trim() || !createForm.password.trim()"
+                :disabled="submitting || !canSubmitCreate"
                 class="inline-flex h-9 items-center rounded-md bg-neutral-900 px-3 text-sm font-medium text-white shadow hover:bg-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100"
               >
                 {{ submitting ? 'Сохранение…' : 'Сохранить' }}
@@ -160,17 +181,56 @@ async function saveRow(row: EditableRow) {
 // Create form
 const openCreate = ref(false)
 const submitting = ref(false)
-const createForm = reactive({ name: '', password: '', rolesChecked: [] as string[] })
+const createForm = reactive({ name: '', password: '', passwordConfirm: '', rolesChecked: [] as string[] })
+
+// validation for password + confirm
+const nameTouched = ref(false)
+const nameError = computed(() => {
+  const n = createForm.name.trim()
+  if (!nameTouched.value) return ''
+  if (!n) return 'Имя обязательно'
+  if (n.length < 2) return 'Минимум 2 символа'
+  return ''
+})
+const passwordTouched = ref(false)
+const confirmTouched = ref(false)
+const passwordError = computed(() => {
+  const pwd = createForm.password.trim()
+  if (!passwordTouched.value && !confirmTouched.value) return ''
+  if (!pwd) return 'Пароль обязателен'
+  if (pwd.length < 6) return 'Минимум 6 символов'
+  return ''
+})
+const passwordConfirmError = computed(() => {
+  const confirm = createForm.passwordConfirm.trim()
+  if (!confirmTouched.value && !passwordTouched.value) return ''
+  if (!confirm) return 'Повторите пароль'
+  if (confirm !== createForm.password.trim()) return 'Пароли не совпадают'
+  return ''
+})
+const canSubmitCreate = computed(() => {
+  return createForm.name.trim().length >= 2 &&
+    !!createForm.password.trim() &&
+    !!createForm.passwordConfirm.trim() &&
+    createForm.password.trim().length >= 6 &&
+    createForm.password.trim() === createForm.passwordConfirm.trim()
+})
 
 async function createSubmit() {
-  if (!createForm.password.trim()) return
+  nameTouched.value = true
+  passwordTouched.value = true
+  confirmTouched.value = true
+  if (!canSubmitCreate.value) return
   submitting.value = true
   try {
     const roles = (createForm.rolesChecked || []).slice()
     await crud.create({ name: createForm.name.trim() || null, plainPassword: createForm.password.trim(), roles } as Partial<User>)
     syncRows()
     openCreate.value = false
-    Object.assign(createForm, { name: '', password: '', rolesChecked: [] })
+    Object.assign(createForm, { name: '', password: '', passwordConfirm: '', rolesChecked: [] })
+    nameTouched.value = false
+    passwordTouched.value = false
+    confirmTouched.value = false
     publishToast('Пользователь создан')
   } finally {
     submitting.value = false

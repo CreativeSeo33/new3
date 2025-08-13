@@ -28,14 +28,6 @@ final class UserPasswordProcessor implements ProcessorInterface
                 $data->setPassword($hashed);
                 $data->setPlainPassword(null);
             }
-            // нормализуем/генерируем email, если отсутствует
-            $email = trim($data->getEmail() ?? '');
-            if ($email === '') {
-                $base = $data->getName() ? strtolower(preg_replace('/[^a-z0-9]+/i', '.', (string) $data->getName())) : 'user';
-                $rand = bin2hex(random_bytes(3));
-                $email = sprintf('%s.%s@local', trim($base, '.'), $rand);
-            }
-            $data->setEmail($email);
             // нормализуем роли: убираем дубликаты и пустые
             $roles = array_values(array_filter(array_map('strval', $data->getRoles())));
             $data->setRoles($roles);
