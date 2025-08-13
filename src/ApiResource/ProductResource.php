@@ -80,6 +80,10 @@ class ProductResource
 
     #[Groups(['product:read'])]
     public ?string $manufacturerName = null;
+
+    // Images
+    #[Groups(['product:read'])]
+    public array $image = [];
 }
 
 

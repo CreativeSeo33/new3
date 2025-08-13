@@ -21,16 +21,16 @@ class ProductImage
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    #[Groups(['product:get'])]
+    #[Groups(['product:get', 'product:read'])]
     private ?int $id = null;
 
     #[ORM\Column(type: 'string', length: 255)]
-    #[Groups(['product:get', 'product:post', 'order:get'])]
+    #[Groups(['product:get', 'product:read', 'product:post', 'order:get'])]
     #[Assert\Length(max: 255)]
     private ?string $imageUrl = null;
 
     #[ORM\Column(type: 'integer')]
-    #[Groups(['product:get', 'product:post'])]
+    #[Groups(['product:get', 'product:read', 'product:post'])]
     private ?int $sortOrder = null;
 
     #[ORM\ManyToOne(targetEntity: Product::class, inversedBy: 'image')]

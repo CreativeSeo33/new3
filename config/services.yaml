@@ -22,3 +22,24 @@ services:
 
     # Doctrine entity listener as service (attributes already present, but ensure service is public)
     App\Doctrine\Listener\ProductEntityListener: ~
+
+    # Intervention Image v3 manager & driver
+    intervention.image.driver.gd:
+        class: Intervention\Image\Drivers\Gd\Driver
+
+    intervention.image.manager:
+        class: Intervention\Image\ImageManager
+        arguments:
+            - '@intervention.image.driver.gd'
+
+    Intervention\Image\Interfaces\ImageManagerInterface: '@intervention.image.manager'
+
+    # Inject project dir for services that need filesystem paths
+    App\Controller\Admin\MediaAdminController:
+        tags: [ 'controller.service_arguments' ]
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    App\Service\ImageCacheService:
+        arguments:
+            $projectDir: '%kernel.project_dir%'

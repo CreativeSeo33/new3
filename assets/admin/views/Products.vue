@@ -69,8 +69,8 @@
         <thead class="bg-neutral-50 text-neutral-600 dark:bg-neutral-900/40 dark:text-neutral-300">
           <tr>
             <th class="px-4 py-2 text-left w-16">#</th>
+            <th class="px-4 py-2 text-left">Изображение</th>
             <th class="px-4 py-2 text-left">Product</th>
-            <th class="px-4 py-2 text-left">Brand</th>
             <th class="px-4 py-2 text-left">Price</th>
             <th class="px-4 py-2 text-left">Stock</th>
             <th class="px-4 py-2 text-left">Status</th>
@@ -80,6 +80,11 @@
         <tbody>
           <tr v-for="p in products" :key="p.id" class="border-t dark:border-neutral-800">
             <td class="px-4 py-2 text-neutral-500">{{ p.id }}</td>
+            <td class="px-4 py-2">
+              <div class="h-12 w-12 overflow-hidden rounded bg-neutral-100 dark:bg-neutral-800">
+                <img v-if="firstImageUrl(p)" :src="firstImageUrl(p) || undefined" class="h-full w-full object-cover" alt="" />
+              </div>
+            </td>
             <td class="px-4 py-2">
               <RouterLink
                 :to="{ name: 'admin-product-form', params: { id: p.id } }"
@@ -182,6 +187,12 @@ const hasPrevPage = computed(() => page.value > 1)
 onMounted(async () => {
   await crud.fetchAll({ itemsPerPage: 20 })
 })
+
+function firstImageUrl(p: ProductDto): string | null {
+  const list = (p as any).image as any[] | undefined
+  if (Array.isArray(list) && list.length > 0 && list[0]?.imageUrl) return String(list[0].imageUrl)
+  return null
+}
 
 function nextPage() {
   crud.nextPage()

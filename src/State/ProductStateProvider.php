@@ -54,6 +54,15 @@ class ProductStateProvider implements ProviderInterface
         $r->h1 = $entity->getMetaH1();
         $r->manufacturerId = $entity->getManufacturerRef()?->getId();
         $r->manufacturerName = $entity->getManufacturerRef()?->getName();
+        // images
+        $r->image = [];
+        foreach ($entity->getImage() as $img) {
+            $r->image[] = [
+                'id' => $img->getId(),
+                'imageUrl' => $img->getImageUrl(),
+                'sortOrder' => $img->getSortOrder(),
+            ];
+        }
         return $r;
     }
 }
