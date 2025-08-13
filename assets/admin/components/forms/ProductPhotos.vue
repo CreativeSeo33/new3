@@ -1,0 +1,363 @@
+<template>
+  <div class="space-y-4">
+    <div class="flex items-center justify-between">
+      <div class="text-sm text-neutral-600 dark:text-neutral-300">Добавляйте изображения из каталога /public/img</div>
+      <DialogRoot v-model:open="photosModalOpen">
+        <DialogTrigger as-child>
+          <Button variant="secondary">Добавить изображение</Button>
+        </DialogTrigger>
+        <DialogOverlay class="fixed inset-0 bg-black/40" />
+        <DialogContent class="fixed left-1/2 top-1/2 w-[90vw] max-w-5xl -translate-x-1/2 -translate-y-1/2 rounded-md bg-white p-0 shadow-lg focus:outline-none">
+          <div class="flex items-center justify-between border-b px-4 py-3">
+            <DialogTitle class="text-base font-medium">Библиотека изображений</DialogTitle>
+            <DialogClose as-child>
+              <button class="text-neutral-500 hover:text-neutral-700">✕</button>
+            </DialogClose>
+          </div>
+          <div class="grid grid-cols-12 gap-0">
+            <div class="col-span-4 border-r max-h-[70vh] overflow-y-auto">
+              <div class="px-3 py-2 cursor-pointer hover:bg-neutral-50" :class="{ 'bg-neutral-100': selectedFolderPath === '' }" @click="selectFolder('')">
+                /img
+              </div>
+              <div v-for="f in flattenedFolders" :key="f.path" class="py-1 cursor-pointer hover:bg-neutral-50" :style="{ paddingLeft: (12 + f.depth * 16) + 'px' }" :class="{ 'bg-neutral-100': selectedFolderPath === f.path }" @click="selectFolder(f.path)">
+                <span class="px-3">{{ f.name }}</span>
+              </div>
+            </div>
+            <div class="col-span-8 max-h-[70vh] overflow-y-auto p-4">
+              <div class="flex items-center justify-between mb-3">
+                <div></div>
+                <div v-if="selectedImages.size > 0">
+                  <Button variant="secondary" @click="attachSelected" :disabled="attachLoading">
+                    Выбрано: {{ selectedImages.size }}
+                  </Button>
+                </div>
+              </div>
+              <div v-if="imagesLoading" class="text-sm text-neutral-500">Загрузка...</div>
+              <div v-else-if="imagesError" class="text-sm text-red-600">{{ imagesError }}</div>
+              <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                <label v-for="img in folderImages" :key="img.relative" class="group cursor-pointer block">
+                  <div class="relative">
+                    <input type="checkbox" class="absolute left-2 top-2 z-10 h-4 w-4" :checked="selectedImages.has(img.relative)" @change="toggleImage(img.relative, ($event.target as HTMLInputElement).checked)" />
+                    <div class="aspect-square w-full overflow-hidden rounded border bg-neutral-50">
+                      <img :src="img.url" :alt="img.name" class="h-full w-full object-cover" loading="lazy" />
+                    </div>
+                  </div>
+                  <div class="mt-1 truncate text-xs text-neutral-600">{{ img.name }}</div>
+                </label>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </DialogRoot>
+    </div>
+
+    <div class="mb-2 text-sm font-medium">Текущие фото товара</div>
+    <div v-if="isCreating" class="text-sm text-neutral-500">Сохраните товар, чтобы добавлять и видеть фотографии.</div>
+    <div v-else>
+      <div v-if="productImagesLoading" class="text-sm text-neutral-500">Загрузка фото...</div>
+      <div v-else-if="productImagesError" class="text-sm text-red-600">{{ productImagesError }}</div>
+      <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        <div
+          v-for="(pi, idx) in productImages"
+          :key="pi.id"
+          class="rounded border overflow-hidden relative group"
+          :class="{ 'ring-2 ring-blue-500': dragOverIndex === idx }"
+          @dragover.prevent="onDragOver(idx)"
+          @dragleave="onDragLeave(idx)"
+          @drop.prevent="onDrop(idx)"
+        >
+          <button
+            class="absolute left-2 top-2 z-10 rounded bg-white/90 px-2 py-1 text-xs text-neutral-700 shadow hover:bg-white cursor-grab"
+            title="Перетащить для сортировки"
+            draggable="true"
+            @dragstart="onDragStart(idx, $event)"
+          >⠿</button>
+          <button
+            class="absolute right-2 top-2 z-10 rounded bg-white/90 px-2 py-1 text-xs text-red-600 shadow hover:bg-white"
+            @click="deleteProductImage(pi.id)"
+            title="Удалить"
+          >Удалить</button>
+          <div class="aspect-square bg-neutral-50 select-none">
+            <img :src="pi.imageUrl" class="h-full w-full object-cover pointer-events-none" loading="lazy" />
+          </div>
+          <div class="px-2 py-1 text-xs text-neutral-600">#{{ pi.id }} · {{ pi.sortOrder }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted, watch } from 'vue'
+import Button from '@admin/ui/components/Button.vue'
+import { DialogClose, DialogContent, DialogOverlay, DialogRoot, DialogTitle, DialogTrigger } from 'reka-ui'
+
+const props = defineProps<{ productId: string; isCreating: boolean }>()
+const emit = defineEmits<{ (e: 'toast', message: string): void }>()
+const publishToast = (m: string) => emit('toast', m)
+
+// Modal + folder tree
+const photosModalOpen = ref(false)
+type FolderNode = { name: string; path: string; children?: FolderNode[] }
+type FlatFolder = { name: string; path: string; depth: number }
+const folderTree = ref<FolderNode[]>([])
+const flattenedFolders = computed<FlatFolder[]>(() => {
+  const acc: FlatFolder[] = []
+  const walk = (nodes: FolderNode[], depth: number) => {
+    for (const n of nodes) {
+      acc.push({ name: n.name, path: n.path, depth })
+      if (n.children && n.children.length) walk(n.children, depth + 1)
+    }
+  }
+  walk(folderTree.value, 0)
+  return acc
+})
+const selectedFolderPath = ref<string>('')
+const folderImages = ref<Array<{ name: string; relative: string; url: string }>>([])
+const imagesLoading = ref(false)
+const imagesError = ref<string>('')
+const selectedImages = ref<Set<string>>(new Set())
+const attachLoading = ref(false)
+
+async function fetchFolderTree() {
+  const res = await fetch('/api/admin/media/tree', { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
+  if (!res.ok) throw new Error('Не удалось получить дерево каталогов')
+  const ct = res.headers.get('content-type') || ''
+  if (!ct.includes('application/json')) {
+    const txt = await res.text()
+    throw new Error('Получен не-JSON ответ. Возможно, требуется авторизация или произошла ошибка. ' + txt.slice(0, 120))
+  }
+  const data = await res.json()
+  folderTree.value = Array.isArray(data.tree) ? data.tree : []
+}
+
+async function fetchImages(dir: string) {
+  imagesLoading.value = true
+  imagesError.value = ''
+  try {
+    const url = new URL('/api/admin/media/list', window.location.origin)
+    if (dir) url.searchParams.set('dir', dir)
+    const res = await fetch(url.toString(), { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
+    if (!res.ok) throw new Error('Не удалось загрузить изображения')
+    const ct = res.headers.get('content-type') || ''
+    if (!ct.includes('application/json')) {
+      const txt = await res.text()
+      throw new Error('Получен не-JSON ответ. Возможно, редирект или HTML ошибка. ' + txt.slice(0, 120))
+    }
+    const data = await res.json()
+    folderImages.value = Array.isArray(data.items) ? data.items : []
+  } catch (e: any) {
+    imagesError.value = e?.message || 'Ошибка'
+  } finally {
+    imagesLoading.value = false
+  }
+}
+
+function selectFolder(path: string) {
+  selectedFolderPath.value = path
+  fetchImages(path)
+}
+
+function toggleImage(relative: string, checked: boolean) {
+  const set = new Set(selectedImages.value)
+  if (checked) set.add(relative)
+  else set.delete(relative)
+  selectedImages.value = set
+}
+
+watch(photosModalOpen, async (open) => {
+  if (open) {
+    try {
+      if (folderTree.value.length === 0) await fetchFolderTree()
+      await fetchImages(selectedFolderPath.value)
+    } catch {
+      /* handled in UI */
+    }
+  }
+})
+
+// Product images list
+type ProductImageDto = { id: number; imageUrl: string; sortOrder: number }
+const productImages = ref<ProductImageDto[]>([])
+const productImagesLoading = ref(false)
+const productImagesError = ref<string>('')
+const deletingImageIds = ref<Set<number>>(new Set())
+const dragFromIndex = ref<number | null>(null)
+const dragOverIndex = ref<number | null>(null)
+const savingOrder = ref(false)
+const hasDuplicateSortOrders = computed(() => {
+  const seen = new Set<number>()
+  for (const it of productImages.value) {
+    const so = Number(it.sortOrder)
+    if (!Number.isFinite(so)) continue
+    if (seen.has(so)) return true
+    seen.add(so)
+  }
+  return false
+})
+
+async function fetchProductImages() {
+  if (props.isCreating) return
+  productImagesLoading.value = true
+  productImagesError.value = ''
+  try {
+    const res = await fetch(`/api/v2/products/${props.productId}`, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
+    if (!res.ok) throw new Error('Не удалось загрузить товар')
+    const data = await res.json()
+    const imgs = Array.isArray(data.image) ? data.image : (Array.isArray(data.images) ? data.images : [])
+    const normalized: ProductImageDto[] = imgs
+      .map((it: any): ProductImageDto => ({ id: Number(it.id), imageUrl: String(it.imageUrl), sortOrder: Number(it.sortOrder ?? 0) }))
+      .sort((a: ProductImageDto, b: ProductImageDto) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.id - b.id)
+    // авто-нормализация дублей: если есть повторы, пересчитываем и отправляем на сервер
+    const seen: Set<number> = new Set<number>()
+    let hasDup = false
+    for (const it of normalized) {
+      const so = Number(it.sortOrder)
+      if (Number.isFinite(so) && seen.has(so)) { hasDup = true; break }
+      seen.add(so)
+    }
+    if (hasDup) {
+      normalized.forEach((it: ProductImageDto, i: number) => (it.sortOrder = i + 1))
+      productImages.value = normalized
+      // fire-and-forget, но дождёмся чтобы порядок в UI совпал
+      await saveImagesOrder(normalized.map((it: ProductImageDto) => it.id))
+    } else {
+      productImages.value = normalized
+    }
+  } catch (e: any) {
+    productImagesError.value = e?.message || 'Ошибка'
+  } finally {
+    productImagesLoading.value = false
+  }
+}
+
+onMounted(() => fetchProductImages())
+watch(() => props.productId, () => fetchProductImages())
+
+async function attachSelected() {
+  if (selectedImages.value.size === 0) return
+  if (props.isCreating) {
+    publishToast('Сначала сохраните товар')
+    return
+  }
+  attachLoading.value = true
+  try {
+    const res = await fetch(`/api/admin/media/product/${props.productId}/images`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ items: Array.from(selectedImages.value) })
+    })
+    if (!res.ok) throw new Error('Не удалось сохранить изображения')
+    const ct = res.headers.get('content-type') || ''
+    if (!ct.includes('application/json')) throw new Error('Неожиданный ответ сервера')
+    await res.json()
+    await fetchProductImages()
+    publishToast('Изображения добавлены')
+    selectedImages.value = new Set()
+    photosModalOpen.value = false
+  } catch (e: any) {
+    publishToast(e?.message || 'Ошибка')
+  } finally {
+    attachLoading.value = false
+  }
+}
+
+async function deleteProductImage(imageId: number) {
+  if (!imageId) return
+  const set = new Set(deletingImageIds.value); set.add(imageId); deletingImageIds.value = set
+  try {
+    const res = await fetch(`/api/admin/media/product-image/${imageId}`, { method: 'DELETE', credentials: 'same-origin' })
+    if (!res.ok) throw new Error('Не удалось удалить изображение')
+    await fetchProductImages()
+    publishToast('Изображение удалено')
+  } catch (e: any) {
+    publishToast(e?.message || 'Ошибка удаления')
+  } finally {
+    const set2 = new Set(deletingImageIds.value); set2.delete(imageId); deletingImageIds.value = set2
+  }
+}
+
+function onDragStart(index: number, e: DragEvent) {
+  dragFromIndex.value = index
+  dragOverIndex.value = index
+  try {
+    e.dataTransfer?.setData('text/plain', String(index))
+    e.dataTransfer?.setDragImage?.(new Image(), 0, 0)
+  } catch {}
+}
+
+function onDragOver(index: number) {
+  dragOverIndex.value = index
+}
+
+function onDragLeave(index: number) {
+  if (dragOverIndex.value === index) dragOverIndex.value = null
+}
+
+function reorderArray<T>(arr: T[], from: number, to: number): T[] {
+  const copy = arr.slice()
+  const [moved] = copy.splice(from, 1)
+  copy.splice(to, 0, moved)
+  return copy
+}
+
+async function onDrop(index: number) {
+  const from = dragFromIndex.value
+  dragFromIndex.value = null
+  dragOverIndex.value = null
+  if (from === null || from === index) return
+  const next = reorderArray(productImages.value, from, index)
+  // локально проставим новые sortOrder с 1
+  next.forEach((it, i) => (it.sortOrder = i + 1))
+  productImages.value = next
+  // отправим порядок на сервер
+  await saveImagesOrder(next.map(it => it.id))
+}
+
+async function saveImagesOrder(orderIds: number[]) {
+  if (props.isCreating || !orderIds.length) return
+  if (savingOrder.value) return
+  savingOrder.value = true
+  try {
+    const res = await fetch(`/api/admin/media/product/${props.productId}/images/reorder`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ order: orderIds })
+    })
+    if (!res.ok) throw new Error('Не удалось сохранить порядок изображений')
+    const ct = res.headers.get('content-type') || ''
+    if (!ct.includes('application/json')) throw new Error('Неожиданный ответ сервера')
+    const data = await res.json()
+    if (Array.isArray(data.items)) {
+      // синхронизируем sortOrder из ответа, если пришло
+      const byId = new Map<number, number>()
+      for (const it of data.items) {
+        const id = Number(it.id)
+        const so = Number(it.sortOrder)
+        if (!Number.isNaN(id) && !Number.isNaN(so)) byId.set(id, so)
+      }
+      productImages.value = productImages.value.map(it => ({ ...it, sortOrder: byId.get(it.id) ?? it.sortOrder }))
+    }
+  } catch (e: any) {
+    publishToast(e?.message || 'Ошибка сохранения порядка')
+    // откат к серверному
+    await fetchProductImages()
+  } finally {
+    savingOrder.value = false
+  }
+}
+
+async function normalizeOrder() {
+  // нормализуем локально и отправим на сервер
+  const sortedByCurrent = productImages.value.slice().sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.id - b.id)
+  sortedByCurrent.forEach((it, i) => (it.sortOrder = i + 1))
+  productImages.value = sortedByCurrent
+  await saveImagesOrder(sortedByCurrent.map(it => it.id))
+}
+</script>
+
+<style scoped></style>
+
+

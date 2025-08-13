@@ -15,6 +15,7 @@
       <AppHeader @toggle-sidebar="isSidebarOpen = !isSidebarOpen" />
       <main class="px-4 sm:px-6 lg:px-8 py-6">
         <ToastProvider>
+          <Breadcrumbs />
           <Card>
             <router-view />
           </Card>
@@ -33,6 +34,7 @@ import AppHeader from '@admin/components/layout/AppHeader.vue'
 import AppSidebar from '@admin/components/layout/AppSidebar.vue'
 import AppFooter from '@admin/components/layout/AppFooter.vue'
 import Card from '@admin/ui/components/Card.vue'
+import Breadcrumbs from '@admin/ui/components/Breadcrumbs.vue'
 import { ToastProvider, ToastViewport } from 'reka-ui'
 
 const isSidebarOpen = ref(false)

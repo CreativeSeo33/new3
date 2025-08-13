@@ -43,6 +43,12 @@ export const adminRoutes: RouteRecordRaw[] = [
         meta: { requiresAuth: true }
       },
       {
+        path: 'attribute-groups',
+        name: 'admin-attribute-groups',
+        component: () => import(/* webpackChunkName: "admin-attribute-groups" */ '@admin/views/AttributeGroups.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
         path: 'design-system',
         name: 'admin-design-system',
         component: () => import(/* webpackChunkName: "admin-design-system" */ '@admin/views/DesignSystem.vue'),

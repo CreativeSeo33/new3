@@ -10,12 +10,16 @@ use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Patch;
 
 #[ApiResource(
     operations: [
         new Get(),
+        new GetCollection(),
+        new Post(),
         new Patch(
             denormalizationContext: ['groups' => ['product_attribute:patch']]
         ),
@@ -38,6 +42,7 @@ class ProductAttribute
     private ?string $text = null;
 
     #[ORM\ManyToOne(targetEntity: ProductAttributeGroup::class, inversedBy: 'attribute', cascade: ['persist'])]
+    #[ORM\JoinColumn(onDelete: 'CASCADE', nullable: true)]
     #[Groups(['product_attribute:post', 'product:post'])]
     private ?ProductAttributeGroup $productAttributeGroup = null;
 

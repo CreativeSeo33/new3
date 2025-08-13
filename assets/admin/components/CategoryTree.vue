@@ -19,7 +19,13 @@
                     @drop.prevent="(e) => onDrop(node, e)"
                 >
 				<div class="flex items-center gap-2">
-					<span class="text-sm" :class="isInvalidMove(node) ? 'text-red-600' : ''">{{ node.name || `Без названия (#${node.id})` }}</span>
+					<RouterLink
+						:to="{ name: 'admin-category-form', params: { id: node.id } }"
+						class="text-sm hover:underline"
+						:class="isInvalidMove(node) ? 'text-red-600' : ''"
+					>
+						{{ node.name || `Без названия (#${node.id})` }}
+					</RouterLink>
 					<span v-if="node.slug" class="text-xs text-neutral-500">/{{ node.slug }}</span>
 				</div>
 				<div class="flex items-center gap-2">

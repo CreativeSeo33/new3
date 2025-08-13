@@ -196,9 +196,96 @@ class MediaAdminController
         if (!$pi) {
             return new JsonResponse(['error' => 'Not found'], 404);
         }
+        $product = $pi->getProduct();
         $this->em->remove($pi);
         $this->em->flush();
+        if ($product instanceof Product) {
+            $this->normalizeProductImagesOrder($product);
+            $this->em->flush();
+        }
         return new JsonResponse(['deleted' => $id]);
+    }
+
+    #[Route(path: '/api/admin/media/product/{id}/images/reorder', name: 'admin_media_reorder_product_images', methods: ['POST'])]
+    public function reorderProductImages(int $id, Request $request): JsonResponse
+    {
+        /** @var Product|null $product */
+        $product = $this->em->getRepository(Product::class)->find($id);
+        if (!$product) {
+            return new JsonResponse(['error' => 'Product not found'], 404);
+        }
+
+        $payload = json_decode((string) $request->getContent(), true);
+        $order = is_array($payload['order'] ?? null) ? $payload['order'] : [];
+        $orderIds = [];
+        foreach ($order as $v) {
+            if (is_int($v) || (is_string($v) && ctype_digit($v))) {
+                $orderIds[] = (int) $v;
+            }
+        }
+
+        /** @var array<int, ProductImage> $images */
+        $images = $this->em->getRepository(ProductImage::class)
+            ->findBy(['product' => $product], ['sortOrder' => 'ASC']);
+        if (!$images) {
+            return new JsonResponse(['items' => []]);
+        }
+
+        $byId = [];
+        foreach ($images as $img) {
+            $byId[(int) $img->getId()] = $img;
+        }
+
+        $sorted = [];
+        // First, add those in provided order
+        foreach ($orderIds as $oid) {
+            if (isset($byId[$oid])) {
+                $sorted[] = $byId[$oid];
+                unset($byId[$oid]);
+            }
+        }
+        // Then, append leftovers preserving their current order
+        foreach ($images as $img) {
+            $iid = (int) $img->getId();
+            if (isset($byId[$iid])) {
+                $sorted[] = $img;
+                unset($byId[$iid]);
+            }
+        }
+
+        $sort = 1;
+        $result = [];
+        foreach ($sorted as $img) {
+            $img->setSortOrder($sort);
+            $result[] = [
+                'id' => (int) $img->getId(),
+                'sortOrder' => $sort,
+            ];
+            $sort++;
+        }
+
+        $this->em->flush();
+
+        return new JsonResponse(['items' => $result]);
+    }
+
+    /**
+     * Ensures unique, sequential sortOrder for all images of a product.
+     * Returns array of ['id' => int, 'sortOrder' => int]
+     */
+    private function normalizeProductImagesOrder(Product $product): array
+    {
+        /** @var array<int, ProductImage> $images */
+        $images = $this->em->getRepository(ProductImage::class)
+            ->findBy(['product' => $product], ['sortOrder' => 'ASC', 'id' => 'ASC']);
+        $sort = 1;
+        $result = [];
+        foreach ($images as $img) {
+            $img->setSortOrder($sort);
+            $result[] = ['id' => (int) $img->getId(), 'sortOrder' => $sort];
+            $sort++;
+        }
+        return $result;
     }
 }
 

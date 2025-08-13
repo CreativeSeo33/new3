@@ -4,6 +4,9 @@ import { BaseRepository } from './BaseRepository';
 export interface Attribute extends ApiResource {
   id: number;
   name: string | null;
+  sortOrder?: number | null;
+  // Api Platform ожидает IRI для связи
+  attributeGroup?: string | null;
 }
 
 export class AttributeRepository extends BaseRepository<Attribute> {

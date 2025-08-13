@@ -40,6 +40,14 @@
         Атрибуты
       </router-link>
       <router-link
+        to="/attribute-groups"
+        class="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
+        active-class="bg-gray-100 text-slate-900"
+      >
+        <span class="inline-block w-1.5 h-1.5 rounded-full bg-fuchsia-500"></span>
+        Группы атрибутов
+      </router-link>
+      <router-link
         to="/design-system"
         class="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
         active-class="bg-gray-100 text-slate-900"

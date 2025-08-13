@@ -31,6 +31,7 @@ class ProductAttributeGroup
     private Collection $attribute;
 
     #[ORM\ManyToOne(targetEntity: AttributeGroup::class, inversedBy: 'productAttributeGroups', cascade: ['persist'])]
+    #[ORM\JoinColumn(onDelete: 'SET NULL', nullable: true)]
     #[Groups(['product:get', 'product_attribute_group:post', 'product:post'])]
     private ?AttributeGroup $attributeGroup = null;
 
