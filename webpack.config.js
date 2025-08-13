@@ -72,22 +72,18 @@ Encore
     //.enableSassLoader()
 
     // uncomment if you use TypeScript
-    .enableTypeScriptLoader()
-
-    // Enable Vue 3 single-file components
-    .enableVueLoader(() => {}, { version: 3 })
-
-    // uncomment if you use React
-    //.enableReactPreset()
-
-    // uncomment to get integrity="..." attributes on your script & link tags
-    // requires WebpackEncoreBundle 1.4 or higher
-    //.enableIntegrityHashes(Encore.isProduction())
-
-    // uncomment if you're having problems with a jQuery plugin
-    //.autoProvidejQuery()
-    .addAliases({
-        '@admin': path.resolve(__dirname, 'assets/admin')
+    .enableTypeScriptLoader((tsConfig) => {
+        tsConfig.transpileOnly = true;
     });
+
+// Включаем Vue loader только если собирается admin
+if (!selectedEntry || selectedEntry === 'admin') {
+    Encore.enableVueLoader(() => {}, { version: 3 });
+}
+
+// Общие алиасы
+Encore.addAliases({
+    '@admin': path.resolve(__dirname, 'assets/admin')
+});
 
 module.exports = Encore.getWebpackConfig();
