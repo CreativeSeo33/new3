@@ -1,0 +1,18 @@
+{% extends 'catalog/base.html.twig' %}
+
+{% block title %}Заказ оформлен — {{ parent() }}{% endblock %}
+
+{% block catalog_body %}
+  <div class="container mx-auto px-4 py-10">
+    <div class="max-w-xl mx-auto text-center">
+      <div class="text-3xl font-semibold mb-4">Спасибо за заказ!</div>
+      <div class="text-gray-700 mb-6">Ваш номер заказа: <span class="font-mono">#{{ orderId }}</span></div>
+      <div class="space-x-3">
+        <a href="{{ path('catalog_index') }}" class="inline-flex items-center px-4 py-2 rounded bg-black text-white hover:bg-gray-900">Вернуться в каталог</a>
+        <a href="{{ path('cart_page') }}" class="inline-flex items-center px-4 py-2 rounded border">Посмотреть корзину</a>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+

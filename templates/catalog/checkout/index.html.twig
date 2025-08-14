@@ -1,0 +1,126 @@
+{% extends 'catalog/base.html.twig' %}
+
+{% block title %}Оформление заказа — {{ parent() }}{% endblock %}
+
+{% block catalog_body %}
+  <div class="container mx-auto px-4 py-6">
+    <h1 class="text-2xl font-semibold mb-6">Оформление заказа</h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="md:col-span-2 space-y-6">
+        <section class="p-4 border rounded">
+          <h2 class="text-lg font-medium mb-4">Контактные данные</h2>
+          <form id="checkout-form" class="space-y-4">
+            <div class="grid grid-cols-1 gap-4">
+              <div>
+                <label class="block text-sm mb-1">Имя</label>
+                <input name="firstName" class="w-full border rounded px-3 py-2" required />
+              </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm mb-1">Телефон</label>
+                <input name="phone" class="w-full border rounded px-3 py-2" required />
+              </div>
+              <div>
+                <label class="block text-sm mb-1">E-mail</label>
+                <input name="email" type="email" class="w-full border rounded px-3 py-2" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm mb-1">Комментарий к заказу</label>
+              <textarea name="comment" class="w-full border rounded px-3 py-2" rows="3" placeholder="Пожелания к заказу"></textarea>
+            </div>
+          </form>
+        </section>
+
+        {# Блок оплаты удалён по требованию #}
+      </div>
+
+      <aside class="md:col-span-1 p-4 border rounded h-fit">
+        <h2 class="text-lg font-medium mb-4">Ваш заказ</h2>
+        <div class="space-y-3">
+          {% for i in cart.items %}
+            <div class="flex justify-between text-sm">
+              <div class="truncate pr-2">{{ i.productName }} × {{ i.qty }}</div>
+              <div>{{ (i.rowTotal/100)|number_format(2, '.', ' ') }} ₽</div>
+            </div>
+          {% else %}
+            <div class="text-gray-500 text-sm">Корзина пуста</div>
+          {% endfor %}
+        </div>
+        <div class="border-t mt-3 pt-3 flex justify-between font-medium">
+          <span>Итого</span>
+          <span id="checkout-total">{{ (cart.total/100)|number_format(2, '.', ' ') }} {{ cart.currency }}</span>
+        </div>
+        <button id="place-order" class="mt-4 w-full bg-black text-white rounded py-2 disabled:opacity-50" {% if cart.items|length == 0 %}disabled{% endif %}>
+          Подтвердить заказ
+        </button>
+      </aside>
+    </div>
+
+    <p class="text-xs text-gray-500 mt-6">Нажимая кнопку, вы соглашаетесь с условиями оферты и политикой конфиденциальности.</p>
+  </div>
+
+  <script type="module">
+  const form = document.getElementById('checkout-form');
+  const btn = document.getElementById('place-order');
+
+  const STORAGE_KEY = 'checkout_form';
+
+  const readCache = () => {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; }
+  };
+  const writeCache = (data) => {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch {}
+  };
+  const collectForm = () => {
+    if (!(form instanceof HTMLFormElement)) return {};
+    const fd = new FormData(form);
+    return Object.fromEntries(fd.entries());
+  };
+  const hydrateForm = () => {
+    if (!(form instanceof HTMLFormElement)) return;
+    const data = readCache();
+    ['firstName','phone','email','comment'].forEach((name) => {
+      const el = form.elements.namedItem(name);
+      if (el && typeof (el).value !== 'undefined' && data[name]) {
+        (el).value = data[name];
+      }
+    });
+  };
+
+  hydrateForm();
+  if (form instanceof HTMLFormElement) {
+    form.addEventListener('input', () => writeCache(collectForm()));
+    form.addEventListener('change', () => writeCache(collectForm()));
+  }
+  btn?.addEventListener('click', async () => {
+    if (!(form instanceof HTMLFormElement)) return;
+    const formData = new FormData(form);
+    const payload = Object.fromEntries(formData.entries());
+    btn.disabled = true;
+    try {
+      const res = await fetch('{{ path('checkout_submit') }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.error || 'Не удалось оформить заказ');
+        return;
+      }
+      try { localStorage.removeItem(STORAGE_KEY); } catch {}
+      window.location.href = data.redirectUrl || '/';
+    } catch (e) {
+      alert('Ошибка сети');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+  </script>
+{% endblock %}
+
+
+

@@ -29,6 +29,14 @@ final class OrderRepository extends ServiceEntityRepository
 			$this->_em->flush();
 		}
 	}
+
+	public function getNextOrderId(): int
+	{
+		$qb = $this->createQueryBuilder('o')
+			->select('MAX(o.orderId) as maxId');
+		$max = (int)($qb->getQuery()->getSingleScalarResult() ?? 0);
+		return $max + 1;
+	}
 }
 
 
