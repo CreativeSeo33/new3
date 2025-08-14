@@ -12,11 +12,12 @@ use ApiPlatform\Metadata\Patch;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use App\Repository\AttributeGroupRepository;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 use Doctrine\ORM\Mapping\OrderBy;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: AttributeGroupRepository::class)]
 #[ApiResource(
     operations: [
         new Get(normalizationContext: ['groups' => ['attribute_group:get']]),

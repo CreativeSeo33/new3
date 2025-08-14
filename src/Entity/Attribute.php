@@ -10,10 +10,11 @@ use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Patch;
 use Doctrine\ORM\Mapping as ORM;
+use App\Repository\AttributeRepository;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Annotation\Groups;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: AttributeRepository::class)]
 #[ApiResource(
     operations: [
         new Get(normalizationContext: ['groups' => ['attribute:get']]),
