@@ -12,9 +12,10 @@ use ApiPlatform\Metadata\Post;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use App\Repository\CategoryRepository;
 use Symfony\Component\Validator\Constraints as Assert;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: CategoryRepository::class)]
 #[ORM\Index(columns: ["name"], name: "category_name_idx")]
 #[ApiResource(
     operations: [

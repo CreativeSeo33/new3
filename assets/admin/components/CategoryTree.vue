@@ -35,6 +35,15 @@
 					>
 						Edit
 					</RouterLink>
+					<a
+						v-if="node.slug"
+						:href="`/category/${node.slug}`"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="inline-flex h-7 items-center rounded-md border px-2 text-xs hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-white/10"
+					>
+						View
+					</a>
                 <button
 						type="button"
 						class="inline-flex h-7 items-center rounded-md bg-red-600 px-2 text-xs font-medium text-white hover:bg-red-700"

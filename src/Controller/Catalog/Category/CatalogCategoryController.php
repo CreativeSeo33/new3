@@ -4,8 +4,9 @@ declare(strict_types=1);
 namespace App\Controller\Catalog\Category;
 
 use App\Entity\Category;
+use App\Repository\CategoryRepository;
 use App\Repository\ProductRepository;
-use Doctrine\Persistence\ManagerRegistry;
+use App\Service\BreadcrumbBuilder;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -13,32 +14,30 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route(path: '/category', name: 'catalog_category_')]
 final class CatalogCategoryController extends AbstractController
 {
-    #[Route('', name: 'index', methods: ['GET'])]
-    public function index(ManagerRegistry $registry): Response
-    {
-        $categoryRepository = $registry->getRepository(Category::class);
-        $categories = $categoryRepository->findBy(['visibility' => true], ['sortOrder' => 'ASC']);
-
-        return $this->render('catalog/category/index.html.twig', [
-            'categories' => $categories,
-        ]);
-    }
+    public function __construct(
+        private readonly CategoryRepository $categoryRepository,
+        private readonly ProductRepository $productRepository,
+        private readonly BreadcrumbBuilder $breadcrumbBuilder,
+    ) {}
+    
 
     #[Route('/{slug}', name: 'show', requirements: ['slug' => '[a-z0-9\-]+' ], methods: ['GET'])]
-    public function show(string $slug, ManagerRegistry $registry, ProductRepository $products): Response
+    public function show(string $slug): Response
     {
-        $categoryRepository = $registry->getRepository(Category::class);
-        $category = $categoryRepository->findOneBy(['slug' => $slug, 'visibility' => true]);
+        $category = $this->categoryRepository->findOneBy(['slug' => $slug, 'visibility' => true]);
 
         if ($category === null) {
             throw $this->createNotFoundException('Категория не найдена');
         }
 
-        $items = $products->findActiveByCategory($category, 20, 0);
+        $items = $this->productRepository->findActiveByCategory($category, 20, 0);
+
+        $breadcrumbs = $this->breadcrumbBuilder->buildForCategory($category);
 
         return $this->render('catalog/category/show.html.twig', [
             'category' => $category,
             'products' => $items,
+            'breadcrumbs' => $breadcrumbs,
         ]);
     }
 }

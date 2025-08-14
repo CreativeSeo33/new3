@@ -1,0 +1,139 @@
+<header class="bg-white shadow-sm">
+  <!-- Header Middle Section -->
+  <div class="bg-white py-4 border-b border-gray-100">
+    <div class="container mx-auto px-4">
+      <div class="flex items-center justify-between">
+        
+        <!-- Logo Section -->
+        <div class="flex items-center">
+          <a href="{{ path('catalog_index') }}" class="flex items-center gap-3">
+            {% if logo_url is defined and logo_url %}
+              <img src="{{ logo_url }}" alt="{{ site_name|default('Shop') }}" class="h-10 w-auto" />
+            {% else %}
+              <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                <span class="text-white font-bold text-lg">L</span>
+              </div>
+            {% endif %}
+            <span class="text-2xl font-bold text-gray-800">{{ site_name|default('ShopGrids') }}</span>
+          </a>
+        </div>
+
+        <!-- Search Section -->
+        <div class="flex-1 max-w-2xl mx-8">
+          <form action="" method="GET" class="relative">
+            <div class="flex">
+              <!-- Category Dropdown -->
+              <div class="relative">
+                <select name="category" class="h-12 px-4 bg-gray-50 border border-r-0 border-gray-300 rounded-l-full text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-[120px]">
+                  <option value="">Все категории</option>
+                  <option value="electronics">Электроника</option>
+                  <option value="accessories">Аксессуары</option>
+                  <option value="televisions">Телевизоры</option>
+                  <option value="computers">Компьютеры</option>
+                </select>
+              </div>
+              
+              <!-- Search Input -->
+              <input type="text" 
+                     name="q" 
+                     placeholder="Поиск товаров..." 
+                     value="{{ app.request.query.get('q') }}"
+                     class="flex-1 h-12 px-4 border-t border-b border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+              
+              <!-- Search Button -->
+              <button type="submit" 
+                      class="h-12 px-6 bg-blue-600 text-white rounded-r-full hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Right Side Actions -->
+        <div class="flex items-center space-x-6">
+          
+          <!-- Hotline -->
+          <div class="hidden lg:flex flex-col items-center text-center">
+            <div class="text-xs text-gray-500 font-medium">Горячая линия:</div>
+            <div class="text-sm font-semibold text-gray-800">(+7) 123 456 7890</div>
+          </div>
+
+          <!-- User Account -->
+          <div class="flex items-center space-x-2 cursor-pointer group">
+            <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-gray-200 transition-colors">
+              <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+              </svg>
+            </div>
+            <div class="hidden md:flex flex-col text-xs">
+              <span class="text-gray-500">Привет</span>
+              <span class="text-gray-800 font-medium">Войти</span>
+            </div>
+          </div>
+
+          <!-- Shopping Cart -->
+          <div class="relative">
+            <a href="" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-50 transition-colors group">
+              <div class="relative">
+                <svg class="w-6 h-6 text-gray-600 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m-1.4 5.6l1.4-.6M7 13L5.4 5H4"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 16a2 2 0 11-4 0 2 2 0 014 0zM10 16a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+                <!-- Cart Counter -->
+                <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">2</span>
+              </div>
+              <div class="hidden lg:flex flex-col text-xs">
+                <span class="text-gray-500">2 товара</span>
+                <span class="text-gray-800 font-medium">₽134.00</span>
+              </div>
+            </a>
+
+            <!-- Cart Dropdown (показывается при hover) -->
+            <div class="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+              <div class="p-4">
+                <h3 class="text-sm font-semibold text-gray-800 mb-3">Корзина</h3>
+                
+                <!-- Cart Items -->
+                <div class="space-y-3 mb-4">
+                  <div class="flex items-center space-x-3">
+                    <img src="/img/placeholder-product.jpg" alt="Product" class="w-12 h-12 object-cover rounded">
+                    <div class="flex-1">
+                      <h4 class="text-sm font-medium text-gray-800">Apple Watch Series 6</h4>
+                      <p class="text-xs text-gray-500">1x - ₽99.00</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center space-x-3">
+                    <img src="/img/placeholder-product.jpg" alt="Product" class="w-12 h-12 object-cover rounded">
+                    <div class="flex-1">
+                      <h4 class="text-sm font-medium text-gray-800">Wi-Fi Smart Camera</h4>
+                      <p class="text-xs text-gray-500">1x - ₽35.00</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Total -->
+                <div class="border-t border-gray-200 pt-3 mb-4">
+                  <div class="flex justify-between text-sm font-semibold">
+                    <span>Итого:</span>
+                    <span>₽134.00</span>
+                  </div>
+                </div>
+                
+                <!-- Checkout Button -->
+                <a href="" 
+                   class="block w-full bg-blue-600 text-white text-center py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+                  Оформить заказ
+                </a>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+

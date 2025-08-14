@@ -1,0 +1,15 @@
+<nav class="w-full border-b bg-gray-50">
+  <div class="container mx-auto px-4">
+    <ul class="flex flex-wrap gap-4 py-2 text-sm">
+      {% for item in navbar|default([]) %}
+        <li>
+          <a href="{{ item.url|default('#') }}" class="hover:text-blue-600">{{ item.label|default('Ссылка') }}</a>
+        </li>
+      {% else %}
+        <li class="text-gray-500">Навигация пока пуста</li>
+      {% endfor %}
+    </ul>
+  </div>
+</nav>
+
+
