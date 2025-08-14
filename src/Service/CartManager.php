@@ -14,42 +14,52 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 final class CartManager
 {
-	public function __construct(
+    public function __construct(
 		private EntityManagerInterface $em,
 		private CartRepository $carts,
 		private ProductRepository $products,
-		private CartCalculator $calculator,
+        private CartCalculator $calculator,
 		private InventoryService $inventory,
 		private CartLockService $lock,
 		private RequestStack $requestStack,
 		private EventDispatcherInterface $events,
-	) {}
+        private DeliveryContext $deliveryContext,
+    ) {}
 
-	public function getOrCreateCurrent(?int $userId): Cart
-	{
-		$request = $this->requestStack->getCurrentRequest();
-		$token = $request?->cookies->get('cart_token');
+    public function getOrCreateCurrent(?int $userId): Cart
+    {
+        $request = $this->requestStack->getCurrentRequest();
+        $token = $request?->cookies->get('cart_token');
 
-		if ($userId) {
-			$cart = $this->carts->findActiveByUser($userId);
-			if ($cart) return $cart;
-			if ($token) {
-				$guest = $this->carts->findActiveByToken($token);
-				if ($guest) return $guest;
-			}
-			$cart = Cart::newGuest();
-			$cart->setUserId($userId);
-		} else {
-			$cart = $token ? ($this->carts->findActiveByToken($token) ?? Cart::newGuest()) : Cart::newGuest();
-		}
+        $cart = null;
+        if ($userId) {
+            $cart = $this->carts->findActiveByUser($userId);
+            if (!$cart && $token) {
+                $cart = $this->carts->findActiveByToken($token);
+            }
+            if (!$cart) {
+                $cart = Cart::newGuest();
+                $cart->setUserId($userId);
+                $this->em->persist($cart);
+            }
+        } else {
+            $cart = $token ? ($this->carts->findActiveByToken($token) ?? Cart::newGuest()) : Cart::newGuest();
+            if ($cart->getId() === null) {
+                $this->em->persist($cart);
+            }
+        }
 
-		$this->em->persist($cart);
-		$this->em->flush();
-		if (!$userId && $request) {
-			$request->attributes->set('_set_cart_cookie', $cart->getToken());
-		}
-		return $cart;
-	}
+        // Синхронизация контекста доставки и пересчет
+        $this->deliveryContext->syncToCart($cart);
+        $this->calculator->recalculate($cart);
+        $cart->setUpdatedAt(new \DateTimeImmutable());
+        $this->em->flush();
+
+        if (!$userId && $request) {
+            $request->attributes->set('_set_cart_cookie', $cart->getToken());
+        }
+        return $cart;
+    }
 
 	public function addItem(Cart $cart, int $productId, int $qty): Cart
 	{

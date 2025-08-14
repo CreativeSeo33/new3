@@ -16,7 +16,7 @@ final class CartApiController extends AbstractController
 	public function __construct(private CartManager $manager, private CartRepository $carts) {}
 
 	#[Route('', name: 'api_cart_get', methods: ['GET'])]
-	public function getCart(Request $request): JsonResponse
+    public function getCart(Request $request): JsonResponse
 	{
 		$user = $this->getUser();
 		$userId = $user instanceof AppUser ? $user->getId() : null;
@@ -78,8 +78,14 @@ final class CartApiController extends AbstractController
 			'id' => $cart->getId(),
 			'currency' => $cart->getCurrency(),
 			'subtotal' => $cart->getSubtotal(),
-			'discountTotal' => $cart->getDiscountTotal(),
+            'discountTotal' => $cart->getDiscountTotal(),
 			'total' => $cart->getTotal(),
+            'shipping' => [
+                'method' => $cart->getShippingMethod(),
+                'cost' => $cart->getShippingCost(),
+                'city' => $cart->getShipToCity(),
+                'data' => $cart->getShippingData(),
+            ],
 			'items' => array_map(fn($i) => [
 				'id' => $i->getId(),
 				'productId' => $i->getProduct()->getId(),

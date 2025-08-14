@@ -55,6 +55,18 @@ class Cart
 	#[ORM\Version]
 	private int $version = 1;
 
+	#[ORM\Column(length: 64, nullable: true)]
+	private ?string $shippingMethod = null;
+
+	#[ORM\Column(type: 'integer', options: ['default' => 0])]
+	private int $shippingCost = 0;
+
+	#[ORM\Column(length: 128, nullable: true)]
+	private ?string $shipToCity = null;
+
+	#[ORM\Column(type: 'json', nullable: true)]
+	private ?array $shippingData = null;
+
 	public function __construct()
 	{
 		$this->items = new ArrayCollection();
@@ -128,6 +140,22 @@ class Cart
 	}
 
 	public function getVersion(): int { return $this->version; }
+
+	public function getShippingMethod(): ?string { return $this->shippingMethod; }
+
+	public function setShippingMethod(?string $shippingMethod): void { $this->shippingMethod = $shippingMethod; }
+
+	public function getShippingCost(): int { return $this->shippingCost; }
+
+	public function setShippingCost(int $shippingCost): void { $this->shippingCost = $shippingCost; }
+
+	public function getShipToCity(): ?string { return $this->shipToCity; }
+
+	public function setShipToCity(?string $shipToCity): void { $this->shipToCity = $shipToCity; }
+
+	public function getShippingData(): ?array { return $this->shippingData; }
+
+	public function setShippingData(?array $shippingData): void { $this->shippingData = $shippingData; }
 }
 
 

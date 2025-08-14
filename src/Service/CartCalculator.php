@@ -7,7 +7,9 @@ use App\Entity\Cart;
 
 final class CartCalculator
 {
-	public function recalculate(Cart $cart): void
+    public function __construct(private ShippingCalculator $shipping) {}
+
+    public function recalculate(Cart $cart): void
 	{
 		$subtotal = 0;
 		foreach ($cart->getItems() as $item) {
@@ -16,8 +18,13 @@ final class CartCalculator
 			$subtotal += $row;
 		}
 
-		$discountTotal = 0;
-		$total = max(0, $subtotal - $discountTotal);
+        $discountTotal = 0;
+        $shippingCost = 0;
+        if ($cart->getShippingMethod()) {
+            $shippingCost = $this->shipping->quote($cart);
+            $cart->setShippingCost($shippingCost);
+        }
+		$total = max(0, $subtotal - $discountTotal + $shippingCost);
 
 		$cart->setSubtotal($subtotal);
 		$cart->setDiscountTotal($discountTotal);

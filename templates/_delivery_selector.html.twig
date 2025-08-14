@@ -1,0 +1,48 @@
+<div id="delivery" class="p-4 border rounded mb-6">
+  <div class="flex gap-2 items-end mb-3">
+    <div class="flex-1">
+      <label class="block text-sm mb-1">Город</label>
+      <input id="city-input" class="w-full border rounded px-3 py-2" value="{{ app.session.get('delivery')['cityName'] ?? '' }}" placeholder="Ваш город">
+    </div>
+    <button id="set-city" class="px-3 py-2 border rounded">OK</button>
+  </div>
+  <div class="flex gap-2 items-end mb-3">
+    <div class="flex-1">
+      <label class="block text-sm mb-1">Способ доставки</label>
+      <select id="method" class="w-full border rounded px-3 py-2">
+        <option value="pickup">Самовывоз</option>
+        <option value="courier">Курьер</option>
+      </select>
+    </div>
+    <button id="set-method" class="px-3 py-2 border rounded">Выбрать</button>
+  </div>
+  <div class="text-sm">Стоимость доставки: <span id="ship-cost">{{ (cart.shippingCost ?? 0) / 100 }}</span> ₽</div>
+</div>
+
+<script type="module">
+const post = (url, body) => fetch(url, {
+  method: 'POST', headers: {'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},
+  body: JSON.stringify(body)
+});
+document.getElementById('set-city')?.addEventListener('click', async () => {
+  const cityName = (document.getElementById('city-input')?.value || '').trim();
+  if (!cityName) return;
+  const r = await post('/api/delivery/select-city', {cityName});
+  if (!r.ok) { alert((await r.json()).error || 'Ошибка'); return; }
+  document.getElementById('ship-cost').textContent = '0';
+});
+
+document.getElementById('set-method')?.addEventListener('click', async () => {
+  const code = (document.getElementById('method')?.value || '');
+  if (!code) return;
+  const r = await post('/api/delivery/select-method', {methodCode: code});
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) { alert(data.error || 'Ошибка'); return; }
+  const cost = (data.shippingCost/100).toFixed(2);
+  document.getElementById('ship-cost').textContent = cost;
+  const total = document.getElementById('checkout-total');
+  if (total) total.textContent = (data.total/100).toFixed(2) + ' ₽';
+});
+</script>
+
+
