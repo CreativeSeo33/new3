@@ -1,0 +1,95 @@
+<?php
+declare(strict_types=1);
+
+namespace App\Controller\Api;
+
+use App\Service\CartManager;
+use App\Repository\CartRepository;
+use App\Entity\User as AppUser;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\{Request, JsonResponse};
+use Symfony\Component\Routing\Attribute\Route;
+
+#[Route('/api/cart')]
+final class CartApiController extends AbstractController
+{
+	public function __construct(private CartManager $manager, private CartRepository $carts) {}
+
+	#[Route('', name: 'api_cart_get', methods: ['GET'])]
+	public function getCart(Request $request): JsonResponse
+	{
+		$user = $this->getUser();
+		$userId = $user instanceof AppUser ? $user->getId() : null;
+		$cart = $this->manager->getOrCreateCurrent($userId);
+		$payload = $this->serializeCart($cart);
+		$etag = md5($cart->getUpdatedAt()->getTimestamp().':'.$cart->getVersion());
+		$response = $this->json($payload);
+		$response->setEtag($etag);
+		if ($response->isNotModified($request)) return $response;
+		return $response;
+	}
+
+	#[Route('/items', name: 'api_cart_add_item', methods: ['POST'])]
+	public function addItem(Request $request): JsonResponse
+	{
+		$data = json_decode($request->getContent(), true) ?? [];
+		$productId = (int)($data['productId'] ?? 0);
+		$qty = (int)($data['qty'] ?? 1);
+		if ($productId < 1 || $qty < 1) {
+			return $this->json(['error' => 'Invalid input'], 422);
+		}
+		$user = $this->getUser();
+		$cart = $this->manager->getOrCreateCurrent($user instanceof AppUser ? $user->getId() : null);
+		try {
+			$this->manager->addItem($cart, $productId, $qty);
+		} catch (\DomainException $e) {
+			return $this->json(['error' => $e->getMessage()], 422);
+		}
+		return $this->json($this->serializeCart($cart), 201);
+	}
+
+	#[Route('/items/{itemId}', name: 'api_cart_update_qty', methods: ['PATCH'])]
+	public function updateQty(int $itemId, Request $request): JsonResponse
+	{
+		$data = json_decode($request->getContent(), true) ?? [];
+		$qty = (int)($data['qty'] ?? 0);
+		$user = $this->getUser();
+		$cart = $this->manager->getOrCreateCurrent($user instanceof AppUser ? $user->getId() : null);
+		try {
+			$this->manager->updateQty($cart, $itemId, $qty);
+		} catch (\DomainException $e) {
+			return $this->json(['error' => $e->getMessage()], 422);
+		}
+		return $this->json($this->serializeCart($cart));
+	}
+
+	#[Route('/items/{itemId}', name: 'api_cart_remove_item', methods: ['DELETE'])]
+	public function removeItem(int $itemId): JsonResponse
+	{
+		$user = $this->getUser();
+		$cart = $this->manager->getOrCreateCurrent($user instanceof AppUser ? $user->getId() : null);
+		$this->manager->removeItem($cart, $itemId);
+		return new JsonResponse(null, 204);
+	}
+
+	private function serializeCart($cart): array
+	{
+		return [
+			'id' => $cart->getId(),
+			'currency' => $cart->getCurrency(),
+			'subtotal' => $cart->getSubtotal(),
+			'discountTotal' => $cart->getDiscountTotal(),
+			'total' => $cart->getTotal(),
+			'items' => array_map(fn($i) => [
+				'id' => $i->getId(),
+				'productId' => $i->getProduct()->getId(),
+				'name' => $i->getProductName(),
+				'unitPrice' => $i->getUnitPrice(),
+				'qty' => $i->getQty(),
+				'rowTotal' => $i->getRowTotal(),
+			], $cart->getItems()->toArray()),
+		];
+	}
+}
+
+

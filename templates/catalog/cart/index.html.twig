@@ -1,0 +1,103 @@
+{% extends 'catalog/base.html.twig' %}
+
+{% block title %}Корзина — {{ parent() }}{% endblock %}
+
+{% block catalog_body %}
+  <div class="container mx-auto px-4 py-6">
+    <h1 class="text-2xl font-semibold mb-4">Корзина</h1>
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+        <tr class="text-left border-b">
+          <th class="py-2 pr-4">Товар</th>
+          <th class="py-2 pr-4">Цена</th>
+          <th class="py-2 pr-4">Кол-во</th>
+          <th class="py-2 pr-4">Сумма</th>
+          <th class="py-2 pr-4"></th>
+        </tr>
+        </thead>
+        <tbody id="cart-items">
+        {% for i in cart.items %}
+          <tr class="border-b" data-item-id="{{ i.id }}">
+            <td class="py-2 pr-4">{{ i.productName }}</td>
+            <td class="py-2 pr-4">{{ (i.unitPrice/100)|number_format(2, '.', ' ') }} ₽</td>
+            <td class="py-2 pr-4">
+              <input type="number" class="qty-input w-20 border rounded px-2 py-1" value="{{ i.qty }}" min="1">
+            </td>
+            <td class="py-2 pr-4 row-total">{{ (i.rowTotal/100)|number_format(2, '.', ' ') }} ₽</td>
+            <td class="py-2 pr-4">
+              <button class="remove text-red-600 hover:underline">Удалить</button>
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="5" class="py-6 text-center text-gray-500">Корзина пуста</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mt-4 text-right text-lg">
+      Итого: <span id="cart-total">{{ (cart.total/100)|number_format(2, '.', ' ') }}</span> {{ cart.currency }}
+    </div>
+  </div>
+
+  <script type="module">
+  const container = document.getElementById('cart-items');
+  container?.addEventListener('change', async (e) => {
+    const target = e.target;
+    if (!(target instanceof HTMLInputElement)) return;
+    if (!target.classList.contains('qty-input')) return;
+    const tr = target.closest('tr');
+    if (!tr) return;
+    const itemId = tr.getAttribute('data-item-id');
+    const qty = parseInt(target.value, 10);
+    try {
+      const res = await fetch(`/api/cart/items/${itemId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        body: JSON.stringify({ qty })
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(data.error || 'Ошибка'); return; }
+      const item = data.items.find(i => i.id == itemId);
+      if (item) {
+        const row = tr.querySelector('.row-total');
+        if (row) row.textContent = (item.rowTotal/100).toFixed(2) + ' ₽';
+      } else {
+        tr.remove();
+      }
+      const totalEl = document.getElementById('cart-total');
+      if (totalEl) totalEl.textContent = (data.total/100).toFixed(2);
+      window.dispatchEvent(new CustomEvent('cart:updated', { detail: data }));
+    } catch (e) {
+      alert('Ошибка сети');
+    }
+  });
+
+  container?.addEventListener('click', async (e) => {
+    const target = e.target;
+    if (!(target instanceof Element)) return;
+    if (!target.classList.contains('remove')) return;
+    const tr = target.closest('tr');
+    if (!tr) return;
+    const itemId = tr.getAttribute('data-item-id');
+    try {
+      const res = await fetch(`/api/cart/items/${itemId}`, { method: 'DELETE', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+      if (res.status === 204) {
+        tr.remove();
+        // после удаления запросим корзину для актуального total
+        const r = await fetch('/api/cart', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        const data = await r.json();
+        const totalEl = document.getElementById('cart-total');
+        if (totalEl) totalEl.textContent = (data.total/100).toFixed(2);
+        window.dispatchEvent(new CustomEvent('cart:updated', { detail: data }));
+      }
+    } catch (e) {
+      alert('Ошибка сети');
+    }
+  });
+  </script>
+{% endblock %}
+
+

@@ -82,11 +82,11 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 16a2 2 0 11-4 0 2 2 0 014 0zM10 16a2 2 0 11-4 0 2 2 0 014 0z"></path>
                 </svg>
                 <!-- Cart Counter -->
-                <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">2</span>
+                <span data-cart-counter class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">0</span>
               </div>
               <div class="hidden lg:flex flex-col text-xs">
-                <span class="text-gray-500">2 товара</span>
-                <span class="text-gray-800 font-medium">₽134.00</span>
+                <span data-cart-label class="text-gray-500">0 товаров</span>
+                <span data-cart-total class="text-gray-800 font-medium">₽0</span>
               </div>
             </a>
 
@@ -117,7 +117,7 @@
                 <div class="border-t border-gray-200 pt-3 mb-4">
                   <div class="flex justify-between text-sm font-semibold">
                     <span>Итого:</span>
-                    <span>₽134.00</span>
+                    <span data-cart-total>₽0</span>
                   </div>
                 </div>
                 

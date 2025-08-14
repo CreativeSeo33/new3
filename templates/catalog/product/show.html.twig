@@ -35,18 +35,45 @@
         {% endif %}
 
         <div class="mt-4">
-          <button type="button" class="btn inline-flex items-center gap-x-2 bg-green-600 text-white border-green-600 disabled:opacity-50 disabled:pointer-events-none hover:text-white hover:bg-green-700 hover:border-green-700 active:bg-green-700 active:border-green-700 focus:outline-none focus:ring-4 focus:ring-green-300">
+          <button type="button" data-product-id="{{ product.id }}" class="js-add-to-cart btn inline-flex items-center gap-x-2 bg-green-600 text-white border-green-600 disabled:opacity-50 disabled:pointer-events-none hover:text-white hover:bg-green-700 hover:border-green-700 active:bg-green-700 active:border-green-700 focus:outline-none focus:ring-4 focus:ring-green-300">
             <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-plus" width="18" height="18" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
               <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
               <path d="M12 5l0 14"></path>
               <path d="M5 12l14 0"></path>
             </svg>
-            <span>Добавить в корзину</span>
+            <span>Купить</span>
           </button>
         </div>
       </div>
     </div>
   </div>
+  <script type="module">
+  document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.js-add-to-cart');
+    if (!btn) return;
+    btn.disabled = true;
+    const productId = parseInt(btn.getAttribute('data-product-id'), 10);
+    try {
+      const res = await fetch('{{ path('api_cart_add_item') }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        body: JSON.stringify({ productId, qty: 1 })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.error || 'Не удалось добавить в корзину');
+        return;
+      }
+      const evt = new CustomEvent('cart:updated', { detail: data });
+      window.dispatchEvent(evt);
+    } catch (err) {
+      console.error(err);
+      alert('Ошибка сети');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+  </script>
 {% endblock %}
 
 

@@ -24,6 +24,45 @@
 {% block javascripts %}
   {{ parent() }}
   {{ encore_entry_script_tags('catalog') }}
+  <script>
+  // Мини-обновление счётчика корзины в хедере по событию cart:updated
+  window.addEventListener('cart:updated', (e) => {
+    try {
+      const data = e.detail;
+      const count = (data.items || []).length;
+      const total = (data.total || 0) / 100;
+      const counter = document.querySelector('[data-cart-counter]');
+      const totalEl = document.querySelector('[data-cart-total]');
+      const label = document.querySelector('[data-cart-label]');
+      if (counter) counter.textContent = String(count);
+      if (totalEl) totalEl.textContent = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: (data.currency || 'RUB') }).format(total);
+      if (label) label.textContent = `${count} товар(ов)`;
+    } catch {}
+  });
+  // Делегирование кликов на кнопки .js-add-to-cart (на листингах)
+  document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.js-add-to-cart');
+    if (!btn) return;
+    const productId = parseInt(btn.getAttribute('data-product-id'), 10);
+    if (!productId) return;
+    btn.disabled = true;
+    try {
+      const res = await fetch('/api/cart/items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        body: JSON.stringify({ productId, qty: 1 })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { alert(data.error || 'Не удалось добавить в корзину'); return; }
+      window.dispatchEvent(new CustomEvent('cart:updated', { detail: data }));
+    } catch(e) {
+      console.error(e);
+      alert('Ошибка сети');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+  </script>
 {% endblock %}
 
 
