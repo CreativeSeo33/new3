@@ -49,8 +49,8 @@ const groups = ref<AttributeGroupDto[]>([])
 
 onMounted(async () => {
   const [attrs, grps] = await Promise.all([
-    attrRepo.findAll({ itemsPerPage: 1000, sort: { sortOrder: 'asc', name: 'asc' } }) as any,
-    groupRepo.findAll({ itemsPerPage: 1000, sort: { sortOrder: 'asc', name: 'asc' } }) as any,
+    attrRepo.findAllCached() as any,
+    groupRepo.findAllCached() as any,
   ])
   attributes.value = (attrs['hydra:member'] ?? attrs.member ?? []) as Attribute[]
   groups.value = (grps['hydra:member'] ?? grps.member ?? []) as AttributeGroupDto[]

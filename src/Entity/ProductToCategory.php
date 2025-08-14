@@ -5,16 +5,39 @@ namespace App\Entity;
 
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use App\Repository\ProductToCategoryRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\ORM\Mapping\JoinColumn;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Bridge\Doctrine\Validator\Constraints as DoctrineAssert;
 
 #[ORM\Entity(repositoryClass: ProductToCategoryRepository::class)]
+#[ORM\Table(
+    uniqueConstraints: [
+        new ORM\UniqueConstraint(
+            name: 'uniq_product_category',
+            columns: ['product_id', 'category_id']
+        )
+    ],
+    indexes: [
+        new ORM\Index(name: 'idx_ptc_product', columns: ['product_id']),
+        new ORM\Index(name: 'idx_ptc_category', columns: ['category_id'])
+    ]
+)]
 #[ApiResource(
     normalizationContext: ['groups' => ['product:get']],
     denormalizationContext: ['groups' => ['product_category:post']]
+)]
+#[ApiFilter(SearchFilter::class, properties: [
+    'product' => 'exact',
+    'category' => 'exact',
+])]
+#[DoctrineAssert\UniqueEntity(
+    fields: ['product', 'category'],
+    message: 'Связка продукт-категория уже существует.'
 )]
 class ProductToCategory
 {
@@ -39,11 +62,12 @@ class ProductToCategory
 
     #[ORM\ManyToOne(targetEntity: Product::class, cascade: ['persist'], inversedBy: 'category')]
     #[Groups(['product_category:post', 'product:post', 'product_category:delete'])]
-    #[JoinColumn(name: 'product_id', referencedColumnName: 'id', onDelete: 'SET NULL')]
+    #[JoinColumn(name: 'product_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     private ?Product $product = null;
 
     #[ORM\ManyToOne(targetEntity: Category::class, cascade: ['persist'], inversedBy: 'product')]
     #[Groups(['product:get', 'product_category:post', 'product:post'])]
+    #[JoinColumn(name: 'category_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     private ?Category $category = null;
 
     public function getId(): ?int

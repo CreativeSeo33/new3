@@ -35,12 +35,21 @@
           <div class="lg:col-span-8">
             <div class="rounded-md border p-4 dark:border-neutral-800">
               <div class="mb-2 text-sm font-medium">Категории</div>
-              <ProductCategoryTree :nodes="categoryTree" :checked-ids="selectedCategoryIds" :main-id="mainCategoryId" @toggle="toggleCategory" @set-main="setMainCategory" />
+              <div v-if="categoryLoading" class="text-sm text-neutral-500">Загрузка…</div>
+              <ProductCategoryTree
+                v-else
+                :key="String(id)"
+                :nodes="categoryTree"
+                :checked-ids="selectedCategoryIds"
+                :main-id="mainCategoryId"
+                @toggle="toggleCategory"
+                @set-main="setMainCategory"
+              />
             </div>
           </div>
           <div class="lg:col-span-4">
             <div class="rounded-md border p-4 text-sm text-neutral-600 dark:border-neutral-800 dark:text-neutral-300">
-              Отмечайте чекбокс, чтобы привязать товар к категории. Снятие чекбокса удалит привязку.
+              Отмечайте чекбокс, чтобы привязать товар к категории. Изменения применяются после нажатия «Сохранить».
             </div>
           </div>
         </div>
@@ -87,12 +96,12 @@
             </div>
           </div>
         </div>
-        <ProductAttributesAddModal v-model="attrModalOpen" @add="handleAddAttribute" />
+        <ProductAttributesAddModal v-if="attrModalOpen" v-model="attrModalOpen" @add="handleAddAttribute" />
         <ConfirmDialog v-model="deletePAOpen" :title="'Удалить атрибут?'" :description="'Это действие необратимо'" confirm-text="Удалить" :danger="true" @confirm="performDeletePA" />
       </TabsContent>
 
       <TabsContent value="photos" class="pt-6">
-        <ProductPhotos :product-id="String(id)" :is-creating="isCreating" @toast="publishToast" />
+        <ProductPhotos v-if="activeTab === 'photos'" :product-id="String(id)" :is-creating="isCreating" @toast="publishToast" />
       </TabsContent>
     </TabsRoot>
 
@@ -179,7 +188,6 @@ const loadIfEditing = async () => {
   if (isCreating.value) return
   const dto = await repo.findById(id.value)
   hydrateForm(dto)
-  await loadProductCategories()
 }
 
 onMounted(() => {
@@ -190,7 +198,23 @@ onMounted(() => {
   }
   loadIfEditing()
 })
-watch(id, () => loadIfEditing())
+watch(id, async () => {
+  // reset per-product lazy flags and state
+  selectedCategoryIds.value = new Set()
+  mainCategoryId.value = null
+  categoriesInitialized.value = false
+  // keep categoryTree and categoriesLoaded; they'll refetch on demand if product differs
+  productAttrGroups.value = []
+  attributesLoaded.value = false
+  await loadIfEditing()
+  // если пользователь находится на вкладке, подтянем данные сразу
+  if (activeTab.value === 'categories') {
+    if (!categoriesLoaded.value) await loadCategoriesTree()
+    if (!isCreating.value) await loadProductCategories()
+  } else if (activeTab.value === 'attributes') {
+    if (!isCreating.value) await loadProductAttributes()
+  }
+})
 // reflect activeTab to URL
 watch(activeTab, (val) => {
   const query = { ...route.query, [tabParamKey]: val }
@@ -207,9 +231,12 @@ watch(() => route.query[tabParamKey], (val) => {
 const selectedCategoryIds = ref<Set<number>>(new Set())
 const mainCategoryId = ref<number | null>(null)
 const categoryTree = ref<Array<{ id: number; label: string; children?: any[] }>>([])
+const categoriesLoaded = ref(false)
+const categoriesInitialized = ref(false)
+const categoryLoading = ref(false)
 
 async function loadCategoriesTree() {
-  const res = await categoryRepo.findAll({ itemsPerPage: 1000 }) as any
+  const res = await categoryRepo.findAllCached({ itemsPerPage: 1000 }) as any
   const list = (res['hydra:member'] ?? res.member ?? res ?? []) as CategoryDto[]
   const byId = new Map<number, any>()
   const roots: any[] = []
@@ -221,65 +248,151 @@ async function loadCategoriesTree() {
   const sortRec = (nodes: any[]) => { nodes.sort((a,b)=> String(a.label).localeCompare(String(b.label))); nodes.forEach((n)=> n.children && sortRec(n.children)) }
   sortRec(roots)
   categoryTree.value = roots
+  categoriesLoaded.value = true
 }
 
 async function loadProductCategories() {
   // fetch relations; assuming API Platform default path /product_to_categories?product=/api/products/{id}
   const iri = `/products/${id.value}`
-  const data = await productCategoryRepo.findAll({ itemsPerPage: 1000, filters: { product: `/api${iri}` } }) as any
-  const items = (data['hydra:member'] ?? data.member ?? []) as any[]
+  const expectedProductIri = `/api${iri}`
+  const data = await productCategoryRepo.findAll({ itemsPerPage: 1000, filters: { product: expectedProductIri } }) as any
+  const allItems = (data['hydra:member'] ?? data.member ?? []) as any[]
+  // Frontend-guard: фильтруем строго по product IRI на случай, если сервер игнорирует фильтр
+  const items = allItems.filter((r: any) => {
+    const p = r.product
+    if (typeof p === 'string') return p === expectedProductIri
+    if (p && typeof p === 'object') {
+      const iriObj = p['@id'] || (p.id ? `/api/products/${p.id}` : null)
+      return iriObj === expectedProductIri
+    }
+    return false
+  })
   selectedCategoryIds.value = new Set(items.map((r: any) => Number(r.category?.split('/').pop() || r.categoryId || 0)).filter(Boolean))
   const main = items.find((r: any) => r.isParent)
   mainCategoryId.value = main ? Number(main.category?.split('/').pop() || main.categoryId || null) : null
+  categoriesInitialized.value = true
 }
 
-onMounted(async () => {
-  await loadCategoriesTree()
-  if (!isCreating.value) await loadProductCategories()
-  await loadProductAttributes()
-})
+async function loadCategoriesBootstrap() {
+  categoryLoading.value = true
+  try {
+    const res = await fetch(`/api/admin/products/${id.value}/bootstrap`, { headers: { Accept: 'application/json' } })
+    if (!res.ok) throw new Error('bootstrap failed')
+    const data = await res.json()
+    const list = Array.isArray(data.categories) ? data.categories : []
+    // build tree
+    const byId = new Map<number, any>()
+    const roots: any[] = []
+    for (const c of list) byId.set(Number(c.id), { id: Number(c.id), label: c.name || `Без названия (#${c.id})`, parentId: (c as any).parentCategoryId ?? null, children: [] })
+    for (const n of byId.values()) {
+      if (n.parentId && byId.has(n.parentId)) byId.get(n.parentId).children.push(n)
+      else roots.push(n)
+    }
+    const sortRec = (nodes: any[]) => { nodes.sort((a,b)=> String(a.label).localeCompare(String(b.label))); nodes.forEach((n)=> n.children && sortRec(n.children)) }
+    sortRec(roots)
+    categoryTree.value = roots
+    categoriesLoaded.value = true
+    // selection
+    const ids: number[] = Array.isArray(data.selectedCategoryIds) ? data.selectedCategoryIds.map((x: any) => Number(x)).filter((n: any) => Number.isFinite(n)) : []
+    selectedCategoryIds.value = new Set(ids)
+    mainCategoryId.value = (data.mainCategoryId != null && Number.isFinite(Number(data.mainCategoryId))) ? Number(data.mainCategoryId) : null
+    categoriesInitialized.value = true
+  } catch {
+    // fallback to legacy loaders
+    if (!categoriesLoaded.value) await loadCategoriesTree()
+    if (!categoriesInitialized.value) await loadProductCategories()
+  } finally {
+    categoryLoading.value = false
+  }
+}
+
+// Ленивые загрузки по вкладкам
+watch(activeTab, async (val) => {
+  if (val === 'categories') {
+    // сразу сбросим выбранные, чтобы не мигали значения от предыдущего товара
+    if (!categoriesInitialized.value) {
+      selectedCategoryIds.value = new Set()
+      mainCategoryId.value = null
+    }
+    if (!isCreating.value) {
+      await loadCategoriesBootstrap()
+    } else {
+      // для нового товара достаточно дерева
+      categoryLoading.value = true
+      if (!categoriesLoaded.value) await loadCategoriesTree()
+      categoryLoading.value = false
+    }
+  }
+  if (val === 'attributes') {
+    if (!isCreating.value && !attributesLoaded.value) await loadProductAttributes()
+  }
+}, { immediate: false })
 
 async function toggleCategory(idNum: number, checked: boolean) {
   if (isCreating.value) {
     publishToast('Сохраните товар, чтобы привязывать категории')
     return
   }
-  const productIri = `/api/products/${id.value}`
-  const categoryIri = `/api/categories/${idNum}`
-  if (checked) {
-    // create relation
-    await productCategoryRepo.create({ product: productIri, category: categoryIri, visibility: true, isParent: false })
-    selectedCategoryIds.value.add(idNum)
-  } else {
-    // need to find relation id to delete; fetch minimal
-    const data = await productCategoryRepo.findAll({ itemsPerPage: 100, filters: { product: productIri, category: categoryIri } }) as any
-    const rel = (data['hydra:member'] ?? data.member ?? []).at(0)
-    if (rel?.id) {
-      await productCategoryRepo.delete(rel.id)
-      selectedCategoryIds.value.delete(idNum)
-      if (mainCategoryId.value === idNum) mainCategoryId.value = null
-    }
+  const next = new Set<number>(selectedCategoryIds.value)
+  if (checked) next.add(idNum)
+  else {
+    next.delete(idNum)
+    if (mainCategoryId.value === idNum) mainCategoryId.value = null
   }
+  selectedCategoryIds.value = next
 }
 
 async function setMainCategory(idNum: number) {
   if (isCreating.value) return
   if (!selectedCategoryIds.value.has(idNum)) {
-    // если не отмечено — создадим связь сначала
-    await toggleCategory(idNum, true)
-  }
-  const productIri = `/api/products/${id.value}`
-  // снимаем флаг isParent у всех текущих связей
-  const all = await productCategoryRepo.findAll({ itemsPerPage: 1000, filters: { product: productIri } }) as any
-  const rels = (all['hydra:member'] ?? all.member ?? [])
-  for (const r of rels) {
-    const cid = Number(r.category?.split('/').pop() || r.categoryId || 0)
-    const shouldBeParent = cid === idNum
-    if (r.id && (r.isParent ?? false) !== shouldBeParent) {
-      await productCategoryRepo.partialUpdate(r.id, { isParent: shouldBeParent })
-    }
+    const next = new Set<number>(selectedCategoryIds.value)
+    next.add(idNum)
+    selectedCategoryIds.value = next
   }
   mainCategoryId.value = idNum
+}
+
+async function saveProductCategories(productNumericId: number | string) {
+  const productIri = `/api/products/${productNumericId}`
+  const desiredIds = new Set<number>(selectedCategoryIds.value)
+  const desiredMainId = mainCategoryId.value
+
+  const all = await productCategoryRepo.findAll({ itemsPerPage: 1000, filters: { product: productIri } }) as any
+  const rels = (all['hydra:member'] ?? all.member ?? []) as any[]
+  const byCategory = new Map<number, any>()
+  for (const r of rels) {
+    const cid = Number(r.category?.split('/').pop() || (r as any).categoryId || 0)
+    if (cid) byCategory.set(cid, r)
+  }
+
+  // delete removed
+  for (const [cid, r] of byCategory.entries()) {
+    if (!desiredIds.has(cid) && r?.id) {
+      await productCategoryRepo.delete(r.id)
+    }
+  }
+
+  // update existing isParent
+  for (const [cid, r] of byCategory.entries()) {
+    if (desiredIds.has(cid) && r?.id) {
+      const shouldBeParent = desiredMainId != null && cid === desiredMainId
+      if ((r.isParent ?? false) !== shouldBeParent) {
+        await productCategoryRepo.partialUpdate(r.id, { isParent: shouldBeParent })
+      }
+    }
+  }
+
+  // create new
+  for (const cid of desiredIds.values()) {
+    if (!byCategory.has(cid)) {
+      await productCategoryRepo.create({
+        product: productIri,
+        category: `/api/categories/${cid}`,
+        visibility: true,
+        isParent: desiredMainId != null && cid === desiredMainId,
+      })
+    }
+  }
 }
 
 const handleSave = async () => {
@@ -289,9 +402,13 @@ const handleSave = async () => {
   }
   const result = await saveProduct(id.value, form)
   if (result.success) {
+    const newId = (result.result as any)?.id ?? id.value
+    // Сохраняем категории, только если они были загружены (чтобы не снести связи без открытия вкладки)
+    if (categoriesInitialized.value) {
+      await saveProductCategories(newId)
+    }
     // показать toast + редирект
     publishToast('Товар сохранён')
-    const newId = (result.result as any)?.id ?? id.value
     router.push({ name: 'admin-product-form', params: { id: newId }, query: { ...route.query } })
   }
 }
@@ -311,6 +428,7 @@ const productAttributeRepo = new ProductAttributeRepository()
 const attributeRepo = new AttributeRepository()
 const attributeGroupRepo = new AttributeGroupRepository()
 const attrLoading = ref(false)
+const attributesLoaded = ref(false)
 type ProductAttributeRow = { id: number; attributeName: string; textProxy: string; pagIri: string }
 const productAttrGroups = ref<Array<{ groupIri: string | null; groupName: string; items: ProductAttributeRow[] }>>([])
 async function handleAddAttribute(attributeIri: string) {
@@ -357,7 +475,7 @@ async function loadProductAttributes() {
     const groups = (groupsData['hydra:member'] ?? groupsData.member ?? []) as any[]
 
     // Сопоставим названия групп
-    const allGroups = await attributeGroupRepo.findAll({ itemsPerPage: 1000 }) as any
+    const allGroups = await attributeGroupRepo.findAllCached() as any
     const groupsDict = new Map<string, string>()
     for (const g of (allGroups['hydra:member'] ?? allGroups.member ?? [])) {
       groupsDict.set(g['@id'], g.name ?? `Группа ${g.id}`)
@@ -393,6 +511,7 @@ async function loadProductAttributes() {
     productAttrGroups.value = rows
   } finally {
     attrLoading.value = false
+    attributesLoaded.value = true
   }
 }
 

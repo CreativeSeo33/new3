@@ -21,47 +21,7 @@
         </RouterLink>
       </div>
     </div>
-
-    <!-- Filters -->
-    <div class="rounded-md border bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900/40">
-      <div class="flex flex-wrap items-end gap-3">
-        <div class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Filter</div>
-        <div class="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-3">
-          <label class="block text-sm">
-            <span class="mb-1 block text-neutral-600 dark:text-neutral-300">Category</span>
-            <select v-model="filters.category" class="h-9 w-full rounded-md border px-2 text-sm dark:border-neutral-800 dark:bg-neutral-900">
-              <option value="">All</option>
-              <option value="electronics">Electronics</option>
-              <option value="fashion">Fashion</option>
-            </select>
-          </label>
-          <label class="block text-sm">
-            <span class="mb-1 block text-neutral-600 dark:text-neutral-300">Company</span>
-            <select v-model="filters.company" class="h-9 w-full rounded-md border px-2 text-sm dark:border-neutral-800 dark:bg-neutral-900">
-              <option value="">All</option>
-              <option value="apple">Apple</option>
-              <option value="samsung">Samsung</option>
-            </select>
-          </label>
-          <div class="flex items-end gap-2">
-            <button
-              type="button"
-              class="h-9 rounded-md border px-3 text-sm hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-white/10"
-              @click="resetFilters"
-            >
-              Reset
-            </button>
-            <button
-              type="button"
-              class="inline-flex h-9 items-center rounded-md bg-neutral-900 px-3 text-sm font-medium text-white shadow hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100"
-              @click="applyFilters"
-            >
-              Apply
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    
 
     <!-- Table -->
     <div class="overflow-hidden rounded-md border dark:border-neutral-800">

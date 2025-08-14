@@ -11,7 +11,7 @@
 
     <h2>Товары</h2>
     {% if products is defined and products is not empty %}
-      {% include 'catalog/product/_grid.html.twig' with { products: products } %}
+      {% include 'catalog/category/_grid.html.twig' with { products: products } %}
     {% else %}
       <p>Товаров нет.</p>
     {% endif %}

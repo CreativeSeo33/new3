@@ -20,6 +20,9 @@ final class DeliveryContextSubscriber implements EventSubscriberInterface
 	public function onRequest(RequestEvent $event): void
 	{
 		if (!$event->isMainRequest()) return;
+		$request = $event->getRequest();
+		// Не использовать сессию на API-запросах (API Platform по умолчанию stateless)
+		if (str_starts_with($request->getPathInfo(), '/api')) return;
 		$this->ctx->ensureCity();
 	}
 }

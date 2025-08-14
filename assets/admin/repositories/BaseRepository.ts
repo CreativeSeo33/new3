@@ -1,6 +1,10 @@
 import { httpClient, type HttpClient } from '@admin/services/http';
 import type { ApiResource, CrudOptions, HydraCollection } from '@admin/types/api';
 
+// Simple in-memory GET cache with TTL and request de-duplication
+const GET_CACHE = new Map<string, { expiresAt: number; promise: Promise<any> }>();
+const DEFAULT_TTL_MS = 60_000; // 60s
+
 export abstract class BaseRepository<T extends ApiResource> {
   protected http: HttpClient;
   protected resourcePath: string;
@@ -8,6 +12,34 @@ export abstract class BaseRepository<T extends ApiResource> {
   constructor(resourcePath: string, httpClientInstance: HttpClient = httpClient) {
     this.http = httpClientInstance;
     this.resourcePath = resourcePath;
+  }
+
+  protected buildAbsoluteUrl(relative: string): string {
+    // Ensures consistent cache keys
+    return relative.startsWith('/') ? relative : `/${relative}`;
+  }
+
+  protected getFromCache<TCached>(url: string): Promise<TCached> | null {
+    const absolute = this.buildAbsoluteUrl(url);
+    const entry = GET_CACHE.get(absolute);
+    if (!entry) return null;
+    if (Date.now() > entry.expiresAt) {
+      GET_CACHE.delete(absolute);
+      return null;
+    }
+    return entry.promise as Promise<TCached>;
+  }
+
+  protected setCache(url: string, promise: Promise<any>, ttlMs: number = DEFAULT_TTL_MS): void {
+    const absolute = this.buildAbsoluteUrl(url);
+    GET_CACHE.set(absolute, { expiresAt: Date.now() + ttlMs, promise });
+  }
+
+  protected invalidateCache(prefix: string = this.resourcePath): void {
+    const absPrefix = this.buildAbsoluteUrl(prefix);
+    for (const key of GET_CACHE.keys()) {
+      if (key.startsWith(absPrefix)) GET_CACHE.delete(key);
+    }
   }
 
   protected buildQueryString(options: CrudOptions = {}): string {
@@ -36,22 +68,44 @@ export abstract class BaseRepository<T extends ApiResource> {
   async findAll(options: CrudOptions = {}): Promise<HydraCollection<T>> {
     const queryString = this.buildQueryString(options);
     const url = queryString ? `${this.resourcePath}?${queryString}` : this.resourcePath;
-    const response = await this.http.get<HydraCollection<T>>(url);
-    return response.data;
+    const cached = this.getFromCache<HydraCollection<T>>(url);
+    if (cached) return cached;
+    const promise = this.http
+      .get<HydraCollection<T>>(url)
+      .then((r) => r.data)
+      .catch((e) => {
+        // drop failed entries to allow retry
+        GET_CACHE.delete(this.buildAbsoluteUrl(url));
+        throw e;
+      });
+    this.setCache(url, promise);
+    return promise;
   }
 
   async findById(id: string | number): Promise<T> {
-    const response = await this.http.get<T>(`${this.resourcePath}/${id}`);
-    return response.data;
+    const url = `${this.resourcePath}/${id}`;
+    const cached = this.getFromCache<T>(url);
+    if (cached) return cached;
+    const promise = this.http
+      .get<T>(url)
+      .then((r) => r.data)
+      .catch((e) => {
+        GET_CACHE.delete(this.buildAbsoluteUrl(url));
+        throw e;
+      });
+    this.setCache(url, promise);
+    return promise;
   }
 
   async create(data: Partial<T>): Promise<T> {
     const response = await this.http.post<T>(this.resourcePath, data);
+    this.invalidateCache();
     return response.data;
   }
 
   async update(id: string | number, data: Partial<T>): Promise<T> {
     const response = await this.http.put<T>(`${this.resourcePath}/${id}`, data);
+    this.invalidateCache();
     return response.data;
   }
 
@@ -59,15 +113,18 @@ export abstract class BaseRepository<T extends ApiResource> {
     const response = await this.http.patch<T>(`${this.resourcePath}/${id}`, data, {
       headers: { 'Content-Type': 'application/merge-patch+json' },
     } as any);
+    this.invalidateCache();
     return response.data;
   }
 
   async delete(id: string | number): Promise<void> {
     await this.http.delete(`${this.resourcePath}/${id}`);
+    this.invalidateCache();
   }
 
   async bulkDelete(ids: Array<string | number>): Promise<void> {
     await Promise.all(ids.map((id) => this.delete(id)));
+    this.invalidateCache();
   }
 }
 
