@@ -10,7 +10,9 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ApiResource(
-    normalizationContext: ['groups' => ['city:get']]
+    normalizationContext: ['groups' => ['city:get']],
+    paginationClientEnabled: true,
+    paginationClientItemsPerPage: true
 )]
 #[ApiFilter(OrderFilter::class,
     properties: ['population' => 'DESC'],

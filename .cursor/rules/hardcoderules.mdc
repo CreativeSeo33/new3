@@ -1,0 +1,224 @@
+---
+alwaysApply: true
+---
+# Configuration Management Rules
+
+## Prohibited Hardcoding Patterns
+❌ **NEVER** hardcode these values directly in code:
+- API URLs and endpoints
+- Database connection strings
+- Email addresses and phone numbers
+- File paths and directory names
+- Pagination limits and timeouts
+- Third-party service credentials
+- Business logic constants (tax rates, limits, etc.)
+- Feature flags and toggles
+- Cache TTL values
+- File upload limits and allowed extensions
+
+## Required Configuration Approach
+✅ **ALWAYS** use Symfony configuration system:
+- Store values in `config/packages/*.yaml`
+- Use environment variables for environment-specific values
+- Define custom parameters in `config/services.yaml`
+- Inject configuration via dependency injection
+- Use parameter bags in services
+
+## Configuration File Structure
+
+### 1. Environment Variables (`.env`)
+```bash
+# ✅ CORRECT: Environment-specific values
+DATABASE_URL="postgresql://user:pass@localhost:5432/db"
+MAILER_DSN=smtp://localhost:1025
+API_BASE_URL=https://api.example.com
+MAX_UPLOAD_SIZE=10485760
+PAGINATION_LIMIT=20
+TAX_RATE=0.21
+2. Services Configuration (config/services.yaml)
+
+# ✅ CORRECT: Custom parameters
+parameters:
+    app.pagination.default_limit: '%env(int:PAGINATION_LIMIT)%'
+    app.upload.max_size: '%env(int:MAX_UPLOAD_SIZE)%'
+    app.business.tax_rate: '%env(float:TAX_RATE)%'
+    app.api.base_url: '%env(API_BASE_URL)%'
+    app.notification.admin_email: '%env(ADMIN_EMAIL)%'
+    
+    # File paths
+    app.upload.directory: '%kernel.project_dir%/public/uploads'
+    app.export.directory: '%kernel.project_dir%/var/exports'
+    
+    # Business constants
+    app.user.max_login_attempts: 5
+    app.order.pending_timeout: 3600
+3. Package-specific Configuration
+
+# config/packages/api_platform.yaml
+api_platform:
+    defaults:
+        pagination_items_per_page: '%app.pagination.default_limit%'
+        pagination_maximum_items_per_page: 100
+    
+# config/packages/framework.yaml
+framework:
+    http_client:
+        default_options:
+            base_uri: '%app.api.base_url%'
+Backend Implementation Rules
+✅ CORRECT: Using Configuration in Services
+
+// Service with injected parameters
+class OrderService
+{
+    public function __construct(
+        private float $taxRate,
+        private int $pendingTimeout,
+        private string $adminEmail
+    ) {}
+    
+    public function calculateTax(float $amount): float
+    {
+        return $amount * $this->taxRate; // ✅ From config
+    }
+}
+
+// Service configuration
+services:
+    App\Service\OrderService:
+        arguments:
+            $taxRate: '%app.business.tax_rate%'
+            $pendingTimeout: '%app.order.pending_timeout%'
+            $adminEmail: '%app.notification.admin_email%'
+✅ CORRECT: Using ParameterBagInterface
+
+class ConfigurableService
+{
+    public function __construct(
+        private ParameterBagInterface $parameterBag
+    ) {}
+    
+    public function getUploadDirectory(): string
+    {
+        return $this->parameterBag->get('app.upload.directory');
+    }
+    
+    public function getMaxFileSize(): int
+    {
+        return $this->parameterBag->get('app.upload.max_size');
+    }
+}
+❌ INCORRECT: Hardcoded Values
+
+// ❌ WRONG: Hardcoded values in code
+class BadOrderService
+{
+    public function calculateTax(float $amount): float
+    {
+        return $amount * 0.21; // ❌ Hardcoded tax rate
+    }
+    
+    public function getPaginationLimit(): int
+    {
+        return 20; // ❌ Hardcoded pagination limit
+    }
+    
+    public function sendNotification(): void
+    {
+        $email = 'admin@example.com'; // ❌ Hardcoded email
+        // ...
+    }
+}
+Frontend Configuration Rules
+✅ CORRECT: Environment-based Configuration
+
+// config/frontend.js - Generated from Symfony
+window.APP_CONFIG = {
+    API_BASE_URL: '{{ app_config.api.base_url }}',
+    PAGINATION_LIMIT: {{ app_config.pagination.default_limit }},
+    MAX_UPLOAD_SIZE: {{ app_config.upload.max_size }},
+    FEATURES: {
+        DARK_MODE: {{ app_config.features.dark_mode ? 'true' : 'false' }},
+        ANALYTICS: {{ app_config.features.analytics ? 'true' : 'false' }}
+    }
+};
+
+// Vue component using configuration
+export default {
+    data() {
+        return {
+            paginationLimit: window.APP_CONFIG.PAGINATION_LIMIT, // ✅ From config
+            apiBaseUrl: window.APP_CONFIG.API_BASE_URL // ✅ From config
+        }
+    },
+    
+    methods: {
+        async fetchUsers() {
+            const response = await fetch(`${this.apiBaseUrl}/api/users?limit=${this.paginationLimit}`)
+            // ...
+        }
+    }
+}
+❌ INCORRECT: Hardcoded Frontend Values
+
+// ❌ WRONG: Hardcoded values in Vue
+export default {
+    data() {
+        return {
+            paginationLimit: 20, // ❌ Hardcoded
+            apiUrl: 'https://api.example.com' // ❌ Hardcoded
+        }
+    }
+}
+Configuration Categories
+1. Business Logic Configuration
+
+parameters:
+    app.business.tax_rate: '%env(float:TAX_RATE)%'
+    app.business.discount_threshold: '%env(float:DISCOUNT_THRESHOLD)%'
+    app.business.free_shipping_amount: '%env(float:FREE_SHIPPING_AMOUNT)%'
+    app.business.max_order_items: '%env(int:MAX_ORDER_ITEMS)%'
+2. Technical Configuration
+
+parameters:
+    app.cache.ttl: '%env(int:CACHE_TTL)%'
+    app.api.timeout: '%env(int:API_TIMEOUT)%'
+    app.upload.allowed_extensions: '%env(csv:ALLOWED_EXTENSIONS)%'
+    app.pagination.max_limit: '%env(int:PAGINATION_MAX_LIMIT)%'
+3. Feature Flags
+
+parameters:
+    app.features.maintenance_mode: '%env(bool:MAINTENANCE_MODE)%'
+    app.features.registration_enabled: '%env(bool:REGISTRATION_ENABLED)%'
+    app.features.payment_gateway: '%env(PAYMENT_GATEWAY)%'
+    app.features.analytics_enabled: '%env(bool:ANALYTICS_ENABLED)%'
+Code Review Guidelines
+When reviewing code, ensure:
+
+❌ No hardcoded URLs, emails, paths, or business constants
+✅ All configurable values use Symfony parameters
+✅ Environment variables for environment-specific values
+✅ Services receive configuration via dependency injection
+✅ Frontend gets configuration from backend-generated config
+✅ Feature flags control conditional functionality
+✅ Business rules are configurable, not hardcoded
+Configuration Validation
+
+// ✅ Add configuration validation
+class ConfigurationValidator
+{
+    public function validateBusinessConfig(ParameterBagInterface $params): void
+    {
+        $taxRate = $params->get('app.business.tax_rate');
+        if ($taxRate < 0 || $taxRate > 1) {
+            throw new InvalidConfigurationException('Tax rate must be between 0 and 1');
+        }
+    }
+}
+Exception Cases
+Only acceptable hardcoded values:
+
+HTTP status codes (200, 404, etc.)
+Standard format patterns (email regex, etc.)
+Mathematical constants (π, e, etc.)
+Framework-specific constants

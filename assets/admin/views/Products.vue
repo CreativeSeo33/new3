@@ -109,16 +109,23 @@
       </table>
     </div>
 
-    <!-- Footer / Pagination (simple) -->
-    <div class="flex flex-col items-center justify-between gap-2 sm:flex-row">
+    <!-- Footer / Pagination + Page size -->
+    <div class="flex flex-col items-center justify-between gap-3 sm:flex-row">
       <div class="text-sm text-neutral-500">
         Showing <span class="font-medium text-neutral-700 dark:text-neutral-300">{{ products.length }}</span>
         of <span class="font-medium text-neutral-700 dark:text-neutral-300">{{ totalItems }}</span>
       </div>
-      <div class="flex items-center gap-2">
-        <button class="h-8 rounded border px-2 text-xs disabled:opacity-50" :disabled="!hasPrevPage" @click="prevPage">Prev</button>
-        <div class="text-xs">Page {{ page }} / {{ totalPages }}</div>
-        <button class="h-8 rounded border px-2 text-xs disabled:opacity-50" :disabled="!hasNextPage" @click="nextPage">Next</button>
+      <div class="flex items-center gap-3">
+        <label class="flex items-center gap-2 text-xs text-neutral-600 dark:text-neutral-300">
+          <span>Per page</span>
+          <select
+            class="h-8 rounded-md border px-2 text-xs dark:border-neutral-800 dark:bg-neutral-900/40"
+            v-model.number="itemsPerPageModel"
+          >
+            <option v-for="opt in ippOptions" :key="opt" :value="opt">{{ opt }}</option>
+          </select>
+        </label>
+        <Pagination v-model="pageModel" :total-pages="totalPages" />
       </div>
     </div>
 
@@ -133,10 +140,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive } from 'vue'
-import { RouterLink } from 'vue-router'
+import { computed, onMounted, reactive, watch } from 'vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { ref as vueRef } from 'vue'
+import { httpClient } from '@admin/services/http'
 import { ToastDescription, ToastRoot } from 'reka-ui'
 import ConfirmDialog from '@admin/components/ConfirmDialog.vue'
+import Pagination from '@admin/ui/components/Pagination.vue'
 import { useCrud } from '@admin/composables/useCrud'
 import { ProductRepository, type ProductDto } from '@admin/repositories/ProductRepository'
 
@@ -144,23 +154,70 @@ import { ProductRepository, type ProductDto } from '@admin/repositories/ProductR
 const productRepository = new ProductRepository()
 const crud = useCrud<ProductDto>(productRepository)
 const crudState = crud.state
+const route = useRoute()
+const router = useRouter()
 
 const products = computed<ProductDto[]>(() => (crudState.items ?? []) as ProductDto[])
 const loading = computed(() => !!crudState.loading)
 const totalItems = computed(() => crudState.totalItems ?? products.value.length)
 const page = computed(() => crudState.pagination.page)
+const itemsPerPage = computed(() => crudState.pagination.itemsPerPage)
+const pageModel = computed({
+  get: () => page.value,
+  set: (v: number) => crud.goToPage(v),
+})
+const itemsPerPageModel = computed<number>({
+  get: () => crudState.pagination.itemsPerPage,
+  set: (v: number) => crud.setItemsPerPage(Number(v)),
+})
 const totalPages = computed(() => crudState.pagination.totalPages)
+const ippOptions = vueRef<number[]>([])
 const hasNextPage = computed(() => page.value < totalPages.value)
 const hasPrevPage = computed(() => page.value > 1)
 
 onMounted(async () => {
-  await crud.fetchAll({ itemsPerPage: 20 })
+  // 1) Load pagination options from backend config
+  let defaultIpp: number | null = null
+  try {
+    const res = await httpClient.get('/config/pagination')
+    const data: any = res.data
+    const options = Array.isArray(data?.itemsPerPageOptions) ? data.itemsPerPageOptions : []
+    ippOptions.value = options.map((n: any) => Number(n)).filter((n: number) => Number.isFinite(n) && n > 0)
+    defaultIpp = Number.isFinite(Number(data?.defaultItemsPerPage)) ? Number(data.defaultItemsPerPage) : null
+  } catch (_) {
+    ippOptions.value = []
+  }
+
+  // 2) Determine initial itemsPerPage and page from URL (no redirects here)
+  const rawIpp = route.query.itemsPerPage
+  const rawPage = route.query.page
+  const desiredIpp = Number.isFinite(Number(rawIpp)) ? Number(rawIpp) : (defaultIpp ?? undefined)
+  const desiredPage = Number.isFinite(Number(rawPage)) ? Math.max(1, Number(rawPage)) : 1
+
+  // 3) Single fetch with desired ipp/page; backend validates ipp
+  await crud.fetchAll({
+    itemsPerPage: typeof desiredIpp === 'number' ? desiredIpp : undefined,
+    page: desiredPage,
+  })
+})
+
+// Sync URL only when user triggers actions (avoid initial redirects / loops)
+let initialized = false
+watch([page, itemsPerPage], ([p, ipp], [prevP, prevIpp]) => {
+  if (!initialized) {
+    initialized = true
+    return
+  }
+  const curPage = Number(route.query.page ?? 1)
+  const curIpp = Number(route.query.itemsPerPage ?? ipp)
+  const nextQuery: Record<string, any> = { ...route.query }
+  if (p !== curPage) nextQuery.page = String(p)
+  if (ipp !== curIpp) nextQuery.itemsPerPage = String(ipp)
+  router.replace({ query: nextQuery })
 })
 
 function firstImageUrl(p: ProductDto): string | null {
-  const list = (p as any).image as any[] | undefined
-  if (Array.isArray(list) && list.length > 0 && list[0]?.imageUrl) return String(list[0].imageUrl)
-  return null
+  return (p as any).firstImageUrl ?? null
 }
 
 function nextPage() {
@@ -178,11 +235,10 @@ function resetFilters() {
 }
 async function applyFilters() {
   // TODO: when backend supports filters, map to query
-  await crud.fetchAll({ itemsPerPage: 20 })
+  await crud.fetchAll({ itemsPerPage: crudState.pagination.itemsPerPage })
 }
 
 // Delete with confirmation + toast
-import { ref as vueRef } from 'vue'
 import { AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogOverlay, AlertDialogPortal, AlertDialogRoot, AlertDialogTitle, AlertDialogTrigger } from 'reka-ui'
 const deleteDialogOpen = vueRef(false)
 const pendingDeleteId = vueRef<number | null>(null)

@@ -9,12 +9,12 @@ export function useProductForm(initialData?: Partial<ProductFormModel>) {
     price: null,
     salePrice: null,
     status: true,
-    quantity: null,
+    quantity: 100,
     description: '',
     metaTitle: '',
     metaDescription: '',
     h1: '',
-    sortOrder: 0,
+    sortOrder: 1,
     ...initialData,
   })
 
@@ -118,7 +118,7 @@ export function useProductForm(initialData?: Partial<ProductFormModel>) {
     (newName) => {
       if (!shouldAutoGenerateSlug.value || !newName) return
       const newSlug = translit(String(newName || ''))
-      if (!form.slug) {
+      if (form.slug !== newSlug) {
         form.slug = newSlug
       }
     }
@@ -126,8 +126,16 @@ export function useProductForm(initialData?: Partial<ProductFormModel>) {
 
   watch(
     () => form.slug,
-    () => {
-      shouldAutoGenerateSlug.value = false
+    (val) => {
+      // Нормализация slug и управление автогенерацией
+      const normalized = translit(String(val || ''))
+      if (normalized !== val) {
+        form.slug = normalized
+        return
+      }
+      // Если slug совпадает с автогенерируемым из name — продолжаем автогенерировать
+      const auto = translit(String(form.name || ''))
+      shouldAutoGenerateSlug.value = !(normalized && normalized !== auto)
     }
   )
 
@@ -138,12 +146,12 @@ export function useProductForm(initialData?: Partial<ProductFormModel>) {
       price: null,
       salePrice: null,
       status: true,
-      quantity: null,
+      quantity: 100,
       description: '',
       metaTitle: '',
       metaDescription: '',
       h1: '',
-      sortOrder: 0,
+      sortOrder: 1,
       ...initialData,
     })
     Object.keys(errors).forEach((key) => delete (errors as any)[key])

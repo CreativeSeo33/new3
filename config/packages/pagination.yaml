@@ -1,0 +1,13 @@
+parameters:
+    # Общие настройки (используются для товаров и по умолчанию)
+    pagination.items_per_page_options: [5, 10, 30]
+    pagination.default_items_per_page: 5
+
+    # Настройки для City
+    pagination.city.items_per_page_options: [30, 60, 100]
+    pagination.city.default_items_per_page: 30
+
+    # Технический максимум для API Platform (глобально)
+    pagination.max_items_per_page: 100
+
+

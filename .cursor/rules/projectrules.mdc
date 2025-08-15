@@ -1,0 +1,87 @@
+---
+alwaysApply: true
+---
+# Project Architecture Rules
+
+## Frontend (Vue.js) Responsibilities
+- **ONLY** handle presentation logic and user interactions
+- **NEVER** implement business logic, data filtering, pagination, or complex data transformations
+- Use reactive data binding and component composition
+- Handle form validation (UI-level only, not business rules)
+- Manage local component state and UI state transitions
+- Handle routing and navigation
+
+## Backend (API Platform) Responsibilities
+- **ALL** business logic must be implemented on the backend
+- **ALL** data filtering, sorting, and search functionality
+- **ALL** pagination logic (page size, total counts, navigation)
+- **ALL** data validation and business rules
+- **ALL** data aggregation and calculations
+- Authentication and authorization logic
+- Data persistence and database operations
+
+## Prohibited Frontend Patterns
+❌ **DO NOT** implement these in Vue components:
+- Database queries or raw SQL
+- Pagination calculations (page numbers, offsets, limits)
+- Data filtering or sorting logic
+- Business rule validation
+- Complex data transformations or aggregations
+- Direct database connections
+- Server-side logic replication
+
+## Required Frontend Patterns
+✅ **DO** implement these in Vue:
+- API calls to backend endpoints with proper parameters
+- Display pagination controls (but delegate logic to backend)
+- Form input handling and submission
+- Loading states and error handling
+- Component reactivity and state management
+- User interface interactions and animations
+
+## API Communication Rules
+- Use API Platform endpoints for ALL data operations
+- Pass filter parameters to backend via query strings
+- Let backend handle pagination metadata (total pages, current page, etc.)
+- Always use backend-provided pagination links when available
+- Handle API responses reactively in Vue components
+
+## Example: Correct Implementation
+```javascript
+// ✅ CORRECT: Vue component delegates to backend
+async fetchUsers() {
+  const response = await api.get('/api/users', {
+    params: {
+      page: this.currentPage,
+      search: this.searchTerm,
+      sort: this.sortField,
+      order: this.sortDirection
+    }
+  })
+  this.users = response.data['hydra:member']
+  this.totalPages = response.data['hydra:view']['hydra:last']
+}
+
+// ❌ INCORRECT: Business logic in Vue
+computed: {
+  filteredUsers() {
+    return this.users.filter(user => 
+      user.name.toLowerCase().includes(this.searchTerm.toLowerCase())
+    ).slice((this.page - 1) * this.pageSize, this.page * this.pageSize)
+  }
+}
+Code Review Guidelines
+When reviewing code, ensure:
+
+Vue components only call API endpoints, never manipulate data directly
+All pagination state comes from API Platform responses
+Search/filter parameters are passed to backend, not processed in frontend
+No business logic exists in Vue computed properties or methods
+API Platform handles all data validation and business rules
+Exception Cases
+The only acceptable frontend logic:
+
+UI-specific formatting (display dates, currency formatting)
+Client-side form validation for UX (must be duplicated on backend)
+Local component state for UI interactions (modals, dropdowns, etc.)
+Temporary state during API calls (loading, error states)

@@ -5,25 +5,46 @@ namespace App\State;
 
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProviderInterface;
+use ApiPlatform\State\Pagination\PaginatorInterface;
+use ApiPlatform\State\Pagination\TraversablePaginator;
 use App\ApiResource\ProductResource;
 use App\Entity\Product;
 use App\Repository\ProductRepository;
+use App\Service\PaginationService;
 
 /**
  * Provides ProductResource items and collections from Product entity.
  */
 class ProductStateProvider implements ProviderInterface
 {
-    public function __construct(private readonly ProductRepository $repository)
+    public function __construct(
+        private readonly ProductRepository $repository,
+        private readonly PaginationService $pagination
+    )
     {
     }
 
-    public function provide(Operation $operation, array $uriVariables = [], array $context = []): ProductResource|array|null
+    public function provide(Operation $operation, array $uriVariables = [], array $context = []): ProductResource|array|PaginatorInterface|null
     {
         $isCollection = method_exists($operation, 'getClass') === false || ($context['operation_name'] ?? '') === 'api_products_get_collection' || str_contains(get_class($operation), 'GetCollection');
         if ($isCollection) {
-            $entities = $this->repository->findBy([], ['id' => 'DESC']);
-            return array_map([$this, 'transform'], $entities);
+            $filters = $context['filters'] ?? [];
+            $page = max(1, (int)($filters['page'] ?? 1));
+            $itemsPerPage = $this->pagination->normalizeItemsPerPage((int)($filters['itemsPerPage'] ?? $this->pagination->getDefaultItemsPerPage()));
+
+            $offset = ($page - 1) * $itemsPerPage;
+
+            $qb = $this->repository->createQueryBuilder('p')
+                ->orderBy('p.id', 'DESC')
+                ->setFirstResult($offset)
+                ->setMaxResults($itemsPerPage);
+
+            $entities = $qb->getQuery()->getResult();
+            $resources = array_map([$this, 'transformLightweight'], $entities);
+
+            $totalItems = (int)$this->repository->count([]);
+
+            return new TraversablePaginator(new \ArrayIterator($resources), $page, $itemsPerPage, $totalItems);
         }
 
         $id = $uriVariables['id'] ?? null;
@@ -63,6 +84,29 @@ class ProductStateProvider implements ProviderInterface
                 'sortOrder' => $img->getSortOrder(),
             ];
         }
+        return $r;
+    }
+
+    /**
+     * Lightweight transform for collection payload (firstImageUrl only)
+     */
+    private function transformLightweight(Product $entity): ProductResource
+    {
+        $r = new ProductResource();
+        $r->id = $entity->getId();
+        $r->code = $entity->getCode()?->toRfc4122();
+        $r->name = $entity->getName();
+        $r->slug = $entity->getSlug();
+        $r->price = $entity->getPrice();
+        $r->salePrice = $entity->getSalePrice();
+        $r->effectivePrice = $entity->getEffectivePrice();
+        $r->status = $entity->getStatus();
+        $r->quantity = $entity->getQuantity();
+        $r->manufacturerId = $entity->getManufacturerRef()?->getId();
+        $r->manufacturerName = $entity->getManufacturerRef()?->getName();
+        $firstImage = $entity->getImage()->first();
+        $r->firstImageUrl = $firstImage ? $firstImage->getImageUrl() : null;
+        $r->image = [];
         return $r;
     }
 }

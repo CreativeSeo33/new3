@@ -84,6 +84,10 @@ class ProductResource
     // Images
     #[Groups(['product:read'])]
     public array $image = [];
+
+    // Lightweight field for list views
+    #[Groups(['product:read'])]
+    public ?string $firstImageUrl = null;
 }
 
 

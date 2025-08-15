@@ -42,6 +42,9 @@ services:
         arguments:
             $projectDir: '%kernel.project_dir%'
 
+    App\Controller\ConfigController:
+        tags: [ 'controller.service_arguments' ]
+
     App\Service\ImageCacheService:
         arguments:
             $projectDir: '%kernel.project_dir%'

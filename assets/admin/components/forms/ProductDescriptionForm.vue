@@ -3,7 +3,6 @@
     <Input
       v-model="form.name"
       label="Название"
-      placeholder="Например, iPhone 15"
       :error="errors.name"
       @blur="() => validateField('name')"
     />
@@ -11,7 +10,6 @@
     <Input
       v-model="form.slug"
       label="Slug"
-      placeholder="iphone-15"
       :error="errors.slug"
       @blur="() => validateField('slug')"
     />
@@ -20,7 +18,6 @@
       v-model="priceModel"
       label="Цена"
       type="number"
-      placeholder="19990"
       :error="errors.price"
       @blur="() => validateField('price')"
     />
@@ -29,7 +26,6 @@
       v-model="salePriceModel"
       label="Цена со скидкой"
       type="number"
-      placeholder="14990"
       :error="errors.salePrice"
       @blur="() => validateField('salePrice')"
     />
@@ -46,13 +42,12 @@
       v-model="quantityModel"
       label="Количество"
       type="number"
-      placeholder="0"
       :error="errors.quantity"
       @blur="() => validateField('quantity')"
     />
 
-    <Input v-model="form.h1" label="H1" placeholder="Заголовок страницы" />
-    <Input v-model="form.description" label="Описание" placeholder="Короткое описание (до 255 символов)" :error="errors.description" @blur="() => validateField('description')" />
+    <Input v-model="form.h1" label="H1" />
+    <Input v-model="form.description" label="Описание" :error="errors.description" @blur="() => validateField('description')" />
     <Input v-model="form.metaTitle" label="Meta Title" />
     <Input v-model="form.metaDescription" label="Meta Description" />
 
@@ -60,7 +55,6 @@
       v-model="sortOrderModel"
       label="Сортировка"
       type="number"
-      placeholder="0"
       :error="errors.sortOrder"
       @blur="() => validateField('sortOrder')"
     />

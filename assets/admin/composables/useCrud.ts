@@ -33,9 +33,13 @@ export function useCrud<T extends ApiResource>(repository: BaseRepository<T>) {
       setLoading(true);
       setError(null);
 
+      // Determine effective pagination for this request
+      const effectivePage = options.page ?? state.pagination.page;
+      const effectiveItemsPerPage = options.itemsPerPage ?? state.pagination.itemsPerPage;
+
       const response = (await repository.findAll({
-        page: state.pagination.page,
-        itemsPerPage: state.pagination.itemsPerPage,
+        page: effectivePage,
+        itemsPerPage: effectiveItemsPerPage,
         ...options,
       })) as unknown as any;
 
@@ -52,12 +56,10 @@ export function useCrud<T extends ApiResource>(repository: BaseRepository<T>) {
 
       state.items = items;
       state.totalItems = totalItems;
-      state.pagination.totalPages = Math.ceil(
-        (state.totalItems || 0) / (state.pagination.itemsPerPage || 10),
-      );
-
-      if (options.page) state.pagination.page = options.page;
-      if (options.itemsPerPage) state.pagination.itemsPerPage = options.itemsPerPage;
+      // Update current pagination first, then compute total pages using effective itemsPerPage
+      state.pagination.page = effectivePage;
+      state.pagination.itemsPerPage = effectiveItemsPerPage;
+      state.pagination.totalPages = Math.max(1, Math.ceil((state.totalItems || 0) / (state.pagination.itemsPerPage || 10)));
     } catch (error: any) {
       setError(error instanceof Error ? error.message : 'Failed to fetch items');
     } finally {
@@ -170,9 +172,11 @@ export function useCrud<T extends ApiResource>(repository: BaseRepository<T>) {
   };
 
   const setItemsPerPage = (itemsPerPage: number) => {
-    state.pagination.itemsPerPage = itemsPerPage;
+    // Normalize to safe integer >= 1
+    const ipp = Math.max(1, Math.floor(Number(itemsPerPage) || 1));
+    state.pagination.itemsPerPage = ipp;
     state.pagination.page = 1;
-    fetchAll();
+    fetchAll({ itemsPerPage: ipp, page: 1 });
   };
 
   const reset = () => {

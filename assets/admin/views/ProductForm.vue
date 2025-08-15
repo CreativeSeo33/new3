@@ -41,15 +41,22 @@
                 :key="String(id)"
                 :nodes="categoryTree"
                 :checked-ids="selectedCategoryIds"
-                :main-id="mainCategoryId"
                 @toggle="toggleCategory"
-                @set-main="setMainCategory"
               />
             </div>
           </div>
           <div class="lg:col-span-4">
-            <div class="rounded-md border p-4 text-sm text-neutral-600 dark:border-neutral-800 dark:text-neutral-300">
-              Отмечайте чекбокс, чтобы привязать товар к категории. Изменения применяются после нажатия «Сохранить».
+            <div class="rounded-md border p-4 text-sm text-neutral-600 space-y-3 dark:border-neutral-800 dark:text-neutral-300">
+              <div>
+                Отмечайте чекбокс, чтобы привязать товар к категории. Изменения применяются после нажатия «Сохранить».
+              </div>
+              <div>
+                <label class="mb-1 block text-sm font-medium text-foreground/80">Основная категория</label>
+                <select v-model="mainCategoryId" class="h-9 w-full rounded-md border bg-background px-2 text-sm dark:border-neutral-800" :disabled="selectedCategoryIds.size === 0">
+                  <option :value="null">Не выбрано</option>
+                  <option v-for="opt in selectedCategoryOptions" :key="opt.id" :value="opt.id">{{ opt.label }}</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
@@ -234,6 +241,17 @@ const categoryTree = ref<Array<{ id: number; label: string; children?: any[] }>>
 const categoriesLoaded = ref(false)
 const categoriesInitialized = ref(false)
 const categoryLoading = ref(false)
+const selectedCategoryOptions = computed(() => {
+  const flat: Array<{ id: number; label: string }> = []
+  const visit = (nodes: Array<{ id: number; label: string; children?: any[] }>) => {
+    for (const n of nodes) {
+      if (selectedCategoryIds.value.has(n.id)) flat.push({ id: n.id, label: n.label })
+      if (n.children && n.children.length) visit(n.children)
+    }
+  }
+  visit(categoryTree.value)
+  return flat
+})
 
 async function loadCategoriesTree() {
   const res = await categoryRepo.findAllCached({ itemsPerPage: 1000 }) as any
@@ -321,6 +339,8 @@ watch(activeTab, async (val) => {
       categoryLoading.value = true
       if (!categoriesLoaded.value) await loadCategoriesTree()
       categoryLoading.value = false
+      // разрешаем сохранение выбранных категорий после первого сохранения товара
+      categoriesInitialized.value = true
     }
   }
   if (val === 'attributes') {
@@ -329,10 +349,6 @@ watch(activeTab, async (val) => {
 }, { immediate: false })
 
 async function toggleCategory(idNum: number, checked: boolean) {
-  if (isCreating.value) {
-    publishToast('Сохраните товар, чтобы привязывать категории')
-    return
-  }
   const next = new Set<number>(selectedCategoryIds.value)
   if (checked) next.add(idNum)
   else {
@@ -343,7 +359,6 @@ async function toggleCategory(idNum: number, checked: boolean) {
 }
 
 async function setMainCategory(idNum: number) {
-  if (isCreating.value) return
   if (!selectedCategoryIds.value.has(idNum)) {
     const next = new Set<number>(selectedCategoryIds.value)
     next.add(idNum)
