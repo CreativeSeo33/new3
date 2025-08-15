@@ -24,6 +24,7 @@ final class CartManager
 		private RequestStack $requestStack,
 		private EventDispatcherInterface $events,
         private DeliveryContext $deliveryContext,
+        private CheckoutContext $checkoutContext,
     ) {}
 
     public function getOrCreateCurrent(?int $userId): Cart
@@ -54,6 +55,9 @@ final class CartManager
         $this->calculator->recalculate($cart);
         $cart->setUpdatedAt(new \DateTimeImmutable());
         $this->em->flush();
+
+        // Сохраняем ссылку на корзину в сессии checkout.cart
+        $this->checkoutContext->setCartRefFromCart($cart);
 
         if (!$userId && $request) {
             $request->attributes->set('_set_cart_cookie', $cart->getToken());

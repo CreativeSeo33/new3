@@ -177,7 +177,7 @@
         fetch(API_URL, { headers: { 'Accept': 'application/ld+json' }})
           .then(r => r.json())
           .then(data => {
-            const items = data['hydra:member'] || [];
+            const items = (data && (data.member || data['hydra:member'])) || [];
             modalList.innerHTML = '';
             if (!items.length) {
               modalList.innerHTML = '<div class="p-4 text-sm text-gray-500">Нет городов</div>';
@@ -189,9 +189,30 @@
               const li = document.createElement('li');
               li.className = 'px-4 py-3 hover:bg-gray-50 cursor-pointer text-sm';
               li.textContent = item.name || '';
-              li.addEventListener('click', () => {
-                // редирект на смену города, если есть эндпоинт; пока просто закрываем
-                modal.classList.add('hidden');
+              li.addEventListener('click', async () => {
+                try {
+                  li.classList.add('opacity-60');
+                  const res = await fetch('/api/delivery/select-city', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ cityName: item.name, cityId: item.id || null })
+                  });
+                  if (!res.ok) throw new Error('Failed');
+                  const labelEl = document.querySelector('[data-city-modal-trigger] span');
+                  if (labelEl) labelEl.textContent = item.name || 'Ваш город';
+                  modal.classList.add('hidden');
+                } catch (e) {
+                  // простое отображение ошибки внутри модалки
+                  const err = document.createElement('div');
+                  err.className = 'p-3 text-sm text-red-600';
+                  err.textContent = 'Не удалось сохранить город. Попробуйте ещё раз';
+                  modalList.prepend(err);
+                } finally {
+                  li.classList.remove('opacity-60');
+                }
               });
               ul.appendChild(li);
             }

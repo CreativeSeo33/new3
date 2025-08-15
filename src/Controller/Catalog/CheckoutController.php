@@ -11,6 +11,7 @@ use App\Repository\OrderRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use App\Service\CartManager;
+use App\Service\CheckoutContext;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -33,6 +34,7 @@ final class CheckoutController extends AbstractController
 	public function submit(
 		Request $request,
 		CartManager $cartManager,
+		CheckoutContext $checkout,
 		OrderRepository $orders,
 		EntityManagerInterface $em
 	): Response {
@@ -48,10 +50,23 @@ final class CheckoutController extends AbstractController
 		$phone = trim((string)($payload['phone'] ?? ''));
 		$email = trim((string)($payload['email'] ?? ''));
 		$comment = trim((string)($payload['comment'] ?? ''));
+		$paymentMethod = isset($payload['paymentMethod']) ? trim((string)$payload['paymentMethod']) : null;
 
 		if ($name === '' || $phone === '' || ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL))) {
 			return $this->json(['error' => 'Проверьте корректность данных'], 400);
 		}
+
+		// Сохраняем черновик в сессию
+		$checkout->setCustomer([
+			'name' => $name,
+			'phone' => $phone,
+			'email' => $email ?: null,
+			'ip' => $request->getClientIp(),
+			'userAgent' => $request->headers->get('User-Agent'),
+			'comment' => $comment ?: null,
+		]);
+		$checkout->setComment($comment ?: null);
+		$checkout->setPaymentMethod($paymentMethod ?: null);
 
 		$order = new Order();
 		$order->setOrderId($orders->getNextOrderId());
