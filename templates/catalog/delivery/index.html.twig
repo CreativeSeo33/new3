@@ -46,7 +46,10 @@
         {% if pvzPoints is not empty %}
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             {% for p in pvzPoints %}
-              <div class="border rounded p-4 bg-white">
+              <div class="pvz-card border rounded p-4 bg-white cursor-pointer hover:shadow transition"
+                   data-pvz-code="{{ p.code }}"
+                   data-address="{{ p.address }}"
+                   role="button" tabindex="0">
                 <div class="font-medium">{{ p.name ?? 'ПВЗ' }}</div>
                 {% if p.address %}
                   <div class="text-sm text-gray-600">{{ p.address }}</div>
@@ -101,6 +104,35 @@
         }
         el.addEventListener('click', select);
         el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(); } });
+      });
+      // PVZ selection
+      const pvzCards = document.querySelectorAll('.pvz-card[data-pvz-code]');
+      pvzCards.forEach((el) => {
+        function selectPvz() {
+          const pvzCode = el.getAttribute('data-pvz-code');
+          const address = el.getAttribute('data-address') || '';
+          if (!pvzCode) return;
+          el.classList.add('opacity-60');
+          fetch('/api/delivery/select-pvz', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ pvzCode, address })
+          })
+          .then(r => r.json().catch(() => ({})).then(data => ({ ok: r.ok, data })))
+          .then(({ ok, data }) => {
+            if (!ok) { alert(data.error || 'Не удалось выбрать ПВЗ'); return; }
+            document.querySelectorAll('.pvz-card.selected').forEach(c => c.classList.remove('selected', 'ring-2', 'ring-blue-500'));
+            el.classList.add('selected', 'ring-2', 'ring-blue-500');
+          })
+          .catch(() => alert('Ошибка сети'))
+          .finally(() => el.classList.remove('opacity-60'));
+        }
+        el.addEventListener('click', selectPvz);
+        el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectPvz(); } });
       });
     })();
   </script>
