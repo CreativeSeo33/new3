@@ -21,13 +21,13 @@ final class DeliveryApiController extends AbstractController
         private EntityManagerInterface $em,
     ) {}
 
-	#[Route('/context', methods: ['GET'])]
+	#[Route('/context', name: 'api_delivery_context', methods: ['GET'])]
 	public function context(): JsonResponse
 	{
 		return $this->json($this->ctx->get());
 	}
 
-	#[Route('/select-city', methods: ['POST'])]
+	#[Route('/select-city', name: 'api_delivery_select_city', methods: ['POST'])]
 	public function selectCity(Request $r): JsonResponse
 	{
 		$d = json_decode($r->getContent() ?: '[]', true) ?? [];
@@ -47,7 +47,7 @@ final class DeliveryApiController extends AbstractController
 		return $this->json(['ok' => true]);
 	}
 
-	#[Route('/select-method', methods: ['POST'])]
+	#[Route('/select-method', name: 'api_delivery_select_method', methods: ['POST'])]
 	public function selectMethod(Request $r): JsonResponse
 	{
 		$d = json_decode($r->getContent() ?: '[]', true) ?? [];
@@ -56,6 +56,15 @@ final class DeliveryApiController extends AbstractController
 
 		$extra = array_intersect_key($d, array_flip(['pickupPointId','address','zip']));
 		$this->ctx->setMethod($code, $extra);
+		// Дублируем в legacy delivery.type
+		$session = $r->getSession();
+		if ($session !== null) {
+			$legacy = $session->get('delivery', []);
+			if (!is_array($legacy)) { $legacy = []; }
+			$legacy['type'] = $code;
+			$legacy['methodCode'] = $code;
+			$session->set('delivery', $legacy);
+		}
 
 		$user = $this->getUser();
 		$userId = $user instanceof AppUser ? $user->getId() : null;

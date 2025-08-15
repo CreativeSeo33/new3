@@ -1,0 +1,109 @@
+{% extends 'catalog/base.html.twig' %}
+
+{% block title %}Доставка — {{ parent() }}{% endblock %}
+
+{% block catalog_body %}
+  <div class="container mx-auto px-4 py-8">
+    <h1 class="text-2xl font-semibold mb-6">Доставка</h1>
+
+    {# Текущий выбранный способ из сессии (legacy) #}
+    {% set _delivery = app.session.get('delivery')|default({}) %}
+    {% set selectedCode = _delivery.methodCode|default(_delivery.type|default(null)) %}
+
+    {% if types is not empty %}
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for t in types %}
+          {% set isSelected = (t.code == selectedCode) or (selectedCode is empty and t.default) %}
+          <div class="delivery-card border rounded-lg p-4 bg-white shadow-sm cursor-pointer hover:shadow transition {% if isSelected %}selected ring-2 ring-blue-500{% endif %}"
+               data-method-code="{{ t.code }}"
+               role="button" tabindex="0">
+            <div class="text-lg font-medium text-gray-900">{{ t.name }}</div>
+            {% if t.code %}
+              <div class="mt-1 text-xs text-gray-500">Код: <span class="font-mono">{{ t.code }}</span></div>
+            {% endif %}
+            {% if t.default %}
+              <div class="mt-2 inline-flex items-center text-xs text-green-700 bg-green-50 border border-green-200 rounded px-2 py-0.5">По умолчанию</div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-gray-600">Способы доставки будут добавлены позже.</div>
+    {% endif %}
+
+    <div class="mt-10 prose max-w-none">
+      <h2>Как это работает</h2>
+      <ol>
+        <li>Выберите город в шапке сайта.</li>
+        <li>Добавьте товары в корзину.</li>
+        <li>На странице оформления выберите способ доставки.</li>
+      </ol>
+    </div>
+
+    {% if deliveryContext.methodCode is defined and deliveryContext.methodCode == 'pvz' %}
+      <div class="mt-10">
+        <h2 class="text-xl font-semibold mb-4">Пункты выдачи ({{ deliveryContext.cityName|default('город не выбран') }})</h2>
+        {% if pvzPoints is not empty %}
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for p in pvzPoints %}
+              <div class="border rounded p-4 bg-white">
+                <div class="font-medium">{{ p.name ?? 'ПВЗ' }}</div>
+                {% if p.address %}
+                  <div class="text-sm text-gray-600">{{ p.address }}</div>
+                {% endif %}
+                {% if p.phone %}
+                  <div class="text-sm text-gray-600">Телефон: {{ p.phone }}</div>
+                {% endif %}
+                {% if p.price is not null %}
+                  <div class="text-sm text-gray-800 mt-1">Цена: {{ p.price|number_format(0, '.', ' ') }} ₽</div>
+                {% endif %}
+                {% if p.deliveryPeriod is not null %}
+                  <div class="text-sm text-gray-800">Срок: {{ p.deliveryPeriod }} дн.</div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-gray-600">Нет пунктов выдачи для выбранного города.</div>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+  <script>
+    (function() {
+      const cards = document.querySelectorAll('.delivery-card[data-method-code]');
+      cards.forEach((el) => {
+        function select() {
+          const code = el.getAttribute('data-method-code');
+          if (!code) return;
+          el.classList.add('opacity-60');
+          fetch('/api/delivery/select-method', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ methodCode: code })
+          })
+          .then(r => r.json().catch(() => ({})).then(data => ({ ok: r.ok, data })))
+          .then(({ ok, data }) => {
+            if (!ok) {
+              alert(data.error || 'Не удалось выбрать способ доставки');
+              return;
+            }
+            // Визуально отметить выбранный
+            document.querySelectorAll('.delivery-card.selected').forEach(c => c.classList.remove('selected', 'ring-2', 'ring-blue-500'));
+            el.classList.add('selected', 'ring-2', 'ring-blue-500');
+          })
+          .catch(() => alert('Ошибка сети'))
+          .finally(() => el.classList.remove('opacity-60'));
+        }
+        el.addEventListener('click', select);
+        el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(); } });
+      });
+    })();
+  </script>
+{% endblock %}
+
+
