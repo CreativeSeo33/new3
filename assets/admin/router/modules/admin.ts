@@ -91,6 +91,12 @@ export const adminRoutes: RouteRecordRaw[] = [
         meta: { requiresAuth: true }
       },
       {
+        path: 'delivery-types',
+        name: 'admin-delivery-types',
+        component: () => import(/* webpackChunkName: "admin-delivery-types" */ '@admin/views/DeliveryTypes.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
         path: ':pathMatch(.*)*',
         name: 'AdminNotFound',
         component: () => import(/* webpackChunkName: "not-found" */ '@admin/views/NotFound.vue')

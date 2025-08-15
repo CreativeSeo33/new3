@@ -47,33 +47,6 @@
       </div>
     </div>
   </div>
-  <script type="module">
-  document.addEventListener('click', async (e) => {
-    const btn = e.target.closest('.js-add-to-cart');
-    if (!btn) return;
-    btn.disabled = true;
-    const productId = parseInt(btn.getAttribute('data-product-id'), 10);
-    try {
-      const res = await fetch('{{ path('api_cart_add_item') }}', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-        body: JSON.stringify({ productId, qty: 1 })
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        alert(data.error || 'Не удалось добавить в корзину');
-        return;
-      }
-      const evt = new CustomEvent('cart:updated', { detail: data });
-      window.dispatchEvent(evt);
-    } catch (err) {
-      console.error(err);
-      alert('Ошибка сети');
-    } finally {
-      btn.disabled = false;
-    }
-  });
-  </script>
 {% endblock %}
 
 

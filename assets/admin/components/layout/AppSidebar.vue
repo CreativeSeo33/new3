@@ -103,6 +103,14 @@
         <span class="inline-block w-1.5 h-1.5 rounded-full bg-orange-400"></span>
         PVZ Цены
       </router-link>
+      <router-link
+        to="/delivery-types"
+        class="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
+        active-class="bg-gray-100 text-slate-900"
+      >
+        <span class="inline-block w-1.5 h-1.5 rounded-full bg-teal-500"></span>
+        Типы доставок
+      </router-link>
     </nav>
   </div>
 </template>

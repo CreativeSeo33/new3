@@ -47,7 +47,7 @@
     if (!productId) return;
     btn.disabled = true;
     try {
-      const res = await fetch('/api/cart/items', {
+      const res = await fetch('{{ path('api_cart_add_item') }}', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify({ productId, qty: 1 })
