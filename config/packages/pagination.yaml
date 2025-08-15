@@ -10,4 +10,8 @@ parameters:
     # Технический максимум для API Platform (глобально)
     pagination.max_items_per_page: 100
 
+    # Настройки для Pvz (админ)
+    pagination.pvz.items_per_page_options: [30, 60, 100]
+    pagination.pvz.default_items_per_page: 30
+
 

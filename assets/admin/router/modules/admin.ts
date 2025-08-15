@@ -79,6 +79,18 @@ export const adminRoutes: RouteRecordRaw[] = [
         meta: { requiresAuth: true }
       },
       {
+        path: 'pvz-points',
+        name: 'admin-pvz-points',
+        component: () => import(/* webpackChunkName: "admin-pvz-points" */ '@admin/views/PvzPointsList.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
+        path: 'pvz-prices',
+        name: 'admin-pvz-prices',
+        component: () => import(/* webpackChunkName: "admin-pvz-prices" */ '@admin/views/PvzPrices.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
         path: ':pathMatch(.*)*',
         name: 'AdminNotFound',
         component: () => import(/* webpackChunkName: "not-found" */ '@admin/views/NotFound.vue')

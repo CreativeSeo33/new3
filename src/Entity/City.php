@@ -12,7 +12,8 @@ use Symfony\Component\Serializer\Annotation\Groups;
 #[ApiResource(
     normalizationContext: ['groups' => ['city:get']],
     paginationClientEnabled: true,
-    paginationClientItemsPerPage: true
+    paginationClientItemsPerPage: true,
+    order: ['city' => 'ASC']
 )]
 #[ApiFilter(OrderFilter::class,
     properties: ['population' => 'DESC'],

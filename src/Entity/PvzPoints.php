@@ -2,11 +2,49 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 /**
  * PvzPoints
  */
+
+#[ApiResource(
+    operations: [
+        new GetCollection(
+            uriTemplate: '/admin/pvz-points',
+            normalizationContext: ['groups' => ['pvzPoint:admin:get']],
+            paginationClientEnabled: true,
+            paginationClientItemsPerPage: true
+        ),
+        new Get(
+            uriTemplate: '/admin/pvz-points/{id}',
+            normalizationContext: ['groups' => ['pvzPoint:admin:get']]
+        ),
+        new Patch(
+            uriTemplate: '/admin/pvz-points/{id}'
+        ),
+        new Put(
+            uriTemplate: '/admin/pvz-points/{id}'
+        ),
+        new Delete(
+            uriTemplate: '/admin/pvz-points/{id}'
+        ),
+    ],
+    order: ['city' => 'ASC']
+)]
+#[ApiFilter(SearchFilter::class,
+    properties: ['city' => 'partial']
+)]
 
 #[ORM\Table(name: 'pvz_points')]
 #[ORM\Index(name: 'city', columns: ['city'])]
@@ -19,6 +57,7 @@ class PvzPoints
     #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'IDENTITY')]
+    #[Groups(['pvzPoint:admin:get'])]
     private $id;
 
     /**
@@ -37,12 +76,14 @@ class PvzPoints
      * @var string|null
      */
     #[ORM\Column(name: 'city_code', type: 'string', length: 255, nullable: true)]
+    #[Groups(['pvzPoint:admin:get'])]
     private $cityCode;
 
     /**
      * @var string|null
      */
     #[ORM\Column(name: 'address', type: 'string', length: 255, nullable: true)]
+    #[Groups(['pvzPoint:admin:get'])]
     private $address;
 
     /**
@@ -73,6 +114,7 @@ class PvzPoints
      * @var string|null
      */
     #[ORM\Column(name: 'region', type: 'string', length: 255, nullable: true)]
+    #[Groups(['pvzPoint:admin:get'])]
     private $region;
 
     /**
@@ -103,6 +145,7 @@ class PvzPoints
      * @var string|null
      */
     #[ORM\Column(name: 'city', type: 'string', length: 255, nullable: true)]
+    #[Groups(['pvzPoint:admin:get'])]
     private $city;
 
     /**

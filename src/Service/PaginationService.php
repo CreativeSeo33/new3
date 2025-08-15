@@ -15,6 +15,10 @@ class PaginationService
     private array $cityAllowedItemsPerPage;
     private int $cityDefaultItemsPerPage;
 
+    /** @var int[] */
+    private array $pvzAllowedItemsPerPage;
+    private int $pvzDefaultItemsPerPage;
+
     public function __construct(ParameterBagInterface $params)
     {
         $this->allowedItemsPerPage = (array)$params->get('pagination.items_per_page_options');
@@ -22,6 +26,9 @@ class PaginationService
 
         $this->cityAllowedItemsPerPage = (array)$params->get('pagination.city.items_per_page_options');
         $this->cityDefaultItemsPerPage = (int)$params->get('pagination.city.default_items_per_page');
+
+        $this->pvzAllowedItemsPerPage = (array)$params->get('pagination.pvz.items_per_page_options');
+        $this->pvzDefaultItemsPerPage = (int)$params->get('pagination.pvz.default_items_per_page');
     }
 
     public function normalizeItemsPerPage(int $itemsPerPage): int
@@ -58,6 +65,24 @@ class PaginationService
     public function getCityDefaultItemsPerPage(): int
     {
         return $this->cityDefaultItemsPerPage;
+    }
+
+    public function normalizePvzItemsPerPage(int $itemsPerPage): int
+    {
+        return in_array($itemsPerPage, $this->pvzAllowedItemsPerPage, true)
+            ? $itemsPerPage
+            : $this->pvzDefaultItemsPerPage;
+    }
+
+    /** @return int[] */
+    public function getPvzAllowedItemsPerPage(): array
+    {
+        return $this->pvzAllowedItemsPerPage;
+    }
+
+    public function getPvzDefaultItemsPerPage(): int
+    {
+        return $this->pvzDefaultItemsPerPage;
     }
 }
 

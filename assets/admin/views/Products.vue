@@ -144,6 +144,7 @@ import { computed, onMounted, reactive, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { ref as vueRef } from 'vue'
 import { httpClient } from '@admin/services/http'
+import { getPaginationConfig } from '@admin/services/config'
 import { ToastDescription, ToastRoot } from 'reka-ui'
 import ConfirmDialog from '@admin/components/ConfirmDialog.vue'
 import Pagination from '@admin/ui/components/Pagination.vue'
@@ -176,14 +177,12 @@ const hasNextPage = computed(() => page.value < totalPages.value)
 const hasPrevPage = computed(() => page.value > 1)
 
 onMounted(async () => {
-  // 1) Load pagination options from backend config
+  // 1) Load pagination options (cached)
   let defaultIpp: number | null = null
   try {
-    const res = await httpClient.get('/config/pagination')
-    const data: any = res.data
-    const options = Array.isArray(data?.itemsPerPageOptions) ? data.itemsPerPageOptions : []
-    ippOptions.value = options.map((n: any) => Number(n)).filter((n: number) => Number.isFinite(n) && n > 0)
-    defaultIpp = Number.isFinite(Number(data?.defaultItemsPerPage)) ? Number(data.defaultItemsPerPage) : null
+    const cfg = await getPaginationConfig('default')
+    ippOptions.value = cfg.itemsPerPageOptions
+    defaultIpp = cfg.defaultItemsPerPage
   } catch (_) {
     ippOptions.value = []
   }

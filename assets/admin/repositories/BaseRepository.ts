@@ -4,6 +4,7 @@ import type { ApiResource, CrudOptions, HydraCollection } from '@admin/types/api
 // Simple in-memory GET cache with TTL and request de-duplication
 const GET_CACHE = new Map<string, { expiresAt: number; promise: Promise<any> }>();
 const DEFAULT_TTL_MS = 60_000; // 60s
+const CONFIG_TTL_MS = 24 * 60_000; // 24 min default for config; will be overridden by headers anyway
 
 export abstract class BaseRepository<T extends ApiResource> {
   protected http: HttpClient;
@@ -79,6 +80,22 @@ export abstract class BaseRepository<T extends ApiResource> {
         throw e;
       });
     this.setCache(url, promise);
+    return promise;
+  }
+
+  // Lightweight GET for arbitrary endpoints with local cache (used for config)
+  async getCached<R = any>(relativeUrl: string, ttlMs: number = CONFIG_TTL_MS): Promise<R> {
+    const cached = this.getFromCache<R>(relativeUrl);
+    if (cached) return cached;
+    const abs = this.buildAbsoluteUrl(relativeUrl);
+    const promise = this.http
+      .get<R>(relativeUrl)
+      .then((r) => r.data as R)
+      .catch((e) => {
+        GET_CACHE.delete(abs);
+        throw e;
+      });
+    this.setCache(relativeUrl, promise, ttlMs);
     return promise;
   }
 

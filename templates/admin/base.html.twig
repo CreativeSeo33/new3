@@ -8,6 +8,19 @@
 {% endblock %}
 
 {% block body %}
+  <script>
+    window.APP_CONFIG = window.APP_CONFIG || {};
+    window.APP_CONFIG.pagination = {
+      default: {
+        itemsPerPageOptions: {{ pagination_config_default.itemsPerPageOptions|json_encode|raw }},
+        defaultItemsPerPage: {{ pagination_config_default.defaultItemsPerPage|json_encode|raw }}
+      },
+      city: {
+        itemsPerPageOptions: {{ pagination_config_city.itemsPerPageOptions|json_encode|raw }},
+        defaultItemsPerPage: {{ pagination_config_city.defaultItemsPerPage|json_encode|raw }}
+      }
+    };
+  </script>
   <div id="admin-app"></div>
   {% block admin_body %}{% endblock %}
 {% endblock %}

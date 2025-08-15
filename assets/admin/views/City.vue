@@ -128,6 +128,7 @@ import { httpClient } from '@admin/services/http'
 import { useRoute, useRouter } from 'vue-router'
 import { useCrud } from '@admin/composables/useCrud'
 import { CityRepository, type City } from '@admin/repositories/CityRepository'
+import { getPaginationConfig } from '@admin/services/config'
 
 type EditableRow = {
   id: number
@@ -161,15 +162,12 @@ const route = useRoute()
 const router = useRouter()
 
 onMounted(async () => {
-  // 1) Load pagination options for City from backend config
+  // 1) Load pagination options for City from backend config (with caching inside service)
   let defaultIpp: number | null = null
   try {
-    const res = await httpClient.get('/config/pagination/city')
-    const data: any = res.data
-    ippOptions.value = (Array.isArray(data?.itemsPerPageOptions) ? data.itemsPerPageOptions : [])
-      .map((n: any) => Number(n))
-      .filter((n: number) => Number.isFinite(n) && n > 0)
-    defaultIpp = Number.isFinite(Number(data?.defaultItemsPerPage)) ? Number(data.defaultItemsPerPage) : null
+    const cfg = await getPaginationConfig('city')
+    ippOptions.value = cfg.itemsPerPageOptions
+    defaultIpp = cfg.defaultItemsPerPage
   } catch (_) {
     ippOptions.value = []
   }

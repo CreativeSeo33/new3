@@ -3,12 +3,57 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Delete;
 use App\Repository\PvzPriceRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ApiResource(
-    normalizationContext: ['groups' => ['pvzPrice:get']]
+    operations: [
+        // Публичная коллекция (сохранена для обратной совместимости)
+        new GetCollection(
+            uriTemplate: '/pvz_prices',
+            normalizationContext: ['groups' => ['pvzPrice:get']]
+        ),
+        new Get(),
+        new Post(),
+        new Put(),
+        new Patch(),
+        new Delete(),
+
+        // Admin-коллекция с явными настройками пагинации и путём /admin/
+        new GetCollection(
+            uriTemplate: '/admin/pvz-prices',
+            normalizationContext: ['groups' => ['pvzPrice:admin:get']],
+            paginationClientEnabled: true,
+            paginationClientItemsPerPage: true
+        ),
+        // Admin item операции для редактирования в админке
+        new Get(
+            uriTemplate: '/admin/pvz-prices/{id}',
+            normalizationContext: ['groups' => ['pvzPrice:admin:get']]
+        ),
+        new Patch(
+            uriTemplate: '/admin/pvz-prices/{id}'
+        ),
+        new Put(
+            uriTemplate: '/admin/pvz-prices/{id}'
+        ),
+        new Delete(
+            uriTemplate: '/admin/pvz-prices/{id}'
+        ),
+    ],
+    order: ['city' => 'ASC']
+)]
+#[ApiFilter(SearchFilter::class,
+    properties: ['city' => 'partial']
 )]
 
 #[ORM\Table(name: 'pvz_price')]
@@ -22,27 +67,28 @@ class PvzPrice
     #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'IDENTITY')]
+    #[Groups(['pvzPrice:get', 'pvzPrice:admin:get'])]
     private $id;
 
     /**
      * @var string
      */
     #[ORM\Column(name: 'city', type: 'string', length: 255, nullable: false)]
-    #[Groups(['pvzPrice:get'])]
+    #[Groups(['pvzPrice:get', 'pvzPrice:admin:get'])]
     private $city;
 
     /**
      * @var string|null
      */
     #[ORM\Column(name: 'srok', type: 'string', length: 255, nullable: true)]
-    #[Groups(['pvzPrice:get'])]
+    #[Groups(['pvzPrice:get', 'pvzPrice:admin:get'])]
     private $srok;
 
     /**
      * @var string|null
      */
     #[ORM\Column(name: 'city2', type: 'string', length: 255, nullable: true)]
-    #[Groups(['pvzPrice:get'])]
+    #[Groups(['pvzPrice:get', 'pvzPrice:admin:get'])]
     private $city2;
 
     /**
@@ -55,7 +101,7 @@ class PvzPrice
      * @var string|null
      */
     #[ORM\Column(name: 'alias', type: 'string', length: 255, nullable: true)]
-    #[Groups(['pvzPrice:get'])]
+    #[Groups(['pvzPrice:get', 'pvzPrice:admin:get'])]
     private $alias;
 
     /**
@@ -68,14 +114,14 @@ class PvzPrice
      * @var int|null
      */
     #[ORM\Column(name: 'cost', type: 'integer', nullable: true)]
-    #[Groups(['pvzPrice:get'])]
+    #[Groups(['pvzPrice:get', 'pvzPrice:admin:get'])]
     private $cost;
 
     /**
      * @var int|null
      */
     #[ORM\Column(name: 'free', type: 'integer', nullable: true)]
-    #[Groups(['pvzPrice:get'])]
+    #[Groups(['pvzPrice:get', 'pvzPrice:admin:get'])]
     private $free;
 
     /**
