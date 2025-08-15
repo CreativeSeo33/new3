@@ -3,15 +3,19 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Order;
 use App\Repository\CityModalRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
 
 #[ApiResource(
-    normalizationContext: ['groups' => ['cityModal:get']]
+    normalizationContext: ['groups' => ['cityModal:get']],
+    operations: [
+        new GetCollection(order: ['sort' => 'ASC'])
+    ]
 )]
-/** не хватает attributes={"order"={"sort": "ASC"}} */
 #[ORM\Entity(repositoryClass: CityModalRepository::class)]
 class CityModal
 {

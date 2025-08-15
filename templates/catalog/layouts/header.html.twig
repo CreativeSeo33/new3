@@ -54,6 +54,16 @@
         <!-- Right Side Actions -->
         <div class="flex items-center space-x-6">
           
+          {# City from session #}
+          {% set delivery = app.session.get('delivery') %}
+          <div class="hidden lg:flex items-center space-x-2 cursor-pointer" id="city-selector" data-city-modal-trigger>
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 22s8-4.5 8-11a8 8 0 10-16 0c0 6.5 8 11 8 11z"/>
+            </svg>
+            <span class="text-sm text-gray-800 font-medium">{{ delivery.cityName ?? 'Ваш город' }}</span>
+          </div>
+          
           <!-- Hotline -->
           <div class="hidden lg:flex flex-col items-center text-center">
             <div class="text-xs text-gray-500 font-medium">Горячая линия:</div>
@@ -134,6 +144,75 @@
       </div>
     </div>
   </div>
+
+  {# City Modal #}
+  <div id="city-modal" class="fixed inset-0 z-50 hidden" aria-hidden="true">
+    <div class="absolute inset-0 bg-black/30"></div>
+    <div class="relative mx-auto mt-24 w-full max-w-md bg-white rounded-lg shadow-lg">
+      <div class="flex items-center justify-between p-4 border-b">
+        <h3 class="text-base font-semibold text-gray-900">Выберите город</h3>
+        <button type="button" class="p-1 text-gray-500 hover:text-gray-700" data-city-modal-close>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="p-2 max-h-96 overflow-y-auto" id="city-modal-list">
+        <div class="p-4 text-sm text-gray-500">Загрузка...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    const API_URL = '/api/city_modals?order[sort]=asc';
+    const trigger = document.querySelector('[data-city-modal-trigger]');
+    const modal = document.getElementById('city-modal');
+    const modalList = document.getElementById('city-modal-list');
+    const closeBtn = modal.querySelector('[data-city-modal-close]');
+
+    if (!trigger || !modal || !modalList) return;
+
+    function openModal() {
+      modal.classList.remove('hidden');
+      if (!modalList.dataset.loaded) {
+        fetch(API_URL, { headers: { 'Accept': 'application/ld+json' }})
+          .then(r => r.json())
+          .then(data => {
+            const items = data['hydra:member'] || [];
+            modalList.innerHTML = '';
+            if (!items.length) {
+              modalList.innerHTML = '<div class="p-4 text-sm text-gray-500">Нет городов</div>';
+              return;
+            }
+            const ul = document.createElement('ul');
+            ul.className = 'divide-y';
+            for (const item of items) {
+              const li = document.createElement('li');
+              li.className = 'px-4 py-3 hover:bg-gray-50 cursor-pointer text-sm';
+              li.textContent = item.name || '';
+              li.addEventListener('click', () => {
+                // редирект на смену города, если есть эндпоинт; пока просто закрываем
+                modal.classList.add('hidden');
+              });
+              ul.appendChild(li);
+            }
+            modalList.appendChild(ul);
+            modalList.dataset.loaded = '1';
+          })
+          .catch(() => {
+            modalList.innerHTML = '<div class="p-4 text-sm text-red-600">Ошибка загрузки</div>';
+          });
+      }
+    }
+
+    function closeModal() {
+      modal.classList.add('hidden');
+    }
+
+    trigger.addEventListener('click', openModal);
+    closeBtn && closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+  })();
+  </script>
 </header>
 
 
