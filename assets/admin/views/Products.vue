@@ -28,23 +28,17 @@
       <table class="w-full text-sm">
         <thead class="bg-neutral-50 text-neutral-600 dark:bg-neutral-900/40 dark:text-neutral-300">
           <tr>
-            <th class="px-4 py-2 text-left w-16">#</th>
+            <th class="px-4 py-2 text-left">Название товара</th>
             <th class="px-4 py-2 text-left">Изображение</th>
-            <th class="px-4 py-2 text-left">Product</th>
-            <th class="px-4 py-2 text-left">Price</th>
-            <th class="px-4 py-2 text-left">Stock</th>
-            <th class="px-4 py-2 text-left">Status</th>
-            <th class="px-4 py-2 text-left w-40">Action</th>
+            <th class="px-4 py-2 text-left">Категории</th>
+            <th class="px-4 py-2 text-left">Цена</th>
+            <th class="px-4 py-2 text-left">Статус</th>
+            <th class="px-4 py-2 text-left">Сортировка</th>
+            <th class="px-4 py-2 text-left">Дата создания</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="p in products" :key="p.id" class="border-t dark:border-neutral-800">
-            <td class="px-4 py-2 text-neutral-500">{{ p.id }}</td>
-            <td class="px-4 py-2">
-              <div class="h-12 w-12 overflow-hidden rounded bg-neutral-100 dark:bg-neutral-800">
-                <img v-if="firstImageUrl(p)" :src="firstImageUrl(p) || undefined" class="h-full w-full object-cover" alt="" />
-              </div>
-            </td>
             <td class="px-4 py-2">
               <RouterLink
                 :to="{ name: 'admin-product-form', params: { id: p.id } }"
@@ -54,14 +48,21 @@
               </RouterLink>
               <div v-if="p.slug" class="text-xs text-neutral-500">/{{ p.slug }}</div>
             </td>
-            <td class="px-4 py-2">{{ p.manufacturerName || '—' }}</td>
+            <td class="px-4 py-2">
+              <div class="h-12 w-12 overflow-hidden rounded bg-neutral-100 dark:bg-neutral-800">
+                <img v-if="firstImageUrl(p)" :src="firstImageUrl(p) || undefined" class="h-full w-full object-cover" alt="" />
+              </div>
+            </td>
+            <td class="px-4 py-2">
+              <span v-if="p.categoryNames && p.categoryNames.length > 0">{{ p.categoryNames.join(', ') }}</span>
+              <span v-else>—</span>
+            </td>
             <td class="px-4 py-2">
               <div class="flex items-center gap-1">
                 <span class="font-medium">{{ p.salePrice ?? p.price ?? 0 }}</span>
                 <span v-if="p.salePrice && p.price" class="text-xs text-neutral-500 line-through">{{ p.price }}</span>
               </div>
             </td>
-            <td class="px-4 py-2">{{ p.quantity ?? 0 }}</td>
             <td class="px-4 py-2">
               <span
                 :class="[
@@ -69,35 +70,11 @@
                   p.status ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
                 ]"
               >
-                {{ p.status ? 'Active' : 'Disabled' }}
+                {{ p.status ? 'Активен' : 'Отключен' }}
               </span>
             </td>
-            <td class="px-4 py-2">
-              <div class="flex items-center gap-2">
-                <RouterLink
-                  :to="{ name: 'admin-product-form', params: { id: p.id } }"
-                  class="inline-flex h-8 items-center rounded-md border px-2 text-xs hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-white/10"
-                >
-                  View More
-                </RouterLink>
-                <a
-                  v-if="p.slug"
-                  :href="`/product/${p.slug}`"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="inline-flex h-8 items-center rounded-md border px-2 text-xs hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-white/10"
-                >
-                  View
-                </a>
-                <button
-                  type="button"
-                  class="inline-flex h-8 items-center rounded-md bg-red-600 px-2 text-xs font-medium text-white hover:bg-red-700"
-                  @click="confirmDelete(p)"
-                >
-                  Delete
-                </button>
-              </div>
-            </td>
+            <td class="px-4 py-2">{{ p.sortOrder ?? '—' }}</td>
+            <td class="px-4 py-2">{{ formatDate(p.createdAt) }}</td>
           </tr>
           <tr v-if="!loading && products.length === 0">
             <td colspan="7" class="px-4 py-8 text-center text-neutral-500">Пока нет товаров</td>
@@ -260,6 +237,17 @@ const lastToastMessage = vueRef('')
 function publishToast(message: string) {
   lastToastMessage.value = message
   toastCount.value++
+}
+
+function formatDate(value: string | null | undefined): string {
+  if (!value) return '—'
+  try {
+    const d = new Date(value)
+    if (Number.isNaN(d.getTime())) return '—'
+    return d.toLocaleDateString()
+  } catch (_) {
+    return '—'
+  }
 }
 </script>
 

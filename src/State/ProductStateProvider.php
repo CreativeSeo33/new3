@@ -75,6 +75,15 @@ class ProductStateProvider implements ProviderInterface
         $r->h1 = $entity->getMetaH1();
         $r->manufacturerId = $entity->getManufacturerRef()?->getId();
         $r->manufacturerName = $entity->getManufacturerRef()?->getName();
+        $r->createdAt = $entity->getDateAdded();
+        // categories (names)
+        $r->categoryNames = [];
+        foreach ($entity->getCategory() as $pc) {
+            $name = $pc->getCategory()?->getName();
+            if ($name !== null) {
+                $r->categoryNames[] = $name;
+            }
+        }
         // images
         $r->image = [];
         foreach ($entity->getImage() as $img) {
@@ -104,6 +113,15 @@ class ProductStateProvider implements ProviderInterface
         $r->quantity = $entity->getQuantity();
         $r->manufacturerId = $entity->getManufacturerRef()?->getId();
         $r->manufacturerName = $entity->getManufacturerRef()?->getName();
+        $r->sortOrder = $entity->getSortOrder();
+        $r->createdAt = $entity->getDateAdded();
+        $r->categoryNames = [];
+        foreach ($entity->getCategory() as $pc) {
+            $name = $pc->getCategory()?->getName();
+            if ($name !== null) {
+                $r->categoryNames[] = $name;
+            }
+        }
         $firstImage = $entity->getImage()->first();
         $r->firstImageUrl = $firstImage ? $firstImage->getImageUrl() : null;
         $r->image = [];

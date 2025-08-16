@@ -12,6 +12,7 @@ use Symfony\Component\HttpKernel\KernelEvents;
 
 final class DeliveryDefaultSubscriber implements EventSubscriberInterface
 {
+    private const API_PATH_PREFIX = '/api';
     public function __construct(
         private readonly RequestStack $requestStack,
         private readonly DeliveryContext $deliveryContext,
@@ -32,6 +33,10 @@ final class DeliveryDefaultSubscriber implements EventSubscriberInterface
         }
 
         $request = $event->getRequest();
+        // Не трогаем сессию на API-запросах (API Platform помечает их stateless)
+        if (str_starts_with($request->getPathInfo(), self::API_PATH_PREFIX)) {
+            return;
+        }
         $session = $request->getSession();
         if ($session === null) {
             return;

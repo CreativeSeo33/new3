@@ -88,6 +88,12 @@ class ProductResource
     // Lightweight field for list views
     #[Groups(['product:read'])]
     public ?string $firstImageUrl = null;
+
+    #[Groups(['product:read'])]
+    public ?\DateTimeInterface $createdAt = null;
+
+    #[Groups(['product:read'])]
+    public array $categoryNames = [];
 }
 
 

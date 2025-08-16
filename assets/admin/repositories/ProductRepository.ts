@@ -20,6 +20,9 @@ export interface ProductDto extends ApiResource {
   manufacturerId?: number | null;
   manufacturerName?: string | null;
   image?: Array<{ id: number; imageUrl: string; sortOrder: number }>;
+  firstImageUrl?: string | null;
+  createdAt?: string | null;
+  categoryNames?: string[];
 }
 
 export class ProductRepository extends BaseRepository<ProductDto> {
