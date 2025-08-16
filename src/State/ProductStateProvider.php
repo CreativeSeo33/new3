@@ -35,14 +35,66 @@ class ProductStateProvider implements ProviderInterface
             $offset = ($page - 1) * $itemsPerPage;
 
             $qb = $this->repository->createQueryBuilder('p')
-                ->orderBy('p.id', 'DESC')
                 ->setFirstResult($offset)
                 ->setMaxResults($itemsPerPage);
+
+            // Apply name filter (partial match)
+            $name = (string)($filters['name'] ?? '');
+            $name = trim($name);
+            if ($name !== '') {
+                $qb->andWhere('LOWER(p.name) LIKE :name')
+                   ->setParameter('name', '%' . strtolower($name) . '%');
+            }
+
+            // Apply category filter (exact by category id)
+            $categoryId = $filters['category'] ?? null;
+            if ($categoryId !== null && $categoryId !== '') {
+                $qb->leftJoin('p.category', 'pc')
+                   ->leftJoin('pc.category', 'c')
+                   ->andWhere('c.id = :cid')
+                   ->setParameter('cid', (int)$categoryId);
+            }
+
+            // Apply ordering via API Platform-style filters: order[dateAdded], order[status]
+            $order = $filters['order'] ?? [];
+            $createdDir = strtoupper((string)($order['dateAdded'] ?? '')) === 'ASC' ? 'ASC' : (strtoupper((string)($order['dateAdded'] ?? '')) === 'DESC' ? 'DESC' : null);
+            $statusDir = strtoupper((string)($order['status'] ?? '')) === 'ASC' ? 'ASC' : (strtoupper((string)($order['status'] ?? '')) === 'DESC' ? 'DESC' : null);
+
+            $applied = false;
+            if ($createdDir !== null) {
+                // Embedded field: timestamps.createdAt maps to date_added
+                $qb->orderBy('p.timestamps.createdAt', $createdDir);
+                $applied = true;
+            }
+            if ($statusDir !== null) {
+                if ($applied) {
+                    $qb->addOrderBy('p.status', $statusDir);
+                } else {
+                    $qb->orderBy('p.status', $statusDir);
+                    $applied = true;
+                }
+            }
+            if (!$applied) {
+                // Default order
+                $qb->orderBy('p.id', 'DESC');
+            }
 
             $entities = $qb->getQuery()->getResult();
             $resources = array_map([$this, 'transformLightweight'], $entities);
 
-            $totalItems = (int)$this->repository->count([]);
+            // Count with filters applied
+            $countQb = $this->repository->createQueryBuilder('p');
+            // Reapply filters
+            if ($name !== '') {
+                $countQb->andWhere('LOWER(p.name) LIKE :name')->setParameter('name', '%' . strtolower($name) . '%');
+            }
+            if ($categoryId !== null && $categoryId !== '') {
+                $countQb->leftJoin('p.category', 'pc')
+                    ->leftJoin('pc.category', 'c')
+                    ->andWhere('c.id = :cid')
+                    ->setParameter('cid', (int)$categoryId);
+            }
+            $totalItems = (int)$countQb->select('COUNT(DISTINCT p.id)')->getQuery()->getSingleScalarResult();
 
             return new TraversablePaginator(new \ArrayIterator($resources), $page, $itemsPerPage, $totalItems);
         }

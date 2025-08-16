@@ -23,6 +23,31 @@
     </div>
     
 
+    <!-- Search -->
+    <div class="flex items-center gap-2">
+      <input
+        type="text"
+        v-model="searchModel"
+        placeholder="Поиск по названию…"
+        class="h-9 w-full max-w-sm rounded-md border px-3 text-sm dark:border-neutral-800 dark:bg-neutral-900/40"
+      />
+      <button
+        type="button"
+        class="inline-flex h-9 items-center rounded-md border px-3 text-sm hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-white/10"
+        @click="openCategoryModal"
+      >
+        Фильтр по категориям
+      </button>
+      <button
+        type="button"
+        class="inline-flex h-9 items-center rounded-md border px-3 text-sm hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-neutral-800 dark:hover:bg-white/10"
+        :disabled="!hasActiveFilters"
+        @click="resetAllFilters"
+      >
+        Сбросить фильтры
+      </button>
+    </div>
+
     <!-- Table -->
     <div class="overflow-hidden rounded-md border dark:border-neutral-800">
       <table class="w-full text-sm">
@@ -32,9 +57,25 @@
             <th class="px-4 py-2 text-left">Изображение</th>
             <th class="px-4 py-2 text-left">Категории</th>
             <th class="px-4 py-2 text-left">Цена</th>
-            <th class="px-4 py-2 text-left">Статус</th>
+            <th
+              class="px-4 py-2 text-left cursor-pointer select-none"
+              :class="sortStatusDir ? 'text-neutral-900 dark:text-neutral-100' : ''"
+              @click="toggleSortStatus"
+            >
+              Статус
+              <span v-if="sortStatusDir === 'desc'">▼</span>
+              <span v-else-if="sortStatusDir === 'asc'">▲</span>
+            </th>
             <th class="px-4 py-2 text-left">Сортировка</th>
-            <th class="px-4 py-2 text-left">Дата создания</th>
+            <th
+              class="px-4 py-2 text-left cursor-pointer select-none"
+              :class="sortDateDir ? 'text-neutral-900 dark:text-neutral-100' : ''"
+              @click="toggleSortCreated"
+            >
+              Дата создания
+              <span v-if="sortDateDir === 'desc'">▼</span>
+              <span v-else-if="sortDateDir === 'asc'">▲</span>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -113,6 +154,24 @@
 
     <!-- Delete confirmation -->
     <ConfirmDialog v-model="deleteDialogOpen" title="Удалить товар?" description="Это действие необратимо. Товар будет удалён навсегда." confirm-text="Удалить" :danger="true" @confirm="performDelete" />
+
+    <!-- Category filter modal -->
+    <Modal v-model="categoryModalOpen" title="Выберите категорию" size="xl">
+      <div class="max-h-[60vh] overflow-auto">
+        <ul class="space-y-1">
+          <li v-for="n in flatCategoryList" :key="n.id">
+            <button
+              type="button"
+              class="text-left hover:underline"
+              :style="{ paddingLeft: `${n.level * 16}px` }"
+              @click="applyCategoryFilter(n.id)"
+            >
+              {{ n.label }}
+            </button>
+          </li>
+        </ul>
+      </div>
+    </Modal>
   </div>
 </template>
 
@@ -127,6 +186,8 @@ import ConfirmDialog from '@admin/components/ConfirmDialog.vue'
 import Pagination from '@admin/ui/components/Pagination.vue'
 import { useCrud } from '@admin/composables/useCrud'
 import { ProductRepository, type ProductDto } from '@admin/repositories/ProductRepository'
+import Modal from '@admin/ui/components/Modal.vue'
+import { CategoryRepository, type CategoryDto } from '@admin/repositories/CategoryRepository'
 
 // Data fetching via repository + useCrud
 const productRepository = new ProductRepository()
@@ -152,6 +213,36 @@ const totalPages = computed(() => crudState.pagination.totalPages)
 const ippOptions = vueRef<number[]>([])
 const hasNextPage = computed(() => page.value < totalPages.value)
 const hasPrevPage = computed(() => page.value > 1)
+const sortDateDir = vueRef<'asc' | 'desc' | null>(null)
+const sortStatusDir = vueRef<'asc' | 'desc' | null>(null)
+const searchModel = vueRef<string>('')
+let searchDebounceHandle: any = null
+const appliedSearch = vueRef<string>('')
+const categoryModalOpen = vueRef(false)
+const selectedCategoryId = vueRef<number | null>(null)
+const categoryTree = vueRef<any[]>([])
+const categoriesLoaded = vueRef(false)
+const categoryRepo = new CategoryRepository()
+const flatCategoryList = computed<{ id: number; label: string; level: number }[]>(() => {
+  const out: { id: number; label: string; level: number }[] = []
+  const walk = (nodes: any[], level = 0) => {
+    for (const n of nodes || []) {
+      out.push({ id: Number(n.id), label: String(n.label ?? ''), level })
+      if (n.children && n.children.length) walk(n.children, level + 1)
+    }
+  }
+  walk(categoryTree.value || [], 0)
+  return out
+})
+
+const hasActiveFilters = computed<boolean>(() => {
+  return (
+    (appliedSearch.value && appliedSearch.value.length >= 3) ||
+    (selectedCategoryId.value != null) ||
+    (sortDateDir.value !== null) ||
+    (sortStatusDir.value !== null)
+  )
+})
 
 onMounted(async () => {
   // 1) Load pagination options (cached)
@@ -171,9 +262,30 @@ onMounted(async () => {
   const desiredPage = Number.isFinite(Number(rawPage)) ? Math.max(1, Number(rawPage)) : 1
 
   // 3) Single fetch with desired ipp/page; backend validates ipp
+  const sortDateRaw = route.query['order[dateAdded]']
+  const initialDateSort = typeof sortDateRaw === 'string' ? sortDateRaw.toLowerCase() : Array.isArray(sortDateRaw) ? String(sortDateRaw[0] || '').toLowerCase() : ''
+  if (initialDateSort === 'asc' || initialDateSort === 'desc') sortDateDir.value = initialDateSort
+
+  const sortStatusRaw = route.query['order[status]']
+  const initialStatusSort = typeof sortStatusRaw === 'string' ? sortStatusRaw.toLowerCase() : Array.isArray(sortStatusRaw) ? String(sortStatusRaw[0] || '').toLowerCase() : ''
+  if (initialStatusSort === 'asc' || initialStatusSort === 'desc') sortStatusDir.value = initialStatusSort
+  const routeSearch = typeof route.query.name === 'string' ? route.query.name : Array.isArray(route.query.name) ? route.query.name[0] : ''
+  searchModel.value = routeSearch ?? ''
+  const initialTrimmed = (searchModel.value ?? '').trim()
+  appliedSearch.value = initialTrimmed.length >= 3 ? initialTrimmed : ''
+  const routeCategory = route.query.category
+  selectedCategoryId.value = routeCategory != null ? Number(routeCategory) : null
   await crud.fetchAll({
     itemsPerPage: typeof desiredIpp === 'number' ? desiredIpp : undefined,
     page: desiredPage,
+    sort: {
+      ...(route.query['order[dateAdded]'] ? { dateAdded: String(route.query['order[dateAdded]']).toLowerCase() as 'asc' | 'desc' } : {}),
+      ...(route.query['order[status]'] ? { status: String(route.query['order[status]']).toLowerCase() as 'asc' | 'desc' } : {}),
+    },
+    filters: {
+      ...(appliedSearch.value ? { name: appliedSearch.value } : {}),
+      ...(selectedCategoryId.value ? { category: selectedCategoryId.value } : {}),
+    },
   })
 })
 
@@ -248,6 +360,161 @@ function formatDate(value: string | null | undefined): string {
   } catch (_) {
     return '—'
   }
+}
+
+async function toggleSortCreated() {
+  // Cycle: null -> desc -> asc -> null
+  let nextDir: 'asc' | 'desc' | null
+  if (sortDateDir.value === null) nextDir = 'desc'
+  else if (sortDateDir.value === 'desc') nextDir = 'asc'
+  else nextDir = null
+
+  sortDateDir.value = nextDir
+
+  const nextQuery: Record<string, any> = { ...route.query, page: '1' }
+  if (nextDir) nextQuery['order[dateAdded]'] = nextDir
+  else delete nextQuery['order[dateAdded]']
+
+  router.replace({ query: nextQuery })
+  await crud.fetchAll({
+    page: 1,
+    itemsPerPage: crudState.pagination.itemsPerPage,
+    sort: {
+      ...(nextDir ? { dateAdded: nextDir } : {}),
+      ...(sortStatusDir.value ? { status: sortStatusDir.value } : {}),
+    },
+    filters: {
+      ...(appliedSearch.value ? { name: appliedSearch.value } : {}),
+      ...(selectedCategoryId.value ? { category: selectedCategoryId.value } : {}),
+    },
+  })
+}
+
+async function toggleSortStatus() {
+  // Cycle: null -> desc -> asc -> null
+  let nextDir: 'asc' | 'desc' | null
+  if (sortStatusDir.value === null) nextDir = 'desc'
+  else if (sortStatusDir.value === 'desc') nextDir = 'asc'
+  else nextDir = null
+
+  sortStatusDir.value = nextDir
+
+  const nextQuery: Record<string, any> = { ...route.query, page: '1' }
+  if (nextDir) nextQuery['order[status]'] = nextDir
+  else delete nextQuery['order[status]']
+
+  router.replace({ query: nextQuery })
+  await crud.fetchAll({
+    page: 1,
+    itemsPerPage: crudState.pagination.itemsPerPage,
+    sort: {
+      ...(sortDateDir.value ? { dateAdded: sortDateDir.value } : {}),
+      ...(nextDir ? { status: nextDir } : {}),
+    },
+    filters: {
+      ...(appliedSearch.value ? { name: appliedSearch.value } : {}),
+      ...(selectedCategoryId.value ? { category: selectedCategoryId.value } : {}),
+    },
+  })
+}
+
+watch(
+  () => searchModel.value,
+  (v) => {
+    if (searchDebounceHandle) clearTimeout(searchDebounceHandle)
+    searchDebounceHandle = setTimeout(async () => {
+      const trimmed = (v ?? '').trim()
+      const hadActive = appliedSearch.value !== ''
+
+      // If below threshold and nothing applied, do nothing
+      if (trimmed.length < 3 && !hadActive) return
+
+      const nextQuery: Record<string, any> = { ...route.query, page: '1' }
+      if (trimmed.length >= 3) {
+        nextQuery.name = trimmed
+        appliedSearch.value = trimmed
+      } else {
+        delete nextQuery.name
+        appliedSearch.value = ''
+      }
+      router.replace({ query: nextQuery })
+      await crud.fetchAll({
+        page: 1,
+        itemsPerPage: crudState.pagination.itemsPerPage,
+        sort: {
+          ...(sortDateDir.value ? { dateAdded: sortDateDir.value } : {}),
+          ...(sortStatusDir.value ? { status: sortStatusDir.value } : {}),
+        },
+        filters: {
+          ...(appliedSearch.value ? { name: appliedSearch.value } : {}),
+          ...(selectedCategoryId.value ? { category: selectedCategoryId.value } : {}),
+        },
+      })
+    }, 300)
+  },
+)
+
+function openCategoryModal() {
+  categoryModalOpen.value = true
+  if (!categoriesLoaded.value) loadCategoriesTree()
+}
+
+async function loadCategoriesTree() {
+  const res = (await categoryRepo.findAllCached({ itemsPerPage: 1000 })) as any
+  const list = (res['hydra:member'] ?? res.member ?? res ?? []) as CategoryDto[]
+  const byId = new Map<number, any>()
+  const roots: any[] = []
+  for (const c of list) byId.set(Number(c.id), { id: Number(c.id), label: c.name || `Без названия (#${c.id})`, parentId: (c as any).parentCategoryId ?? null, children: [] })
+  for (const n of byId.values()) {
+    if (n.parentId && byId.has(n.parentId)) byId.get(n.parentId).children.push(n)
+    else roots.push(n)
+  }
+  const sortRec = (nodes: any[]) => { nodes.sort((a,b)=> String(a.label).localeCompare(String(b.label))); nodes.forEach((n)=> n.children && sortRec(n.children)) }
+  sortRec(roots)
+  categoryTree.value = roots
+  categoriesLoaded.value = true
+}
+
+async function applyCategoryFilter(id: number) {
+  selectedCategoryId.value = id
+  const nextQuery: Record<string, any> = { ...route.query, page: '1', category: String(id) }
+  router.replace({ query: nextQuery })
+  categoryModalOpen.value = false
+  await crud.fetchAll({
+    page: 1,
+    itemsPerPage: crudState.pagination.itemsPerPage,
+    sort: {
+      ...(sortDateDir.value ? { dateAdded: sortDateDir.value } : {}),
+      ...(sortStatusDir.value ? { status: sortStatusDir.value } : {}),
+    },
+    filters: {
+      ...(appliedSearch.value ? { name: appliedSearch.value } : {}),
+      ...(selectedCategoryId.value ? { category: selectedCategoryId.value } : {}),
+    },
+  })
+}
+
+async function resetAllFilters() {
+  searchModel.value = ''
+  appliedSearch.value = ''
+  selectedCategoryId.value = null
+  sortDateDir.value = null
+  sortStatusDir.value = null
+
+  const nextQuery: Record<string, any> = { ...route.query }
+  delete nextQuery.name
+  delete nextQuery.category
+  delete nextQuery['order[dateAdded]']
+  delete nextQuery['order[status]']
+  nextQuery.page = '1'
+  router.replace({ query: nextQuery })
+
+  await crud.fetchAll({
+    page: 1,
+    itemsPerPage: crudState.pagination.itemsPerPage,
+    sort: undefined,
+    filters: undefined,
+  })
 }
 </script>
 
