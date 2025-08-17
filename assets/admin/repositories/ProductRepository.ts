@@ -23,6 +23,7 @@ export interface ProductDto extends ApiResource {
   firstImageUrl?: string | null;
   createdAt?: string | null;
   categoryNames?: string[];
+  optionsJson?: any[] | null;
 }
 
 export class ProductRepository extends BaseRepository<ProductDto> {

@@ -30,6 +30,7 @@ export function useProductSave() {
         metaTitle: data.metaTitle || null,
         metaDescription: data.metaDescription || null,
         h1: data.h1 || null,
+        optionsJson: (data as any).optionsJson ?? null,
       }
 
       let result: ProductDto

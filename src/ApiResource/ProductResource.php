@@ -94,6 +94,10 @@ class ProductResource
 
     #[Groups(['product:read'])]
     public array $categoryNames = [];
+
+    // Options JSON configuration
+    #[Groups(['product:read', 'product:write'])]
+    public ?array $optionsJson = null;
 }
 
 

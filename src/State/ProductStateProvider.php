@@ -125,6 +125,7 @@ class ProductStateProvider implements ProviderInterface
         $r->metaDescription = $entity->getMetaDescription();
         $r->metaKeywords = $entity->getMetaKeywords();
         $r->h1 = $entity->getMetaH1();
+        $r->optionsJson = $entity->getOptionsJson();
         $r->manufacturerId = $entity->getManufacturerRef()?->getId();
         $r->manufacturerName = $entity->getManufacturerRef()?->getName();
         $r->createdAt = $entity->getDateAdded();

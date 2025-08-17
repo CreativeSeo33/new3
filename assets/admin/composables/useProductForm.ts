@@ -15,6 +15,7 @@ export function useProductForm(initialData?: Partial<ProductFormModel>) {
     metaDescription: '',
     h1: '',
     sortOrder: 1,
+    optionsJson: [],
     ...initialData,
   })
 
@@ -152,6 +153,7 @@ export function useProductForm(initialData?: Partial<ProductFormModel>) {
       metaDescription: '',
       h1: '',
       sortOrder: 1,
+      optionsJson: [],
       ...initialData,
     })
     Object.keys(errors).forEach((key) => delete (errors as any)[key])

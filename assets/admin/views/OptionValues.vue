@@ -15,49 +15,54 @@
       {{ state.error }}
     </div>
 
-    <div class="rounded-md border">
-      <table class="w-full text-sm">
-        <thead class="bg-neutral-50 text-neutral-600 dark:bg-neutral-900/40 dark:text-neutral-300">
-          <tr>
-            <th class="px-4 py-2 text-left">Название</th>
-            <th class="px-4 py-2 text-left w-72">Опция</th>
-            <th class="px-4 py-2 text-left w-40">Сортировка</th>
-            <th class="px-4 py-2 text-left w-28">Действия</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="row in rows" :key="row.id" class="border-t">
-            <td class="px-4 py-2">
-              <Input v-model="row.valueProxy" placeholder="Название значения" @blur="() => saveRow(row)" />
-            </td>
-            <td class="px-4 py-2">
-              <select
-                v-model="row.optionIriProxy"
-                class="h-9 w-full rounded-md border px-2 text-sm dark:border-neutral-800 dark:bg-neutral-900"
-                @change="() => saveRow(row)"
-              >
-                <option :value="''">Без опции</option>
-                <option v-for="o in optionsSorted" :key="o.id" :value="o['@id']">{{ o.name || `Опция #${o.id}` }}</option>
-              </select>
-            </td>
-            <td class="px-4 py-2">
-              <Input v-model="row.sortOrderProxy" type="number" placeholder="0" @blur="() => saveRow(row)" />
-            </td>
-            <td class="px-4 py-2">
-              <button
-                type="button"
-                class="h-8 rounded-md bg-red-600 px-2 text-xs font-medium text-white hover:bg-red-700"
-                @click="confirmDelete(row.id)"
-              >
-                Удалить
-              </button>
-            </td>
-          </tr>
-          <tr v-if="!loading && rows.length === 0">
-            <td colspan="4" class="px-4 py-6 text-center text-neutral-500">Нет значений</td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="space-y-6">
+      <div v-for="group in grouped" :key="group.key" class="rounded-md border">
+        <div class="border-b px-4 py-2 text-sm font-medium">
+          {{ group.title }}
+        </div>
+        <table class="w-full text-sm">
+          <thead class="bg-neutral-50 text-neutral-600 dark:bg-neutral-900/40 dark:text-neutral-300">
+            <tr>
+              <th class="px-4 py-2 text-left">Название</th>
+              <th class="px-4 py-2 text-left w-72">Опция</th>
+              <th class="px-4 py-2 text-left w-40">Сортировка</th>
+              <th class="px-4 py-2 text-left w-28">Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="row in group.items" :key="row.id" class="border-t">
+              <td class="px-4 py-2">
+                <Input v-model="row.valueProxy" placeholder="Название значения" @blur="() => saveRow(row)" />
+              </td>
+              <td class="px-4 py-2">
+                <select
+                  v-model="row.optionIriProxy"
+                  class="h-9 w-full rounded-md border px-2 text-sm dark:border-neutral-800 dark:bg-neutral-900"
+                  @change="() => saveRow(row)"
+                >
+                  <option :value="''">Без опции</option>
+                  <option v-for="o in optionsSorted" :key="o.id" :value="o['@id']">{{ o.name || `Опция #${o.id}` }}</option>
+                </select>
+              </td>
+              <td class="px-4 py-2">
+                <Input v-model="row.sortOrderProxy" type="number" placeholder="0" @blur="() => saveRow(row)" />
+              </td>
+              <td class="px-4 py-2">
+                <button
+                  type="button"
+                  class="h-8 rounded-md bg-red-600 px-2 text-xs font-medium text-white hover:bg-red-700"
+                  @click="confirmDelete(row.id)"
+                >
+                  Удалить
+                </button>
+              </td>
+            </tr>
+            <tr v-if="!loading && group.items.length === 0">
+              <td colspan="4" class="px-4 py-6 text-center text-neutral-500">Нет значений</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <!-- Modal create -->
@@ -144,6 +149,38 @@ const optionsSorted = computed(() => {
     return String(a.name || '').localeCompare(String(b.name || ''))
   })
   return list
+})
+
+type Grouped = { key: string; title: string; items: EditableRow[] }
+const grouped = computed<Grouped[]>(() => {
+  const map = new Map<string, Grouped>()
+  const titleOf = (iri: string): string => {
+    if (!iri) return 'Без опции'
+    const found = optionsSorted.value.find(o => (o as any)['@id'] === iri)
+    return found?.name ? String(found.name) : `Опция ${iri.split('/').pop()}`
+  }
+  for (const r of rows.value) {
+    const key = r.optionIriProxy || '__no_option__'
+    if (!map.has(key)) map.set(key, { key, title: titleOf(r.optionIriProxy), items: [] })
+    map.get(key)!.items.push(r)
+  }
+  // order groups: option sortOrder asc, then name asc; empty group last
+  const arr = Array.from(map.values())
+  arr.sort((a, b) => {
+    const aOpt = optionsSorted.value.find(o => (o as any)['@id'] === a.key)
+    const bOpt = optionsSorted.value.find(o => (o as any)['@id'] === b.key)
+    const aEmpty = a.key === '__no_option__'
+    const bEmpty = b.key === '__no_option__'
+    if (aEmpty && !bEmpty) return 1
+    if (!aEmpty && bEmpty) return -1
+    const ao = (aOpt as any)?.sortOrder ?? null
+    const bo = (bOpt as any)?.sortOrder ?? null
+    if (ao != null && bo != null) return ao - bo
+    if (ao != null) return -1
+    if (bo != null) return 1
+    return String((aOpt as any)?.name || '').localeCompare(String((bOpt as any)?.name || ''))
+  })
+  return arr
 })
 
 onMounted(async () => {

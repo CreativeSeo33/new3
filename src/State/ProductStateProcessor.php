@@ -11,6 +11,7 @@ use App\Entity\Manufacturer;
 use App\Entity\Product;
 use App\Repository\ProductRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use App\Service\PaginationService;
 
 /**
  * Processes ProductResource writes to Product entity.
@@ -21,6 +22,7 @@ class ProductStateProcessor implements ProcessorInterface
         private readonly EntityManagerInterface $em,
         private readonly ProductRepository $repository,
         private readonly \Symfony\Component\HttpFoundation\RequestStack $requestStack,
+        private readonly PaginationService $pagination,
     ) {
     }
 
@@ -108,6 +110,10 @@ class ProductStateProcessor implements ProcessorInterface
         if (($isPatch && array_key_exists('h1', $provided)) || !$isPatch) {
             $entity->setMetaH1($data->h1);
         }
+        if (($isPatch && array_key_exists('optionsJson', $provided)) || (!$isPatch && $data->optionsJson !== null)) {
+            // optionsJson приходит как массив структур; сохраняем как есть (API-level validation возможна отдельно)
+            $entity->setOptionsJson(is_array($data->optionsJson) ? $data->optionsJson : null);
+        }
         if (($isPatch && array_key_exists('manufacturerId', $provided)) || !$isPatch) {
             $manufacturer = $data->manufacturerId ? $this->em->getRepository(Manufacturer::class)->find((int) $data->manufacturerId) : null;
             $entity->setManufacturerRef($manufacturer);
@@ -117,7 +123,7 @@ class ProductStateProcessor implements ProcessorInterface
         $this->em->flush();
 
         // Return DTO from fresh entity
-        $provider = new ProductStateProvider($this->repository);
+        $provider = new ProductStateProvider($this->repository, $this->pagination);
         return $provider->provide($operation, ['id' => $entity->getId()], $context);
     }
 }

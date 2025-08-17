@@ -107,6 +107,10 @@
         <ConfirmDialog v-model="deletePAOpen" :title="'Удалить атрибут?'" :description="'Это действие необратимо'" confirm-text="Удалить" :danger="true" @confirm="performDeletePA" />
       </TabsContent>
 
+      <TabsContent value="options" class="pt-6">
+        <ProductOptions v-model:options-json="form.optionsJson" @toast="publishToast" />
+      </TabsContent>
+
       <TabsContent value="photos" class="pt-6">
         <ProductPhotos v-if="activeTab === 'photos'" :product-id="String(id)" :is-creating="isCreating" @toast="publishToast" />
       </TabsContent>
@@ -123,16 +127,18 @@
 import { computed, ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Button from '@admin/ui/components/Button.vue'
-import { TabsContent, TabsIndicator, TabsList, TabsRoot, TabsTrigger, ToastDescription, ToastRoot } from 'reka-ui'
+import { DialogContent, DialogOverlay, DialogPortal, DialogRoot, DialogTitle, TabsContent, TabsIndicator, TabsList, TabsRoot, TabsTrigger, ToastDescription, ToastRoot } from 'reka-ui'
 import ProductDescriptionForm from '@admin/components/forms/ProductDescriptionForm.vue'
 import ProductCategoryTree from '@admin/components/ProductCategoryTree.vue'
 import ProductPhotos from '@admin/components/forms/ProductPhotos.vue'
 import ProductAttributesAddModal from '@admin/components/forms/ProductAttributesAddModal.vue'
+import ProductOptions from '@admin/components/forms/ProductOptions.vue'
 import ConfirmDialog from '@admin/components/ConfirmDialog.vue'
 import { useProductForm } from '@admin/composables/useProductForm'
 import { useProductSave } from '@admin/composables/useProductSave'
 import type { ProductTab } from '@admin/types/product'
 import { ProductRepository, type ProductDto } from '@admin/repositories/ProductRepository'
+// (options UI moved to ProductOptions)
 import { ProductAttributeGroupRepository } from '@admin/repositories/ProductAttributeGroupRepository'
 import { ProductAttributeRepository } from '@admin/repositories/ProductAttributeRepository'
 import { AttributeRepository } from '@admin/repositories/AttributeRepository'
@@ -144,6 +150,7 @@ const tabs: ProductTab[] = [
   { value: 'description', label: 'Описание товара' },
   { value: 'categories', label: 'Категории' },
   { value: 'attributes', label: 'Аттрибуты' },
+  { value: 'options', label: 'Опции' },
   { value: 'photos', label: 'Фотографии' },
 ]
 
@@ -189,6 +196,7 @@ const hydrateForm = (dto: ProductDto) => {
     metaDescription: dto.metaDescription ?? '',
     h1: dto.h1 ?? '',
     sortOrder: (dto as any).sortOrder ?? 0,
+    optionsJson: Array.isArray((dto as any).optionsJson) ? normalizeOptionsJson((dto as any).optionsJson as any) : [],
   })
 }
 const loadIfEditing = async () => {
@@ -478,6 +486,24 @@ async function handleAddAttribute(attributeIri: string) {
   publishToast('Атрибут добавлен к товару')
   await loadProductAttributes()
 }
+
+// Options (select existing; no CRUD yet)
+// moved options UI/logic into ProductOptions component
+
+// Options helpers and state
+type OptionConfig = { option: string; multiple: boolean; required: boolean; priceMode: 'delta' | 'absolute'; values: Array<{ value: string; label?: string; price?: number | null }>; defaultValues?: string[]; sortOrder: number; meta?: Record<string, any> }
+function normalizeOptionsJson(raw: any[]): OptionConfig[] {
+  const out: OptionConfig[] = []
+  for (const it of (raw || [])) {
+    const option = typeof it.option === 'string' ? it.option : ''
+    const priceMode = it.priceMode === 'absolute' ? 'absolute' : 'delta'
+    const values = Array.isArray(it.values) ? it.values.map((v: any) => ({ value: String(v?.value || ''), label: v?.label ?? undefined, price: toNum(v?.price) })) : []
+    out.push({ option, multiple: !!it.multiple, required: !!it.required, priceMode, values, defaultValues: Array.isArray(it.defaultValues) ? it.defaultValues.map(String) : [], sortOrder: Number(it.sortOrder ?? 0), meta: it.meta && typeof it.meta === 'object' ? it.meta : undefined })
+  }
+  return out
+}
+
+// options logic is encapsulated in ProductOptions
 
 // load existing product attributes grouped
 async function loadProductAttributes() {
