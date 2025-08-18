@@ -14,8 +14,11 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
--- Дамп данных таблицы new3.attribute: ~0 rows (приблизительно)
+-- Дамп данных таблицы new3.attribute: ~2 rows (приблизительно)
 DELETE FROM `attribute`;
+INSERT INTO `attribute` (`id`, `attribute_group_id`, `name`, `sort_order`, `show_in_category`, `short_name`) VALUES
+	(1, NULL, 'Размер', 1, NULL, NULL),
+	(2, NULL, 'Цвет', 2, NULL, NULL);
 
 -- Дамп данных таблицы new3.attribute_group: ~0 rows (приблизительно)
 DELETE FROM `attribute_group`;
@@ -23,7 +26,7 @@ DELETE FROM `attribute_group`;
 -- Дамп данных таблицы new3.carousel: ~0 rows (приблизительно)
 DELETE FROM `carousel`;
 
--- Дамп данных таблицы new3.cart: ~0 rows (приблизительно)
+-- Дамп данных таблицы new3.cart: ~3 rows (приблизительно)
 DELETE FROM `cart`;
 INSERT INTO `cart` (`id`, `user_id`, `token`, `currency`, `subtotal`, `discount_total`, `total`, `created_at`, `updated_at`, `expires_at`, `version`, `shipping_method`, `shipping_cost`, `ship_to_city`, `shipping_data`) VALUES
 	(1, NULL, 'f093a2af-bae3-4128-b579-e68a8711f172', 'RUB', 0, 0, 0, '2025-08-14 10:27:06', '2025-08-14 10:27:06', '2025-09-13 10:27:06', 1, NULL, 0, NULL, NULL),
@@ -35,7 +38,7 @@ DELETE FROM `cart_item`;
 INSERT INTO `cart_item` (`id`, `cart_id`, `product_id`, `product_name`, `unit_price`, `qty`, `row_total`, `version`) VALUES
 	(4, 2, 2, 'Анжелика 3 лампы + низ 1', 7800, 1, 7800, 1);
 
--- Дамп данных таблицы new3.category: ~0 rows (приблизительно)
+-- Дамп данных таблицы new3.category: ~3 rows (приблизительно)
 DELETE FROM `category`;
 INSERT INTO `category` (`id`, `name`, `slug`, `visibility`, `parent_category_id`, `meta_title`, `meta_description`, `meta_keywords`, `sort_order`, `meta_h1`, `description`, `navbar_visibility`, `footer_visibility`) VALUES
 	(1, 'Потолочные люстры', 'potolochnye-lyustry', 1, NULL, 'Потолочные люстры', '', '', 1, 'Потолочные люстры', '', 1, 1),
@@ -43,7 +46,7 @@ INSERT INTO `category` (`id`, `name`, `slug`, `visibility`, `parent_category_id`
 	(3, 'Большие люстры', 'bolshie-lyustry', 1, NULL, 'Большие люстры', '', '', 2, 'Большие люстры', '', 1, 1),
 	(4, 'Бронзовые люстры', 'bronzovye-lyustry', 1, NULL, 'Бронзовые люстры', '', '', 3, 'Бронзовые люстры', '', 1, 1);
 
--- Дамп данных таблицы new3.city: ~0 rows (приблизительно)
+-- Дамп данных таблицы new3.city: ~1 117 rows (приблизительно)
 DELETE FROM `city`;
 INSERT INTO `city` (`id`, `address`, `postal_code`, `federal_district`, `region_type`, `region`, `city_type`, `city`, `kladr_id`, `fias_level`, `capital_marker`, `geo_lat`, `geo_lon`, `population`) VALUES
 	(1, 'Респ Адыгея, г Адыгейск', '385200', 'Южный', 'Респ', 'Адыгея', 'г', 'Адыгейск', 100000200000, 4, 0, 44.878414, 39.190289, 12689),
@@ -1164,7 +1167,7 @@ INSERT INTO `city` (`id`, `address`, `postal_code`, `federal_district`, `region_
 	(1116, 'Ярославская обл, г Углич', '152610', 'Центральный', 'обл', 'Ярославская', 'г', 'Углич', 7601700100000, 4, 1, 57.5224249, 38.3020044, 34505),
 	(1117, 'г Ярославль', '150000', 'Центральный', 'обл', 'Ярославская', 'г', 'Ярославль', 7600000100000, 4, 2, 57.6215477, 39.8977411, 591486);
 
--- Дамп данных таблицы new3.city_modal: ~0 rows (приблизительно)
+-- Дамп данных таблицы new3.city_modal: ~11 rows (приблизительно)
 DELETE FROM `city_modal`;
 INSERT INTO `city_modal` (`id`, `fias_id`, `name`, `sort`) VALUES
 	(4, 3300000100000, 'Владимир', 6),
@@ -1179,13 +1182,13 @@ INSERT INTO `city_modal` (`id`, `fias_id`, `name`, `sort`) VALUES
 	(19, 7800000000000, 'Санкт-Петербург', 1),
 	(20, 6900000100000, 'Тверь', 1);
 
--- Дамп данных таблицы new3.delivery_type: ~0 rows (приблизительно)
+-- Дамп данных таблицы new3.delivery_type: ~2 rows (приблизительно)
 DELETE FROM `delivery_type`;
 INSERT INTO `delivery_type` (`id`, `name`, `code`, `active`, `sort_order`, `is_default`) VALUES
 	(1, 'Пункт выдачи', 'pvz', 1, 1, 1),
 	(2, 'Курьерская доставка', 'courier', 1, 2, 0);
 
--- Дамп данных таблицы new3.doctrine_migration_versions: ~1 rows (приблизительно)
+-- Дамп данных таблицы new3.doctrine_migration_versions: ~2 rows (приблизительно)
 DELETE FROM `doctrine_migration_versions`;
 INSERT INTO `doctrine_migration_versions` (`version`, `executed_at`, `execution_time`) VALUES
 	('DoctrineMigrations\\Version20250815143456', '2025-08-15 14:35:06', 26),
@@ -1195,11 +1198,17 @@ INSERT INTO `doctrine_migration_versions` (`version`, `executed_at`, `execution_
 -- Дамп данных таблицы new3.manufacturer: ~0 rows (приблизительно)
 DELETE FROM `manufacturer`;
 
--- Дамп данных таблицы new3.option: ~0 rows (приблизительно)
+-- Дамп данных таблицы new3.option: ~2 rows (приблизительно)
 DELETE FROM `option`;
+INSERT INTO `option` (`id`, `name`, `sort_order`) VALUES
+	(1, 'Размер', 1),
+	(2, 'Цвет', 2);
 
--- Дамп данных таблицы new3.option_value: ~0 rows (приблизительно)
+-- Дамп данных таблицы new3.option_value: ~2 rows (приблизительно)
 DELETE FROM `option_value`;
+INSERT INTO `option_value` (`id`, `option_type_id`, `value`, `sort_order`) VALUES
+	(1, 1, 'XL', 1),
+	(2, 2, 'Красный', 0);
 
 -- Дамп данных таблицы new3.order: ~0 rows (приблизительно)
 DELETE FROM `order`;
@@ -1224,16 +1233,18 @@ DELETE FROM `order_product_options`;
 
 -- Дамп данных таблицы new3.order_status: ~0 rows (приблизительно)
 DELETE FROM `order_status`;
+INSERT INTO `order_status` (`id`, `name`, `sort`) VALUES
+	(1, 'В работе', 1);
 
--- Дамп данных таблицы new3.product: ~0 rows (приблизительно)
+-- Дамп данных таблицы new3.product: ~7 rows (приблизительно)
 DELETE FROM `product`;
 INSERT INTO `product` (`id`, `manufacturer_id`, `name`, `slug`, `sort_order`, `effective_price`, `status`, `quantity`, `options_json`, `attribute_json`, `code`, `description`, `price`, `sale_price`, `currency`, `date_added`, `date_edited`) VALUES
 	(1, NULL, 'Люстра', 'lyustra', 1, 5000, 1, 100, '[]', '[]', _binary 0x0198a7d2fc43a14cb38d4120d65b8f15, '', 5000, NULL, 'RUB', '2025-08-14 09:04:38', '2025-08-14 10:28:20'),
 	(2, NULL, 'Анжелика 3 лампы + низ 1', 'anzhelika-3-lampy-niz-1', 2, 7800, 1, 100, '[]', '[]', _binary 0x0198a9c2a185828c53d00562f9f0211c, '', 7800, NULL, 'RUB', '2025-08-14 18:06:01', NULL),
 	(3, NULL, 'Люстра Астра Бутон №1', 'lyustra-astra-buton-1', 3, 8650, 1, 100, '[]', '[]', _binary 0x0198a9c44d251b794bd7f9f04d1ecf02, '', 8650, NULL, 'RUB', '2025-08-14 18:07:51', NULL),
 	(4, NULL, 'Люстра 5', 'lyustra-5', 1, 18990, 1, 100, '[]', '[]', _binary 0x0198ac744e68ad0c4f6a3cb1ad20f899, 'Люстра 5', 18990, NULL, 'RUB', '2025-08-15 06:39:20', NULL),
-	(5, NULL, 'Люстра 6', 'lyustra-6', 1, 15000, 1, 100, '[]', '[]', _binary 0x0198ac7671379f3f739e2c988b44f064, '', 15000, NULL, 'RUB', '2025-08-15 06:41:40', NULL),
-	(6, NULL, 'Люстра 7', 'lyustra-7', 2, 35000, 1, 100, '[]', '[]', _binary 0x0198ac7bcb0021e87cf1ac9863390625, 'Люстра 7', 35000, NULL, 'RUB', '2025-08-15 06:47:30', NULL),
+	(5, NULL, 'Люстра 6', 'lyustra-6', 1, 15000, 1, 100, '[{"option": "/api/options/1", "values": [{"label": "Красный", "price": null, "value": "/api/option_values/2"}], "multiple": false, "required": false, "priceMode": "delta", "sortOrder": 0, "defaultValues": []}]', '[]', _binary 0x0198ac7671379f3f739e2c988b44f064, '', 15000, NULL, 'RUB', '2025-08-15 06:41:40', '2025-08-18 14:43:52'),
+	(6, NULL, 'Люстра 7', 'lyustra-7', 2, 35000, 1, 100, '[{"option": "/api/options/1", "values": [{"label": "Красный", "price": 5000, "value": "/api/option_values/2"}], "multiple": false, "required": false, "priceMode": "delta", "sortOrder": 0, "defaultValues": []}]', '[]', _binary 0x0198ac7bcb0021e87cf1ac9863390625, 'Люстра 7', 35000, NULL, 'RUB', '2025-08-15 06:47:30', '2025-08-18 08:23:21'),
 	(7, NULL, 'Люстра 8', 'lyustra-8', 3, 100900, 1, 100, '[]', '[]', _binary 0x0198ac7caba980735f763c2e30d3a06e, '', 100900, NULL, 'RUB', '2025-08-15 06:48:28', NULL);
 
 -- Дамп данных таблицы new3.product_attribute: ~0 rows (приблизительно)
@@ -1242,19 +1253,20 @@ DELETE FROM `product_attribute`;
 -- Дамп данных таблицы new3.product_attribute_group: ~0 rows (приблизительно)
 DELETE FROM `product_attribute_group`;
 
--- Дамп данных таблицы new3.product_image: ~0 rows (приблизительно)
+-- Дамп данных таблицы new3.product_image: ~9 rows (приблизительно)
 DELETE FROM `product_image`;
 INSERT INTO `product_image` (`id`, `product_id`, `image_url`, `sort_order`) VALUES
 	(1, 1, '/media/cache/500x500/diana-6-zhuravlik-pod-bronzu-chaynaya-1.jpg', 1),
 	(2, 2, '/media/cache/500x500/anzhelika-3-lampy-niz-1-zoloto-1.jpg', 1),
 	(3, 3, '/media/cache/500x500/astra-buton-1-pod-bronzu-zelenaya-1.jpg', 1),
 	(4, 1, '/media/cache/500x500/diana-6-zhuravlik-pod-bronzu-zelenaya-1.jpg', 2),
-	(5, 7, '/media/cache/500x500/astra-buton-1-pod-bronzu-zelenaya-1.jpg', 1),
-	(6, 6, '/media/cache/500x500/potolok/kapel/613A6665.jpg', 1),
-	(7, 5, '/media/cache/500x500/diana-6-zhuravlik-pod-bronzu-chaynaya-1.jpg', 1),
-	(8, 4, '/media/cache/500x500/potolok/kapel/613A6680.jpg', 1);
+	(8, 4, '/media/cache/500x500/potolok/kapel/613A6680.jpg', 1),
+	(14, 7, '/media/cache/md2/img/astra-buton-1-pod-bronzu-zelenaya-1.jpg', 1),
+	(16, 6, '/media/cache/md2/img/diana-6-zhuravlik-pod-bronzu-1.jpg', 1),
+	(17, 5, '/media/cache/md2/img/diana-6-zhuravlik-pod-bronzu-zelenaya-1.jpg', 1),
+	(19, 5, '/media/cache/md2/img/astra-buton-1-pod-bronzu-chernaya-1.jpg', 2);
 
--- Дамп данных таблицы new3.product_seo: ~0 rows (приблизительно)
+-- Дамп данных таблицы new3.product_seo: ~7 rows (приблизительно)
 DELETE FROM `product_seo`;
 INSERT INTO `product_seo` (`product_id`, `meta_title`, `meta_description`, `meta_keywords`, `h1`) VALUES
 	(1, NULL, NULL, NULL, 'Люстра'),
@@ -1265,7 +1277,7 @@ INSERT INTO `product_seo` (`product_id`, `meta_title`, `meta_description`, `meta
 	(6, NULL, NULL, NULL, 'Люстра 7'),
 	(7, 'Люстра 8', NULL, NULL, 'Люстра 8');
 
--- Дамп данных таблицы new3.product_to_category: ~0 rows (приблизительно)
+-- Дамп данных таблицы new3.product_to_category: ~15 rows (приблизительно)
 DELETE FROM `product_to_category`;
 INSERT INTO `product_to_category` (`id`, `product_id`, `category_id`, `is_parent`, `position`, `visibility`) VALUES
 	(7, 3, 1, 0, NULL, 1),
@@ -1284,9 +1296,10 @@ INSERT INTO `product_to_category` (`id`, `product_id`, `category_id`, `is_parent
 	(21, 4, 4, 0, NULL, 1),
 	(22, 5, 1, 1, NULL, 1),
 	(23, 5, 4, 0, NULL, 1),
-	(24, 5, 3, 0, NULL, 1);
+	(24, 5, 3, 0, NULL, 1),
+	(25, 7, 1, 0, NULL, 1);
 
--- Дамп данных таблицы new3.pvz_points: ~0 rows (приблизительно)
+-- Дамп данных таблицы new3.pvz_points: ~5 301 rows (приблизительно)
 DELETE FROM `pvz_points`;
 INSERT INTO `pvz_points` (`id`, `code`, `name`, `city_code`, `address`, `tariff_zone`, `price`, `delivery_period`, `phone`, `region`, `type_of_office`, `metro`, `only_prepaid_orders`, `postal`, `city`, `time`, `card`, `shirota`, `dolgota`, `company`) VALUES
 	(32171, '0004ccff-edea-46fa-a1c0-30c34178fb0c', 'Пункт выдачи заказов Яндекс Маркета', '117025', 'Москва Ленинградское шоссе 128', NULL, NULL, NULL, '+74951570020', 'Москва', NULL, NULL, NULL, 125445, 'Москва', NULL, NULL, 55.869457244873, 37.462108612061, NULL),
