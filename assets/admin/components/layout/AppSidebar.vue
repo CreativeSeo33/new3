@@ -111,6 +111,14 @@
         <span class="inline-block w-1.5 h-1.5 rounded-full bg-teal-500"></span>
         Типы доставок
       </router-link>
+      <router-link
+        to="/order-statuses"
+        class="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
+        active-class="bg-gray-100 text-slate-900"
+      >
+        <span class="inline-block w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+        Статусы заказов
+      </router-link>
     </nav>
   </div>
 </template>
