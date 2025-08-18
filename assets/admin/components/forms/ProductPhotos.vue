@@ -7,7 +7,7 @@
           <Button variant="secondary">Добавить изображение</Button>
         </DialogTrigger>
         <DialogOverlay class="fixed inset-0 bg-black/40 z-[9998]" />
-        <DialogContent class="fixed left-1/2 top-1/2 w-[90vw] max-w-5xl -translate-x-1/2 -translate-y-1/2 rounded-md bg-white p-0 shadow-lg focus:outline-none z-[9999]">
+        <DialogContent class="fixed left-1/2 top-1/2 w-[90vw] max-w-5xl min-h-[70vh] -translate-x-1/2 -translate-y-1/2 rounded-md bg-white p-0 shadow-lg focus:outline-none z-[9999]">
           <div class="flex items-center justify-between border-b px-4 py-3">
             <DialogTitle class="text-base font-medium">Библиотека изображений</DialogTitle>
             <DialogClose as-child>
@@ -32,7 +32,9 @@
                   </Button>
                 </div>
               </div>
-              <div v-if="imagesLoading" class="text-sm text-neutral-500">Загрузка...</div>
+              <div v-if="imagesLoading" class="relative h-32">
+                <Spinner />
+              </div>
               <div v-else-if="imagesError" class="text-sm text-red-600">{{ imagesError }}</div>
               <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                 <label v-for="img in folderImages" :key="img.relative" class="group cursor-pointer block">
@@ -69,7 +71,9 @@
       </div>
     </div>
     <div v-else>
-      <div v-if="productImagesLoading" class="text-sm text-neutral-500">Загрузка фото...</div>
+      <div v-if="productImagesLoading" class="relative h-32">
+        <Spinner />
+      </div>
       <div v-else-if="productImagesError" class="text-sm text-red-600">{{ productImagesError }}</div>
       <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
         <div
@@ -105,6 +109,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import Button from '@admin/ui/components/Button.vue'
+import Spinner from '@admin/ui/components/Spinner.vue'
 import { DialogClose, DialogContent, DialogOverlay, DialogRoot, DialogTitle, DialogTrigger } from 'reka-ui'
 
 const props = defineProps<{ productId: string; isCreating: boolean }>()

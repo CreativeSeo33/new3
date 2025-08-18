@@ -143,6 +143,7 @@ import { ProductAttributeGroupRepository } from '@admin/repositories/ProductAttr
 import { ProductAttributeRepository } from '@admin/repositories/ProductAttributeRepository'
 import { AttributeRepository } from '@admin/repositories/AttributeRepository'
 import { AttributeGroupRepository } from '@admin/repositories/AttributeGroupRepository'
+import { uiLoading } from '@admin/shared/uiLoading'
 import { CategoryRepository, type CategoryDto } from '@admin/repositories/CategoryRepository'
 import { ProductCategoryRepository } from '@admin/repositories/ProductCategoryRepository'
 
@@ -301,6 +302,7 @@ async function loadProductCategories() {
 
 async function loadCategoriesBootstrap() {
   categoryLoading.value = true
+  uiLoading.startGlobalLoading()
   try {
     const res = await fetch(`/api/admin/products/${id.value}/bootstrap`, { headers: { Accept: 'application/json' } })
     if (!res.ok) throw new Error('bootstrap failed')
@@ -323,6 +325,8 @@ async function loadCategoriesBootstrap() {
     selectedCategoryIds.value = new Set(ids)
     mainCategoryId.value = (data.mainCategoryId != null && Number.isFinite(Number(data.mainCategoryId))) ? Number(data.mainCategoryId) : null
     categoriesInitialized.value = true
+    // Успех: скрываем глобальный спиннер
+    uiLoading.stopGlobalLoading()
   } catch {
     // fallback to legacy loaders
     if (!categoriesLoaded.value) await loadCategoriesTree()

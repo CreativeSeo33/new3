@@ -1,14 +1,40 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios';
+import { uiLoading } from '@admin/shared/uiLoading'
+
+function isStreamRequest(cfg: AxiosRequestConfig): boolean {
+  const headers: any = cfg.headers as any
+  let accept: string | undefined
+  if (headers) {
+    if (typeof headers.get === 'function') {
+      accept = headers.get('Accept') || headers.get('accept')
+    } else {
+      accept = headers['Accept'] || headers['accept']
+    }
+  }
+  const url = cfg.url || ''
+  return (
+    accept === 'text/event-stream' ||
+    (cfg as any).responseType === 'stream' ||
+    /\/(\.well-known\/mercure|hub)(\?|$)/.test(url || '')
+  )
+}
 
 export class HttpClient {
   private instance: AxiosInstance;
 
   constructor(baseURL: string = '/api') {
+    // baseURL из env при наличии, иначе '/api'
+    let resolvedBaseURL = baseURL
+    try {
+      const env = (import.meta as any)?.env
+      if (env?.VITE_API_URL) resolvedBaseURL = env.VITE_API_URL as string
+    } catch {}
+
     this.instance = axios.create({
-      baseURL,
+      baseURL: resolvedBaseURL,
       headers: {
         'Content-Type': 'application/json',
-        Accept: 'application/ld+json, application/json',
+        Accept: 'application/ld+json',
       },
     });
 
@@ -26,14 +52,23 @@ export class HttpClient {
             (config.headers ||= {} as any).Authorization = `Bearer ${token}`;
           }
         }
+        if (!isStreamRequest(config)) uiLoading.startGlobalLoading()
         return config;
       },
       (error) => Promise.reject(error),
     );
 
     this.instance.interceptors.response.use(
-      (response) => response,
+      (response) => {
+        if (!isStreamRequest(response.config)) uiLoading.stopGlobalLoading()
+        return response
+      },
       (error) => {
+        if (error?.config && !isStreamRequest(error.config)) {
+          // По ТЗ: при ошибке спиннер НЕ скрываем.
+          // Чтобы скрывать и при ошибке, раскомментируйте строку ниже:
+          // uiLoading.stopGlobalLoading()
+        }
         if (error.response?.status === 401) {
           this.handleUnauthorized();
         }
