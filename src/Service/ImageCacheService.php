@@ -3,19 +3,28 @@ declare(strict_types=1);
 
 namespace App\Service;
 
-use Intervention\Image\Interfaces\ImageManagerInterface;
+use Liip\ImagineBundle\Imagine\Cache\CacheManager;
+use Liip\ImagineBundle\Imagine\Data\DataManager;
+use Liip\ImagineBundle\Imagine\Filter\FilterConfiguration;
+use Liip\ImagineBundle\Imagine\Filter\FilterManager;
 use Symfony\Component\Filesystem\Filesystem;
 
 class ImageCacheService
 {
     private string $publicDir;
-    private ImageManagerInterface $imageManager;
     private Filesystem $filesystem;
+    private CacheManager $cacheManager;
+    private FilterManager $filterManager;
+    private FilterConfiguration $filterConfig;
+    private DataManager $dataManager;
 
-    public function __construct(ImageManagerInterface $imageManager, string $projectDir)
+    public function __construct(CacheManager $cacheManager, FilterManager $filterManager, FilterConfiguration $filterConfig, DataManager $dataManager, string $projectDir)
     {
-        $this->imageManager = $imageManager;
         $this->filesystem = new Filesystem();
+        $this->cacheManager = $cacheManager;
+        $this->filterManager = $filterManager;
+        $this->filterConfig = $filterConfig;
+        $this->dataManager = $dataManager;
         $this->publicDir = rtrim($projectDir, '\\/') . '/public';
     }
 
@@ -27,16 +36,12 @@ class ImageCacheService
 
     public function ensureCached(string $relativeImgPath, int $width, int $height): string
     {
-        $sourcePath = $this->publicDir . '/img/' . ltrim($this->normalizeRelativePath($relativeImgPath), '/');
+        $normalized = ltrim($this->normalizeRelativePath($relativeImgPath), '/');
+        $sourcePath = $this->publicDir . '/img/' . $normalized;
         $targetPath = $this->getCachedPathFor($relativeImgPath, $width, $height);
 
         if (!is_file($sourcePath)) {
             throw new \RuntimeException('Source image not found: ' . $sourcePath);
-        }
-
-        $targetDir = \dirname($targetPath);
-        if (!$this->filesystem->exists($targetDir)) {
-            $this->filesystem->mkdir($targetDir, 0755);
         }
 
         if ($this->filesystem->exists($targetPath)) {
@@ -47,16 +52,32 @@ class ImageCacheService
             }
         }
 
-        $image = $this->imageManager->read($sourcePath);
-        // Вписываем в рамку WxH без апскейла и сохраняем в JPEG
-        if (method_exists($image, 'contain')) {
-            $image = $image->contain($width, $height);
-        } else {
-            // fallback для разных драйверов/версий: масштаб по ширине/высоте
-            $image = $image->scale(width: $width, height: $height);
-        }
-        $image = $image->toJpeg(85);
-        $image->save($targetPath);
+        $filterName = sprintf('%dx%d', $width, $height);
+        $runtimeConfig = [
+            'filters' => [
+                'thumbnail' => [
+                    'size' => [ $width, $height ],
+                    'mode' => 'inset',
+                    'allow_upscale' => true,
+                ],
+                'scale' => [
+                    'dim' => [ $width, $height ],
+                ],
+                'background' => [
+                    'size' => [ $width, $height ],
+                    'position' => 'center',
+                    'color' => '#fff',
+                ],
+            ],
+        ];
+
+        // Регистрируем/обновляем временный фильтр под именем WxH
+        $this->filterConfig->set($filterName, $runtimeConfig);
+
+        $publicSource = '/img/' . $normalized;
+        $binary = $this->dataManager->find($filterName, $publicSource);
+        $filtered = $this->filterManager->applyFilter($binary, $filterName);
+        $this->cacheManager->store($filtered, $publicSource, $filterName);
 
         return $targetPath;
     }
@@ -77,7 +98,7 @@ class ImageCacheService
                 continue;
             }
             $ext = strtolower($file->getExtension());
-            if ($ext !== 'jpg' && $ext !== 'jpeg') {
+            if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif'], true)) {
                 continue;
             }
             $relative = ltrim(str_replace($base, '', $file->getPathname()), '\\/');

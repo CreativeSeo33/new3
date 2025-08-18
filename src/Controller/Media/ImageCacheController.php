@@ -28,7 +28,7 @@ class ImageCacheController
 
         $response = new BinaryFileResponse($absoluteCachedPath);
         $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_INLINE, basename($absoluteCachedPath));
-        $response->headers->set('Content-Type', 'image/jpeg');
+        // LiipImagine сохраняет в том же формате, что и исходник; оставляем autodetect
         $response->setPublic();
         $response->setMaxAge(60 * 60 * 24 * 30);
         $response->setSharedMaxAge(60 * 60 * 24 * 30);

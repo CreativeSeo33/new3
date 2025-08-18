@@ -25,16 +25,7 @@ services:
     # Doctrine entity listener as service (attributes already present, but ensure service is public)
     App\Doctrine\Listener\ProductEntityListener: ~
 
-    # Intervention Image v3 manager & driver
-    intervention.image.driver.gd:
-        class: Intervention\Image\Drivers\Gd\Driver
-
-    intervention.image.manager:
-        class: Intervention\Image\ImageManager
-        arguments:
-            - '@intervention.image.driver.gd'
-
-    Intervention\Image\Interfaces\ImageManagerInterface: '@intervention.image.manager'
+    # Remove Intervention Image wiring (migrated to LiipImagine)
 
     # Inject project dir for services that need filesystem paths
     App\Controller\Admin\MediaAdminController:
@@ -48,3 +39,7 @@ services:
     App\Service\ImageCacheService:
         arguments:
             $projectDir: '%kernel.project_dir%'
+            $cacheManager: '@liip_imagine.cache.manager'
+            $filterManager: '@liip_imagine.filter.manager'
+            $filterConfig: '@liip_imagine.filter.configuration'
+            $dataManager: '@liip_imagine.data.manager'
