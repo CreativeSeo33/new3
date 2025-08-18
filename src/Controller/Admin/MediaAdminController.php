@@ -209,8 +209,26 @@ class MediaAdminController
             return new JsonResponse(['error' => 'Not found'], 404);
         }
         $product = $pi->getProduct();
+        // Попробуем вычислить относительный путь оригинала и удалить деривативы всех фильтров
+        $imgUrl = (string) $pi->getImageUrl(); // ожидается '/media/cache/<filter>/img/<relative>'
+        $rel = '';
+        if (str_starts_with($imgUrl, '/media/cache/')) {
+            $parts = explode('/', trim($imgUrl, '/'));
+            // [media, cache, <filter>, img, <...relative parts>]
+            $imgIndex = array_search('img', $parts, true);
+            if ($imgIndex !== false && isset($parts[$imgIndex + 1])) {
+                $rel = implode('/', array_slice($parts, $imgIndex + 1));
+            }
+        }
         $this->em->remove($pi);
         $this->em->flush();
+        if ($rel !== '') {
+            try {
+                $this->imageWarmup->clear($rel, $this->imagineFilters);
+            } catch (\Throwable) {
+                // ignore
+            }
+        }
         if ($product instanceof Product) {
             $this->normalizeProductImagesOrder($product);
             $this->em->flush();

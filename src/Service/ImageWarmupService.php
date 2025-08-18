@@ -38,6 +38,20 @@ class ImageWarmupService
             }
         }
     }
+
+    /**
+     * Удаляет из кэша все деривативы для указанного относительного пути и набора фильтров.
+     */
+    public function clear(string $relativeImgPath, array $filters): void
+    {
+        $normalized = ltrim(str_replace(['\\', '..'], ['/', ''], $relativeImgPath), '/');
+        $publicSource = '/img/' . $normalized;
+        try {
+            $this->cacheManager->remove([$publicSource], $filters);
+        } catch (\Throwable) {
+            // игнорируем ошибки удаления
+        }
+    }
 }
 
 
