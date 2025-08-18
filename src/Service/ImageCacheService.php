@@ -31,7 +31,13 @@ class ImageCacheService
     public function getCachedPathFor(string $relativeImgPath, int $width, int $height): string
     {
         $normalizedPath = ltrim($this->normalizeRelativePath($relativeImgPath), '/');
-        return sprintf('%s/media/cache/%dx%d/%s', $this->publicDir, $width, $height, $normalizedPath);
+        return sprintf('%s/media/cache/%dx%d/img/%s', $this->publicDir, $width, $height, $normalizedPath);
+    }
+
+    public function getCachedPathForFilter(string $relativeImgPath, string $filterName): string
+    {
+        $normalizedPath = ltrim($this->normalizeRelativePath($relativeImgPath), '/');
+        return sprintf('%s/media/cache/%s/img/%s', $this->publicDir, $filterName, $normalizedPath);
     }
 
     public function ensureCached(string $relativeImgPath, int $width, int $height): string
@@ -73,6 +79,32 @@ class ImageCacheService
 
         // Регистрируем/обновляем временный фильтр под именем WxH
         $this->filterConfig->set($filterName, $runtimeConfig);
+
+        $publicSource = '/img/' . $normalized;
+        $binary = $this->dataManager->find($filterName, $publicSource);
+        $filtered = $this->filterManager->applyFilter($binary, $filterName);
+        $this->cacheManager->store($filtered, $publicSource, $filterName);
+
+        return $targetPath;
+    }
+
+    public function ensureCachedByFilter(string $relativeImgPath, string $filterName): string
+    {
+        $normalized = ltrim($this->normalizeRelativePath($relativeImgPath), '/');
+        $sourcePath = $this->publicDir . '/img/' . $normalized;
+        $targetPath = $this->getCachedPathForFilter($relativeImgPath, $filterName);
+
+        if (!is_file($sourcePath)) {
+            throw new \RuntimeException('Source image not found: ' . $sourcePath);
+        }
+
+        if ($this->filesystem->exists($targetPath)) {
+            $srcMtime = filemtime($sourcePath) ?: 0;
+            $dstMtime = filemtime($targetPath) ?: 0;
+            if ($dstMtime >= $srcMtime) {
+                return $targetPath;
+            }
+        }
 
         $publicSource = '/img/' . $normalized;
         $binary = $this->dataManager->find($filterName, $publicSource);

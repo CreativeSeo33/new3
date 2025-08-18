@@ -6,8 +6,8 @@
         <DialogTrigger as-child>
           <Button variant="secondary">Добавить изображение</Button>
         </DialogTrigger>
-        <DialogOverlay class="fixed inset-0 bg-black/40" />
-        <DialogContent class="fixed left-1/2 top-1/2 w-[90vw] max-w-5xl -translate-x-1/2 -translate-y-1/2 rounded-md bg-white p-0 shadow-lg focus:outline-none">
+        <DialogOverlay class="fixed inset-0 bg-black/40 z-[9998]" />
+        <DialogContent class="fixed left-1/2 top-1/2 w-[90vw] max-w-5xl -translate-x-1/2 -translate-y-1/2 rounded-md bg-white p-0 shadow-lg focus:outline-none z-[9999]">
           <div class="flex items-center justify-between border-b px-4 py-3">
             <DialogTitle class="text-base font-medium">Библиотека изображений</DialogTitle>
             <DialogClose as-child>
@@ -61,7 +61,7 @@
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
           <div v-for="rel in pendingRelatives" :key="rel" class="rounded border overflow-hidden">
             <div class="aspect-square bg-neutral-50 select-none">
-              <img :src="'/img/' + rel" class="h-full w-full object-cover pointer-events-none" loading="lazy" />
+              <img :src="liipResolve(rel)" class="h-full w-full object-cover pointer-events-none" loading="lazy" />
             </div>
             <div class="px-2 py-1 text-xs text-neutral-600 truncate">{{ rel }}</div>
           </div>
@@ -133,6 +133,15 @@ const imagesLoading = ref(false)
 const imagesError = ref<string>('')
 const selectedImages = ref<Set<string>>(new Set())
 const attachLoading = ref(false)
+
+// Построение URL LiipImagine resolver для предпросмотра (md2)
+function liipResolve(relative: string, filter: string = 'md2'): string {
+  const clean = String(relative || '')
+    .replace(/\\\\/g, '/')
+    .replace(/\.+/g, '')
+    .replace(/^\/+|\/+$/g, '')
+  return `/media/cache/resolve/${filter}/img/${clean}`
+}
 
 // Pending images storage for a new product
 const PENDING_KEY = 'new-product-pending-images'

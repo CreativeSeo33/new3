@@ -11,7 +11,7 @@
               {% set imgSrc = raw %}
             {% else %}
               {% set rel = raw|replace({'/img/':''})|trim('/') %}
-              {% set imgSrc = path('media_image_cache', { size: '500x500', path: rel }) %}
+              {% set imgSrc = asset('/img/' ~ rel) | imagine_filter('md2') %}
             {% endif %}
             <a href="{{ path('catalog_product_show', { slug: p.slug }) }}"><img src="{{ imgSrc }}" alt="{{ p.name }}" class="w-full h-auto"></a>
           {% else %}

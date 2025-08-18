@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Service\ImageCacheService;
+use App\Service\ImageWarmupService;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\Product;
 use App\Entity\ProductImage;
@@ -13,7 +14,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class MediaAdminController
 {
-    public function __construct(private readonly string $projectDir, private readonly ImageCacheService $imageCacheService, private readonly EntityManagerInterface $em)
+    public function __construct(private readonly string $projectDir, private readonly ImageCacheService $imageCacheService, private readonly EntityManagerInterface $em, private readonly ImageWarmupService $imageWarmup, private readonly array $imagineFilters)
     {
     }
 
@@ -55,7 +56,7 @@ class MediaAdminController
     #[Route(path: '/api/admin/media/tree', name: 'admin_media_tree', methods: ['GET'])]
     public function listDirectoryTree(): JsonResponse
     {
-        $base = rtrim($this->projectDir, '\/') . '/public/img';
+        $base = rtrim($this->projectDir, '\\/') . '/public/img';
         $build = function (string $absoluteDir, string $relativeDir) use (&$build): array {
             $nodes = [];
             $handle = @opendir($absoluteDir);
@@ -159,19 +160,20 @@ class MediaAdminController
             ->getQuery()->getSingleScalarResult());
 
         $created = [];
+        $warmedRelatives = [];
         foreach ($items as $rel) {
             if (!is_string($rel) || $rel === '') {
                 continue;
             }
             $relative = $normalize($rel);
-            // ensure cache 500x500 and compute cached URL
+            // ensure cache md2 and compute cached URL
             try {
-                $this->imageCacheService->ensureCached($relative, 500, 500);
+                $this->imageCacheService->ensureCachedByFilter($relative, 'md2');
             } catch (\Throwable $e) {
                 // skip invalid source silently
                 continue;
             }
-            $cachedUrl = '/media/cache/500x500/' . $relative;
+            $cachedUrl = '/media/cache/md2/img/' . $relative;
 
             $pi = new ProductImage();
             $pi->setProduct($product)
@@ -182,8 +184,18 @@ class MediaAdminController
                 'imageUrl' => $cachedUrl,
                 'sortOrder' => $maxSort,
             ];
+            $warmedRelatives[] = $relative;
         }
         $this->em->flush();
+
+        // Синхронный прогрев всех пресетов для добавленных изображений
+        foreach (array_unique($warmedRelatives) as $relPath) {
+            try {
+                $this->imageWarmup->warm($relPath, $this->imagineFilters);
+            } catch (\Throwable) {
+                // игнорируем ошибки прогрева, т.к. md2 уже прогрели выше
+            }
+        }
 
         return new JsonResponse(['created' => count($created), 'items' => $created]);
     }

@@ -4,6 +4,11 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    app.imagine.filters:
+        - 'sm'
+        - 'md'
+        - 'md2'
+        - 'xl'
 
 services:
     # default configuration for services in *this* file
@@ -32,6 +37,7 @@ services:
         tags: [ 'controller.service_arguments' ]
         arguments:
             $projectDir: '%kernel.project_dir%'
+            $imagineFilters: '%app.imagine.filters%'
 
     App\Controller\ConfigController:
         tags: [ 'controller.service_arguments' ]
@@ -43,3 +49,5 @@ services:
             $filterManager: '@liip_imagine.filter.manager'
             $filterConfig: '@liip_imagine.filter.configuration'
             $dataManager: '@liip_imagine.data.manager'
+
+    App\Service\ImageWarmupService: ~
