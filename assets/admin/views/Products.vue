@@ -1,58 +1,49 @@
 <template>
   <div class="space-y-6">
-    <!-- Header / Actions -->
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div>
-        <h1 class="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Products List</h1>
-        <p class="mt-1 text-sm text-neutral-500">Track your store's progress to boost your sales.</p>
-      </div>
-      <div class="flex items-center gap-2">
-        <button
-          type="button"
-          class="inline-flex h-9 items-center rounded-md border px-3 text-sm shadow-sm hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-white/10"
-        >
-          Export
-        </button>
-        <RouterLink
-          :to="{ name: 'admin-product-form', params: { id: 'new' } }"
-          class="inline-flex h-9 items-center rounded-md bg-neutral-900 px-3 text-sm font-medium text-white shadow hover:bg-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100"
-        >
-          Add Product
-        </RouterLink>
-      </div>
-    </div>
     
-
-    <!-- Search -->
-    <div class="flex items-center gap-2">
-      <input
-        type="text"
-        v-model="searchModel"
-        placeholder="Поиск по названию…"
-        class="h-9 w-full max-w-sm rounded-md border px-3 text-sm dark:border-neutral-800 dark:bg-neutral-900/40"
-      />
-      <button
-        type="button"
-        class="inline-flex h-9 items-center rounded-md border px-3 text-sm hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-white/10"
-        @click="openCategoryModal"
-      >
-        Фильтр по категориям
-      </button>
-      <button
-        type="button"
-        class="inline-flex h-9 items-center rounded-md border px-3 text-sm hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-neutral-800 dark:hover:bg-white/10"
-        :disabled="!hasActiveFilters"
-        @click="resetAllFilters"
-      >
-        Сбросить фильтры
-      </button>
-    </div>
 
     <!-- Table -->
     <div class="overflow-hidden rounded-md border dark:border-neutral-800">
       <table class="w-full text-sm">
-        <thead class="bg-neutral-50 text-neutral-600 dark:bg-neutral-900/40 dark:text-neutral-300">
-          <tr>
+        <tbody>
+          <tr class=" text-neutral-600 dark:bg-neutral-900/40 dark:text-neutral-300">
+            <td colspan="7" class="px-4 py-3">
+              <div class="space-y-3">
+                <!-- Header / Actions -->
+                
+                <!-- Search -->
+                <div class="flex items-center gap-2">
+                  <input
+                    type="text"
+                    v-model="searchModel"
+                    placeholder="Поиск по названию…"
+                    class="h-9 w-full max-w-sm rounded-md border px-3 text-sm dark:border-neutral-800 dark:bg-neutral-900/40"
+                  />
+                  <button
+                    type="button"
+                    class="inline-flex h-9 items-center rounded-md border px-3 text-sm hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-white/10"
+                    @click="openCategoryModal"
+                  >
+                    Фильтр по категориям
+                  </button>
+                  <button
+                    type="button"
+                    class="inline-flex h-9 items-center rounded-md border px-3 text-sm hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-neutral-800 dark:hover:bg-white/10"
+                    :disabled="!hasActiveFilters"
+                    @click="resetAllFilters"
+                  >
+                    Сбросить фильтры
+                  </button>
+                  <div class="flex items-center gap-2">
+                    <Button variant="primary" @click="router.push({ name: 'admin-product-form', params: { id: 'new' } })">
+                      + Добавить товар
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr class="bg-neutral-50 text-neutral-600 dark:bg-neutral-900/40 dark:text-neutral-300">
             <th class="px-4 py-2 text-left">Название товара</th>
             <th class="px-4 py-2 text-left">Изображение</th>
             <th class="px-4 py-2 text-left">Категории</th>
@@ -77,8 +68,6 @@
               <span v-else-if="sortDateDir === 'asc'">▲</span>
             </th>
           </tr>
-        </thead>
-        <tbody>
           <tr v-for="p in products" :key="p.id" class="border-t dark:border-neutral-800">
             <td class="px-4 py-2">
               <RouterLink
@@ -90,12 +79,24 @@
               <div v-if="p.slug" class="text-xs text-neutral-500">/{{ p.slug }}</div>
             </td>
             <td class="px-4 py-2">
-              <div class="h-12 w-12 overflow-hidden rounded bg-neutral-100 dark:bg-neutral-800">
+              <div class="h-12 w-12 overflow-hidden rounded bg-neutral-100 ">
                 <img v-if="firstImageUrl(p)" :src="firstImageUrl(p) || undefined" class="h-full w-full object-cover" alt="" />
               </div>
             </td>
             <td class="px-4 py-2">
-              <span v-if="p.categoryNames && p.categoryNames.length > 0">{{ p.categoryNames.join(', ') }}</span>
+              <div v-if="p.categoryNames && p.categoryNames.length > 0">
+                <ScrollAreaRoot type="auto" class="relative overflow-hidden h-20 w-full">
+                  <ScrollAreaViewport class="pr-2 w-full h-full">
+                    <ul class="list-none m-0 p-0">
+                      <li v-for="(name, idx) in p.categoryNames" :key="idx">{{ name }}</li>
+                    </ul>
+                  </ScrollAreaViewport>
+                  <ScrollAreaScrollbar orientation="vertical" class="w-3">
+                    <ScrollAreaThumb class="bg-neutral-300 dark:bg-neutral-700 rounded-full" />
+                  </ScrollAreaScrollbar>
+                  <ScrollAreaCorner />
+                </ScrollAreaRoot>
+              </div>
               <span v-else>—</span>
             </td>
             <td class="px-4 py-2">
@@ -181,9 +182,10 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { ref as vueRef } from 'vue'
 import { httpClient } from '@admin/services/http'
 import { getPaginationConfig } from '@admin/services/config'
-import { ToastDescription, ToastRoot } from 'reka-ui'
+import { ToastDescription, ToastRoot, ScrollAreaRoot, ScrollAreaScrollbar, ScrollAreaThumb, ScrollAreaViewport, ScrollAreaCorner } from 'reka-ui'
 import ConfirmDialog from '@admin/components/ConfirmDialog.vue'
 import Pagination from '@admin/ui/components/Pagination.vue'
+import Button from '@admin/ui/components/Button.vue'
 import { useCrud } from '@admin/composables/useCrud'
 import { ProductRepository, type ProductDto } from '@admin/repositories/ProductRepository'
 import Modal from '@admin/ui/components/Modal.vue'

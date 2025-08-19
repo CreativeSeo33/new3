@@ -117,4 +117,70 @@ export const adminRoutes: RouteRecordRaw[] = [
   }
 ];
 
+// Навигация сайдбара: поддержка вложенных групп
+export type AdminSidebarLink = {
+  to: { name: string } | string;
+  label: string;
+  colorClass?: string;
+};
+
+export type AdminSidebarGroup = {
+  label: string;
+  icon?: string;
+  children: AdminSidebarLink[];
+};
+
+export type AdminSidebarItem = AdminSidebarLink | AdminSidebarGroup;
+
+export function isGroup(item: AdminSidebarItem): item is AdminSidebarGroup {
+  return (item as AdminSidebarGroup).children !== undefined;
+}
+
+export const adminSidebarItems: AdminSidebarItem[] = [
+  {
+    to: { name: 'admin-dashboard' },
+    label: 'Дашборд',
+    colorClass: 'bg-blue-500'
+  },
+  { to: { name: 'admin-products' }, label: 'Товары', colorClass: 'bg-emerald-500' },
+  { to: { name: 'admin-categories' }, label: 'Категории', colorClass: 'bg-cyan-500' },
+  {
+    label: 'Атрибуты',
+    children: [
+      { to: { name: 'admin-attributes' }, label: 'Атрибуты', colorClass: 'bg-violet-500' },
+      { to: { name: 'admin-attribute-groups' }, label: 'Группы атрибутов', colorClass: 'bg-fuchsia-500' }
+    ]
+  },
+  {
+    label: 'Опции',
+    children: [
+      { to: { name: 'admin-options' }, label: 'Опции', colorClass: 'bg-rose-500' },
+      { to: { name: 'admin-option-values' }, label: 'Значения опций', colorClass: 'bg-sky-500' }
+    ]
+  },
+  {
+    label: 'Доставка',
+    children: [
+      { to: { name: 'admin-cities' }, label: 'Города', colorClass: 'bg-lime-500' },
+      { to: { name: 'admin-pvz-points' }, label: 'PVZ точки', colorClass: 'bg-orange-500' },
+      { to: { name: 'admin-pvz-prices' }, label: 'PVZ цены', colorClass: 'bg-orange-400' },
+      { to: { name: 'admin-delivery-types' }, label: 'Типы доставок', colorClass: 'bg-teal-500' }
+    ]
+  },
+  {
+    label: 'Система',
+    children: [
+      { to: { name: 'admin-settings' }, label: 'Настройки', colorClass: 'bg-emerald-700' },
+      { to: { name: 'admin-order-statuses' }, label: 'Статусы заказов', colorClass: 'bg-indigo-500' },
+      { to: { name: 'admin-design-system' }, label: 'Design System', colorClass: 'bg-amber-500' },
+      { to: { name: 'admin-users' }, label: 'Пользователи', colorClass: 'bg-slate-500' }
+    ]
+  }
+];
+
+// Обратная совместимость: плоский список ссылок формируется из групп
+export const adminSidebarLinks: AdminSidebarLink[] = adminSidebarItems.flatMap((item) =>
+  isGroup(item) ? item.children : [item]
+);
+
 

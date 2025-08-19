@@ -20,7 +20,7 @@
 import { computed } from 'vue'
 import { cn } from '@admin/utils/cn'
 
-type Variant = 'default' | 'secondary' | 'ghost' | 'destructive' | 'outline'
+type Variant = 'default' | 'primary' | 'secondary' | 'ghost' | 'destructive' | 'outline'
 type Size = 'sm' | 'md' | 'lg' | 'icon'
 
 const props = withDefaults(defineProps<{
@@ -39,6 +39,7 @@ const base = 'inline-flex items-center justify-center whitespace-nowrap rounded-
 
 const variants: Record<Variant, string> = {
   default: 'shadow-theme-xs inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-3 text-sm font-medium text-gray-700 ring-1 ring-gray-300 transition hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:ring-gray-700 dark:hover:bg-white/[0.03]',
+  primary: 'bg-brand-500 shadow-theme-xs hover:bg-brand-600 inline-flex items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-medium text-white transition',
   secondary: 'bg-brand-500 shadow-theme-xs hover:bg-brand-600 inline-flex items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-medium text-white transition',
   ghost: 'bg-transparent hover:bg-accent hover:text-accent-foreground',
   destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',

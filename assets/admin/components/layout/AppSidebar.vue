@@ -7,132 +7,102 @@
       <span class="text-base font-semibold">Admin</span>
     </div>
     <nav class="p-3 space-y-1">
-      <router-link
-        to="/dashboard"
-        class="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
-        active-class="bg-gray-100 text-slate-900"
-      >
-        <span class="inline-block w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-        Дашборд
-      </router-link>
-      <router-link
-        to="/products"
-        class="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
-        active-class="bg-gray-100 text-slate-900"
-      >
-        <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-        Товары
-      </router-link>
-      <router-link
-        to="/categories"
-        class="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
-        active-class="bg-gray-100 text-slate-900"
-      >
-        <span class="inline-block w-1.5 h-1.5 rounded-full bg-cyan-500"></span>
-        Категории
-      </router-link>
-      <router-link
-        to="/attributes"
-        class="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
-        active-class="bg-gray-100 text-slate-900"
-      >
-        <span class="inline-block w-1.5 h-1.5 rounded-full bg-violet-500"></span>
-        Атрибуты
-      </router-link>
-      <router-link
-        to="/attribute-groups"
-        class="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
-        active-class="bg-gray-100 text-slate-900"
-      >
-        <span class="inline-block w-1.5 h-1.5 rounded-full bg-fuchsia-500"></span>
-        Группы атрибутов
-      </router-link>
-      <router-link
-        to="/options"
-        class="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
-        active-class="bg-gray-100 text-slate-900"
-      >
-        <span class="inline-block w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-        Опции
-      </router-link>
-      <router-link
-        to="/design-system"
-        class="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
-        active-class="bg-gray-100 text-slate-900"
-      >
-        <span class="inline-block w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-        Design System
-      </router-link>
-      <router-link
-        to="/option-values"
-        class="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
-        active-class="bg-gray-100 text-slate-900"
-      >
-        <span class="inline-block w-1.5 h-1.5 rounded-full bg-sky-500"></span>
-        Значения опций
-      </router-link>
-      <router-link
-        to="/settings"
-        class="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
-        active-class="bg-gray-100 text-slate-900"
-      >
-        <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-700"></span>
-        Настройки
-      </router-link>
-      <router-link
-        to="/users"
-        class="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
-        active-class="bg-gray-100 text-slate-900"
-      >
-        <span class="inline-block w-1.5 h-1.5 rounded-full bg-slate-500"></span>
-        Пользователи
-      </router-link>
-      <router-link
-        to="/cities"
-        class="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
-        active-class="bg-gray-100 text-slate-900"
-      >
-        <span class="inline-block w-1.5 h-1.5 rounded-full bg-lime-500"></span>
-        Города
-      </router-link>
-      <router-link
-        to="/pvz-points"
-        class="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
-        active-class="bg-gray-100 text-slate-900"
-      >
-        <span class="inline-block w-1.5 h-1.5 rounded-full bg-orange-500"></span>
-        Города Цены
-      </router-link>
-      <router-link
-        to="/pvz-prices"
-        class="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
-        active-class="bg-gray-100 text-slate-900"
-      >
-        <span class="inline-block w-1.5 h-1.5 rounded-full bg-orange-400"></span>
-        PVZ Цены
-      </router-link>
-      <router-link
-        to="/delivery-types"
-        class="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
-        active-class="bg-gray-100 text-slate-900"
-      >
-        <span class="inline-block w-1.5 h-1.5 rounded-full bg-teal-500"></span>
-        Типы доставок
-      </router-link>
-      <router-link
-        to="/order-statuses"
-        class="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
-        active-class="bg-gray-100 text-slate-900"
-      >
-        <span class="inline-block w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
-        Статусы заказов
-      </router-link>
+      <template v-for="item in items" :key="getItemKey(item)">
+        <router-link
+          v-if="!isGroup(item)"
+          :to="item.to"
+          class="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-100 transition-colors"
+          active-class="bg-gray-100 text-slate-900"
+        >
+    
+          {{ item.label }}
+        </router-link>
+
+        <div v-else class="space-y-1">
+          <button
+            @click="toggleGroup(item.label)"
+            class="w-full flex items-center justify-between gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-100 transition-colors"
+            :class="{ 'bg-gray-50': expandedGroups.has(item.label) }"
+          >
+            <span class="flex items-center gap-3">
+              
+              {{ item.label }}
+            </span>
+            <svg
+              class="w-4 h-4 transition-transform duration-200"
+              :class="{ 'rotate-90': expandedGroups.has(item.label) }"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+
+          <div v-show="expandedGroups.has(item.label)" class="ml-4 space-y-1 border-l border-gray-200 pl-4">
+            <router-link
+              v-for="child in item.children"
+              :key="typeof child.to === 'string' ? child.to : child.to.name"
+              :to="child.to"
+              class="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-100 transition-colors"
+              active-class="bg-gray-100 text-slate-900"
+            >
+              
+              {{ child.label }}
+            </router-link>
+          </div>
+        </div>
+      </template>
     </nav>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted, watch } from 'vue';
+import { useRoute } from 'vue-router';
+import type { AdminSidebarItem } from '@admin/router/modules/admin';
+import { adminSidebarItems, isGroup } from '@admin/router/modules/admin';
+
 defineProps<{ open: boolean }>();
+
+const route = useRoute();
+const items: AdminSidebarItem[] = adminSidebarItems;
+const expandedGroups = ref<Set<string>>(new Set());
+
+function getItemKey(item: AdminSidebarItem): string {
+  if (isGroup(item)) return `group-${item.label}`;
+  return typeof item.to === 'string' ? item.to : item.to.name;
+}
+
+function toggleGroup(groupLabel: string) {
+  const next = new Set(expandedGroups.value);
+  if (next.has(groupLabel)) next.delete(groupLabel); else next.add(groupLabel);
+  expandedGroups.value = next;
+}
+
+function expandActiveGroup() {
+  const currentRouteName = route.name as string | undefined;
+  if (!currentRouteName) return;
+  const next = new Set(expandedGroups.value);
+  for (const item of items) {
+    if (isGroup(item)) {
+      const hasActiveChild = item.children.some((child) => {
+        const name = typeof child.to === 'string' ? child.to : child.to.name;
+        return name === currentRouteName;
+      });
+      if (hasActiveChild) next.add(item.label);
+    }
+  }
+  expandedGroups.value = next;
+}
+
+onMounted(() => {
+  expandActiveGroup();
+});
+
+watch(() => route.name, () => {
+  expandActiveGroup();
+});
 </script>
 
 <style scoped>
