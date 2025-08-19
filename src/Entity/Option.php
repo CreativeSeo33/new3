@@ -34,7 +34,7 @@ use App\Api\Processor\DeleteOptionRestrictProcessor;
     denormalizationContext: ['groups' => ['options_only:post']],
 )]
 /** не хватает attributes={"order"={"sortOrder": "ASC"}} */
-#[ORM\Table(name: '`option`')]
+#[ORM\Table(name: '`option`', indexes: [new ORM\Index(name: 'option_sort_order_idx', columns: ['sort_order'])])]
 #[ORM\Entity(repositoryClass: OptionRepository::class)]
 class Option
 {

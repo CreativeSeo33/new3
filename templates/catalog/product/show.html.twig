@@ -44,6 +44,33 @@
             <span>Купить</span>
           </button>
         </div>
+
+        {% if product.optionAssignments is defined and product.optionAssignments|length > 0 %}
+          <div class="mt-6">
+            <div class="mb-2 text-sm font-medium">Опции</div>
+            {% set items = product.optionAssignments|sort((a,b) => (a.option.sortOrder <=> b.option.sortOrder) ?: ((a.sortOrder ?? 2147483647) <=> (b.sortOrder ?? 2147483647))) %}
+            <ul class="space-y-1 text-sm text-gray-800">
+              {% for a in items %}
+                <li>
+                  <span class="font-medium">{{ a.option.name ?? ('Опция #' ~ a.option.id) }}</span>:
+                  <span>{{ a.value.value ?? ('Значение #' ~ a.value.id) }}</span>
+                  {% set parts = [] %}
+                  {% if a.height is not null %}{% set parts = parts|merge(['Высота: ' ~ a.height]) %}{% endif %}
+                  {% if a.bulbsCount is not null %}{% set parts = parts|merge(['Лампочек: ' ~ a.bulbsCount]) %}{% endif %}
+                  {% if a.sku %}{% set parts = parts|merge(['Артикул: ' ~ a.sku]) %}{% endif %}
+                  {% if a.originalSku %}{% set parts = parts|merge(['Ориг. артикул: ' ~ a.originalSku]) %}{% endif %}
+                  {% if a.price is not null %}{% set parts = parts|merge(['Цена: ' ~ a.price]) %}{% endif %}
+                  {% if a.salePrice is not null %}{% set parts = parts|merge(['Со скидкой: ' ~ a.salePrice]) %}{% endif %}
+                  {% if a.lightingArea is not null %}{% set parts = parts|merge(['Площадь освещения: ' ~ a.lightingArea]) %}{% endif %}
+                  {% if a.quantity is not null %}{% set parts = parts|merge(['Кол-во: ' ~ a.quantity]) %}{% endif %}
+                  {% if parts|length %}
+                    — <span class="text-gray-500">{{ parts|join(', ') }}</span>
+                  {% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
       </div>
     </div>
   </div>

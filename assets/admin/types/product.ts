@@ -11,7 +11,7 @@ export interface ProductFormModel {
   h1: string
   sortOrder: number | null
   optionsJson: ProductOptionConfig[] | null
-  optionAssignments?: ProductOptionValueAssignment[] | null
+  optionAssignments: ProductOptionValueAssignment[] | null
 }
 
 export interface ProductTab {
