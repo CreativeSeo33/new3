@@ -17,6 +17,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Patch;
+use App\Api\Processor\DeleteOptionRestrictProcessor;
 
 #[ApiResource(
     order: ['sortOrder' => 'ASC'],
@@ -25,7 +26,7 @@ use ApiPlatform\Metadata\Patch;
         new Patch(
             denormalizationContext: ['groups' => ['options_only:patch']]
         ),
-        new Delete(),
+        new Delete(processor: DeleteOptionRestrictProcessor::class),
         new Post(),
         new GetCollection()
     ],
@@ -50,6 +51,10 @@ class Option
     #[ORM\Column(type: 'integer')]
     #[Groups(['options_only:get', 'product:get', 'options_only:patch', 'options_only:post', 'options_only:getCollection'])]
     private int $sortOrder;
+
+    #[ORM\Column(type: 'string', length: 100, unique: true, nullable: true)]
+    #[Groups(['options_only:get', 'product:read', 'options_only:patch', 'options_only:post', 'options_only:getCollection'])]
+    private ?string $code = null;
 
     #[ORM\OneToMany(targetEntity: OptionValue::class, mappedBy: 'optionType')]
     #[Groups(['options_only:getCollection'])]
@@ -91,6 +96,17 @@ class Option
         return $this;
     }
 
+    public function getCode(): ?string
+    {
+        return $this->code;
+    }
+
+    public function setCode(string $code): self
+    {
+        $this->code = strtolower($code);
+        return $this;
+    }
+
     /**
      * @return Collection|OptionValue[]
      */
@@ -113,10 +129,7 @@ class Option
     {
         if ($this->optionValues->contains($optionValue)) {
             $this->optionValues->removeElement($optionValue);
-            // set the owning side to null (unless already changed)
-            if ($optionValue->getOptionType() === $this) {
-                $optionValue->setOptionType(null);
-            }
+            // owning side теперь non-nullable, оставляем как есть; удаление значения должно идти отдельно
         }
 
         return $this;

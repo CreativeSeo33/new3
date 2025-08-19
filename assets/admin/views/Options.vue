@@ -189,11 +189,20 @@ function confirmDelete(id: number) {
 }
 async function performDelete() {
   if (pendingDeleteId.value == null) return
-  await crud.remove(pendingDeleteId.value)
-  rows.value = rows.value.filter(r => r.id !== pendingDeleteId.value!)
-  publishToast('Опция удалена')
-  pendingDeleteId.value = null
-  deleteOpen.value = false
+  try {
+    await crud.remove(pendingDeleteId.value)
+    rows.value = rows.value.filter(r => r.id !== pendingDeleteId.value!)
+    publishToast('Опция удалена')
+    pendingDeleteId.value = null
+    deleteOpen.value = false
+  } catch (err: any) {
+    // 409 Conflict от бэкенда нормализуется в Error с сообщением
+    const backendMsg = err?.message ? String(err.message) : ''
+    const friendly = 'Нельзя удалить опцию: есть значения опций, привязанные к этой опции (или есть назначения в товарах).'
+    const msg = backendMsg && /нельзя удалить опцию/i.test(backendMsg) ? backendMsg : friendly
+    crud.setError(msg)
+    publishToast(msg)
+  }
 }
 </script>
 

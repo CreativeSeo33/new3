@@ -65,9 +65,10 @@ export class HttpClient {
       },
       (error) => {
         if (error?.config && !isStreamRequest(error.config)) {
-          // По ТЗ: при ошибке спиннер НЕ скрываем.
-          // Чтобы скрывать и при ошибке, раскомментируйте строку ниже:
-          // uiLoading.stopGlobalLoading()
+          // По умолчанию при ошибке спиннер оставляем видимым, но для 409 — скрываем
+          if (error?.response?.status === 409) {
+            uiLoading.stopGlobalLoading()
+          }
         }
         if (error.response?.status === 401) {
           this.handleUnauthorized();

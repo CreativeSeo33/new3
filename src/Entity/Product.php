@@ -8,6 +8,7 @@ use ApiPlatform\Metadata\ApiFilter;
 
 use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Doctrine\Orm\Filter\RangeFilter;
 use ApiPlatform\Doctrine\Orm\Filter\BooleanFilter;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
@@ -29,6 +30,7 @@ use App\Entity\ProductSeo;
 use App\Entity\Embeddable\ProductPrice;
 use App\Entity\Embeddable\ProductTimestamps;
 use App\Entity\Manufacturer;
+use App\Entity\ProductOptionValueAssignment;
 
 #[ORM\Entity(repositoryClass: ProductRepository::class)]
 #[ORM\Index(columns: ["name"], name: 'name')]
@@ -63,6 +65,16 @@ use App\Entity\Manufacturer;
 #[ApiFilter(BooleanFilter::class,
     properties: ['status' => 'exact']
 )]
+#[ApiFilter(RangeFilter::class, properties: [
+    'optionAssignments.height',
+    'optionAssignments.price',
+    'optionAssignments.bulbsCount',
+    'optionAssignments.lightingArea'
+])]
+#[ApiFilter(SearchFilter::class, properties: [
+    'optionAssignments.option.code' => 'exact',
+    'optionAssignments.value.code' => 'exact'
+])]
 class Product
 {
 
@@ -159,6 +171,11 @@ class Product
     #[OrderBy(['sort' => 'ASC'])]
     private Collection $carousels;
 
+    #[ORM\OneToMany(mappedBy: 'product', targetEntity: ProductOptionValueAssignment::class, cascade: ['persist', 'remove'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
+    #[OrderBy(['id' => 'ASC'])]
+    #[Groups(['product:read', 'product:create', 'product:update'])]
+    private Collection $optionAssignments;
+
     public function __construct()
     {
         $this->productAttributeGroups = new ArrayCollection();
@@ -167,6 +184,7 @@ class Product
         $this->carousels = new ArrayCollection();
         $this->pricing = new ProductPrice();
         $this->timestamps = new ProductTimestamps();
+        $this->optionAssignments = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -589,6 +607,51 @@ class Product
         }
 
         return $this;
+    }
+
+    /**
+     * @return Collection|ProductOptionValueAssignment[]
+     */
+    public function getOptionAssignments(): Collection
+    {
+        return $this->optionAssignments;
+    }
+
+    public function addOptionAssignment(ProductOptionValueAssignment $assignment): self
+    {
+        if (!$this->optionAssignments->contains($assignment)) {
+            $this->optionAssignments[] = $assignment;
+            $assignment->setProduct($this);
+        }
+        return $this;
+    }
+
+    public function removeOptionAssignment(ProductOptionValueAssignment $assignment): self
+    {
+        $this->optionAssignments->removeElement($assignment);
+        return $this;
+    }
+
+    #[Groups(['product:read'])]
+    public function getOptionsStructured(): array
+    {
+        $out = [];
+        foreach ($this->optionAssignments as $a) {
+            $optCode = $a->getOption()->getCode();
+            $out[$optCode][] = [
+                'optionCode'    => $optCode,
+                'optionName'    => $a->getOption()->getName(),
+                'valueCode'     => $a->getValue()->getCode(),
+                'value'         => $a->getValue()->getValue(),
+                'height'        => $a->getHeight(),
+                'price'         => $a->getPrice(),
+                'bulbs_count'   => $a->getBulbsCount(),
+                'lighting_area' => $a->getLightingArea(),
+                'sku'           => $a->getSku(),
+                'attributes'    => $a->getAttributes(),
+            ];
+        }
+        return $out;
     }
 
 }

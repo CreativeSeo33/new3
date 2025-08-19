@@ -29,6 +29,7 @@ services:
 
     # Doctrine entity listener as service (attributes already present, but ensure service is public)
     App\Doctrine\Listener\ProductEntityListener: ~
+    App\Doctrine\Listener\OptionEntityListener: ~
 
     # Remove Intervention Image wiring (migrated to LiipImagine)
 

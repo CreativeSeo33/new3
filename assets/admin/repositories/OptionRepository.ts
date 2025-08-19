@@ -5,6 +5,7 @@ export interface Option extends ApiResource {
   id: number;
   name: string | null;
   sortOrder?: number | null;
+  code?: string | null;
 }
 
 export class OptionRepository extends BaseRepository<Option> {

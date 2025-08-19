@@ -41,7 +41,7 @@
                   @change="() => saveRow(row)"
                 >
                   <option :value="''">Без опции</option>
-                  <option v-for="o in optionsSorted" :key="o.id" :value="o['@id']">{{ o.name || `Опция #${o.id}` }}</option>
+                  <option v-for="o in optionsSorted" :key="o.id" :value="o['@id']">{{ o.name || `Опция #${o.id}` }}<span v-if="(o as any).code"> ({{ (o as any).code }})</span></option>
                 </select>
               </td>
               <td class="px-4 py-2">
@@ -223,6 +223,12 @@ async function saveRow(row: EditableRow) {
     sortOrder: row.sortOrderProxy === '' ? 0 : Number(row.sortOrderProxy),
     optionType: row.optionIriProxy || null,
   }
+  if (row.optionIriProxy) {
+    const opt = optionsSorted.value.find(o => (o as any)['@id'] === row.optionIriProxy)
+    if (opt && (opt as any).code) {
+      ;(payload as any).code = String((opt as any).code)
+    }
+  }
   await crud.update(row.id, payload)
   publishToast('Сохранено')
 }
@@ -240,6 +246,13 @@ async function createSubmit() {
       value: createForm.value.trim(),
       optionType: createForm.optionIri || null,
       sortOrder: createForm.sortOrderStr === '' ? 0 : Number(createForm.sortOrderStr),
+      ...(function() {
+        if (createForm.optionIri) {
+          const opt = optionsSorted.value.find(o => (o as any)['@id'] === createForm.optionIri)
+          if (opt && (opt as any).code) return { code: String((opt as any).code) } as any
+        }
+        return {}
+      })(),
     } as Partial<OptionValue>)
     syncRows()
     openCreate.value = false

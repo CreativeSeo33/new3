@@ -29,6 +29,17 @@ final class OptionRepository extends ServiceEntityRepository
             $this->_em->flush();
         }
     }
+
+    public function codeExists(string $code): bool
+    {
+        return (bool) $this->createQueryBuilder('o')
+            ->select('1')
+            ->andWhere('o.code = :code')
+            ->setParameter('code', $code)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
 }
 
 

@@ -190,6 +190,7 @@ export function useCrud<T extends ApiResource>(repository: BaseRepository<T>) {
 
   return {
     state: readonly(state),
+    setError,
     hasItems,
     hasNextPage,
     hasPrevPage,
