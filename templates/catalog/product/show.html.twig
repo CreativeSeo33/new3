@@ -72,7 +72,13 @@
           </div>
         {% endif %}
 
-        
+        {# Debug коллекции атрибутов товара #}
+        {% if app.debug %}
+          <div class="mt-4 p-3 rounded border border-yellow-300 bg-yellow-50 text-xs text-yellow-900">
+            <div class="font-medium mb-1">DEBUG: product.productAttributeGroups</div>
+            {{ dump(product.productAttributeGroups) }}
+          </div>
+        {% endif %}
 
         {# Характеристики товара (атрибуты) #}
         {% set attr_items = [] %}
