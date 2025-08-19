@@ -67,6 +67,12 @@ export const adminRoutes: RouteRecordRaw[] = [
         meta: { requiresAuth: true }
       },
       {
+        path: 'settings',
+        name: 'admin-settings',
+        component: () => import(/* webpackChunkName: "admin-settings" */ '@admin/views/Settings.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
         path: 'users',
         name: 'admin-users',
         component: () => import(/* webpackChunkName: "admin-users" */ '@admin/views/Users.vue'),
