@@ -51,6 +51,11 @@ class ProductAttribute
     #[Groups(['product_attribute:post', 'product:get', 'product:post'])]
     private ?Attribute $attribute = null;
 
+    #[ORM\ManyToOne(targetEntity: Product::class, inversedBy: 'productAttributes')]
+    #[ORM\JoinColumn(onDelete: 'CASCADE', nullable: true)]
+    #[Groups(['product:get', 'product:post'])]
+    private ?Product $product = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -89,6 +94,17 @@ class ProductAttribute
     {
         $this->attribute = $attribute;
 
+        return $this;
+    }
+
+    public function getProduct(): ?Product
+    {
+        return $this->product;
+    }
+
+    public function setProduct(?Product $product): self
+    {
+        $this->product = $product;
         return $this;
     }
 

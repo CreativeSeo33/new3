@@ -72,30 +72,21 @@
           </div>
         {% endif %}
 
-        {# Debug коллекции атрибутов товара #}
-        {% if app.debug %}
-          <div class="mt-4 p-3 rounded border border-yellow-300 bg-yellow-50 text-xs text-yellow-900">
-            <div class="font-medium mb-1">DEBUG: product.productAttributeGroups</div>
-            {{ dump(product.productAttributeGroups) }}
-          </div>
-        {% endif %}
-
-        {# Характеристики товара (атрибуты) #}
+        {# Характеристики товара (атрибуты) по прямой связи #}
         {% set attr_items = [] %}
-        {% for pag in product.productAttributeGroups %}
-          {% for pa in pag.attribute %}
-            {% set attr_name = pa.attribute ? (pa.attribute.name ?? ('Атрибут #' ~ (pa.attribute.id ?? ''))) : 'Атрибут' %}
-            {% set attr_value = pa.text %}
-            {% set gsort = pag.attributeGroup ? (pag.attributeGroup.sortOrder ?? 2147483647) : 2147483647 %}
-            {% set asort = pa.attribute ? (pa.attribute.sortOrder ?? 2147483647) : 2147483647 %}
-            {% set attr_items = attr_items|merge([{
-              name: attr_name,
-              value: attr_value,
-              group: pag.attributeGroup ? (pag.attributeGroup.name ?? null) : null,
-              gsort: gsort,
-              asort: asort
-            }]) %}
-          {% endfor %}
+        {% for pa in product.productAttributes %}
+          {% set attr_name = pa.attribute ? (pa.attribute.name ?? ('Атрибут #' ~ (pa.attribute.id ?? ''))) : 'Атрибут' %}
+          {% set attr_value = pa.text %}
+          {% set gsort = pa.productAttributeGroup and pa.productAttributeGroup.attributeGroup ? (pa.productAttributeGroup.attributeGroup.sortOrder ?? 2147483647) : 2147483647 %}
+          {% set asort = pa.attribute ? (pa.attribute.sortOrder ?? 2147483647) : 2147483647 %}
+          {% set groupName = pa.productAttributeGroup and pa.productAttributeGroup.attributeGroup ? (pa.productAttributeGroup.attributeGroup.name ?? null) : null %}
+          {% set attr_items = attr_items|merge([{
+            name: attr_name,
+            value: attr_value,
+            group: groupName,
+            gsort: gsort,
+            asort: asort
+          }]) %}
         {% endfor %}
         {% if attr_items|length > 0 %}
           {% set sorted_attrs = attr_items|sort((a,b) => (a.gsort <=> b.gsort) ?: (a.asort <=> b.asort) ?: (a.name <=> b.name)) %}

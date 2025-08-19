@@ -137,6 +137,10 @@ class Product
     #[Groups(['product:read', 'product:create'])]
     private Collection $productAttributeGroups;
 
+    #[ORM\OneToMany(mappedBy: 'product', targetEntity: ProductAttribute::class, cascade: ['persist', 'remove'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
+    #[Groups(['product:read'])]
+    private Collection $productAttributes;
+
     #[ORM\OneToMany(mappedBy: 'product', targetEntity: ProductToCategory::class, cascade: ['persist', 'remove'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
     #[Groups(['product:read', 'product:create'])]
     #[ApiFilter(SearchFilter::class,
@@ -179,6 +183,7 @@ class Product
     public function __construct()
     {
         $this->productAttributeGroups = new ArrayCollection();
+        $this->productAttributes = new ArrayCollection();
         $this->category = new ArrayCollection();
         $this->image = new ArrayCollection();
         $this->carousels = new ArrayCollection();
@@ -451,6 +456,34 @@ class Product
             }
         }
 
+        return $this;
+    }
+
+    /**
+     * @return Collection|ProductAttribute[]
+     */
+    public function getProductAttributes(): Collection
+    {
+        return $this->productAttributes;
+    }
+
+    public function addProductAttribute(ProductAttribute $productAttribute): self
+    {
+        if (!$this->productAttributes->contains($productAttribute)) {
+            $this->productAttributes[] = $productAttribute;
+            $productAttribute->setProduct($this);
+        }
+        return $this;
+    }
+
+    public function removeProductAttribute(ProductAttribute $productAttribute): self
+    {
+        if ($this->productAttributes->contains($productAttribute)) {
+            $this->productAttributes->removeElement($productAttribute);
+            if ($productAttribute->getProduct() === $this) {
+                $productAttribute->setProduct(null);
+            }
+        }
         return $this;
     }
 

@@ -20,8 +20,9 @@ final class ProductCatalogController extends AbstractController
     #[Route('/{slug}', name: 'show', requirements: ['slug' => '[a-z0-9\-]+' ], methods: ['GET'])]
     public function show(string $slug, ManagerRegistry $registry, Request $request): Response
     {
+        /** @var \App\Repository\ProductRepository $repository */
         $repository = $registry->getRepository(Product::class);
-        $product = $repository->findOneBy(['slug' => $slug, 'status' => true]);
+        $product = $repository->findOneActiveWithAttributesBySlug($slug);
 
         if ($product === null) {
             throw $this->createNotFoundException('Товар не найден');

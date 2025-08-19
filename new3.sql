@@ -1191,11 +1191,10 @@ INSERT INTO `delivery_type` (`id`, `name`, `code`, `active`, `sort_order`, `is_d
 	(1, 'Пункт выдачи', 'pvz', 1, 1, 1),
 	(2, 'Курьерская доставка', 'courier', 1, 2, 0);
 
--- Дамп данных таблицы new3.doctrine_migration_versions: ~2 rows (приблизительно)
+-- Дамп данных таблицы new3.doctrine_migration_versions: ~0 rows (приблизительно)
 DELETE FROM `doctrine_migration_versions`;
 INSERT INTO `doctrine_migration_versions` (`version`, `executed_at`, `execution_time`) VALUES
-	('DoctrineMigrations\\Version20250819144205', '2025-08-19 14:42:13', 333),
-	('DoctrineMigrations\\Version20250819144535', '2025-08-19 14:45:45', 66);
+	('DoctrineMigrations\\Version20250819154747', '2025-08-19 15:47:58', 81);
 
 -- Дамп данных таблицы new3.manufacturer: ~0 rows (приблизительно)
 DELETE FROM `manufacturer`;
@@ -1254,13 +1253,13 @@ INSERT INTO `product` (`id`, `manufacturer_id`, `name`, `slug`, `sort_order`, `e
 	(6, NULL, 'Люстра 7', 'lyustra-7', 2, 35000, 1, 100, '[{"option": "/api/options/1", "values": [{"label": "Красный", "price": 5000, "value": "/api/option_values/2"}], "multiple": false, "required": false, "priceMode": "delta", "sortOrder": 0, "defaultValues": []}]', '[]', _binary 0x0198ac7bcb0021e87cf1ac9863390625, 'Люстра 7', 35000, NULL, 'RUB', '2025-08-15 06:47:30', '2025-08-19 14:18:41'),
 	(7, NULL, 'Люстра 8', 'lyustra-8', 3, 100900, 1, 100, '[{"option": "/api/options/5", "values": [{"label": "500", "price": 5000, "value": "/api/option_values/4"}], "multiple": false, "required": false, "priceMode": "delta", "sortOrder": 0, "defaultValues": []}]', '[]', _binary 0x0198ac7caba980735f763c2e30d3a06e, '', 100900, NULL, 'RUB', '2025-08-15 06:48:28', '2025-08-19 15:14:33');
 
--- Дамп данных таблицы new3.product_attribute: ~0 rows (приблизительно)
+-- Дамп данных таблицы new3.product_attribute: ~2 rows (приблизительно)
 DELETE FROM `product_attribute`;
-INSERT INTO `product_attribute` (`id`, `product_attribute_group_id`, `attribute_id`, `text`) VALUES
-	(1, 1, 3, '500'),
-	(2, 1, 4, '150');
+INSERT INTO `product_attribute` (`id`, `product_attribute_group_id`, `attribute_id`, `text`, `product_id`) VALUES
+	(1, 1, 3, '500', NULL),
+	(2, 1, 4, '150', NULL);
 
--- Дамп данных таблицы new3.product_attribute_group: ~0 rows (приблизительно)
+-- Дамп данных таблицы new3.product_attribute_group: ~1 rows (приблизительно)
 DELETE FROM `product_attribute_group`;
 INSERT INTO `product_attribute_group` (`id`, `product_id`, `attribute_group_id`) VALUES
 	(1, 7, 1);
