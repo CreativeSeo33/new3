@@ -16,6 +16,7 @@ use App\Repository\AttributeGroupRepository;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 use Doctrine\ORM\Mapping\OrderBy;
+use App\Api\Processor\DeleteAttributeGroupRestrictProcessor;
 
 #[ORM\Entity(repositoryClass: AttributeGroupRepository::class)]
 #[ApiResource(
@@ -23,7 +24,7 @@ use Doctrine\ORM\Mapping\OrderBy;
         new Get(normalizationContext: ['groups' => ['attribute_group:get']]),
         new Patch(denormalizationContext: ['groups' => ['attribute_group:patch']]),
         new Post(denormalizationContext: ['groups' => ['attribute_group:post']]),
-        new Delete(),
+        new Delete(processor: DeleteAttributeGroupRestrictProcessor::class),
         new GetCollection()
     ],
     normalizationContext: ['groups' => ['attribute_group:get']],
@@ -51,7 +52,7 @@ class AttributeGroup
     #[OrderBy(['sortOrder' => 'ASC'])]
     private Collection $attributes;
 
-    #[ORM\OneToMany(mappedBy: 'attributeGroup', targetEntity: ProductAttributeGroup::class, cascade: ['persist', 'remove'])]
+    #[ORM\OneToMany(mappedBy: 'attributeGroup', targetEntity: ProductAttributeGroup::class, cascade: ['persist'])]
     private Collection $productAttributeGroups;
 
     public function __construct()

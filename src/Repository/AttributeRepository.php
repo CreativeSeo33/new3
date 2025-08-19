@@ -13,6 +13,17 @@ final class AttributeRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Attribute::class);
     }
+
+    public function codeExists(string $code): bool
+    {
+        return (bool) $this->createQueryBuilder('a')
+            ->select('1')
+            ->andWhere('a.code = :code')
+            ->setParameter('code', $code)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
 }
 
 

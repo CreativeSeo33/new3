@@ -71,6 +71,39 @@
             </ul>
           </div>
         {% endif %}
+
+        
+
+        {# Характеристики товара (атрибуты) #}
+        {% set attr_items = [] %}
+        {% for pag in product.productAttributeGroups %}
+          {% for pa in pag.attribute %}
+            {% set attr_name = pa.attribute ? (pa.attribute.name ?? ('Атрибут #' ~ (pa.attribute.id ?? ''))) : 'Атрибут' %}
+            {% set attr_value = pa.text %}
+            {% set gsort = pag.attributeGroup ? (pag.attributeGroup.sortOrder ?? 2147483647) : 2147483647 %}
+            {% set asort = pa.attribute ? (pa.attribute.sortOrder ?? 2147483647) : 2147483647 %}
+            {% set attr_items = attr_items|merge([{
+              name: attr_name,
+              value: attr_value,
+              group: pag.attributeGroup ? (pag.attributeGroup.name ?? null) : null,
+              gsort: gsort,
+              asort: asort
+            }]) %}
+          {% endfor %}
+        {% endfor %}
+        {% if attr_items|length > 0 %}
+          {% set sorted_attrs = attr_items|sort((a,b) => (a.gsort <=> b.gsort) ?: (a.asort <=> b.asort) ?: (a.name <=> b.name)) %}
+          <div class="mt-6">
+            <div class="mb-2 text-sm font-medium">Характеристики</div>
+            <ul class="space-y-1 text-sm text-gray-800">
+              {% for it in sorted_attrs %}
+                <li>
+                  <span class="text-gray-500">{{ it.name }}:</span> <span>{{ it.value is not empty ? it.value : '—' }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
       </div>
     </div>
   </div>

@@ -9,6 +9,7 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Patch;
+use App\Api\Processor\DeleteAttributeRestrictProcessor;
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\AttributeRepository;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -20,7 +21,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
         new Get(normalizationContext: ['groups' => ['attribute:get']]),
         new Patch(denormalizationContext: ['groups' => ['attribute:patch']]),
         new Post(),
-        new Delete(),
+        new Delete(processor: DeleteAttributeRestrictProcessor::class),
         new GetCollection()
     ],
     normalizationContext: ['groups' => ['attribute:get']],
@@ -53,9 +54,13 @@ class Attribute
     private ?string $shortName = null;
 
     #[ORM\ManyToOne(targetEntity: AttributeGroup::class, inversedBy: 'attributes', cascade: ['persist'])]
-    #[ORM\JoinColumn(onDelete: 'SET NULL', nullable: true)]
+    #[ORM\JoinColumn(onDelete: 'RESTRICT', nullable: true)]
     #[Groups(['attribute:get', 'attribute:patch', 'attribute:post'])]
     private ?AttributeGroup $attributeGroup = null;
+
+    #[ORM\Column(type: 'string', length: 100, unique: true, nullable: true)]
+    #[Groups(['attribute:get', 'attribute:patch', 'attribute:post'])]
+    private ?string $code = null;
 
     public function getId(): ?int
     {
@@ -114,6 +119,17 @@ class Attribute
     public function setAttributeGroup(?AttributeGroup $attributeGroup): self
     {
         $this->attributeGroup = $attributeGroup;
+        return $this;
+    }
+
+    public function getCode(): ?string
+    {
+        return $this->code;
+    }
+
+    public function setCode(?string $code): self
+    {
+        $this->code = $code !== null ? strtolower($code) : null;
         return $this;
     }
 }

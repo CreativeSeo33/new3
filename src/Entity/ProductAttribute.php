@@ -42,11 +42,12 @@ class ProductAttribute
     private ?string $text = null;
 
     #[ORM\ManyToOne(targetEntity: ProductAttributeGroup::class, inversedBy: 'attribute', cascade: ['persist'])]
-    #[ORM\JoinColumn(onDelete: 'CASCADE', nullable: true)]
+    #[ORM\JoinColumn(onDelete: 'RESTRICT', nullable: true)]
     #[Groups(['product_attribute:post', 'product:post'])]
     private ?ProductAttributeGroup $productAttributeGroup = null;
 
     #[ORM\ManyToOne(targetEntity: Attribute::class)]
+    #[ORM\JoinColumn(onDelete: 'RESTRICT', nullable: false)]
     #[Groups(['product_attribute:post', 'product:get', 'product:post'])]
     private ?Attribute $attribute = null;
 

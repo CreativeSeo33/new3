@@ -215,11 +215,19 @@ function confirmDelete(id: number) {
 }
 async function performDelete() {
   if (pendingDeleteId.value == null) return
-  await crud.remove(pendingDeleteId.value)
-  rows.value = rows.value.filter(r => r.id !== pendingDeleteId.value!)
-  publishToast('Группа удалена')
-  pendingDeleteId.value = null
-  deleteOpen.value = false
+  try {
+    await crud.remove(pendingDeleteId.value)
+    rows.value = rows.value.filter(r => r.id !== pendingDeleteId.value!)
+    publishToast('Группа удалена')
+    pendingDeleteId.value = null
+    deleteOpen.value = false
+  } catch (err: any) {
+    const backendMsg = err?.message ? String(err.message) : ''
+    const friendly = 'Нельзя удалить группу атрибутов: есть связанные атрибуты или привязки к товарам.'
+    const msg = backendMsg && /нельзя удалить группу атрибутов/i.test(backendMsg) ? backendMsg : friendly
+    crud.setError(msg)
+    publishToast(msg)
+  }
 }
 </script>
 

@@ -279,11 +279,19 @@ function confirmDelete(id: number) {
 }
 async function performDelete() {
   if (pendingDeleteId.value == null) return
-  await crud.remove(pendingDeleteId.value)
-  rows.value = rows.value.filter(r => r.id !== pendingDeleteId.value!)
-  publishToast('Атрибут удалён')
-  pendingDeleteId.value = null
-  deleteOpen.value = false
+  try {
+    await crud.remove(pendingDeleteId.value)
+    rows.value = rows.value.filter(r => r.id !== pendingDeleteId.value!)
+    publishToast('Атрибут удалён')
+    pendingDeleteId.value = null
+    deleteOpen.value = false
+  } catch (err: any) {
+    const backendMsg = err?.message ? String(err.message) : ''
+    const friendly = 'Нельзя удалить атрибут: есть использования в товарах.'
+    const msg = backendMsg && /нельзя удалить атрибут/i.test(backendMsg) ? backendMsg : friendly
+    crud.setError(msg)
+    publishToast(msg)
+  }
 }
 </script>
 

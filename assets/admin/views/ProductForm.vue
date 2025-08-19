@@ -108,7 +108,7 @@
       </TabsContent>
 
       <TabsContent value="options" class="pt-6">
-        <ProductOptionAssignments v-model:option-assignments="form.optionAssignments" @toast="publishToast" />
+        <ProductOptionAssignments v-if="activeTab === 'options'" v-model:option-assignments="form.optionAssignments" @toast="publishToast" />
       </TabsContent>
 
       <TabsContent value="photos" class="pt-6">
@@ -146,6 +146,8 @@ import { AttributeGroupRepository } from '@admin/repositories/AttributeGroupRepo
 import { uiLoading } from '@admin/shared/uiLoading'
 import { CategoryRepository, type CategoryDto } from '@admin/repositories/CategoryRepository'
 import { ProductCategoryRepository } from '@admin/repositories/ProductCategoryRepository'
+import { OptionRepository } from '@admin/repositories/OptionRepository'
+import { OptionValueRepository } from '@admin/repositories/OptionValueRepository'
 
 const tabs: ProductTab[] = [
   { value: 'description', label: 'Описание товара' },
@@ -179,6 +181,25 @@ const { saving, error: saveError, saveProduct } = useProductSave()
 const repo = new ProductRepository()
 const categoryRepo = new CategoryRepository()
 const productCategoryRepo = new ProductCategoryRepository()
+// Options bootstrap state
+const optionsPrefetched = ref(false)
+const optionRepo = new OptionRepository()
+const optionValueRepo = new OptionValueRepository()
+async function loadOptionsBootstrap() {
+  if (optionsPrefetched.value) return
+  await optionRepo.findAll({ itemsPerPage: 500, sort: { sortOrder: 'asc', name: 'asc' } })
+  await optionValueRepo.findAll({ itemsPerPage: 1000, sort: { sortOrder: 'asc', value: 'asc' } })
+  const optionIris = new Set<string>()
+  for (const r of (form as any).optionAssignments ?? []) {
+    if (r?.option && typeof r.option === 'string') optionIris.add(r.option)
+  }
+  if (optionIris.size > 0) {
+    await Promise.all(Array.from(optionIris.values()).map((iri) =>
+      optionValueRepo.findAll({ itemsPerPage: 500, sort: { sortOrder: 'asc', value: 'asc' }, filters: { optionType: iri } })
+    ))
+  }
+  optionsPrefetched.value = true
+}
 const toNum = (v: unknown): number | null => {
   if (v === null || v === undefined || v === '') return null
   const n = Number(String(v).trim())
@@ -239,6 +260,8 @@ watch(id, async () => {
   // keep categoryTree and categoriesLoaded; they'll refetch on demand if product differs
   productAttrGroups.value = []
   attributesLoaded.value = false
+  optionsPrefetched.value = false
+  attributesPrefetched.value = false
   await loadIfEditing()
   // если пользователь находится на вкладке, подтянем данные сразу
   if (activeTab.value === 'categories') {
@@ -246,6 +269,8 @@ watch(id, async () => {
     if (!isCreating.value) await loadProductCategories()
   } else if (activeTab.value === 'attributes') {
     if (!isCreating.value) await loadProductAttributes()
+  } else if (activeTab.value === 'options') {
+    if (!optionsPrefetched.value) await loadOptionsBootstrap()
   }
 })
 // reflect activeTab to URL
@@ -373,7 +398,11 @@ watch(activeTab, async (val) => {
     }
   }
   if (val === 'attributes') {
+    await loadAttributesBootstrap()
     if (!isCreating.value && !attributesLoaded.value) await loadProductAttributes()
+  }
+  if (val === 'options') {
+    if (!optionsPrefetched.value) await loadOptionsBootstrap()
   }
 }, { immediate: false })
 
@@ -471,6 +500,15 @@ const productAttributeGroupRepo = new ProductAttributeGroupRepository()
 const productAttributeRepo = new ProductAttributeRepository()
 const attributeRepo = new AttributeRepository()
 const attributeGroupRepo = new AttributeGroupRepository()
+const attributesPrefetched = ref(false)
+async function loadAttributesBootstrap() {
+  if (attributesPrefetched.value) return
+  await Promise.all([
+    attributeGroupRepo.findAllCached(),
+    attributeRepo.findAllCached(),
+  ])
+  attributesPrefetched.value = true
+}
 const attrLoading = ref(false)
 const attributesLoaded = ref(false)
 type ProductAttributeRow = { id: number; attributeName: string; textProxy: string; pagIri: string }
@@ -536,11 +574,17 @@ async function loadProductAttributes() {
     const groupsData = await productAttributeGroupRepo.findAll({ itemsPerPage: 1000, filters: { product: productIri } }) as any
     const groups = (groupsData['hydra:member'] ?? groupsData.member ?? []) as any[]
 
-    // Сопоставим названия групп
+    // Сопоставим названия групп и атрибутов
     const allGroups = await attributeGroupRepo.findAllCached() as any
     const groupsDict = new Map<string, string>()
     for (const g of (allGroups['hydra:member'] ?? allGroups.member ?? [])) {
       groupsDict.set(g['@id'], g.name ?? `Группа ${g.id}`)
+    }
+    const allAttrs = await attributeRepo.findAllCached() as any
+    const attrsDict = new Map<string, string>()
+    for (const a of (allAttrs['hydra:member'] ?? allAttrs.member ?? [])) {
+      const iri = a['@id'] ?? (a.id ? `/api/attributes/${a.id}` : null)
+      if (iri) attrsDict.set(iri, a.name ?? `Атрибут ${a.id}`)
     }
 
     // Загрузим все ProductAttribute по каждому PAG отдельно (надёжно)
@@ -564,8 +608,21 @@ async function loadProductAttributes() {
       const items: ProductAttributeRow[] = []
       const paList = byPag.get(g['@id']) ?? []
       for (const pa of paList) {
-        const attr = typeof pa.attribute === 'object' ? pa.attribute : null
-        const attrName = attr?.name ?? `Атрибут ${String(pa.attribute || '').split('/').pop()}`
+        let attrName = ''
+        if (typeof pa.attribute === 'object') {
+          attrName = String(pa.attribute?.name ?? '')
+        }
+        if (!attrName) {
+          const attrIri = ((): string | null => {
+            if (typeof pa.attribute === 'string') return pa.attribute
+            const id = pa.attribute?.id
+            const iriObj = pa.attribute?.['@id']
+            if (typeof iriObj === 'string') return iriObj
+            if (id != null) return `/api/attributes/${id}`
+            return null
+          })()
+          attrName = (attrIri ? attrsDict.get(attrIri) : undefined) ?? `Атрибут ${String(pa.attribute || '').split('/').pop()}`
+        }
         items.push({ id: Number(pa.id), attributeName: attrName, textProxy: String(pa.text ?? ''), pagIri: g['@id'] })
       }
       rows.push({ groupIri, groupName: String(title), items })

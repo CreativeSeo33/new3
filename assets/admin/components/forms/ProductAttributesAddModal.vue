@@ -48,9 +48,10 @@ const attributes = ref<Attribute[]>([])
 const groups = ref<AttributeGroupDto[]>([])
 
 onMounted(async () => {
+  // Всегда принудительно валидируем кэш, если модал открывается при активном экране товара
   const [attrs, grps] = await Promise.all([
-    attrRepo.findAllCached() as any,
-    groupRepo.findAllCached() as any,
+    attrRepo.findAllCached(true) as any,
+    groupRepo.findAllCached(true) as any,
   ])
   attributes.value = (attrs['hydra:member'] ?? attrs.member ?? []) as Attribute[]
   groups.value = (grps['hydra:member'] ?? grps.member ?? []) as AttributeGroupDto[]
