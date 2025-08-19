@@ -16,6 +16,7 @@ export function useProductForm(initialData?: Partial<ProductFormModel>) {
     h1: '',
     sortOrder: 1,
     optionsJson: [],
+    optionAssignments: [],
     ...initialData,
   })
 

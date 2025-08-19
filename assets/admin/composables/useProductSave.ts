@@ -31,6 +31,22 @@ export function useProductSave() {
         metaDescription: data.metaDescription || null,
         h1: data.h1 || null,
         optionsJson: (data as any).optionsJson ?? null,
+        optionAssignments: Array.isArray((data as any).optionAssignments)
+          ? (data as any).optionAssignments.map((r: any) => ({
+              option: r.option || null,
+              value: r.value || null,
+              height: toInt(r.height),
+              bulbsCount: toInt(r.bulbsCount),
+              sku: r.sku ?? null,
+              originalSku: r.originalSku ?? null,
+              price: toInt(r.price),
+              salePrice: toInt(r.salePrice),
+              lightingArea: toInt(r.lightingArea),
+              sortOrder: toInt(r.sortOrder),
+              quantity: toInt(r.quantity),
+              attributes: r.attributes ?? null,
+            }))
+          : null,
       }
 
       let result: ProductDto

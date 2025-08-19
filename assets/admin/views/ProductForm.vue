@@ -108,7 +108,7 @@
       </TabsContent>
 
       <TabsContent value="options" class="pt-6">
-        <ProductOptions v-model:options-json="form.optionsJson" @toast="publishToast" />
+        <ProductOptionAssignments v-model:option-assignments="form.optionAssignments" @toast="publishToast" />
       </TabsContent>
 
       <TabsContent value="photos" class="pt-6">
@@ -132,7 +132,7 @@ import ProductDescriptionForm from '@admin/components/forms/ProductDescriptionFo
 import ProductCategoryTree from '@admin/components/ProductCategoryTree.vue'
 import ProductPhotos from '@admin/components/forms/ProductPhotos.vue'
 import ProductAttributesAddModal from '@admin/components/forms/ProductAttributesAddModal.vue'
-import ProductOptions from '@admin/components/forms/ProductOptions.vue'
+import ProductOptionAssignments from '@admin/components/forms/ProductOptionAssignments.vue'
 import ConfirmDialog from '@admin/components/ConfirmDialog.vue'
 import { useProductForm } from '@admin/composables/useProductForm'
 import { useProductSave } from '@admin/composables/useProductSave'
@@ -199,6 +199,23 @@ const hydrateForm = (dto: ProductDto) => {
     sortOrder: (dto as any).sortOrder ?? 0,
     optionsJson: Array.isArray((dto as any).optionsJson) ? normalizeOptionsJson((dto as any).optionsJson as any) : [],
   })
+  // map optionAssignments if present
+  ;(form as any).optionAssignments = Array.isArray((dto as any).optionAssignments)
+    ? ((dto as any).optionAssignments as any[]).map((r: any) => ({
+        option: typeof r.option === 'string' ? r.option : r.option?.['@id'] ?? (r.option?.id ? `/api/options/${r.option.id}` : ''),
+        value: typeof r.value === 'string' ? r.value : r.value?.['@id'] ?? (r.value?.id ? `/api/option_values/${r.value.id}` : null),
+        height: toNum(r.height),
+        bulbsCount: toNum(r.bulbsCount),
+        sku: r.sku ?? null,
+        originalSku: r.originalSku ?? null,
+        price: toNum(r.price),
+        salePrice: toNum(r.salePrice),
+        lightingArea: toNum(r.lightingArea),
+        sortOrder: toNum(r.sortOrder),
+        quantity: toNum(r.quantity),
+        attributes: r.attributes ?? null,
+      }))
+    : []
 }
 const loadIfEditing = async () => {
   if (isCreating.value) return

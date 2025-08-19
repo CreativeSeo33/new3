@@ -24,6 +24,20 @@ export interface ProductDto extends ApiResource {
   createdAt?: string | null;
   categoryNames?: string[];
   optionsJson?: any[] | null;
+  optionAssignments?: Array<{
+    option: string;
+    value: string | null;
+    height: number | null;
+    bulbsCount: number | null;
+    sku: string | null;
+    originalSku?: string | null;
+    price: number | null;
+    salePrice?: number | null;
+    lightingArea: number | null;
+    sortOrder?: number | null;
+    quantity?: number | null;
+    attributes?: Record<string, any> | null;
+  }> | null;
 }
 
 export class ProductRepository extends BaseRepository<ProductDto> {

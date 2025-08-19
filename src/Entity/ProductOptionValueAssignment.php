@@ -19,7 +19,8 @@ use App\Repository\ProductOptionValueAssignmentRepository;
         new ORM\Index(name: 'idx_pova_height', columns: ['height']),
         new ORM\Index(name: 'idx_pova_price', columns: ['price']),
         new ORM\Index(name: 'idx_pova_bulbs', columns: ['bulbs_count']),
-        new ORM\Index(name: 'idx_pova_area', columns: ['lighting_area'])
+        new ORM\Index(name: 'idx_pova_area', columns: ['lighting_area']),
+        new ORM\Index(name: 'idx_pova_sort', columns: ['sort_order'])
     ]
 )]
 class ProductOptionValueAssignment
@@ -35,37 +36,53 @@ class ProductOptionValueAssignment
 
     #[ORM\ManyToOne(targetEntity: Option::class)]
     #[ORM\JoinColumn(name: 'option_id', referencedColumnName: 'id', nullable: false)]
-    #[Groups(['product:read'])]
+    #[Groups(['product:read', 'product:create', 'product:update'])]
     private Option $option;
 
     #[ORM\ManyToOne(targetEntity: OptionValue::class)]
     #[ORM\JoinColumn(name: 'value_id', referencedColumnName: 'id', nullable: false)]
-    #[Groups(['product:read'])]
+    #[Groups(['product:read', 'product:create', 'product:update'])]
     private OptionValue $value;
 
     #[ORM\Column(type: 'integer', nullable: true)]
-    #[Groups(['product:read'])]
+    #[Groups(['product:read', 'product:create', 'product:update'])]
     private ?int $height = null;
 
     #[ORM\Column(type: 'integer', nullable: true)]
-    #[Groups(['product:read'])]
+    #[Groups(['product:read', 'product:create', 'product:update'])]
     private ?int $price = null;
 
     #[ORM\Column(name: 'bulbs_count', type: 'integer', nullable: true)]
-    #[Groups(['product:read'])]
+    #[Groups(['product:read', 'product:create', 'product:update'])]
     private ?int $bulbsCount = null;
 
     #[ORM\Column(name: 'lighting_area', type: 'integer', nullable: true)]
-    #[Groups(['product:read'])]
+    #[Groups(['product:read', 'product:create', 'product:update'])]
     private ?int $lightingArea = null;
 
     #[ORM\Column(type: 'string', length: 64, nullable: true)]
-    #[Groups(['product:read'])]
+    #[Groups(['product:read', 'product:create', 'product:update'])]
     private ?string $sku = null;
 
     #[ORM\Column(type: Types::JSON, nullable: true)]
-    #[Groups(['product:read'])]
+    #[Groups(['product:read', 'product:create', 'product:update'])]
     private ?array $attributes = [];
+
+    #[ORM\Column(name: 'original_sku', type: 'string', length: 64, nullable: true)]
+    #[Groups(['product:read', 'product:create', 'product:update'])]
+    private ?string $originalSku = null;
+
+    #[ORM\Column(name: 'sale_price', type: 'integer', nullable: true)]
+    #[Groups(['product:read', 'product:create', 'product:update'])]
+    private ?int $salePrice = null;
+
+    #[ORM\Column(name: 'sort_order', type: 'integer', nullable: true)]
+    #[Groups(['product:read', 'product:create', 'product:update'])]
+    private ?int $sortOrder = null;
+
+    #[ORM\Column(name: 'quantity', type: 'integer', nullable: true)]
+    #[Groups(['product:read', 'product:create', 'product:update'])]
+    private ?int $quantity = null;
 
     public function getId(): ?int
     {
@@ -168,6 +185,50 @@ class ProductOptionValueAssignment
     public function setAttributes(?array $attributes): self
     {
         $this->attributes = $attributes;
+        return $this;
+    }
+
+    public function getOriginalSku(): ?string
+    {
+        return $this->originalSku;
+    }
+
+    public function setOriginalSku(?string $originalSku): self
+    {
+        $this->originalSku = $originalSku;
+        return $this;
+    }
+
+    public function getSalePrice(): ?int
+    {
+        return $this->salePrice;
+    }
+
+    public function setSalePrice(?int $salePrice): self
+    {
+        $this->salePrice = $salePrice;
+        return $this;
+    }
+
+    public function getSortOrder(): ?int
+    {
+        return $this->sortOrder;
+    }
+
+    public function setSortOrder(?int $sortOrder): self
+    {
+        $this->sortOrder = $sortOrder;
+        return $this;
+    }
+
+    public function getQuantity(): ?int
+    {
+        return $this->quantity;
+    }
+
+    public function setQuantity(?int $quantity): self
+    {
+        $this->quantity = $quantity;
         return $this;
     }
 }

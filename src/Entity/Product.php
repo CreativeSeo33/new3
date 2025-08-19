@@ -172,7 +172,7 @@ class Product
     private Collection $carousels;
 
     #[ORM\OneToMany(mappedBy: 'product', targetEntity: ProductOptionValueAssignment::class, cascade: ['persist', 'remove'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
-    #[OrderBy(['id' => 'ASC'])]
+    #[OrderBy(['sortOrder' => 'ASC', 'id' => 'ASC'])]
     #[Groups(['product:read', 'product:create', 'product:update'])]
     private Collection $optionAssignments;
 

@@ -11,6 +11,7 @@ export interface ProductFormModel {
   h1: string
   sortOrder: number | null
   optionsJson: ProductOptionConfig[] | null
+  optionAssignments?: ProductOptionValueAssignment[] | null
 }
 
 export interface ProductTab {
@@ -45,6 +46,21 @@ export interface ProductOptionConfig {
   defaultValues?: string[]
   sortOrder: number
   meta?: Record<string, any>
+}
+
+export interface ProductOptionValueAssignment {
+  option: string
+  value: string | null
+  height: number | null
+  bulbsCount: number | null
+  sku: string | null
+  originalSku?: string | null
+  price: number | null
+  salePrice?: number | null
+  lightingArea: number | null
+  sortOrder?: number | null
+  quantity?: number | null
+  attributes?: Record<string, any> | null
 }
 
 

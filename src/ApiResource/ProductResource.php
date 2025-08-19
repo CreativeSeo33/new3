@@ -98,6 +98,10 @@ class ProductResource
     // Options JSON configuration
     #[Groups(['product:read', 'product:write'])]
     public ?array $optionsJson = null;
+
+    // Option assignments (admin editing)
+    #[Groups(['product:read', 'product:write'])]
+    public ?array $optionAssignments = null;
 }
 
 

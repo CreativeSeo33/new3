@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
@@ -26,6 +28,9 @@ use Symfony\Component\Serializer\Annotation\Groups;
         new Delete(processor: DeleteOptionValueRestrictProcessor::class)
     ]
 )]
+#[ApiFilter(SearchFilter::class, properties: [
+    'optionType' => 'exact'
+])]
 #[ORM\Table(
     name: 'option_value',
     uniqueConstraints: [new ORM\UniqueConstraint(name: 'uq_value_code_per_option', columns: ['option_id', 'code'])]

@@ -126,6 +126,24 @@ class ProductStateProvider implements ProviderInterface
         $r->metaKeywords = $entity->getMetaKeywords();
         $r->h1 = $entity->getMetaH1();
         $r->optionsJson = $entity->getOptionsJson();
+        // Include option assignments for admin edit (keeps Doctrine collection order)
+        $r->optionAssignments = [];
+        foreach ($entity->getOptionAssignments() as $a) {
+            $r->optionAssignments[] = [
+                'option' => '/api/options/' . $a->getOption()->getId(),
+                'value' => '/api/option_values/' . $a->getValue()->getId(),
+                'height' => $a->getHeight(),
+                'bulbsCount' => $a->getBulbsCount(),
+                'sku' => $a->getSku(),
+                'originalSku' => $a->getOriginalSku(),
+                'price' => $a->getPrice(),
+                'salePrice' => $a->getSalePrice(),
+                'sortOrder' => $a->getSortOrder(),
+                'quantity' => $a->getQuantity(),
+                'lightingArea' => $a->getLightingArea(),
+                'attributes' => $a->getAttributes(),
+            ];
+        }
         $r->manufacturerId = $entity->getManufacturerRef()?->getId();
         $r->manufacturerName = $entity->getManufacturerRef()?->getName();
         $r->createdAt = $entity->getDateAdded();
