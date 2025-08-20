@@ -171,8 +171,7 @@ const hydrateForm = (dto: ProductDto) => {
     metaTitle: dto.metaTitle ?? '',
     metaDescription: dto.metaDescription ?? '',
     h1: dto.h1 ?? '',
-    sortOrder: (dto as any).sortOrder ?? 0,
-    optionsJson: Array.isArray((dto as any).optionsJson) ? normalizeOptionsJson((dto as any).optionsJson as any) : [],
+    sortOrder: (dto as any).sortOrder ?? 0,    
   })
   // map optionAssignments if present
   ;(form as any).optionAssignments = Array.isArray((dto as any).optionAssignments)
