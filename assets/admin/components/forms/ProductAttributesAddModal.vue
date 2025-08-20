@@ -5,7 +5,7 @@
       <DialogContent class="fixed left-1/2 top-1/2 w-[92vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-md border bg-white p-4 shadow-lg focus:outline-none dark:border-neutral-800 dark:bg-neutral-900">
         <div class="mb-2">
           <DialogTitle class="text-base font-semibold text-neutral-900 dark:text-neutral-100">Добавить атрибут</DialogTitle>
-          <DialogDescription class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">Выберите атрибут из списка</DialogDescription>
+          <DialogDescription class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">Выберите атрибут и введите значение</DialogDescription>
         </div>
 
         <form class="space-y-4" @submit.prevent="submit">
@@ -19,9 +19,14 @@
             </select>
           </label>
 
+          <label class="block text-sm">
+            <span class="mb-1 block text-neutral-600 dark:text-neutral-300">Значение (string)</span>
+            <input v-model="initialValue" type="text" class="h-9 w-full rounded-md border px-2 text-sm dark:border-neutral-800 dark:bg-neutral-900" placeholder="Введите значение" />
+          </label>
+
           <div class="flex justify-end gap-2 pt-2">
             <button type="button" class="h-9 rounded-md px-3 text-sm hover:bg-neutral-100 dark:hover:bg-white/10" @click="open = false">Отмена</button>
-            <button type="submit" class="inline-flex h-9 items-center rounded-md bg-neutral-900 px-3 text-sm font-medium text-white shadow hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100" :disabled="!selected">Добавить</button>
+            <button type="submit" class="inline-flex h-9 items-center rounded-md bg-neutral-900 px-3 text-sm font-medium text-white shadow hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100" :disabled="!canSubmit">Добавить</button>
           </div>
         </form>
       </DialogContent>
@@ -36,10 +41,12 @@ import { AttributeRepository, type Attribute } from '@admin/repositories/Attribu
 import { AttributeGroupRepository, type AttributeGroupDto } from '@admin/repositories/AttributeGroupRepository'
 
 const props = defineProps<{ modelValue: boolean }>()
-const emit = defineEmits<{ 'update:modelValue': [boolean]; add: [attributeIri: string] }>()
+const emit = defineEmits<{ 'update:modelValue': [boolean]; add: [{ attributeIri: string; value: string }] }>()
 
 const open = computed({ get: () => props.modelValue, set: v => emit('update:modelValue', v) })
 const selected = ref<string>('')
+const initialValue = ref<string>('')
+const canSubmit = computed(() => !!selected.value && initialValue.value.trim() !== '')
 
 const attrRepo = new AttributeRepository()
 const groupRepo = new AttributeGroupRepository()
@@ -78,9 +85,10 @@ const groupedOptions = computed(() => {
 })
 
 function submit() {
-  if (!selected.value) return
-  emit('add', selected.value)
+  if (!canSubmit.value) return
+  emit('add', { attributeIri: selected.value, value: initialValue.value.trim() })
   selected.value = ''
+  initialValue.value = ''
   open.value = false
 }
 </script>

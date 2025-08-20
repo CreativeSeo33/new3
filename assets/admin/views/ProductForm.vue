@@ -63,48 +63,7 @@
       </TabsContent>
 
       <TabsContent value="attributes" class="pt-6">
-        <div class="rounded-md border p-4 dark:border-neutral-800">
-          <div class="mb-3 flex items-center justify-between">
-            <div class="text-sm font-medium">Атрибуты</div>
-            <Button size="sm" @click="attrModalOpen = true">Добавить</Button>
-          </div>
-          <div v-if="attrLoading" class="text-sm text-neutral-500">Загрузка…</div>
-          <div v-else class="space-y-6">
-            <div v-for="group in productAttrGroups" :key="group.groupIri || '__no_group__'" class="rounded-md border">
-              <div class="border-b px-3 py-2 text-sm font-medium">{{ group.groupName }}</div>
-              <table class="w-full text-sm">
-                <thead class="bg-neutral-50 text-neutral-600 dark:bg-neutral-900/40 dark:text-neutral-300">
-                  <tr>
-                    <th class="px-3 py-2 text-left">Атрибут</th>
-                    <th class="px-3 py-2 text-left">Значение</th>
-                    <th class="px-3 py-2 text-left w-28">Действия</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="item in group.items" :key="item.id" class="border-t">
-                    <td class="px-3 py-2">{{ item.attributeName }}</td>
-                    <td class="px-3 py-2">
-                      <input
-                        v-model="item.textProxy"
-                        type="text"
-                        class="h-9 w-full rounded-md border px-2 text-sm dark:border-neutral-800 dark:bg-neutral-900"
-                        @blur="() => saveProductAttribute(item)"
-                      />
-                    </td>
-                    <td class="px-3 py-2">
-                      <button type="button" class="h-8 rounded-md bg-red-600 px-2 text-xs font-medium text-white hover:bg-red-700" @click="confirmDeletePA(item.id)">Удалить</button>
-                    </td>
-                  </tr>
-                  <tr v-if="group.items.length === 0">
-                    <td colspan="3" class="px-3 py-6 text-center text-neutral-500">Нет атрибутов</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-        <ProductAttributesAddModal v-if="attrModalOpen" v-model="attrModalOpen" @add="handleAddAttribute" />
-        <ConfirmDialog v-model="deletePAOpen" :title="'Удалить атрибут?'" :description="'Это действие необратимо'" confirm-text="Удалить" :danger="true" @confirm="performDeletePA" />
+        <ProductAttributeAssignments v-if="activeTab === 'attributes'" :product-id="String(id)" :is-creating="isCreating" @toast="publishToast" />
       </TabsContent>
 
       <TabsContent value="options" class="pt-6">
@@ -127,22 +86,17 @@
 import { computed, ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Button from '@admin/ui/components/Button.vue'
-import { DialogContent, DialogOverlay, DialogPortal, DialogRoot, DialogTitle, TabsContent, TabsIndicator, TabsList, TabsRoot, TabsTrigger, ToastDescription, ToastRoot } from 'reka-ui'
+import { TabsContent, TabsIndicator, TabsList, TabsRoot, TabsTrigger, ToastDescription, ToastRoot } from 'reka-ui'
 import ProductDescriptionForm from '@admin/components/forms/ProductDescriptionForm.vue'
 import ProductCategoryTree from '@admin/components/ProductCategoryTree.vue'
 import ProductPhotos from '@admin/components/forms/ProductPhotos.vue'
-import ProductAttributesAddModal from '@admin/components/forms/ProductAttributesAddModal.vue'
+import ProductAttributeAssignments from '@admin/components/forms/ProductAttributeAssignments.vue'
 import ProductOptionAssignments from '@admin/components/forms/ProductOptionAssignments.vue'
-import ConfirmDialog from '@admin/components/ConfirmDialog.vue'
 import { useProductForm } from '@admin/composables/useProductForm'
 import { useProductSave } from '@admin/composables/useProductSave'
 import type { ProductTab } from '@admin/types/product'
 import { ProductRepository, type ProductDto } from '@admin/repositories/ProductRepository'
 // (options UI moved to ProductOptions)
-import { ProductAttributeGroupRepository } from '@admin/repositories/ProductAttributeGroupRepository'
-import { ProductAttributeRepository } from '@admin/repositories/ProductAttributeRepository'
-import { AttributeRepository } from '@admin/repositories/AttributeRepository'
-import { AttributeGroupRepository } from '@admin/repositories/AttributeGroupRepository'
 import { uiLoading } from '@admin/shared/uiLoading'
 import { CategoryRepository, type CategoryDto } from '@admin/repositories/CategoryRepository'
 import { ProductCategoryRepository } from '@admin/repositories/ProductCategoryRepository'
@@ -258,17 +212,14 @@ watch(id, async () => {
   mainCategoryId.value = null
   categoriesInitialized.value = false
   // keep categoryTree and categoriesLoaded; they'll refetch on demand if product differs
-  productAttrGroups.value = []
-  attributesLoaded.value = false
   optionsPrefetched.value = false
-  attributesPrefetched.value = false
   await loadIfEditing()
   // если пользователь находится на вкладке, подтянем данные сразу
   if (activeTab.value === 'categories') {
     if (!categoriesLoaded.value) await loadCategoriesTree()
     if (!isCreating.value) await loadProductCategories()
   } else if (activeTab.value === 'attributes') {
-    if (!isCreating.value) await loadProductAttributes()
+    // handled inside ProductAttributeAssignments
   } else if (activeTab.value === 'options') {
     if (!optionsPrefetched.value) await loadOptionsBootstrap()
   }
@@ -397,10 +348,7 @@ watch(activeTab, async (val) => {
       categoriesInitialized.value = true
     }
   }
-  if (val === 'attributes') {
-    await loadAttributesBootstrap()
-    if (!isCreating.value && !attributesLoaded.value) await loadProductAttributes()
-  }
+  // attributes handled inside ProductAttributeAssignments
   if (val === 'options') {
     if (!optionsPrefetched.value) await loadOptionsBootstrap()
   }
@@ -493,164 +441,6 @@ function publishToast(message: string) {
   toastCount.value++
 }
 const lastToastMessage = ref('')
-
-// Attributes add modal
-const attrModalOpen = ref(false)
-const productAttributeGroupRepo = new ProductAttributeGroupRepository()
-const productAttributeRepo = new ProductAttributeRepository()
-const attributeRepo = new AttributeRepository()
-const attributeGroupRepo = new AttributeGroupRepository()
-const attributesPrefetched = ref(false)
-async function loadAttributesBootstrap() {
-  if (attributesPrefetched.value) return
-  await Promise.all([
-    attributeGroupRepo.findAllCached(),
-    attributeRepo.findAllCached(),
-  ])
-  attributesPrefetched.value = true
-}
-const attrLoading = ref(false)
-const attributesLoaded = ref(false)
-type ProductAttributeRow = { id: number; attributeName: string; textProxy: string; pagIri: string }
-const productAttrGroups = ref<Array<{ groupIri: string | null; groupName: string; items: ProductAttributeRow[] }>>([])
-async function handleAddAttribute(attributeIri: string) {
-  if (isCreating.value) {
-    publishToast('Сначала сохраните товар')
-    return
-  }
-  // 1) найти группу у атрибута
-  const attributeId = Number(attributeIri.split('/').pop())
-  // минимальный GET атрибута
-  const attr = await attributeRepo.findById(attributeId) as any
-  const groupRaw = attr.attributeGroup as any
-  const groupIri: string | null = typeof groupRaw === 'string' ? groupRaw : groupRaw?.['@id'] ?? (groupRaw?.id ? `/api/attribute_groups/${groupRaw.id}` : null)
-
-  // 2) получить/создать ProductAttributeGroup для пары (product, attributeGroup)
-  const productIri = `/api/products/${id.value}`
-  let pag = null as any
-  if (groupIri) {
-    // ищем группу товара с этой группой атрибутов
-    const found = await productAttributeGroupRepo.findAll({ itemsPerPage: 10, filters: { product: productIri, attributeGroup: groupIri } }) as any
-    const member = (found['hydra:member'] ?? found.member ?? [])[0]
-    if (member?.id) {
-      pag = member
-    }
-  }
-  if (!pag) {
-    pag = await productAttributeGroupRepo.create({ product: productIri, attributeGroup: groupIri })
-  }
-
-  // 3) создать ProductAttribute в этой группе
-  await productAttributeRepo.create({ productAttributeGroup: pag['@id'] ?? `/api/product_attribute_groups/${pag.id}`, attribute: attributeIri, text: null })
-  publishToast('Атрибут добавлен к товару')
-  await loadProductAttributes()
-}
-
-// Options (select existing; no CRUD yet)
-// moved options UI/logic into ProductOptions component
-
-// Options helpers and state
-type OptionConfig = { option: string; multiple: boolean; required: boolean; priceMode: 'delta' | 'absolute'; values: Array<{ value: string; label?: string; price?: number | null }>; defaultValues?: string[]; sortOrder: number; meta?: Record<string, any> }
-function normalizeOptionsJson(raw: any[]): OptionConfig[] {
-  const out: OptionConfig[] = []
-  for (const it of (raw || [])) {
-    const option = typeof it.option === 'string' ? it.option : ''
-    const priceMode = it.priceMode === 'absolute' ? 'absolute' : 'delta'
-    const values = Array.isArray(it.values) ? it.values.map((v: any) => ({ value: String(v?.value || ''), label: v?.label ?? undefined, price: toNum(v?.price) })) : []
-    out.push({ option, multiple: !!it.multiple, required: !!it.required, priceMode, values, defaultValues: Array.isArray(it.defaultValues) ? it.defaultValues.map(String) : [], sortOrder: Number(it.sortOrder ?? 0), meta: it.meta && typeof it.meta === 'object' ? it.meta : undefined })
-  }
-  return out
-}
-
-// options logic is encapsulated in ProductOptions
-
-// load existing product attributes grouped
-async function loadProductAttributes() {
-  if (isCreating.value) return
-  attrLoading.value = true
-  try {
-    const productIri = `/api/products/${id.value}`
-    // Загрузим группы для продукта
-    const groupsData = await productAttributeGroupRepo.findAll({ itemsPerPage: 1000, filters: { product: productIri } }) as any
-    const groups = (groupsData['hydra:member'] ?? groupsData.member ?? []) as any[]
-
-    // Сопоставим названия групп и атрибутов
-    const allGroups = await attributeGroupRepo.findAllCached() as any
-    const groupsDict = new Map<string, string>()
-    for (const g of (allGroups['hydra:member'] ?? allGroups.member ?? [])) {
-      groupsDict.set(g['@id'], g.name ?? `Группа ${g.id}`)
-    }
-    const allAttrs = await attributeRepo.findAllCached() as any
-    const attrsDict = new Map<string, string>()
-    for (const a of (allAttrs['hydra:member'] ?? allAttrs.member ?? [])) {
-      const iri = a['@id'] ?? (a.id ? `/api/attributes/${a.id}` : null)
-      if (iri) attrsDict.set(iri, a.name ?? `Атрибут ${a.id}`)
-    }
-
-    // Загрузим все ProductAttribute по каждому PAG отдельно (надёжно)
-    const paBatches = await Promise.all(groups.map(g => productAttributeRepo.findAll({ itemsPerPage: 1000, filters: { productAttributeGroup: g['@id'] } }) as any))
-    const pas: any[] = []
-    for (const b of paBatches) pas.push(...((b['hydra:member'] ?? b.member ?? []) as any[]))
-
-    // Нормализуем
-    const byPag = new Map<string, any[]>()
-    for (const pa of pas) {
-      const k = typeof pa.productAttributeGroup === 'string' ? pa.productAttributeGroup : pa.productAttributeGroup?.['@id']
-      if (!k) continue
-      if (!byPag.has(k)) byPag.set(k, [])
-      byPag.get(k)!.push(pa)
-    }
-
-    const rows: Array<{ groupIri: string | null; groupName: string; items: ProductAttributeRow[] }> = []
-    for (const g of groups) {
-      const groupIri = typeof g.attributeGroup === 'string' ? g.attributeGroup : g.attributeGroup?.['@id'] ?? null
-      const title = groupIri ? (groupsDict.get(groupIri) ?? 'Группа') : 'Без группы'
-      const items: ProductAttributeRow[] = []
-      const paList = byPag.get(g['@id']) ?? []
-      for (const pa of paList) {
-        let attrName = ''
-        if (typeof pa.attribute === 'object') {
-          attrName = String(pa.attribute?.name ?? '')
-        }
-        if (!attrName) {
-          const attrIri = ((): string | null => {
-            if (typeof pa.attribute === 'string') return pa.attribute
-            const id = pa.attribute?.id
-            const iriObj = pa.attribute?.['@id']
-            if (typeof iriObj === 'string') return iriObj
-            if (id != null) return `/api/attributes/${id}`
-            return null
-          })()
-          attrName = (attrIri ? attrsDict.get(attrIri) : undefined) ?? `Атрибут ${String(pa.attribute || '').split('/').pop()}`
-        }
-        items.push({ id: Number(pa.id), attributeName: attrName, textProxy: String(pa.text ?? ''), pagIri: g['@id'] })
-      }
-      rows.push({ groupIri, groupName: String(title), items })
-    }
-    productAttrGroups.value = rows
-  } finally {
-    attrLoading.value = false
-    attributesLoaded.value = true
-  }
-}
-
-async function saveProductAttribute(item: ProductAttributeRow) {
-  await productAttributeRepo.partialUpdate(item.id, { text: item.textProxy })
-  publishToast('Сохранено')
-}
-
-const deletePAOpen = ref(false)
-const pendingPAId = ref<number | null>(null)
-function confirmDeletePA(idNum: number) { pendingPAId.value = idNum; deletePAOpen.value = true }
-async function performDeletePA() {
-  if (pendingPAId.value == null) return
-  await productAttributeRepo.delete(pendingPAId.value)
-  for (const g of productAttrGroups.value) {
-    g.items = g.items.filter(i => i.id !== pendingPAId.value!)
-  }
-  publishToast('Удалено')
-  pendingPAId.value = null
-}
 </script>
 
 <style scoped></style>

@@ -6,7 +6,7 @@ namespace App\Api\Processor;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
 use App\Entity\Attribute;
-use App\Repository\ProductAttributeRepository;
+use App\Repository\ProductAttributeAssignmentRepository;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -14,7 +14,7 @@ final class DeleteAttributeRestrictProcessor implements ProcessorInterface
 {
     public function __construct(
         private readonly EntityManagerInterface $em,
-        private readonly ProductAttributeRepository $productAttributeRepo,
+        private readonly ProductAttributeAssignmentRepository $assignmentRepo,
     ) {}
 
     /** @param Attribute $data */
@@ -22,18 +22,18 @@ final class DeleteAttributeRestrictProcessor implements ProcessorInterface
     {
         $attr = $data;
 
-        $usedCount = (int) $this->productAttributeRepo->createQueryBuilder('pa')
-            ->select('COUNT(pa.id)')
-            ->andWhere('pa.attribute = :attr')
+        $assignCount = (int) $this->assignmentRepo->createQueryBuilder('aa')
+            ->select('COUNT(aa.id)')
+            ->andWhere('aa.attribute = :attr')
             ->setParameter('attr', $attr)
             ->getQuery()
             ->getSingleScalarResult();
 
-        if ($usedCount > 0) {
+        if ($assignCount > 0) {
             throw new ConflictHttpException(sprintf(
-                'Нельзя удалить атрибут "%s": используется в %d значениях товаров. Сначала удалите/перенесите использования.',
+                'Нельзя удалить атрибут "%s": используется в %d назначениях. Сначала удалите/перенесите использования.',
                 (string) $attr->getName(),
-                $usedCount
+                $assignCount
             ));
         }
 

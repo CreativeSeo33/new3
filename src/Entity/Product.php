@@ -31,6 +31,7 @@ use App\Entity\Embeddable\ProductPrice;
 use App\Entity\Embeddable\ProductTimestamps;
 use App\Entity\Manufacturer;
 use App\Entity\ProductOptionValueAssignment;
+use App\Entity\ProductAttributeAssignment;
 
 #[ORM\Entity(repositoryClass: ProductRepository::class)]
 #[ORM\Index(columns: ["name"], name: 'name')]
@@ -74,6 +75,17 @@ use App\Entity\ProductOptionValueAssignment;
 #[ApiFilter(SearchFilter::class, properties: [
     'optionAssignments.option.code' => 'exact',
     'optionAssignments.value.code' => 'exact'
+])]
+#[ApiFilter(SearchFilter::class, properties: [
+    'attributeAssignments.attribute.code' => 'exact',
+    'attributeAssignments.attributeGroup.code' => 'exact',
+])]
+#[ApiFilter(BooleanFilter::class, properties: [
+    'attributeAssignments.boolValue',
+])]
+#[ApiFilter(RangeFilter::class, properties: [
+    'attributeAssignments.intValue',
+    'attributeAssignments.decimalValue',
 ])]
 class Product
 {
@@ -133,13 +145,7 @@ class Product
     #[ORM\OneToOne(mappedBy: 'product', targetEntity: ProductSeo::class, cascade: ['persist', 'remove'])]
     private ?ProductSeo $seo = null;
 
-    #[ORM\OneToMany(mappedBy: 'product', targetEntity: ProductAttributeGroup::class, cascade: ['persist', 'remove'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
-    #[Groups(['product:read', 'product:create'])]
-    private Collection $productAttributeGroups;
-
-    #[ORM\OneToMany(mappedBy: 'product', targetEntity: ProductAttribute::class, cascade: ['persist', 'remove'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
-    #[Groups(['product:read'])]
-    private Collection $productAttributes;
+    
 
     #[ORM\OneToMany(mappedBy: 'product', targetEntity: ProductToCategory::class, cascade: ['persist', 'remove'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
     #[Groups(['product:read', 'product:create'])]
@@ -180,16 +186,20 @@ class Product
     #[Groups(['product:read', 'product:create', 'product:update'])]
     private Collection $optionAssignments;
 
+    #[ORM\OneToMany(mappedBy: 'product', targetEntity: ProductAttributeAssignment::class, cascade: ['persist','remove'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
+    #[Groups(['product:read','product:create','product:update'])]
+    private Collection $attributeAssignments;
+
     public function __construct()
     {
-        $this->productAttributeGroups = new ArrayCollection();
-        $this->productAttributes = new ArrayCollection();
+        
         $this->category = new ArrayCollection();
         $this->image = new ArrayCollection();
         $this->carousels = new ArrayCollection();
         $this->pricing = new ProductPrice();
         $this->timestamps = new ProductTimestamps();
         $this->optionAssignments = new ArrayCollection();
+        $this->attributeAssignments = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -428,64 +438,7 @@ class Product
         return $this;
     }
 
-    /**
-     * @return Collection|ProductAttributeGroup[]
-     */
-    public function getProductAttributeGroups(): Collection
-    {
-        return $this->productAttributeGroups;
-    }
-
-    public function addProductAttributeGroup(ProductAttributeGroup $productAttributeGroup): self
-    {
-        if (!$this->productAttributeGroups->contains($productAttributeGroup)) {
-            $this->productAttributeGroups[] = $productAttributeGroup;
-            $productAttributeGroup->setProduct($this);
-        }
-
-        return $this;
-    }
-
-    public function removeProductAttributeGroup(ProductAttributeGroup $productAttributeGroup): self
-    {
-        if ($this->productAttributeGroups->contains($productAttributeGroup)) {
-            $this->productAttributeGroups->removeElement($productAttributeGroup);
-            // set the owning side to null (unless already changed)
-            if ($productAttributeGroup->getProduct() === $this) {
-                $productAttributeGroup->setProduct(null);
-            }
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return Collection|ProductAttribute[]
-     */
-    public function getProductAttributes(): Collection
-    {
-        return $this->productAttributes;
-    }
-
-    public function addProductAttribute(ProductAttribute $productAttribute): self
-    {
-        if (!$this->productAttributes->contains($productAttribute)) {
-            $this->productAttributes[] = $productAttribute;
-            $productAttribute->setProduct($this);
-        }
-        return $this;
-    }
-
-    public function removeProductAttribute(ProductAttribute $productAttribute): self
-    {
-        if ($this->productAttributes->contains($productAttribute)) {
-            $this->productAttributes->removeElement($productAttribute);
-            if ($productAttribute->getProduct() === $this) {
-                $productAttribute->setProduct(null);
-            }
-        }
-        return $this;
-    }
+    
 
     /**
      * @return Collection|ProductToCategory[]
@@ -663,6 +616,53 @@ class Product
     {
         $this->optionAssignments->removeElement($assignment);
         return $this;
+    }
+
+    public function getAttributeAssignments(): Collection
+    {
+        return $this->attributeAssignments;
+    }
+
+    public function addAttributeAssignment(ProductAttributeAssignment $a): self
+    {
+        if (!$this->attributeAssignments->contains($a)) {
+            $this->attributeAssignments->add($a);
+            $a->setProduct($this);
+        }
+        return $this;
+    }
+
+    public function removeAttributeAssignment(ProductAttributeAssignment $a): self
+    {
+        $this->attributeAssignments->removeElement($a);
+        return $this;
+    }
+
+    #[Groups(['product:read'])]
+    public function getAttributesStructured(): array
+    {
+        $out = [];
+        foreach ($this->attributeAssignments as $a) {
+            $grpKey = $a->getAttributeGroup()?->getCode() ?? $a->getAttributeGroup()?->getName() ?? '_';
+            $attr = $a->getAttribute();
+            $value = match ($a->getDataType()) {
+                'int'     => $a->getIntValue(),
+                'decimal' => $a->getDecimalValue(),
+                'bool'    => $a->getBoolValue(),
+                'json'    => $a->getJsonValue(),
+                'date'    => $a->getDateValue()?->format('Y-m-d'),
+                'text'    => $a->getTextValue(),
+                default   => $a->getStringValue(),
+            };
+            $out[$grpKey][] = [
+                'attributeCode' => $attr?->getCode(),
+                'attributeName' => $attr?->getName(),
+                'value'         => $value,
+                'unit'          => $a->getUnit(),
+                'position'      => $a->getPosition(),
+            ];
+        }
+        return $out;
     }
 
     #[Groups(['product:read'])]

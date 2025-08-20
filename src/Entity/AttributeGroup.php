@@ -47,18 +47,21 @@ class AttributeGroup
     #[Groups(['attribute_group:get', 'attribute_group:post', 'attribute_group:patch'])]
     private ?int $sortOrder = null;
 
+    #[ORM\Column(type: 'string', length: 100, unique: true, nullable: true)]
+    #[Groups(['attribute_group:get','attribute_group:post','attribute_group:patch'])]
+    private ?string $code = null;
+
     #[ORM\OneToMany(mappedBy: 'attributeGroup', targetEntity: Attribute::class, cascade: ['persist'], orphanRemoval: false)]
     #[Groups(['attribute_group:get'])]
     #[OrderBy(['sortOrder' => 'ASC'])]
     private Collection $attributes;
 
-    #[ORM\OneToMany(mappedBy: 'attributeGroup', targetEntity: ProductAttributeGroup::class, cascade: ['persist'])]
-    private Collection $productAttributeGroups;
+    
 
     public function __construct()
     {
         $this->attributes = new ArrayCollection();
-        $this->productAttributeGroups = new ArrayCollection();
+        
     }
 
     public function getId(): ?int
@@ -88,29 +91,7 @@ class AttributeGroup
         return $this;
     }
 
-    public function getProductAttributeGroups(): Collection
-    {
-        return $this->productAttributeGroups;
-    }
-
-    public function addProductAttributeGroup(ProductAttributeGroup $group): self
-    {
-        if (!$this->productAttributeGroups->contains($group)) {
-            $this->productAttributeGroups->add($group);
-            $group->setAttributeGroup($this);
-        }
-        return $this;
-    }
-
-    public function removeProductAttributeGroup(ProductAttributeGroup $group): self
-    {
-        if ($this->productAttributeGroups->removeElement($group)) {
-            if ($group->getAttributeGroup() === $this) {
-                $group->setAttributeGroup(null);
-            }
-        }
-        return $this;
-    }
+    
 
     public function getAttributes(): Collection
     {
@@ -133,6 +114,17 @@ class AttributeGroup
                 $attribute->setAttributeGroup(null);
             }
         }
+        return $this;
+    }
+
+    public function getCode(): ?string
+    {
+        return $this->code;
+    }
+
+    public function setCode(?string $code): self
+    {
+        $this->code = $code ? strtolower($code) : null;
         return $this;
     }
 }

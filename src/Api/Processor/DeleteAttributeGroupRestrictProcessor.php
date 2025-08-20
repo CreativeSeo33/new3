@@ -7,7 +7,7 @@ use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
 use App\Entity\AttributeGroup;
 use App\Repository\AttributeRepository;
-use App\Repository\ProductAttributeGroupRepository;
+use App\Repository\ProductAttributeAssignmentRepository;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -16,7 +16,7 @@ final class DeleteAttributeGroupRestrictProcessor implements ProcessorInterface
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly AttributeRepository $attributeRepo,
-        private readonly ProductAttributeGroupRepository $productAttrGroupRepo,
+        private readonly ProductAttributeAssignmentRepository $assignmentRepo,
     ) {}
 
     /** @param AttributeGroup $data */
@@ -31,19 +31,19 @@ final class DeleteAttributeGroupRestrictProcessor implements ProcessorInterface
             ->getQuery()
             ->getSingleScalarResult();
 
-        $productGroupsCount = (int) $this->productAttrGroupRepo->createQueryBuilder('pag')
-            ->select('COUNT(pag.id)')
-            ->andWhere('pag.attributeGroup = :grp')
+        $assignCount = (int) $this->assignmentRepo->createQueryBuilder('aa')
+            ->select('COUNT(aa.id)')
+            ->andWhere('aa.attributeGroup = :grp')
             ->setParameter('grp', $group)
             ->getQuery()
             ->getSingleScalarResult();
 
-        if ($attributesCount > 0 || $productGroupsCount > 0) {
+        if ($attributesCount > 0 || $assignCount > 0) {
             throw new ConflictHttpException(sprintf(
-                'Нельзя удалить группу атрибутов "%s": %d атрибут(ов), %d привязок к товарам. Сначала очистите связи.',
+                'Нельзя удалить группу атрибутов "%s": %d атрибут(ов), %d назначений. Сначала очистите связи.',
                 (string) $group->getName(),
                 $attributesCount,
-                $productGroupsCount
+                $assignCount
             ));
         }
 
