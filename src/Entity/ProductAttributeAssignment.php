@@ -52,6 +52,7 @@ class ProductAttributeAssignment
     #[ORM\ManyToOne(targetEntity: Product::class, inversedBy: 'attributeAssignments')]
     #[ORM\JoinColumn(name: 'product_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     #[Assert\NotNull]
+    #[Groups(['paa:read','paa:write','product:read'])]
     private ?Product $product = null;
 
     #[ORM\ManyToOne(targetEntity: Attribute::class)]
