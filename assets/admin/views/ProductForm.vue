@@ -63,7 +63,13 @@
       </TabsContent>
 
       <TabsContent value="attributes" class="pt-6">
-        <ProductAttributeAssignments v-if="activeTab === 'attributes'" :product-id="String(id)" :is-creating="isCreating" @toast="publishToast" />
+        <ProductAttributeAssignments 
+          v-if="activeTab === 'attributes'" 
+          :key="String(id)" 
+          :product-id="String(id)" 
+          :is-creating="isCreating" 
+          @toast="publishToast" 
+        />
       </TabsContent>
 
       <TabsContent value="options" class="pt-6">
