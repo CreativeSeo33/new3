@@ -14,7 +14,14 @@
             <select v-model="selected" class="h-9 w-full rounded-md border px-2 text-sm dark:border-neutral-800 dark:bg-neutral-900">
               <option disabled value="">Выберите…</option>
               <optgroup v-for="group in groupedOptions" :key="group.key" :label="group.title">
-                <option v-for="opt in group.options" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+                <option 
+                  v-for="opt in group.options" 
+                  :key="opt.value" 
+                  :value="opt.value"
+                  :disabled="isAttributeDisabled(opt.value)"
+                >
+                  {{ opt.label }}
+                </option>
               </optgroup>
             </select>
           </label>
@@ -40,7 +47,15 @@ import { DialogContent, DialogDescription, DialogOverlay, DialogPortal, DialogRo
 import { AttributeRepository, type Attribute } from '@admin/repositories/AttributeRepository'
 import { AttributeGroupRepository, type AttributeGroupDto } from '@admin/repositories/AttributeGroupRepository'
 
-const props = defineProps<{ modelValue: boolean }>()
+interface Props {
+  modelValue: boolean
+  existingAttributes?: string[] // IRI существующих атрибутов
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  existingAttributes: () => []
+})
+
 const emit = defineEmits<{ 'update:modelValue': [boolean]; add: [{ attributeIri: string; value: string }] }>()
 
 const open = computed({ get: () => props.modelValue, set: v => emit('update:modelValue', v) })
@@ -83,6 +98,11 @@ const groupedOptions = computed(() => {
   const orderedKeys = ['__no_group__', ...groups.value.map(g => g['@id'] as string)]
   return orderedKeys.filter(k => groupMap.has(k)).map(k => ({ key: k, title: groupMap.get(k)!.title, options: groupMap.get(k)!.options }))
 })
+
+// Проверяем, что атрибут уже существует у товара
+function isAttributeDisabled(attributeIri: string): boolean {
+  return props.existingAttributes.includes(attributeIri)
+}
 
 function submit() {
   if (!canSubmit.value) return

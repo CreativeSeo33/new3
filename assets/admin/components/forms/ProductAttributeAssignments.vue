@@ -35,6 +35,7 @@
   <ProductAttributesAddModal 
     v-if="attrModalOpen" 
     v-model="attrModalOpen" 
+    :existing-attributes="existingAttributeIris"
     @add="onAddFromModal" 
   />
   
@@ -50,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { onMounted, ref, watch, computed } from 'vue'
 import Button from '@admin/ui/components/Button.vue'
 import ProductAttributesAddModal from '@admin/components/forms/ProductAttributesAddModal.vue'
 import ConfirmDialog from '@admin/components/ConfirmDialog.vue'
@@ -59,6 +60,7 @@ import { ProductAttributeAssignmentRepository } from '@admin/repositories/Produc
 import { AttributeRepository } from '@admin/repositories/AttributeRepository'
 import { AttributeGroupRepository } from '@admin/repositories/AttributeGroupRepository'
 import { useProductAttributes } from '@admin/composables/useProductAttributes'
+import { getAttributeIri, getHydraMembers } from '@admin/utils/attributeUtils'
 
 // Props и emits
 const props = defineProps<{ 
@@ -70,10 +72,13 @@ const emit = defineEmits<{
   (e: 'toast', message: string): void
 }>()
 
-// Репозитории
+// Repositories
 const assignmentRepo = new ProductAttributeAssignmentRepository()
 const attributeRepo = new AttributeRepository()
 const attributeGroupRepo = new AttributeGroupRepository()
+
+// Состояние для хранения всех атрибутов
+const allAttrs = ref<any[]>([])
 
 // Реактивное состояние
 const attrModalOpen = ref(false)
@@ -97,6 +102,22 @@ const {
   attributeGroupRepo,
   productId: props.productId,
   emit
+})
+
+// Получаем IRI существующих атрибутов для отключения их в модальном окне
+const existingAttributeIris = computed(() => {
+  const iris: string[] = []
+  productAttrGroups.value.forEach(group => {
+    group.items.forEach(item => {
+      // Находим IRI атрибута по его имени
+      const attribute = allAttrs.value?.find((attr: any) => attr.name === item.attributeName)
+      if (attribute) {
+        const iri = getAttributeIri(attribute)
+        if (iri) iris.push(iri)
+      }
+    })
+  })
+  return iris
 })
 
 // Операции удаления
@@ -141,6 +162,14 @@ async function onAddFromModal(payload: { attributeIri: string; value: string }) 
 
 // Жизненный цикл и наблюдатели
 onMounted(async () => {
+  // Загружаем все атрибуты для справочника
+  try {
+    const attrsData = await attributeRepo.findAllCached()
+    allAttrs.value = getHydraMembers(attrsData)
+  } catch (error) {
+    console.error('Failed to load attributes:', error)
+  }
+  
   await loadAttributesBootstrap()
   // loadProductAttributes будет вызван через watcher с immediate: true
 })
