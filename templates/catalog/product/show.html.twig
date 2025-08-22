@@ -74,12 +74,12 @@
 
         {# Характеристики товара (атрибуты) по прямой связи #}
         {% set attr_items = [] %}
-        {% for pa in product.productAttributes %}
+        {% for pa in product.attributeAssignments %}
           {% set attr_name = pa.attribute ? (pa.attribute.name ?? ('Атрибут #' ~ (pa.attribute.id ?? ''))) : 'Атрибут' %}
-          {% set attr_value = pa.text %}
-          {% set gsort = pa.productAttributeGroup and pa.productAttributeGroup.attributeGroup ? (pa.productAttributeGroup.attributeGroup.sortOrder ?? 2147483647) : 2147483647 %}
+          {% set attr_value = pa.textValue %}
+          {% set gsort = pa.attributeGroup ? (pa.attributeGroup.sortOrder ?? 2147483647) : 2147483647 %}
           {% set asort = pa.attribute ? (pa.attribute.sortOrder ?? 2147483647) : 2147483647 %}
-          {% set groupName = pa.productAttributeGroup and pa.productAttributeGroup.attributeGroup ? (pa.productAttributeGroup.attributeGroup.name ?? null) : null %}
+          {% set groupName = pa.attributeGroup ? (pa.attributeGroup.name ?? null) : null %}
           {% set attr_items = attr_items|merge([{
             name: attr_name,
             value: attr_value,

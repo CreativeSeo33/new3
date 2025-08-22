@@ -18,13 +18,9 @@ final class ProductRepository extends ServiceEntityRepository
     public function findOneActiveWithAttributesBySlug(string $slug): ?Product
     {
         return $this->createQueryBuilder('p')
-            ->leftJoin('p.productAttributeGroups', 'pag')->addSelect('pag')
-            ->leftJoin('pag.attributeGroup', 'ag')->addSelect('ag')
-            ->leftJoin('pag.attribute', 'pa_old')->addSelect('pa_old')
-            ->leftJoin('p.productAttributes', 'pattr')->addSelect('pattr')
-            ->leftJoin('pattr.attribute', 'attr')->addSelect('attr')
-            ->leftJoin('pattr.productAttributeGroup', 'pattr_pag')->addSelect('pattr_pag')
-            ->leftJoin('pattr_pag.attributeGroup', 'pattr_ag')->addSelect('pattr_ag')
+            ->leftJoin('p.attributeAssignments', 'paa')->addSelect('paa')
+            ->leftJoin('paa.attributeGroup', 'ag')->addSelect('ag')
+            ->leftJoin('paa.attribute', 'attr')->addSelect('attr')
             ->andWhere('p.slug = :slug')
             ->andWhere('p.status = true')
             ->setParameter('slug', $slug)
