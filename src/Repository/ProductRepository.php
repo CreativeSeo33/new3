@@ -7,6 +7,7 @@ use App\Entity\Category;
 use App\Entity\Product;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use App\Entity\ProductAttributeAssignment;
 
 final class ProductRepository extends ServiceEntityRepository
 {
@@ -17,16 +18,37 @@ final class ProductRepository extends ServiceEntityRepository
 
     public function findOneActiveWithAttributesBySlug(string $slug): ?Product
     {
-        return $this->createQueryBuilder('p')
-            ->leftJoin('p.attributeAssignments', 'paa')->addSelect('paa')
-            ->leftJoin('paa.attributeGroup', 'ag')->addSelect('ag')
-            ->leftJoin('paa.attribute', 'attr')->addSelect('attr')
+        // Сначала загружаем товар без атрибутов
+        $product = $this->createQueryBuilder('p')
             ->andWhere('p.slug = :slug')
             ->andWhere('p.status = true')
             ->setParameter('slug', $slug)
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
+            
+        if ($product === null) {
+            return null;
+        }
+        
+        // Затем загружаем все атрибуты для этого товара
+        $attributeAssignments = $this->getEntityManager()->createQueryBuilder()
+            ->select('paa', 'ag', 'attr')
+            ->from(ProductAttributeAssignment::class, 'paa')
+            ->leftJoin('paa.attributeGroup', 'ag')
+            ->leftJoin('paa.attribute', 'attr')
+            ->where('paa.product = :product')
+            ->setParameter('product', $product)
+            ->getQuery()
+            ->getResult();
+            
+        // Очищаем коллекцию и добавляем загруженные атрибуты
+        $product->getAttributeAssignments()->clear();
+        foreach ($attributeAssignments as $assignment) {
+            $product->addAttributeAssignment($assignment);
+        }
+        
+        return $product;
     }
     public function save(Product $entity, bool $flush = false): void
     {

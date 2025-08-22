@@ -72,38 +72,47 @@
           </div>
         {% endif %}
 
-        {# Характеристики товара (атрибуты) по прямой связи #}
-        {% set attr_items = [] %}
+
+
+      </div>
+    </div>
+  </div>
+  
+  {# Характеристики товара (атрибуты) #}
+  {% if product.attributeAssignments is defined and product.attributeAssignments|length > 0 %}
+    <div class="container mx-auto px-4 py-6">
+      <div class="mt-6">
+        <div class="mb-4 text-lg font-medium">Характеристики</div>
+        
+        {# Группируем атрибуты по группам #}
+        {% set grouped_attrs = {} %}
         {% for pa in product.attributeAssignments %}
-          {% set attr_name = pa.attribute ? (pa.attribute.name ?? ('Атрибут #' ~ (pa.attribute.id ?? ''))) : 'Атрибут' %}
-          {% set attr_value = pa.textValue %}
-          {% set gsort = pa.attributeGroup ? (pa.attributeGroup.sortOrder ?? 2147483647) : 2147483647 %}
-          {% set asort = pa.attribute ? (pa.attribute.sortOrder ?? 2147483647) : 2147483647 %}
-          {% set groupName = pa.attributeGroup ? (pa.attributeGroup.name ?? null) : null %}
-          {% set attr_items = attr_items|merge([{
-            name: attr_name,
-            value: attr_value,
-            group: groupName,
-            gsort: gsort,
-            asort: asort
-          }]) %}
+          {% set groupName = pa.attributeGroup ? pa.attributeGroup.name : 'Основные характеристики' %}
+          
+          {% if grouped_attrs[groupName] is not defined %}
+            {% set grouped_attrs = grouped_attrs|merge({ (groupName): [] }) %}
+          {% endif %}
+          
+          {% set grouped_attrs = grouped_attrs|merge({ (groupName): grouped_attrs[groupName]|merge([pa]) }) %}
         {% endfor %}
-        {% if attr_items|length > 0 %}
-          {% set sorted_attrs = attr_items|sort((a,b) => (a.gsort <=> b.gsort) ?: (a.asort <=> b.asort) ?: (a.name <=> b.name)) %}
-          <div class="mt-6">
-            <div class="mb-2 text-sm font-medium">Характеристики</div>
-            <ul class="space-y-1 text-sm text-gray-800">
-              {% for it in sorted_attrs %}
-                <li>
-                  <span class="text-gray-500">{{ it.name }}:</span> <span>{{ it.value is not empty ? it.value : '—' }}</span>
+        
+        {# Сортируем группы и выводим атрибуты #}
+        {% for groupName, attributes in grouped_attrs|sort((a, b) => a <=> b) %}
+          <div class="mb-6">
+            <div class="mb-3 text-md font-medium text-gray-700">{{ groupName }}</div>
+            <ul class="space-y-2 text-sm text-gray-800">
+              {% for pa in attributes|sort((a, b) => (a.attribute.sortOrder ?? 0) <=> (b.attribute.sortOrder ?? 0)) %}
+                <li class="flex justify-between py-1 border-b border-gray-100">
+                  <span class="text-gray-600">{{ pa.attribute.name }}:</span>
+                  <span class="font-medium">{{ pa.stringValue ?? '—' }}</span>
                 </li>
               {% endfor %}
             </ul>
           </div>
-        {% endif %}
+        {% endfor %}
       </div>
     </div>
-  </div>
+  {% endif %}
 {% endblock %}
 
 
