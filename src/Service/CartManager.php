@@ -26,28 +26,61 @@ final class CartManager
 		private EventDispatcherInterface $events,
         private DeliveryContext $deliveryContext,
         private CheckoutContext $checkoutContext,
+        private CartSessionStorage $sessionStorage,
     ) {}
 
     public function getOrCreateCurrent(?int $userId): Cart
     {
         $request = $this->requestStack->getCurrentRequest();
-        $token = $request?->cookies->get('cart_token');
-
         $cart = null;
+        
         if ($userId) {
+            // Для авторизованного пользователя
             $cart = $this->carts->findActiveByUser($userId);
-            if (!$cart && $token) {
-                $cart = $this->carts->findActiveByToken($token);
+            
+            if (!$cart) {
+                // Проверяем, была ли гостевая корзина в сессии
+                $guestToken = $this->sessionStorage->getCartToken();
+                if ($guestToken) {
+                    $guestCart = $this->carts->findActiveByToken($guestToken);
+                    if ($guestCart) {
+                        // Мигрируем гостевую корзину к пользователю
+                        $this->assignToUser($guestCart, $userId);
+                        $cart = $guestCart;
+                        $this->sessionStorage->migrateToUser($userId);
+                    }
+                }
             }
+            
             if (!$cart) {
                 $cart = Cart::newGuest();
                 $cart->setUserId($userId);
                 $this->em->persist($cart);
             }
         } else {
-            $cart = $token ? ($this->carts->findActiveByToken($token) ?? Cart::newGuest()) : Cart::newGuest();
-            if ($cart->getId() === null) {
+            // Для гостя - используем сессию
+            $token = $this->sessionStorage->getCartToken();
+            
+            if ($token) {
+                $cart = $this->carts->findActiveByToken($token);
+                
+                // Если корзина не найдена в БД, но есть снимок в сессии
+                if (!$cart && $snapshot = $this->sessionStorage->getCartSnapshot()) {
+                    $cart = $this->restoreCartFromSnapshot($snapshot, $token);
+                }
+            }
+            
+            if (!$cart) {
+                $cart = Cart::newGuest();
                 $this->em->persist($cart);
+            }
+            
+            // Сохраняем референс в сессию
+            if ($cart->getToken()) {
+                $this->sessionStorage->saveCartReference(
+                    $cart->getId() ?? 0,
+                    $cart->getToken()
+                );
             }
         }
 
@@ -63,6 +96,7 @@ final class CartManager
         if (!$userId && $request) {
             $request->attributes->set('_set_cart_cookie', $cart->getToken());
         }
+        
         return $cart;
     }
 
@@ -174,9 +208,67 @@ final class CartManager
 				$this->calculator->recalculate($cart);
 				$cart->setUpdatedAt(new \DateTimeImmutable());
 				$this->em->flush();
+				
+				// После успешного добавления сохраняем снимок для гостя
+				if (!$cart->getUserId()) {
+					$this->saveCartSnapshotToSession($cart);
+				}
 			});
 		});
 		$this->events->dispatch(new \App\Event\CartUpdatedEvent($cart->getId()));
+		return $cart;
+	}
+
+	/**
+	 * Сохранение снимка корзины в сессию для гостя
+	 */
+	private function saveCartSnapshotToSession(Cart $cart): void
+	{
+		$items = [];
+		foreach ($cart->getItems() as $item) {
+			$items[] = [
+				'productId' => $item->getProduct()->getId(),
+				'name' => $item->getProductName(),
+				'qty' => $item->getQty(),
+				'price' => $item->getUnitPrice(),
+				'options' => $item->getSelectedOptionsData() ?? [],
+				'optionsHash' => $item->getOptionsHash(),
+			];
+		}
+		
+		$this->sessionStorage->saveCartSnapshot($items);
+	}
+	
+	/**
+	 * Восстановление корзины из снимка сессии
+	 */
+	private function restoreCartFromSnapshot(array $snapshot, string $token): Cart
+	{
+		$cart = Cart::newGuest();
+		$cart->setToken($token);
+		
+		foreach ($snapshot as $itemData) {
+			$product = $this->products->find($itemData['product_id']);
+			if (!$product) continue;
+			
+			$item = new CartItem();
+			$item->setCart($cart);
+			$item->setProduct($product);
+			$item->setProductName($itemData['name']);
+			$item->setUnitPrice($itemData['price']);
+			$item->setQty($itemData['qty']);
+			
+			if (!empty($itemData['options'])) {
+				$item->setSelectedOptionsData($itemData['options']);
+				$item->setOptionsHash($itemData['optionsHash'] ?? null);
+			}
+			
+			$cart->addItem($item);
+		}
+		
+		$this->em->persist($cart);
+		$this->em->flush();
+		
 		return $cart;
 	}
 

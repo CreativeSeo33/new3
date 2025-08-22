@@ -36,6 +36,8 @@ final class ProductCatalogController extends AbstractController
             ]);
         }
 
+        
+
         $breadcrumbs = $this->breadcrumbBuilder->buildForProduct($product);
 
         return $this->render('catalog/product/show.html.twig', [

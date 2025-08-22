@@ -31,6 +31,17 @@ services:
     App\Doctrine\Listener\ProductEntityListener: ~
     App\Doctrine\Listener\OptionEntityListener: ~
 
+    # Cart session storage services
+    App\Service\CartSessionStorage:
+        arguments:
+            - '@request_stack'
+    
+    App\EventListener\CartSessionCleanupListener:
+        arguments:
+            - '@App\Service\CartSessionStorage'
+        tags:
+            - { name: kernel.event_subscriber }
+
     # Remove Intervention Image wiring (migrated to LiipImagine)
 
     # Inject project dir for services that need filesystem paths
