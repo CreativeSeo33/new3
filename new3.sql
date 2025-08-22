@@ -15,34 +15,31 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 -- Дамп данных таблицы new3.attribute: ~2 rows (приблизительно)
-DELETE FROM `attribute`;
 INSERT INTO `attribute` (`id`, `attribute_group_id`, `name`, `sort_order`, `show_in_category`, `short_name`, `code`) VALUES
 	(3, 1, 'Диаметр', 1, NULL, NULL, 'diametr'),
-	(4, 2, 'Высота', 2, NULL, NULL, 'vysota');
+	(4, 2, 'Высота', 2, NULL, NULL, 'vysota'),
+	(5, 2, 'Вес', 2, NULL, NULL, 'ves');
 
--- Дамп данных таблицы new3.attribute_group: ~0 rows (приблизительно)
-DELETE FROM `attribute_group`;
-INSERT INTO `attribute_group` (`id`, `name`, `sort_order`) VALUES
-	(1, 'Внешний вид', 1),
-	(2, 'Размеры', 2);
+-- Дамп данных таблицы new3.attribute_group: ~2 rows (приблизительно)
+INSERT INTO `attribute_group` (`id`, `name`, `sort_order`, `code`) VALUES
+	(1, 'Внешний вид', 1, NULL),
+	(2, 'Размеры', 2, NULL);
 
 -- Дамп данных таблицы new3.carousel: ~0 rows (приблизительно)
-DELETE FROM `carousel`;
 
--- Дамп данных таблицы new3.cart: ~3 rows (приблизительно)
-DELETE FROM `cart`;
+-- Дамп данных таблицы new3.cart: ~1 rows (приблизительно)
 INSERT INTO `cart` (`id`, `user_id`, `token`, `currency`, `subtotal`, `discount_total`, `total`, `created_at`, `updated_at`, `expires_at`, `version`, `shipping_method`, `shipping_cost`, `ship_to_city`, `shipping_data`) VALUES
-	(1, NULL, 'f093a2af-bae3-4128-b579-e68a8711f172', 'RUB', 0, 0, 0, '2025-08-14 10:27:06', '2025-08-14 10:27:06', '2025-09-13 10:27:06', 1, NULL, 0, NULL, NULL),
-	(2, NULL, 'dab32e85-8333-414e-9923-a60176d8c727', 'RUB', 7800, 0, 47800, '2025-08-14 10:27:07', '2025-08-15 15:57:34', '2025-09-13 10:27:07', 55, 'pvz', 40000, 'Нижний Новгород', '{"address": "Нижний Новгород улица Лескова 3", "etaDays": 2, "pickupPointId": "0193de5cde54717b9fc99cfea928fa8c"}'),
-	(3, NULL, 'b5747b3c-a6b3-4090-b809-b6c07b576483', 'RUB', 0, 0, 0, '2025-08-15 13:12:33', '2025-08-15 13:12:33', '2025-09-14 13:12:33', 1, NULL, 0, 'Москва', '[]');
+	(13, NULL, '83ab73a2-4f47-49fd-a5ef-d6fa38d6ca2c', 'RUB', 4000, 0, 44000, '2025-08-22 15:19:54', '2025-08-22 15:20:41', '2025-09-21 15:19:54', 14, 'pvz', 40000, 'Москва', '{"etaDays": 2}');
 
--- Дамп данных таблицы new3.cart_item: ~0 rows (приблизительно)
-DELETE FROM `cart_item`;
-INSERT INTO `cart_item` (`id`, `cart_id`, `product_id`, `product_name`, `unit_price`, `qty`, `row_total`, `version`) VALUES
-	(4, 2, 2, 'Анжелика 3 лампы + низ 1', 7800, 1, 7800, 1);
+-- Дамп данных таблицы new3.cart_item: ~1 rows (приблизительно)
+INSERT INTO `cart_item` (`id`, `cart_id`, `product_id`, `product_name`, `unit_price`, `qty`, `row_total`, `version`, `options_price_modifier`, `effective_unit_price`, `options_hash`, `selected_options_data`, `options_snapshot`) VALUES
+	(20, 13, 7, 'Люстра 8', 100900, 1, 4000, 1, 4000, 4000, 'c0c7c76d30bd3dcaefc96f40275bdc0a', '[{"sku": "12345", "price": 4000, "valueCode": "diametr", "valueName": "500", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 50}]', '[{"sku": "12345", "price": 5000, "height": 200, "attributes": [], "sale_price": 4000, "value_code": "diametr", "value_name": "500", "bulbs_count": 5, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 50, "lighting_area": 15}]');
+
+-- Дамп данных таблицы new3.cart_item_option_assignment: ~0 rows (приблизительно)
+INSERT INTO `cart_item_option_assignment` (`cart_item_id`, `product_option_value_assignment_id`) VALUES
+	(20, 50);
 
 -- Дамп данных таблицы new3.category: ~3 rows (приблизительно)
-DELETE FROM `category`;
 INSERT INTO `category` (`id`, `name`, `slug`, `visibility`, `parent_category_id`, `meta_title`, `meta_description`, `meta_keywords`, `sort_order`, `meta_h1`, `description`, `navbar_visibility`, `footer_visibility`) VALUES
 	(1, 'Потолочные люстры', 'potolochnye-lyustry', 1, NULL, 'Потолочные люстры', '', '', 1, 'Потолочные люстры', '', 1, 1),
 	(2, 'Цветные люстры', 'cvetnye-lyustry', 1, 1, 'Цветные люстры', '', '', 1, 'Цветные люстры', '', 1, 1),
@@ -50,7 +47,6 @@ INSERT INTO `category` (`id`, `name`, `slug`, `visibility`, `parent_category_id`
 	(4, 'Бронзовые люстры', 'bronzovye-lyustry', 1, NULL, 'Бронзовые люстры', '', '', 3, 'Бронзовые люстры', '', 1, 1);
 
 -- Дамп данных таблицы new3.city: ~1 117 rows (приблизительно)
-DELETE FROM `city`;
 INSERT INTO `city` (`id`, `address`, `postal_code`, `federal_district`, `region_type`, `region`, `city_type`, `city`, `kladr_id`, `fias_level`, `capital_marker`, `geo_lat`, `geo_lon`, `population`) VALUES
 	(1, 'Респ Адыгея, г Адыгейск', '385200', 'Южный', 'Респ', 'Адыгея', 'г', 'Адыгейск', 100000200000, 4, 0, 44.878414, 39.190289, 12689),
 	(2, 'г Майкоп', '385000', 'Южный', 'Респ', 'Адыгея', 'г', 'Майкоп', 100000100000, 4, 2, 44.6098268, 40.1006606, 144055),
@@ -1171,7 +1167,6 @@ INSERT INTO `city` (`id`, `address`, `postal_code`, `federal_district`, `region_
 	(1117, 'г Ярославль', '150000', 'Центральный', 'обл', 'Ярославская', 'г', 'Ярославль', 7600000100000, 4, 2, 57.6215477, 39.8977411, 591486);
 
 -- Дамп данных таблицы new3.city_modal: ~11 rows (приблизительно)
-DELETE FROM `city_modal`;
 INSERT INTO `city_modal` (`id`, `fias_id`, `name`, `sort`) VALUES
 	(4, 3300000100000, 'Владимир', 6),
 	(5, 6200000100000, 'Рязань', 5),
@@ -1186,27 +1181,23 @@ INSERT INTO `city_modal` (`id`, `fias_id`, `name`, `sort`) VALUES
 	(20, 6900000100000, 'Тверь', 1);
 
 -- Дамп данных таблицы new3.delivery_type: ~2 rows (приблизительно)
-DELETE FROM `delivery_type`;
 INSERT INTO `delivery_type` (`id`, `name`, `code`, `active`, `sort_order`, `is_default`) VALUES
 	(1, 'Пункт выдачи', 'pvz', 1, 1, 1),
 	(2, 'Курьерская доставка', 'courier', 1, 2, 0);
 
--- Дамп данных таблицы new3.doctrine_migration_versions: ~0 rows (приблизительно)
-DELETE FROM `doctrine_migration_versions`;
+-- Дамп данных таблицы new3.doctrine_migration_versions: ~3 rows (приблизительно)
 INSERT INTO `doctrine_migration_versions` (`version`, `executed_at`, `execution_time`) VALUES
-	('DoctrineMigrations\\Version20250819154747', '2025-08-19 15:47:58', 81);
+	('DoctrineMigrations\\Version20250822100150', '2025-08-22 10:02:15', 207),
+	('DoctrineMigrations\\Version20250822103055', '2025-08-22 10:31:17', 21);
 
 -- Дамп данных таблицы new3.manufacturer: ~0 rows (приблизительно)
-DELETE FROM `manufacturer`;
 
 -- Дамп данных таблицы new3.option: ~2 rows (приблизительно)
-DELETE FROM `option`;
 INSERT INTO `option` (`id`, `name`, `sort_order`, `code`) VALUES
 	(5, 'Диаметр', 1, 'diametr'),
 	(6, 'Цвет арматуры', 2, 'cvet_armatury');
 
--- Дамп данных таблицы new3.option_value: ~2 rows (приблизительно)
-DELETE FROM `option_value`;
+-- Дамп данных таблицы new3.option_value: ~7 rows (приблизительно)
 INSERT INTO `option_value` (`id`, `option_id`, `value`, `sort_order`, `code`) VALUES
 	(6, 5, '500', 2, 'diametr'),
 	(7, 5, '600', 3, 'diametr'),
@@ -1217,55 +1208,48 @@ INSERT INTO `option_value` (`id`, `option_id`, `value`, `sort_order`, `code`) VA
 	(12, 5, '800', 5, 'diametr');
 
 -- Дамп данных таблицы new3.order: ~0 rows (приблизительно)
-DELETE FROM `order`;
 INSERT INTO `order` (`id`, `customer_id`, `delivery_id`, `order_id`, `date_added`, `comment`, `status`, `total`) VALUES
 	(1, 1, NULL, 1, '2025-08-14 13:32:13', NULL, NULL, 25000);
 
 -- Дамп данных таблицы new3.order_customer: ~0 rows (приблизительно)
-DELETE FROM `order_customer`;
 INSERT INTO `order_customer` (`id`, `name`, `phone`, `email`, `ip`, `user_agent`, `phone_normal`, `comment`) VALUES
 	(1, 'Алексей', '89209217054', 'alex@gmail.com', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', NULL, NULL);
 
 -- Дамп данных таблицы new3.order_delivery: ~0 rows (приблизительно)
-DELETE FROM `order_delivery`;
 
 -- Дамп данных таблицы new3.order_products: ~0 rows (приблизительно)
-DELETE FROM `order_products`;
 INSERT INTO `order_products` (`id`, `orders_id`, `product_id`, `product_name`, `price`, `quantity`, `sale_price`) VALUES
 	(1, 1, 1, 'Люстра', 5000, 5, NULL);
 
 -- Дамп данных таблицы new3.order_product_options: ~0 rows (приблизительно)
-DELETE FROM `order_product_options`;
 
 -- Дамп данных таблицы new3.order_status: ~0 rows (приблизительно)
-DELETE FROM `order_status`;
 INSERT INTO `order_status` (`id`, `name`, `sort`) VALUES
 	(1, 'В работе', 1);
 
--- Дамп данных таблицы new3.product: ~7 rows (приблизительно)
-DELETE FROM `product`;
+-- Дамп данных таблицы new3.product: ~9 rows (приблизительно)
 INSERT INTO `product` (`id`, `manufacturer_id`, `name`, `slug`, `sort_order`, `effective_price`, `status`, `quantity`, `options_json`, `attribute_json`, `code`, `description`, `price`, `sale_price`, `currency`, `date_added`, `date_edited`) VALUES
 	(1, NULL, 'Люстра', 'lyustra', 1, 5000, 1, 100, '[]', '[]', _binary 0x0198a7d2fc43a14cb38d4120d65b8f15, '', 5000, NULL, 'RUB', '2025-08-14 09:04:38', '2025-08-14 10:28:20'),
 	(2, NULL, 'Анжелика 3 лампы + низ 1', 'anzhelika-3-lampy-niz-1', 2, 7800, 1, 100, '[]', '[]', _binary 0x0198a9c2a185828c53d00562f9f0211c, '', 7800, NULL, 'RUB', '2025-08-14 18:06:01', NULL),
 	(3, NULL, 'Люстра Астра Бутон №1', 'lyustra-astra-buton-1', 3, 8650, 1, 100, '[]', '[]', _binary 0x0198a9c44d251b794bd7f9f04d1ecf02, '', 8650, NULL, 'RUB', '2025-08-14 18:07:51', NULL),
 	(4, NULL, 'Люстра 5', 'lyustra-5', 1, 18990, 1, 100, '[]', '[]', _binary 0x0198ac744e68ad0c4f6a3cb1ad20f899, 'Люстра 5', 18990, NULL, 'RUB', '2025-08-15 06:39:20', NULL),
 	(5, NULL, 'Люстра 6', 'lyustra-6', 1, 15000, 1, 100, '[{"option": "/api/options/1", "values": [{"label": "Красный", "price": null, "value": "/api/option_values/2"}], "multiple": false, "required": false, "priceMode": "delta", "sortOrder": 0, "defaultValues": []}]', '[]', _binary 0x0198ac7671379f3f739e2c988b44f064, '', 15000, NULL, 'RUB', '2025-08-15 06:41:40', '2025-08-19 13:23:48'),
-	(6, NULL, 'Люстра 7', 'lyustra-7', 2, 35000, 1, 100, '[{"option": "/api/options/1", "values": [{"label": "Красный", "price": 5000, "value": "/api/option_values/2"}], "multiple": false, "required": false, "priceMode": "delta", "sortOrder": 0, "defaultValues": []}]', '[]', _binary 0x0198ac7bcb0021e87cf1ac9863390625, 'Люстра 7', 35000, NULL, 'RUB', '2025-08-15 06:47:30', '2025-08-19 14:18:41'),
-	(7, NULL, 'Люстра 8', 'lyustra-8', 3, 100900, 1, 100, '[{"option": "/api/options/5", "values": [{"label": "500", "price": 5000, "value": "/api/option_values/4"}], "multiple": false, "required": false, "priceMode": "delta", "sortOrder": 0, "defaultValues": []}]', '[]', _binary 0x0198ac7caba980735f763c2e30d3a06e, '', 100900, NULL, 'RUB', '2025-08-15 06:48:28', '2025-08-19 15:14:33');
+	(6, NULL, 'Люстра 7', 'lyustra-7', 2, 35000, 1, 100, '[]', '[]', _binary 0x0198ac7bcb0021e87cf1ac9863390625, 'Люстра 7', 35000, NULL, 'RUB', '2025-08-15 06:47:30', '2025-08-20 11:52:43'),
+	(7, NULL, 'Люстра 8', 'lyustra-8', 3, 100900, 1, 100, '[{"option": "/api/options/5", "values": [{"label": "500", "price": 5000, "value": "/api/option_values/4"}], "multiple": false, "required": false, "priceMode": "delta", "sortOrder": 0, "defaultValues": []}]', '[]', _binary 0x0198ac7caba980735f763c2e30d3a06e, '', 100900, NULL, 'RUB', '2025-08-15 06:48:28', '2025-08-19 15:14:33'),
+	(8, NULL, 'Капель', 'kapel', 1, 4900, 1, 100, '[]', '[]', _binary 0x0198cb8795ae61f0b32a60babbe8f491, '', 5000, 4900, 'RUB', '2025-08-21 07:28:37', NULL),
+	(9, NULL, 'Кольцо купол', 'kolco-kupol', 2, 13000, 1, 100, '[]', '[]', _binary 0x0198cb8d8d702fd30f80dd72cf11745f, '', 15000, 13000, 'RUB', '2025-08-21 07:35:08', NULL);
 
--- Дамп данных таблицы new3.product_attribute: ~2 rows (приблизительно)
-DELETE FROM `product_attribute`;
-INSERT INTO `product_attribute` (`id`, `product_attribute_group_id`, `attribute_id`, `text`, `product_id`) VALUES
-	(1, 1, 3, '500', NULL),
-	(2, 1, 4, '150', NULL);
-
--- Дамп данных таблицы new3.product_attribute_group: ~1 rows (приблизительно)
-DELETE FROM `product_attribute_group`;
-INSERT INTO `product_attribute_group` (`id`, `product_id`, `attribute_group_id`) VALUES
-	(1, 7, 1);
+-- Дамп данных таблицы new3.product_attribute_assignment: ~5 rows (приблизительно)
+INSERT INTO `product_attribute_assignment` (`id`, `product_id`, `attribute_id`, `attribute_group_id`, `data_type`, `string_value`, `text_value`, `int_value`, `decimal_value`, `bool_value`, `date_value`, `json_value`, `unit`, `position`, `sort_order`) VALUES
+	(10, 9, 4, 2, 'string', '500', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(13, 8, 3, 1, 'string', '600', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(14, 8, 4, 2, 'string', '150', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(16, 7, 4, 2, 'string', '600', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(17, 7, 3, 1, 'string', '650', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(18, 8, 5, 2, 'string', '5 кг', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(19, 7, 5, 2, 'string', '50 кг', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL);
 
 -- Дамп данных таблицы new3.product_image: ~9 rows (приблизительно)
-DELETE FROM `product_image`;
 INSERT INTO `product_image` (`id`, `product_id`, `image_url`, `sort_order`) VALUES
 	(1, 1, '/media/cache/500x500/diana-6-zhuravlik-pod-bronzu-chaynaya-1.jpg', 1),
 	(2, 2, '/media/cache/500x500/anzhelika-3-lampy-niz-1-zoloto-1.jpg', 1),
@@ -1276,24 +1260,24 @@ INSERT INTO `product_image` (`id`, `product_id`, `image_url`, `sort_order`) VALU
 	(16, 6, '/media/cache/md2/img/diana-6-zhuravlik-pod-bronzu-1.jpg', 1),
 	(17, 5, '/media/cache/md2/img/diana-6-zhuravlik-pod-bronzu-zelenaya-1.jpg', 1),
 	(19, 5, '/media/cache/md2/img/astra-buton-1-pod-bronzu-chernaya-1.jpg', 2),
-	(20, 6, '/media/cache/md2/img/diana-6-zhuravlik-pod-bronzu-chaynaya-1.jpg', 2);
+	(20, 6, '/media/cache/md2/img/diana-6-zhuravlik-pod-bronzu-chaynaya-1.jpg', 2),
+	(21, 8, '/media/cache/md2/img/anzhelika-3-lampy-niz-1-zoloto-1.jpg', 1);
 
--- Дамп данных таблицы new3.product_option_value_assignment: ~0 rows (приблизительно)
-DELETE FROM `product_option_value_assignment`;
+-- Дамп данных таблицы new3.product_option_value_assignment: ~11 rows (приблизительно)
 INSERT INTO `product_option_value_assignment` (`id`, `product_id`, `option_id`, `value_id`, `height`, `price`, `bulbs_count`, `lighting_area`, `sku`, `attributes`, `original_sku`, `sale_price`, `sort_order`, `quantity`) VALUES
 	(36, 5, 5, 10, NULL, 500, NULL, NULL, NULL, '[]', NULL, NULL, NULL, NULL),
 	(37, 5, 5, 6, NULL, 600, NULL, NULL, NULL, '[]', NULL, NULL, NULL, NULL),
 	(38, 5, 6, 8, NULL, NULL, NULL, NULL, NULL, '[]', NULL, NULL, NULL, NULL),
-	(44, 6, 6, 8, NULL, NULL, NULL, NULL, NULL, '[]', NULL, NULL, NULL, NULL),
-	(45, 6, 6, 9, NULL, NULL, NULL, NULL, NULL, '[]', NULL, NULL, NULL, NULL),
-	(46, 6, 5, 11, 350, 5000, NULL, NULL, NULL, '[]', NULL, NULL, 3, NULL),
-	(47, 6, 5, 10, 200, 3000, 3, 9, '324234', '[]', '45335443', NULL, 1, 100),
-	(48, 6, 5, 6, 300, 4000, 4, 12, 'sdfdsfd', '[]', '543345543', NULL, 2, 100),
 	(49, 7, 5, 6, 300, 6000, 6, 18, '12450', '[]', NULL, 5000, NULL, NULL),
-	(50, 7, 5, 6, 200, 5000, 5, 15, '12345', '[]', NULL, 4000, NULL, NULL);
+	(50, 7, 5, 6, 200, 5000, 5, 15, '12345', '[]', NULL, 4000, NULL, NULL),
+	(51, 6, 6, 8, NULL, NULL, NULL, NULL, NULL, '[]', NULL, NULL, NULL, NULL),
+	(52, 6, 6, 9, NULL, NULL, NULL, NULL, NULL, '[]', NULL, NULL, NULL, NULL),
+	(53, 6, 5, 10, 200, 3000, 3, 9, '324234', '[]', '45335443', NULL, 1, 100),
+	(54, 6, 5, 6, 300, 4000, 4, 12, 'sdfdsfd', '[]', '543345543', NULL, 2, 100),
+	(55, 6, 5, 11, 350, 5000, NULL, NULL, NULL, '[]', NULL, NULL, 3, NULL),
+	(57, 8, 5, 6, NULL, NULL, NULL, NULL, NULL, '[]', NULL, NULL, NULL, NULL);
 
--- Дамп данных таблицы new3.product_seo: ~7 rows (приблизительно)
-DELETE FROM `product_seo`;
+-- Дамп данных таблицы new3.product_seo: ~9 rows (приблизительно)
 INSERT INTO `product_seo` (`product_id`, `meta_title`, `meta_description`, `meta_keywords`, `h1`) VALUES
 	(1, NULL, NULL, NULL, 'Люстра'),
 	(2, NULL, NULL, NULL, 'Анжелика 3 лампы + низ 1'),
@@ -1301,10 +1285,11 @@ INSERT INTO `product_seo` (`product_id`, `meta_title`, `meta_description`, `meta
 	(4, 'Люстра 5', NULL, NULL, 'Люстра 5'),
 	(5, 'Люстра 6', 'Люстра 6', NULL, 'Люстра 6'),
 	(6, NULL, NULL, NULL, 'Люстра 7'),
-	(7, 'Люстра 8', NULL, NULL, 'Люстра 8');
+	(7, 'Люстра 8', NULL, NULL, 'Люстра 8'),
+	(8, NULL, NULL, NULL, 'Капель'),
+	(9, NULL, NULL, NULL, 'Кольцо купол');
 
--- Дамп данных таблицы new3.product_to_category: ~15 rows (приблизительно)
-DELETE FROM `product_to_category`;
+-- Дамп данных таблицы new3.product_to_category: ~22 rows (приблизительно)
 INSERT INTO `product_to_category` (`id`, `product_id`, `category_id`, `is_parent`, `position`, `visibility`) VALUES
 	(7, 3, 1, 0, NULL, 1),
 	(9, 3, 3, 0, NULL, 1),
@@ -1323,10 +1308,13 @@ INSERT INTO `product_to_category` (`id`, `product_id`, `category_id`, `is_parent
 	(22, 5, 1, 1, NULL, 1),
 	(23, 5, 4, 0, NULL, 1),
 	(24, 5, 3, 0, NULL, 1),
-	(25, 7, 1, 0, NULL, 1);
+	(25, 7, 1, 0, NULL, 1),
+	(26, 8, 3, 0, NULL, 1),
+	(27, 8, 1, 0, NULL, 1),
+	(28, 9, 1, 1, NULL, 1),
+	(29, 9, 2, 0, NULL, 1);
 
 -- Дамп данных таблицы new3.pvz_points: ~5 301 rows (приблизительно)
-DELETE FROM `pvz_points`;
 INSERT INTO `pvz_points` (`id`, `code`, `name`, `city_code`, `address`, `tariff_zone`, `price`, `delivery_period`, `phone`, `region`, `type_of_office`, `metro`, `only_prepaid_orders`, `postal`, `city`, `time`, `card`, `shirota`, `dolgota`, `company`) VALUES
 	(32171, '0004ccff-edea-46fa-a1c0-30c34178fb0c', 'Пункт выдачи заказов Яндекс Маркета', '117025', 'Москва Ленинградское шоссе 128', NULL, NULL, NULL, '+74951570020', 'Москва', NULL, NULL, NULL, 125445, 'Москва', NULL, NULL, 55.869457244873, 37.462108612061, NULL),
 	(32172, '00120266-3448-4986-b8db-28efea7c34ff', 'Пункт выдачи заказов Яндекс Маркета', '11030', 'Азов переулок Маяковского 19', NULL, NULL, NULL, '+74951570020', 'Ростовская область', NULL, NULL, NULL, 346789, 'Азов', NULL, NULL, 47.098316192627, 39.440433502197, NULL),
@@ -3299,7 +3287,8 @@ INSERT INTO `pvz_points` (`id`, `code`, `name`, `city_code`, `address`, `tariff_
 	(34139, '28c6129e-e570-41e7-98bb-bccd6e22c394', 'Пункт выдачи заказов Яндекс Маркета', '217008', 'Тюмень улица Щербакова 146 к2', NULL, NULL, NULL, '+74951570020', 'Тюменская область', NULL, NULL, NULL, 625000, 'Тюмень', NULL, NULL, 57.189910888672, 65.574310302734, NULL),
 	(34140, '28d01530-b97f-4315-b5da-df2bcb033909', 'Пункт выдачи заказов Яндекс Маркета', '101980', 'Екатеринбург Союзная улица 2', NULL, NULL, NULL, '+74951570020', 'Свердловская область', NULL, NULL, NULL, 620144, 'Екатеринбург', NULL, NULL, 56.807525634766, 60.607082366943, NULL),
 	(34141, '28d8191b-127c-47d9-9846-4f09ff568287', 'Пункт выдачи заказов Яндекс Маркета', '22914', 'Сясьстрой Советская улица 34', NULL, NULL, NULL, '+74951570020', 'Ленинградская область', NULL, NULL, NULL, 187420, 'Сясьстрой', NULL, NULL, 60.143836975098, 32.554244995117, NULL),
-	(34142, '28d85aca-d4c0-40c8-aecd-5ece6d8f963f', 'Пункт выдачи заказов Яндекс Маркета', '108220', 'Волгоград улица Генерала Штеменко 7', NULL, NULL, NULL, '+74951570020', 'Волгоградская область', NULL, NULL, NULL, 400105, 'Волгоград', NULL, NULL, 48.772682189941, 44.561420440674, NULL),
+	(34142, '28d85aca-d4c0-40c8-aecd-5ece6d8f963f', 'Пункт выдачи заказов Яндекс Маркета', '108220', 'Волгоград улица Генерала Штеменко 7', NULL, NULL, NULL, '+74951570020', 'Волгоградская область', NULL, NULL, NULL, 400105, 'Волгоград', NULL, NULL, 48.772682189941, 44.561420440674, NULL);
+INSERT INTO `pvz_points` (`id`, `code`, `name`, `city_code`, `address`, `tariff_zone`, `price`, `delivery_period`, `phone`, `region`, `type_of_office`, `metro`, `only_prepaid_orders`, `postal`, `city`, `time`, `card`, `shirota`, `dolgota`, `company`) VALUES
 	(34143, '28daabdd-b4a3-418a-a68c-f71c023cd949', 'Пункт выдачи заказов Яндекс Маркета', '11121', 'Альметьевск улица Ленина 100 стр2', NULL, NULL, NULL, '+74951570020', 'Республика Татарстан (Татарстан)', NULL, NULL, NULL, 423457, 'Альметьевск', NULL, NULL, 54.89920425415, 52.275455474854, NULL),
 	(34144, '28e2a0e1-46d2-43d0-916c-ba5ad7b68189', 'Пункт выдачи заказов Яндекс Маркета', '21735', 'Дзержинский Томилинская улица 20А', NULL, NULL, NULL, '+74951570020', 'Московская область', NULL, NULL, NULL, 140090, 'Дзержинский', NULL, NULL, 55.627174377441, 37.864234924316, NULL),
 	(34145, '28e4bc42-2d80-431a-b5a4-6213e859acec', 'Пункт выдачи заказов Яндекс Маркета', '121742', 'посёлок Первомайское Центральная улица 28', NULL, NULL, NULL, '+74951570020', 'Москва', NULL, NULL, NULL, 108808, 'посёлок Первомайское', NULL, NULL, 55.537044525146, 37.15710067749, NULL),
@@ -4008,8 +3997,7 @@ INSERT INTO `pvz_points` (`id`, `code`, `name`, `city_code`, `address`, `tariff_
 	(34848, '55cf5258-9395-4dae-9722-92af079c8124', 'Пункт выдачи заказов партнёра', '120475', 'деревня Энколово Шоссейная улица 1Г', NULL, NULL, NULL, '+74951570020', 'Ленинградская область', NULL, NULL, NULL, 188687, 'деревня Энколово', NULL, NULL, 60.110675811768, 30.426202774048, NULL),
 	(34849, '55df8ae8-c3cb-4bea-b39c-d4782d8f5cc1', 'Пункт выдачи заказов Яндекс Маркета', '120565', 'Москва Скобелевская улица 1 к1', NULL, NULL, NULL, '+74951570020', 'Москва', NULL, NULL, NULL, 117624, 'Москва', NULL, NULL, 55.55078125, 37.555461883545, NULL),
 	(34850, '56207975-1c79-4e9f-b9cf-ca53bace726e', 'Пункт выдачи заказов Яндекс Маркета', '20192', 'Алексеевка Мостовая улица 7', NULL, NULL, NULL, '+74951570020', 'Белгородская область', NULL, NULL, NULL, 309850, 'Алексеевка', NULL, NULL, 50.621509552002, 38.678897857666, NULL),
-	(34851, '563f53cc-427f-419c-a545-b7d8b51be97d', 'Пункт выдачи заказов Яндекс Маркета', '21745', 'рабочий посёлок Нахабино Покровская улица 14', NULL, NULL, NULL, '+74951570020', 'Московская область', NULL, NULL, NULL, 143430, 'рабочий посёлок Нахабино', NULL, NULL, 55.855438232422, 37.181232452393, NULL);
-INSERT INTO `pvz_points` (`id`, `code`, `name`, `city_code`, `address`, `tariff_zone`, `price`, `delivery_period`, `phone`, `region`, `type_of_office`, `metro`, `only_prepaid_orders`, `postal`, `city`, `time`, `card`, `shirota`, `dolgota`, `company`) VALUES
+	(34851, '563f53cc-427f-419c-a545-b7d8b51be97d', 'Пункт выдачи заказов Яндекс Маркета', '21745', 'рабочий посёлок Нахабино Покровская улица 14', NULL, NULL, NULL, '+74951570020', 'Московская область', NULL, NULL, NULL, 143430, 'рабочий посёлок Нахабино', NULL, NULL, 55.855438232422, 37.181232452393, NULL),
 	(34852, '56417f08-ff6b-4945-8d7a-83d728b39623', 'Пункт выдачи заказов Яндекс Маркета', '217053', 'Рязань Быстрецкая улица 22', NULL, NULL, NULL, '+74951570020', 'Рязанская область', NULL, NULL, NULL, 390027, 'Рязань', NULL, NULL, 54.630752563477, 39.780113220215, NULL),
 	(34853, '564ced5c-aac9-4c8f-a0dc-760ff48a9792', 'Пункт выдачи заказов партнёра', '20200', 'Киров Базарный переулок 1Б', NULL, NULL, NULL, '+74951570020', 'Калужская область', NULL, NULL, NULL, 249440, 'Киров', NULL, NULL, 54.079208374023, 34.304054260254, NULL),
 	(34854, '564e22bf-b8ba-40a2-bc79-9cd60384dd28', 'Пункт выдачи заказов Яндекс Маркета', '101980', 'Екатеринбург улица Грибоедова 20', NULL, NULL, NULL, '+74951570020', 'Свердловская область', NULL, NULL, NULL, 620010, 'Екатеринбург', NULL, NULL, 56.754238128662, 60.702365875244, NULL),
@@ -5910,7 +5898,8 @@ INSERT INTO `pvz_points` (`id`, `code`, `name`, `city_code`, `address`, `tariff_
 	(36749, 'cdafe3ed-4d7d-45a0-a7ac-7a1f4ab4eeed', 'Пункт выдачи заказов Яндекс Маркета', '10878', 'Отрадное улица Победы 2', NULL, NULL, NULL, '+74951570020', 'Ленинградская область', NULL, NULL, NULL, 187330, 'Отрадное', NULL, NULL, 59.762771606445, 30.771089553833, NULL),
 	(36750, 'cdba0454-c7c8-4991-b102-953822b75ff5', 'Пункт выдачи заказов Яндекс Маркета', '972', 'Дзержинск улица Петрищева 14', NULL, NULL, NULL, '+74951570020', 'Нижегородская область', NULL, NULL, NULL, 606037, 'Дзержинск', NULL, NULL, 56.232288360596, 43.414813995361, NULL),
 	(36751, 'cdca1441-533b-4454-8753-b0b529a15459', 'Пункт выдачи заказов Яндекс Маркета', '110296', 'посёлок городского типа Белые Берега улица Коминтерна 16', NULL, NULL, NULL, '+74951570020', 'Брянская область', NULL, NULL, NULL, 241902, 'посёлок городского типа Белые Берега', NULL, NULL, 53.211536407471, 34.664134979248, NULL),
-	(36752, 'cddda3e5-9196-4007-b7d8-9738654d845f', 'Пункт выдачи заказов Яндекс Маркета', '20704', 'Славянск-на-Кубани улица Ленина 73', NULL, NULL, NULL, '+74951570020', 'Краснодарский край', NULL, NULL, NULL, 353560, 'Славянск-на-Кубани', NULL, NULL, 45.256526947021, 38.124786376953, NULL),
+	(36752, 'cddda3e5-9196-4007-b7d8-9738654d845f', 'Пункт выдачи заказов Яндекс Маркета', '20704', 'Славянск-на-Кубани улица Ленина 73', NULL, NULL, NULL, '+74951570020', 'Краснодарский край', NULL, NULL, NULL, 353560, 'Славянск-на-Кубани', NULL, NULL, 45.256526947021, 38.124786376953, NULL);
+INSERT INTO `pvz_points` (`id`, `code`, `name`, `city_code`, `address`, `tariff_zone`, `price`, `delivery_period`, `phone`, `region`, `type_of_office`, `metro`, `only_prepaid_orders`, `postal`, `city`, `time`, `card`, `shirota`, `dolgota`, `company`) VALUES
 	(36753, 'cddfba29-ccf9-404f-93a4-cb654ec55b5a', 'Пункт выдачи заказов Яндекс Маркета', '108157', 'Челябинск улица Агалакова 37', NULL, NULL, NULL, '+74951570020', 'Челябинская область', NULL, NULL, NULL, 454010, 'Челябинск', NULL, NULL, 55.13415145874, 61.446491241455, NULL),
 	(36754, 'ce1a17e5-4ee2-4cff-9f20-827d45131e30', 'Пункт выдачи заказов Яндекс Маркета', '117007', 'Москва Малая Филёвская улица 12 к1', NULL, NULL, NULL, '+74951570020', 'Москва', NULL, NULL, NULL, 121433, 'Москва', NULL, NULL, 55.738460540771, 37.473377227783, NULL),
 	(36755, 'ce24c157-b4b8-4128-bbd0-90d64cf4c0fc', 'Пункт выдачи заказов Яндекс Маркета', '10738', 'Люберцы улица Кирова 4', NULL, NULL, NULL, '+74951570020', 'Московская область', NULL, NULL, NULL, 140002, 'Люберцы', NULL, NULL, 55.690410614014, 37.86198425293, NULL),
@@ -6619,8 +6608,7 @@ INSERT INTO `pvz_points` (`id`, `code`, `name`, `city_code`, `address`, `tariff_
 	(37458, 'fb51d893-94f7-4cb0-b6f2-48d10dd9de35', 'Пункт выдачи заказов Яндекс Маркета', '20235', 'Октябрьский улица Садовое Кольцо 319/1', NULL, NULL, NULL, '+74951570020', 'Республика Башкортостан', NULL, NULL, NULL, 452607, 'Октябрьский', NULL, NULL, 54.47566986084, 53.465576171875, NULL),
 	(37459, 'fb6f9cd7-aae3-4716-8b8e-17e6293f2e84', 'Пункт выдачи заказов Яндекс Маркета', '102026', 'Казань Чистопольская улица 66', NULL, NULL, NULL, '+74951570020', 'Республика Татарстан (Татарстан)', NULL, NULL, NULL, 421001, 'Казань', NULL, NULL, 55.816299438477, 49.135089874268, NULL),
 	(37460, 'fb77b230-767e-48b1-822f-621b5bf3289c', 'Пункт выдачи заказов Яндекс Маркета', '217092', 'Белгород улица Пушкина 49А', NULL, NULL, NULL, '+74951570020', 'Белгородская область', NULL, NULL, NULL, 308015, 'Белгород', NULL, NULL, 50.599998474121, 36.576530456543, NULL),
-	(37461, 'fbcf4ddf-9824-4345-ba99-8f370523d9f0', 'Пункт выдачи заказов Яндекс Маркета', '10752', 'Сергиев Посад улица 2-й Кирпичный Завод 18А', NULL, NULL, NULL, '+74951570020', 'Московская область', NULL, NULL, NULL, 141305, 'Сергиев Посад', NULL, NULL, 56.291786193848, 38.141139984131, NULL);
-INSERT INTO `pvz_points` (`id`, `code`, `name`, `city_code`, `address`, `tariff_zone`, `price`, `delivery_period`, `phone`, `region`, `type_of_office`, `metro`, `only_prepaid_orders`, `postal`, `city`, `time`, `card`, `shirota`, `dolgota`, `company`) VALUES
+	(37461, 'fbcf4ddf-9824-4345-ba99-8f370523d9f0', 'Пункт выдачи заказов Яндекс Маркета', '10752', 'Сергиев Посад улица 2-й Кирпичный Завод 18А', NULL, NULL, NULL, '+74951570020', 'Московская область', NULL, NULL, NULL, 141305, 'Сергиев Посад', NULL, NULL, 56.291786193848, 38.141139984131, NULL),
 	(37462, 'fc06f369-b19a-472a-8e4b-f49a66db82b7', 'Пункт выдачи заказов Яндекс Маркета', '108237', 'Барнаул улица Попова 76', NULL, NULL, NULL, '+74951570020', 'Алтайский край', NULL, NULL, NULL, 656062, 'Барнаул', NULL, NULL, 53.367893218994, 83.674095153809, NULL),
 	(37463, 'fc17dc89-2c8f-4713-b997-2aab1b242c3e', 'Пункт выдачи заказов Яндекс Маркета', '217445', 'Калуга бульвар Энтузиастов 13А', NULL, NULL, NULL, '+74951570020', 'Калужская область', NULL, NULL, NULL, 248017, 'Калуга', NULL, NULL, 54.566844940186, 36.272407531738, NULL),
 	(37464, 'fc24a8a1-913f-4761-bc9d-3f1d553ca00f', 'Пункт выдачи заказов Яндекс Маркета', '120553', 'Москва улица Васильцовский Стан 9', NULL, NULL, NULL, '+74951570020', 'Москва', NULL, NULL, NULL, 109125, 'Москва', NULL, NULL, 55.71594619751, 37.75121307373, NULL),
@@ -6689,9 +6677,9 @@ INSERT INTO `pvz_points` (`id`, `code`, `name`, `city_code`, `address`, `tariff_
 	(37527, 'ffe22c6e-6a85-45a7-a04f-2dcc3f16327f', 'Пункт выдачи заказов Яндекс Маркета', '117673', 'деревня Глинка Центральная улица 35 к3', NULL, NULL, NULL, '+74951570020', 'Ленинградская область', NULL, NULL, NULL, 187021, 'деревня Глинка', NULL, NULL, 59.677433013916, 30.502948760986, NULL);
 
 -- Дамп данных таблицы new3.pvz_price: ~594 rows (приблизительно)
-DELETE FROM `pvz_price`;
 INSERT INTO `pvz_price` (`id`, `city`, `srok`, `city2`, `code`, `alias`, `region`, `cost`, `free`, `calculate_price`, `calculate_delivery_period`) VALUES
-	(1, 'Москва', 'от 2 до 4 дней', 'Москве', '', 'moscow', '', 190, 6000, 609, '3'),
+	(1, 'Москва', 'от 2 до 4 дней', 'Москве', '', 'moscow', '', 190, 6000, 609, '3');
+INSERT INTO `pvz_price` (`id`, `city`, `srok`, `city2`, `code`, `alias`, `region`, `cost`, `free`, `calculate_price`, `calculate_delivery_period`) VALUES
 	(2, 'Тамбов', 'от 5 до 6 дней', 'Тамбове', '', 'tambov', '', 490, 0, 644, '5'),
 	(3, 'Санкт-Петербург', 'от 4 до 6 дней	', 'Санкт-Петербурге', '', 'spb', '', 190, 7000, 609, '4'),
 	(4, 'Новосибирск', 'от 7 до 9 дней', 'Новосибирске', '', 'novosibirsk', '', 490, 0, 859, '7'),
@@ -7287,13 +7275,12 @@ INSERT INTO `pvz_price` (`id`, `city`, `srok`, `city2`, `code`, `alias`, `region
 	(595, 'Смышляевка', 'от 9 до 11 дней', NULL, NULL, 'smyshlyaevka', NULL, NULL, NULL, 772, '8');
 
 -- Дамп данных таблицы new3.settings: ~1 rows (приблизительно)
-DELETE FROM `settings`;
 INSERT INTO `settings` (`id`, `name`, `value`) VALUES
-	(1, 'phone', '899933000'),
+	(1, 'phone', '899933000');
+INSERT INTO `settings` (`id`, `name`, `value`) VALUES
 	(2, 'email', 'info@site.ru');
 
 -- Дамп данных таблицы new3.users: ~0 rows (приблизительно)
-DELETE FROM `users`;
 INSERT INTO `users` (`id`, `name`, `roles`, `password`) VALUES
 	(1, 'admin', '["ROLE_ADMIN", "ROLE_USER"]', '$2y$13$qJp9xcw0zgGd7IJqMHvS/.mr32.nobYRv4nUGZJz3amLZDzR/1aqW');
 
