@@ -37,5 +37,4 @@ class ContactsExtension extends AbstractExtension
 
         return $contact;
     }
-
 }

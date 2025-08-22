@@ -195,7 +195,7 @@ final class CartManager
 						$item->setSelectedOptionsData($selectedOptionsData);
 						$item->setOptionsSnapshot($optionsSnapshot);
 						$item->setOptionsHash($optionsHash);
-						$item->setEffectiveUnitPrice($basePrice + $optionsPriceModifier);
+						$item->setEffectiveUnitPrice($optionsPriceModifier);
 					} else {
 						$item->setEffectiveUnitPrice($basePrice);
 					}

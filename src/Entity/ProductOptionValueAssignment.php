@@ -7,6 +7,8 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 use App\Repository\ProductOptionValueAssignmentRepository;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
 
 #[ORM\Entity(repositoryClass: ProductOptionValueAssignmentRepository::class)]
 #[ORM\Table(
@@ -83,6 +85,17 @@ class ProductOptionValueAssignment
     #[ORM\Column(name: 'quantity', type: 'integer', nullable: true)]
     #[Groups(['product:read', 'product:create', 'product:update'])]
     private ?int $quantity = null;
+
+    /**
+     * @var Collection<int, CartItem>
+     */
+    #[ORM\ManyToMany(targetEntity: CartItem::class, mappedBy: 'optionAssignments')]
+    private Collection $cartItems;
+
+    public function __construct()
+    {
+        $this->cartItems = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -229,6 +242,30 @@ class ProductOptionValueAssignment
     public function setQuantity(?int $quantity): self
     {
         $this->quantity = $quantity;
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, CartItem>
+     */
+    public function getCartItems(): Collection
+    {
+        return $this->cartItems;
+    }
+
+    public function addCartItem(CartItem $cartItem): self
+    {
+        if (!$this->cartItems->contains($cartItem)) {
+            $this->cartItems->add($cartItem);
+        }
+
+        return $this;
+    }
+
+    public function removeCartItem(CartItem $cartItem): self
+    {
+        $this->cartItems->removeElement($cartItem);
+
         return $this;
     }
 }
