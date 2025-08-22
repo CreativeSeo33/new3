@@ -5,6 +5,7 @@ namespace App\Controller\Api;
 
 use App\Service\CartManager;
 use App\Repository\CartRepository;
+use App\Repository\ProductRepository;
 use App\Entity\User as AppUser;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\{Request, JsonResponse};
@@ -13,7 +14,7 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/api/cart')]
 final class CartApiController extends AbstractController
 {
-	public function __construct(private CartManager $manager, private CartRepository $carts) {}
+	public function __construct(private CartManager $manager, private CartRepository $carts, private ProductRepository $products) {}
 
 	#[Route('', name: 'api_cart_get', methods: ['GET'])]
     public function getCart(Request $request): JsonResponse
@@ -35,16 +36,27 @@ final class CartApiController extends AbstractController
 		$data = json_decode($request->getContent(), true) ?? [];
 		$productId = (int)($data['productId'] ?? 0);
 		$qty = (int)($data['qty'] ?? 1);
+		
+		// Добавляем обработку опций
+		$optionAssignmentIds = [];
+		if (isset($data['optionAssignmentIds']) && is_array($data['optionAssignmentIds'])) {
+			$optionAssignmentIds = array_map('intval', $data['optionAssignmentIds']);
+		}
+		
 		if ($productId < 1 || $qty < 1) {
 			return $this->json(['error' => 'Invalid input'], 422);
 		}
+		
 		$user = $this->getUser();
 		$cart = $this->manager->getOrCreateCurrent($user instanceof AppUser ? $user->getId() : null);
+		
 		try {
-			$this->manager->addItem($cart, $productId, $qty);
+			// Передаем опции в метод addItem
+			$this->manager->addItem($cart, $productId, $qty, $optionAssignmentIds);
 		} catch (\DomainException $e) {
 			return $this->json(['error' => $e->getMessage()], 422);
 		}
+		
 		return $this->json($this->serializeCart($cart), 201);
 	}
 
@@ -72,6 +84,40 @@ final class CartApiController extends AbstractController
 		return new JsonResponse(null, 204);
 	}
 
+	#[Route('/products/{productId}/options', name: 'api_product_options', methods: ['GET'])]
+	public function getProductOptions(int $productId): JsonResponse
+	{
+		$product = $this->products->find($productId);
+		if (!$product) {
+			return $this->json(['error' => 'Product not found'], 404);
+		}
+		
+		$options = [];
+		foreach ($product->getOptionAssignments() as $assignment) {
+			$optionCode = $assignment->getOption()->getCode();
+			if (!isset($options[$optionCode])) {
+				$options[$optionCode] = [
+					'code' => $optionCode,
+					'name' => $assignment->getOption()->getName(),
+					'values' => []
+				];
+			}
+			
+			$options[$optionCode]['values'][] = [
+				'assignmentId' => $assignment->getId(), // Это ID для отправки в корзину
+				'valueCode' => $assignment->getValue()->getCode(),
+				'valueName' => $assignment->getValue()->getValue(),
+				'price' => $assignment->getPrice(),
+				'salePrice' => $assignment->getSalePrice(),
+				'sku' => $assignment->getSku(),
+				'quantity' => $assignment->getQuantity(),
+				'attributes' => $assignment->getAttributes(),
+			];
+		}
+		
+		return $this->json(array_values($options));
+	}
+
 	private function serializeCart($cart): array
 	{
 		return [
@@ -93,6 +139,11 @@ final class CartApiController extends AbstractController
 				'unitPrice' => $i->getUnitPrice(),
 				'qty' => $i->getQty(),
 				'rowTotal' => $i->getRowTotal(),
+				// Добавляем информацию об опциях
+				'optionsPriceModifier' => $i->getOptionsPriceModifier(),
+				'effectiveUnitPrice' => $i->getEffectiveUnitPrice(),
+				'selectedOptions' => $i->getOptionsSnapshot() ?? $i->getSelectedOptionsData() ?? [],
+				'optionsHash' => $i->getOptionsHash(),
 			], $cart->getItems()->toArray()),
 		];
 	}

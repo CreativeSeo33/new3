@@ -45,12 +45,33 @@
     if (!btn) return;
     const productId = parseInt(btn.getAttribute('data-product-id'), 10);
     if (!productId) return;
+    
+    // Собираем выбранные опции
+    const optionAssignmentIds = [];
+    const form = btn.closest('form');
+    if (form) {
+      // Ищем все выбранные radio кнопки с опциями в пределах формы
+      const selectedOptions = form.querySelectorAll('input[type="radio"][name^="option-"]:checked');
+      selectedOptions.forEach(option => {
+        const assignmentId = parseInt(option.value, 10);
+        if (assignmentId) {
+          optionAssignmentIds.push(assignmentId);
+        }
+      });
+    }
+    
     btn.disabled = true;
     try {
+      const requestBody = { productId, qty: 1 };
+      // Добавляем опции только если они есть
+      if (optionAssignmentIds.length > 0) {
+        requestBody.optionAssignmentIds = optionAssignmentIds;
+      }
+      
       const res = await fetch('{{ path('api_cart_add_item') }}', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-        body: JSON.stringify({ productId, qty: 1 })
+        body: JSON.stringify(requestBody)
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) { alert(data.error || 'Не удалось добавить в корзину'); return; }

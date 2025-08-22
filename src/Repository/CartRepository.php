@@ -41,9 +41,20 @@ final class CartRepository extends ServiceEntityRepository
     public function findItemForUpdate(Cart $cart, Product $product): ?CartItem
     {
         return $this->getEntityManager()->createQuery(
-            'SELECT ci FROM App\\Entity\\CartItem ci WHERE ci.cart = :c AND ci.product = :p'
+            'SELECT ci FROM App\\Entity\\CartItem ci WHERE ci.cart = :c AND ci.product = :p AND ci.optionsHash IS NULL'
         )
         ->setParameters(['c' => $cart, 'p' => $product])
+        ->setLockMode(LockMode::PESSIMISTIC_WRITE)
+        ->setMaxResults(1)
+        ->getOneOrNullResult();
+    }
+
+    public function findItemForUpdateWithOptions(Cart $cart, Product $product, string $optionsHash): ?CartItem
+    {
+        return $this->getEntityManager()->createQuery(
+            'SELECT ci FROM App\\Entity\\CartItem ci WHERE ci.cart = :c AND ci.product = :p AND ci.optionsHash = :h'
+        )
+        ->setParameters(['c' => $cart, 'p' => $product, 'h' => $optionsHash])
         ->setLockMode(LockMode::PESSIMISTIC_WRITE)
         ->setMaxResults(1)
         ->getOneOrNullResult();
