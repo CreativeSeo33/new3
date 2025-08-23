@@ -1,15 +1,114 @@
-<footer class="w-full border-t bg-white mt-10">
-  <div class="container mx-auto px-4 py-8 text-sm text-gray-600">
-    <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+<footer class="w-full bg-gray-100 border-t mt-10">
+  <div class="container mx-auto px-4 py-12">
+    <!-- Footer Top - Newsletter -->
+    <div class="border-b border-gray-300 pb-10 mb-10">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+        <div>
+          <h3 class="text-xl font-bold text-gray-900 mb-2">Подпишитесь на нашу рассылку</h3>
+          <p class="text-gray-600">Получайте ежедневные новости и скидки</p>
+        </div>
+        <div class="flex">
+          <input type="email" placeholder="Ваш email" class="flex-1 h-12 px-4 border border-r-0 border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+          <button class="h-12 px-6 bg-blue-600 text-white rounded-r-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200">
+            Подписаться
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Footer Middle - Links -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-10">
+      <!-- Company Info -->
+      <div class="lg:col-span-2">
+        <div class="flex items-center mb-4">
+          <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+            <span class="text-white font-bold text-lg">L</span>
+          </div>
+          <span class="text-2xl font-bold text-gray-800 ml-2">{{ site_name|default('ShopGrids') }}</span>
+        </div>
+        <p class="text-gray-600 mb-4">
+          55 Gallaxy Enque,<br>
+          2568 steet, 23568 NY<br>
+          United States
+        </p>
+        <div class="flex items-center text-gray-600 mb-2">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+          </svg>
+          <span>(440) 000 000 0000</span>
+        </div>
+        <div class="flex items-center text-gray-600">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+          </svg>
+          <span>sales@yousite.com</span>
+        </div>
+      </div>
+      
+      <!-- Information -->
       <div>
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">ИНФОРМАЦИЯ</h3>
+        <ul class="space-y-2">
+          <li><a href="#" class="text-gray-600 hover:text-blue-600">О нас</a></li>
+          <li><a href="#" class="text-gray-600 hover:text-blue-600">Контакты</a></li>
+          <li><a href="#" class="text-gray-600 hover:text-blue-600">Карьера</a></li>
+          <li><a href="#" class="text-gray-600 hover:text-blue-600">Мой аккаунт</a></li>
+          <li><a href="#" class="text-gray-600 hover:text-blue-600">Заказы и возвраты</a></li>
+        </ul>
+      </div>
+      
+      <!-- Quick Shop -->
+      <div>
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">БЫСТРЫЙ ПОИСК</h3>
+        <ul class="space-y-2">
+          <li><a href="#" class="text-gray-600 hover:text-blue-600">Мода</a></li>
+          <li><a href="#" class="text-gray-600 hover:text-blue-600">Мужские</a></li>
+          <li><a href="#" class="text-gray-600 hover:text-blue-600">Мебель</a></li>
+          <li><a href="#" class="text-gray-600 hover:text-blue-600">Декор</a></li>
+          <li><a href="#" class="text-gray-600 hover:text-blue-600">Обувь</a></li>
+        </ul>
+      </div>
+      
+      <!-- Customer Service -->
+      <div>
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">СЛУЖБА ПОДДЕРЖКИ</h3>
+        <ul class="space-y-2">
+          <li><a href="#" class="text-gray-600 hover:text-blue-600">Помощь и FAQ</a></li>
+          <li><a href="#" class="text-gray-600 hover:text-blue-600">Политика возврата</a></li>
+          <li><a href="#" class="text-gray-600 hover:text-blue-600">Условия и положения</a></li>
+          <li><a href="#" class="text-gray-600 hover:text-blue-600">Политика конфиденциальности</a></li>
+          <li><a href="#" class="text-gray-600 hover:text-blue-600">Центр поддержки</a></li>
+        </ul>
+      </div>
+    </div>
+    
+    <!-- Footer Bottom -->
+    <div class="flex flex-col md:flex-row items-center justify-between pt-6 border-t border-gray-300">
+      <div class="text-gray-600 text-sm mb-4 md:mb-0">
         &copy; {{ "now"|date("Y") }} {{ site_name|default('Symfony Shop') }}. Все права защищены.
       </div>
-      <div class="flex items-center gap-4">
-        {% if footer_links is defined %}
-          {% for link in footer_links %}
-            <a href="{{ link.url }}" class="hover:text-blue-600">{{ link.label }}</a>
-          {% endfor %}
-        {% endif %}
+      <div class="flex items-center space-x-4">
+        <span class="text-gray-600 text-sm">Мы принимаем:</span>
+        <div class="flex space-x-2">
+          <div class="w-8 h-6 bg-gray-200 rounded flex items-center justify-center">
+            <span class="text-xs font-medium text-gray-700">VISA</span>
+          </div>
+          <div class="w-8 h-6 bg-gray-200 rounded flex items-center justify-center">
+            <span class="text-xs font-medium text-gray-700">MC</span>
+          </div>
+          <div class="w-8 h-6 bg-gray-200 rounded flex items-center justify-center">
+            <span class="text-xs font-medium text-gray-700">AE</span>
+          </div>
+          <div class="w-8 h-6 bg-gray-200 rounded flex items-center justify-center">
+            <span class="text-xs font-medium text-gray-700">PP</span>
+          </div>
+          <div class="w-8 h-6 bg-gray-200 rounded flex items-center justify-center">
+            <span class="text-xs font-medium text-gray-700">DC</span>
+          </div>
+          <div class="w-8 h-6 bg-gray-200 rounded flex items-center justify-center">
+            <span class="text-xs font-medium text-gray-700">DS</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>

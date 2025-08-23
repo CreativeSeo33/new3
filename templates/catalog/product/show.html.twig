@@ -11,12 +11,8 @@
         {% set firstImage = product.image|sort((a,b) => a.sortOrder <=> b.sortOrder)|first %}
         {% if firstImage %}
           {% set raw = firstImage.imageUrl %}
-          {% if raw starts with '/media/cache/' %}
-            {% set imgSrc = raw %}
-          {% else %}
-            {% set rel = raw|replace({'/img/':''})|trim('/') %}
-            {% set imgSrc = asset('/img/' ~ rel) | imagine_filter('md2') %}
-          {% endif %}
+          {% set rel = raw|replace({'/media/cache/':''})|split('/')|last %}
+          {% set imgSrc = asset('/img/' ~ rel) | imagine_filter('xl') %}
           <img src="{{ imgSrc }}" alt="{{ product.name }}" class="w-full h-auto rounded-md shadow" />
         {% else %}
           <img src="https://via.placeholder.com/500" alt="{{ product.name }}" class="w-full h-auto rounded-md shadow" />

@@ -1,44 +1,72 @@
 <header class="bg-white shadow-sm">
+  <!-- Top Bar -->
+  <div class="bg-gray-900 text-white text-xs">
+    <div class="container mx-auto px-4 py-2 flex justify-between items-center">
+      <div class="flex items-center space-x-4">
+        <div class="flex items-center">
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+          </svg>
+          <span>{{ contacts('phone') }}</span>
+        </div>
+        <div class="hidden md:flex items-center">
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+          </svg>
+          <span>sales@yousite.com</span>
+        </div>
+      </div>
+      <div class="flex items-center space-x-4">
+        <a href="#" class="hover:text-gray-300">Войти</a>
+        <a href="#" class="hover:text-gray-300">Регистрация</a>
+        <div class="flex items-center space-x-2">
+          <span>RU</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Header Middle Section -->
-  <div class="bg-white py-4 border-b border-gray-100">
+  <div class="py-4 border-b border-gray-100">
     <div class="container mx-auto px-4">
       <div class="flex items-center justify-between">
+        
+        <!-- Mobile Menu Toggle -->
+        <div class="md:hidden flex items-center">
+          <button id="mobile-menu-toggle" class="p-2 rounded-md text-gray-700 hover:text-blue-600 focus:outline-none">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+          </button>
+        </div>
         
         <!-- Logo Section -->
         <div class="flex items-center">
           <a href="{{ path('catalog_index') }}" class="flex items-center gap-3">
             {% if logo_url is defined and logo_url %}
-              <img src="{{ logo_url }}" alt="{{ site_name|default('Shop') }}" class="h-10 w-auto" />
+              <img src="{{ logo_url }}" alt="{{ site_name|default('Shop') }}" class="h-12 w-auto" />
             {% else %}
-              <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span class="text-white font-bold text-lg">L</span>
+              <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                <span class="text-white font-bold text-xl">L</span>
               </div>
             {% endif %}
-            <span class="text-2xl font-bold text-gray-800">{{ site_name|default('ShopGrids') }}</span>
+            <span class="text-2xl font-bold text-gray-800 hidden sm:block">{{ site_name|default('ShopGrids') }}</span>
           </a>
         </div>
 
         <!-- Search Section -->
-        <div class="flex-1 max-w-2xl mx-8">
-          <form action="" method="GET" class="relative">
+        <div class="hidden lg:flex flex-1 max-w-2xl mx-8">
+          <form action="" method="GET" class="relative w-full">
             <div class="flex">
-              <!-- Category Dropdown -->
-              <div class="relative">
-                <select name="category" class="h-12 px-4 bg-gray-50 border border-r-0 border-gray-300 rounded-l-full text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-[120px]">
-                  <option value="">Все категории</option>
-                  <option value="electronics">Электроника</option>
-                  <option value="accessories">Аксессуары</option>
-                  <option value="televisions">Телевизоры</option>
-                  <option value="computers">Компьютеры</option>
-                </select>
-              </div>
-              
               <!-- Search Input -->
               <input type="text" 
                      name="q" 
                      placeholder="Поиск товаров..." 
                      value="{{ app.request.query.get('q') }}"
-                     class="flex-1 h-12 px-4 border-t border-b border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                     class="flex-1 h-12 px-4 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent rounded-l-full">
               
               <!-- Search Button -->
               <button type="submit" 
@@ -58,18 +86,12 @@
           {% set delivery = app.session.get('delivery') %}
           <div class="hidden lg:flex items-center space-x-2 cursor-pointer" id="city-selector" data-city-modal-trigger>
             <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3z"/>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 22s8-4.5 8-11a8 8 0 10-16 0c0 6.5 8 11 8 11z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
             </svg>
             <span class="text-sm text-gray-800 font-medium">{{ delivery.cityName ?? 'Ваш город' }}</span>
           </div>
           
-          <!-- Hotline -->
-          <div class="hidden lg:flex flex-col items-center text-center">
-            <div class="text-xs text-gray-500 font-medium">Номер телефона:</div>
-            <div class="text-sm font-semibold text-gray-800">{{ contacts('phone') }}</div>
-          </div>
-
           <!-- User Account -->
           <div class="flex items-center space-x-2 cursor-pointer group">
             <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-gray-200 transition-colors">
@@ -81,6 +103,17 @@
               <span class="text-gray-500">Привет</span>
               <span class="text-gray-800 font-medium">Войти</span>
             </div>
+          </div>
+
+          <!-- Wishlist -->
+          <div class="relative">
+            <a href="#" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-50 transition-colors group">
+              <div class="relative">
+                <svg class="w-6 h-6 text-gray-600 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                </svg>
+              </div>
+            </a>
           </div>
 
           <!-- Shopping Cart -->
@@ -142,6 +175,89 @@
 
         </div>
       </div>
+      
+      <!-- Mobile Search -->
+      <div class="mt-4 lg:hidden">
+        <form action="" method="GET" class="relative">
+          <div class="flex">
+            <input type="text" 
+                   name="q" 
+                   placeholder="Поиск товаров..." 
+                   value="{{ app.request.query.get('q') }}"
+                   class="flex-1 h-10 px-4 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent rounded-l-full">
+            <button type="submit" 
+                    class="h-10 px-4 bg-blue-600 text-white rounded-r-full hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Menu -->
+  <div id="mobile-menu" class="md:hidden fixed inset-0 z-50 bg-white hidden">
+    <div class="flex flex-col h-full">
+      <!-- Mobile Menu Header -->
+      <div class="flex items-center justify-between p-4 border-b">
+        <div class="flex items-center">
+          <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+            <span class="text-white font-bold text-lg">L</span>
+          </div>
+          <span class="text-xl font-bold text-gray-800 ml-2">{{ site_name|default('ShopGrids') }}</span>
+        </div>
+        <button id="mobile-menu-close" class="p-2 rounded-md text-gray-700 hover:text-blue-600 focus:outline-none">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      
+      <!-- Mobile Menu Content -->
+      <div class="flex-1 overflow-y-auto p-4">
+        <div class="mb-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-3">Категории</h3>
+          <ul class="space-y-2">
+            <li><a href="#" class="block py-2 text-gray-700 hover:text-blue-600">Женская одежда</a></li>
+            <li><a href="#" class="block py-2 text-gray-700 hover:text-blue-600">Мужская одежда</a></li>
+            <li><a href="#" class="block py-2 text-gray-700 hover:text-blue-600">Обувь</a></li>
+            <li><a href="#" class="block py-2 text-gray-700 hover:text-blue-600">Аксессуары</a></li>
+            <li><a href="#" class="block py-2 text-gray-700 hover:text-blue-600">Красота</a></li>
+            <li><a href="#" class="block py-2 text-gray-700 hover:text-blue-600">Детские товары</a></li>
+          </ul>
+        </div>
+        
+        <div class="mb-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-3">Страницы</h3>
+          <ul class="space-y-2">
+            <li><a href="#" class="block py-2 text-gray-700 hover:text-blue-600">О нас</a></li>
+            <li><a href="#" class="block py-2 text-gray-700 hover:text-blue-600">Контакты</a></li>
+            <li><a href="#" class="block py-2 text-gray-700 hover:text-blue-600">Блог</a></li>
+            <li><a href="#" class="block py-2 text-gray-700 hover:text-blue-600">FAQ</a></li>
+          </ul>
+        </div>
+        
+        <div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-3">Аккаунт</h3>
+          <ul class="space-y-2">
+            <li><a href="#" class="block py-2 text-gray-700 hover:text-blue-600">Войти</a></li>
+            <li><a href="#" class="block py-2 text-gray-700 hover:text-blue-600">Регистрация</a></li>
+          </ul>
+        </div>
+      </div>
+      
+      <!-- Mobile Menu Footer -->
+      <div class="p-4 border-t">
+        <div class="flex items-center justify-between">
+          <span class="text-gray-600">RU</span>
+          <div class="flex items-center space-x-4">
+            <a href="#" class="text-gray-600 hover:text-blue-600">Войти</a>
+            <a href="#" class="text-gray-600 hover:text-blue-600">Регистрация</a>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -163,6 +279,31 @@
 
   <script>
   (function() {
+    // Mobile menu toggle
+    const menuToggle = document.getElementById('mobile-menu-toggle');
+    const menuClose = document.getElementById('mobile-menu-close');
+    const mobileMenu = document.getElementById('mobile-menu');
+    
+    if (menuToggle && menuClose && mobileMenu) {
+      menuToggle.addEventListener('click', () => {
+        mobileMenu.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+      });
+      
+      menuClose.addEventListener('click', () => {
+        mobileMenu.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+      });
+      
+      mobileMenu.addEventListener('click', (e) => {
+        if (e.target === mobileMenu) {
+          mobileMenu.classList.add('hidden');
+          document.body.classList.remove('overflow-hidden');
+        }
+      });
+    }
+    
+    // City modal functionality
     const API_URL = '/api/city_modals?order[sort]=asc';
     const trigger = document.querySelector('[data-city-modal-trigger]');
     const modal = document.getElementById('city-modal');

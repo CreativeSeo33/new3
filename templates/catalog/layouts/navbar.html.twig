@@ -1,14 +1,185 @@
-<nav class="w-full border-b bg-gray-50">
+<nav class="w-full border-b bg-white shadow-sm">
   <div class="container mx-auto px-4">
-    <ul class="flex flex-wrap gap-4 py-2 text-sm">
-      {% for item in navbar|default([]) %}
-        <li>
-          <a href="{{ item.url|default('#') }}" class="hover:text-blue-600">{{ item.label|default('Ссылка') }}</a>
+    <div class="flex flex-wrap items-center justify-between">
+      <!-- Categories Dropdown -->
+      <div class="relative group">
+        <button class="flex items-center py-4 px-4 text-gray-700 font-medium hover:text-blue-600">
+          <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+          </svg>
+          Категории
+          <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </button>
+        
+        <!-- Dropdown Menu -->
+        <div class="absolute left-0 top-full w-64 bg-white shadow-lg border border-gray-200 rounded-b-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+          <div class="py-2">
+            <a href="#" class="block px-6 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600">Женская одежда</a>
+            <a href="#" class="block px-6 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600">Мужская одежда</a>
+            <a href="#" class="block px-6 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600">Обувь</a>
+            <a href="#" class="block px-6 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600">Аксессуары</a>
+            <a href="#" class="block px-6 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600">Красота</a>
+            <a href="#" class="block px-6 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600">Детские товары</a>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Main Navigation -->
+      <div class="flex-1 hidden md:flex items-center justify-center">
+        <ul class="flex flex-wrap gap-6 py-2 text-sm font-medium">
+          <li>
+            <a href="{{ path('catalog_index') }}" class="text-gray-700 hover:text-blue-600">Главная</a>
+          </li>
+          <li class="relative group">
+            <a href="#" class="flex items-center text-gray-700 hover:text-blue-600">
+              Женские
+              <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </a>
+            
+            <!-- Mega Menu -->
+            <div class="absolute left-0 top-full w-full bg-white shadow-lg border border-gray-200 rounded-b-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+              <div class="container mx-auto px-4 py-6">
+                <div class="grid grid-cols-4 gap-6">
+                  <div>
+                    <h3 class="text-sm font-semibold text-gray-900 mb-3">Одежда</h3>
+                    <ul class="space-y-2">
+                      <li><a href="#" class="text-sm text-gray-600 hover:text-blue-600">Платья</a></li>
+                      <li><a href="#" class="text-sm text-gray-600 hover:text-blue-600">Топы</a></li>
+                      <li><a href="#" class="text-sm text-gray-600 hover:text-blue-600">Брюки</a></li>
+                      <li><a href="#" class="text-sm text-gray-600 hover:text-blue-600">Костюмы</a></li>
+                      <li><a href="#" class="text-sm text-gray-600 hover:text-blue-600">Свитшоты</a></li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h3 class="text-sm font-semibold text-gray-900 mb-3">Обувь</h3>
+                    <ul class="space-y-2">
+                      <li><a href="#" class="text-sm text-gray-600 hover:text-blue-600">Кроссовки</a></li>
+                      <li><a href="#" class="text-sm text-gray-600 hover:text-blue-600">Туфли</a></li>
+                      <li><a href="#" class="text-sm text-gray-600 hover:text-blue-600">Ботинки</a></li>
+                      <li><a href="#" class="text-sm text-gray-600 hover:text-blue-600">Сандалии</a></li>
+                      <li><a href="#" class="text-sm text-gray-600 hover:text-blue-600">Домашняя обувь</a></li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h3 class="text-sm font-semibold text-gray-900 mb-3">Аксессуары</h3>
+                    <ul class="space-y-2">
+                      <li><a href="#" class="text-sm text-gray-600 hover:text-blue-600">Сумки</a></li>
+                      <li><a href="#" class="text-sm text-gray-600 hover:text-blue-600">Часы</a></li>
+                      <li><a href="#" class="text-sm text-gray-600 hover:text-blue-600">Ювелирные изделия</a></li>
+                      <li><a href="#" class="text-sm text-gray-600 hover:text-blue-600">Шарфы</a></li>
+                      <li><a href="#" class="text-sm text-gray-600 hover:text-blue-600">Ремни</a></li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h3 class="text-sm font-semibold text-gray-900 mb-3">Новинки</h3>
+                    <div class="bg-gray-100 rounded-lg p-4">
+                      <img src="/img/placeholder-product.jpg" alt="New Collection" class="w-full h-32 object-cover rounded mb-2">
+                      <p class="text-sm font-medium text-gray-900">Весенняя коллекция</p>
+                      <p class="text-xs text-gray-500">Скидки до 50%</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </li>
+          <li class="relative group">
+            <a href="#" class="flex items-center text-gray-700 hover:text-blue-600">
+              Мужские
+              <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </a>
+            
+            <!-- Mega Menu -->
+            <div class="absolute left-0 top-full w-full bg-white shadow-lg border border-gray-200 rounded-b-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+              <div class="container mx-auto px-4 py-6">
+                <div class="grid grid-cols-4 gap-6">
+                  <div>
+                    <h3 class="text-sm font-semibold text-gray-900 mb-3">Одежда</h3>
+                    <ul class="space-y-2">
+                      <li><a href="#" class="text-sm text-gray-600 hover:text-blue-600">Рубашки</a></li>
+                      <li><a href="#" class="text-sm text-gray-600 hover:text-blue-600">Футболки</a></li>
+                      <li><a href="#" class="text-sm text-gray-600 hover:text-blue-600">Джинсы</a></li>
+                      <li><a href="#" class="text-sm text-gray-600 hover:text-blue-600">Костюмы</a></li>
+                      <li><a href="#" class="text-sm text-gray-600 hover:text-blue-600">Верхняя одежда</a></li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h3 class="text-sm font-semibold text-gray-900 mb-3">Обувь</h3>
+                    <ul class="space-y-2">
+                      <li><a href="#" class="text-sm text-gray-600 hover:text-blue-600">Кроссовки</a></li>
+                      <li><a href="#" class="text-sm text-gray-600 hover:text-blue-600">Туфли</a></li>
+                      <li><a href="#" class="text-sm text-gray-600 hover:text-blue-600">Ботинки</a></li>
+                      <li><a href="#" class="text-sm text-gray-600 hover:text-blue-600">Сандалии</a></li>
+                      <li><a href="#" class="text-sm text-gray-600 hover:text-blue-600">Домашняя обувь</a></li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h3 class="text-sm font-semibold text-gray-900 mb-3">Аксессуары</h3>
+                    <ul class="space-y-2">
+                      <li><a href="#" class="text-sm text-gray-600 hover:text-blue-600">Сумки</a></li>
+                      <li><a href="#" class="text-sm text-gray-600 hover:text-blue-600">Часы</a></li>
+                      <li><a href="#" class="text-sm text-gray-600 hover:text-blue-600">Ремни</a></li>
+                      <li><a href="#" class="text-sm text-gray-600 hover:text-blue-600">Очки</a></li>
+                      <li><a href="#" class="text-sm text-gray-600 hover:text-blue-600">Шарфы</a></li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h3 class="text-sm font-semibold text-gray-900 mb-3">Новинки</h3>
+                    <div class="bg-gray-100 rounded-lg p-4">
+                      <img src="/img/placeholder-product.jpg" alt="New Collection" class="w-full h-32 object-cover rounded mb-2">
+                      <p class="text-sm font-medium text-gray-900">Весенняя коллекция</p>
+                      <p class="text-xs text-gray-500">Скидки до 50%</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </li>
+          <li>
+            <a href="#" class="text-gray-700 hover:text-blue-600">Детские</a>
+          </li>
+          <li>
+            <a href="#" class="text-gray-700 hover:text-blue-600">Аксессуары</a>
+          </li>
+          <li>
+            <a href="#" class="text-gray-700 hover:text-blue-600">Красота</a>
+          </li>
+          <li class="relative group">
+            <a href="#" class="flex items-center text-gray-700 hover:text-blue-600">
+              Страницы
+              <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </a>
+            
+            <!-- Dropdown Menu -->
+            <div class="absolute left-0 top-full w-48 bg-white shadow-lg border border-gray-200 rounded-b-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+              <div class="py-2">
+                <a href="#" class="block px-6 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600">О нас</a>
+                <a href="#" class="block px-6 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600">Контакты</a>
+                <a href="#" class="block px-6 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600">Блог</a>
+                <a href="#" class="block px-6 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600">FAQ</a>
+              </div>
+            </div>
         </li>
-      {% else %}
-        <li class="text-gray-500">Навигация пока пуста</li>
-      {% endfor %}
     </ul>
+      </div>
+      
+      <!-- Special Offers -->
+      <div class="hidden md:flex items-center">
+        <div class="flex items-center bg-red-50 text-red-600 px-3 py-1 rounded-full">
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"></path>
+          </svg>
+          <span class="text-sm font-medium">Скидки 50%</span>
+        </div>
+      </div>
+    </div>
   </div>
 </nav>
 
