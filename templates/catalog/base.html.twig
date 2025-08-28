@@ -58,6 +58,7 @@
 
     // Собираем выбранные опции
     const optionAssignmentIds = [];
+    const optionDetails = [];
     const form = btn.closest('form');
     if (form) {
       // Ищем все выбранные radio кнопки с опциями в пределах формы
@@ -66,6 +67,19 @@
         const assignmentId = parseInt(option.value, 10);
         if (assignmentId) {
           optionAssignmentIds.push(assignmentId);
+
+          // Собираем детали опций для отображения в корзине
+          const optionName = option.dataset.optionName;
+          const optionValue = option.dataset.optionValue;
+          const optionPrice = parseInt(option.dataset.optionPrice) || 0;
+
+          if (optionName === 'Диаметр' && optionPrice > 0) {
+            optionDetails.push({
+              name: optionName,
+              value: optionValue,
+              price: optionPrice
+            });
+          }
         }
       });
     }

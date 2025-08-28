@@ -122,11 +122,13 @@
           <div class="bg-gray-50 rounded-xl p-6 space-y-2">
             {% if product.getEffectivePrice() %}
               <div class="flex items-baseline gap-3">
-                <span class="text-4xl font-bold text-gray-900">{{ product.getEffectivePrice() }}</span>
-                <span class="text-lg text-gray-500 line-through">₽ 45 000</span>
-                <span class="bg-red-500 text-white px-2 py-1 rounded text-sm font-medium">-15%</span>
+                <span id="product-price" class="text-4xl font-bold text-gray-900" data-base-price="{{ product.getEffectivePrice() }}">
+                  {{ product.getEffectivePrice() }}
+                </span>
+                <span class="text-lg text-gray-500 line-through" id="old-price" data-old-price="45000">₽ 45 000</span>
+                <span class="bg-red-500 text-white px-2 py-1 rounded text-sm font-medium" id="discount-badge">-15%</span>
               </div>
-              <p class="text-sm text-gray-600">Цена включает НДС и доставку по Москве</p>
+              <p class="text-sm text-gray-600" id="price-description">Цена включает НДС и доставку по Москве</p>
             {% endif %}
           </div>
 
@@ -176,6 +178,9 @@
                             name="option-{{ a.option.id }}"
                             value="{{ a.id }}"
                             class="sr-only peer"
+                            data-option-name="{{ optionName }}"
+                            data-option-price="{{ a.price|default(0) }}"
+                            data-option-value="{{ a.value.value ?? ('Значение #' ~ a.value.id) }}"
                             {% if loop.first %}checked{% endif %}
                           >
                           <label for="option-{{ a.id }}" class="flex items-center justify-between p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-400 peer-checked:border-blue-500 peer-checked:bg-blue-50 transition-all">
@@ -187,7 +192,7 @@
                                 {{ a.value.value ?? ('Значение #' ~ a.value.id) }}
                               </span>
                             </div>
-                            {% if a.price is not null %}
+                            {% if a.price is not null and a.price > 0 %}
                               <span class="text-sm font-medium text-gray-900">+{{ a.price }}</span>
                             {% endif %}
                           </label>
@@ -593,6 +598,108 @@
         thumbnails[currentImageIndex - 1].classList.add('border-blue-500');
       }
     }
+  });
+
+  // Функционал динамического обновления цены при выборе опций
+  document.addEventListener('DOMContentLoaded', function() {
+    const priceElement = document.getElementById('product-price');
+    const oldPriceElement = document.getElementById('old-price');
+    const discountBadge = document.getElementById('discount-badge');
+
+    if (!priceElement) return;
+
+    const basePrice = parseInt(priceElement.dataset.basePrice) || 0;
+    const oldPrice = parseInt(oldPriceElement?.dataset.oldPrice) || 45000;
+
+    // Функция форматирования цены
+    function formatPrice(price) {
+      return new Intl.NumberFormat('ru-RU', {
+        style: 'currency',
+        currency: 'RUB',
+        minimumFractionDigits: 0
+      }).format(price);
+    }
+
+    // Функция расчета новой цены
+    function calculateNewPrice() {
+      let totalOptionPrice = 0;
+
+      // Находим все выбранные радио-кнопки
+      const selectedOptions = document.querySelectorAll('input[type="radio"]:checked');
+
+      selectedOptions.forEach(option => {
+        const optionName = option.dataset.optionName;
+        const optionPrice = parseInt(option.dataset.optionPrice) || 0;
+
+        // Если это опция "Диаметр" и цена > 0, добавляем к итоговой цене
+        if (optionName === 'Диаметр' && optionPrice > 0) {
+          totalOptionPrice += optionPrice;
+        }
+      });
+
+      return basePrice + totalOptionPrice;
+    }
+
+    // Функция обновления отображения цены
+    function updatePriceDisplay() {
+      const newPrice = calculateNewPrice();
+      const newOldPrice = oldPrice + (newPrice - basePrice); // Пропорционально увеличиваем старую цену
+      const currentPrice = parseInt(priceElement.textContent.replace(/[^\d]/g, '')) || basePrice;
+
+      // Если цена не изменилась, выходим
+      if (newPrice === currentPrice) return;
+
+      // Анимируем изменение цены
+      priceElement.style.transition = 'all 0.3s ease';
+      priceElement.style.transform = 'scale(1.1)';
+      priceElement.style.color = newPrice > currentPrice ? '#dc2626' : '#059669';
+
+      setTimeout(() => {
+        // Обновляем текущую цену
+        priceElement.textContent = formatPrice(newPrice);
+
+        // Обновляем старую цену
+        if (oldPriceElement) {
+          oldPriceElement.textContent = formatPrice(newOldPrice);
+        }
+
+        // Обновляем процент скидки
+        if (discountBadge && newOldPrice > newPrice) {
+          const discountPercent = Math.round((1 - newPrice / newOldPrice) * 100);
+          discountBadge.textContent = `-${discountPercent}%`;
+        }
+
+        // Возвращаем нормальный вид
+        setTimeout(() => {
+          priceElement.style.transform = 'scale(1)';
+          priceElement.style.color = '';
+        }, 200);
+      }, 150);
+    }
+
+    // Слушаем изменения радио-кнопок
+    document.addEventListener('change', function(e) {
+      if (e.target.type === 'radio' && e.target.name.startsWith('option-')) {
+        // Добавляем анимацию для выбранного лейбла
+        const label = e.target.nextElementSibling;
+        if (label) {
+          label.style.transition = 'all 0.2s ease';
+          label.style.transform = 'scale(1.02)';
+          label.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.15)';
+
+          setTimeout(() => {
+            label.style.transform = 'scale(1)';
+            label.style.boxShadow = '';
+          }, 200);
+        }
+
+        // Небольшая задержка для визуального эффекта
+        setTimeout(updatePriceDisplay, 100);
+      }
+    });
+
+    // Инициализируем цену при загрузке страницы
+    updatePriceDisplay();
   });
   </script>
 {% endblock %}
