@@ -1,21 +1,67 @@
+# Cache and logs
+/var/*
+!/var/cache/.gitkeep
+!/var/log/.gitkeep
 
-###> symfony/framework-bundle ###
+# Symfony specific
 /.env.local
 /.env.local.php
 /.env.*.local
-/config/secrets/prod/prod.decrypt.private.php
-/public/bundles/
-/var/
+
+# Generated media cache
+/public/media/
+/public/media/cache/
+
+# Dependencies
 /vendor/
-###< symfony/framework-bundle ###
-
-###> symfony/webpack-encore-bundle ###
 /node_modules/
-/public/build/
-npm-debug.log
-yarn-error.log
-###< symfony/webpack-encore-bundle ###
 
-###> lexik/jwt-authentication-bundle ###
-/config/jwt/*.pem
-###< lexik/jwt-authentication-bundle ###
+# Build artifacts
+/public/build/
+/public/bundles/
+
+# IDE and editor files
+/.idea/
+/.vscode/
+/*.swp
+/*.swo
+/*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# Logs
+/logs/
+/*.log
+
+# Database
+/*.sqlite
+/*.sqlite3
+/*.db
+
+# PHP specific
+.phpunit.result.cache
+
+# Composer
+/composer.lock.backup
+
+# Yarn
+/.yarn-integrity
+
+# Storybook build
+/storybook-static/
+
+# Custom files
+/warmup_cache.bat
+/warmup_md2.bat
