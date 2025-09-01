@@ -36,9 +36,9 @@
                 >
                   {% for image in sortedImages %}
                     {% set raw = image.imageUrl %}
-                    {% set rel = raw|replace({'/media/cache/':''})|split('/')|last %}
-                    {% set imgSrc = asset('/img/' ~ rel) | imagine_filter('xl') %}
-                    {% set fullImgSrc = asset('/img/' ~ rel) %}
+                    {% set rel = raw|replace({'/media/cache/':''})|replace({'md2/':'','md/':'','sm/':'','xl/':''}) %}
+                    {% set imgSrc = asset('/' ~ rel) | imagine_filter('xl') %}
+                    {% set fullImgSrc = asset('/' ~ rel) | imagine_filter('xl') %}
                     <swiper-slide>
                       <div class="gallery-slide cursor-pointer h-full flex items-center justify-center" data-image-src="{{ fullImgSrc }}" data-caption="{{ product.name }} - Изображение {{ loop.index }}">
                         <img src="{{ imgSrc }}" alt="{{ product.name }} - Изображение {{ loop.index }}"
@@ -55,9 +55,9 @@
                   <div class="gallery-thumbs-grid">
                     {% for image in sortedImages %}
                       {% set raw = image.imageUrl %}
-                      {% set rel = raw|replace({'/media/cache/':''})|split('/')|last %}
-                      {% set thumbSrc = asset('/img/' ~ rel) | imagine_filter('sm') %}
-                      {% set fullImgSrc = asset('/img/' ~ rel) %}
+                      {% set rel = raw|replace({'/media/cache/':''})|replace({'md2/':'','md/':'','sm/':'','xl/':''}) %}
+                      {% set thumbSrc = asset('/' ~ rel) | imagine_filter('sm') %}
+                      {% set fullImgSrc = asset('/' ~ rel) | imagine_filter('xl') %}
                       <div class="thumbnail-item-wrapper">
                         <div class="thumbnail-item overflow-hidden rounded-lg border-2 border-gray-200 hover:border-blue-400 cursor-pointer transition-all" data-image-src="{{ fullImgSrc }}" data-caption="{{ product.name }} - Изображение {{ loop.index }}">
                           <img src="{{ thumbSrc }}" alt="{{ product.name }} - Миниатюра {{ loop.index }}"

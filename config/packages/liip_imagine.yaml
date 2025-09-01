@@ -9,11 +9,14 @@ liip_imagine:
     webp:
         generate: false
         quality: 80
+    twig:
+        mode: lazy
     filter_sets:
         cache: ~
 
         sm:
             quality: 50
+            cache: default
             filters:
                 thumbnail:
                     size: [ 150, 150 ]
@@ -26,6 +29,7 @@ liip_imagine:
                     color: '#fff'
         md:
             quality: 65
+            cache: default
             filters:
                 thumbnail:
                     size: [ 330, 330 ]
@@ -38,6 +42,7 @@ liip_imagine:
                     color: '#fff'
         md2:
             quality: 80
+            cache: default
             filters:
                 thumbnail:
                     size: [ 700, 700 ]
@@ -51,15 +56,16 @@ liip_imagine:
                     color: '#fff'
         xl:
             quality: 80
+            cache: default
             filters:
                 thumbnail:
-                    size: [ 1200, 1200 ]
+                    size: [ 1600, 1600 ]
                     mode: inset
                     allow_upscale: true
                 scale:
-                    dim: [ 1200, 1200 ]
+                    dim: [ 1600, 1600 ]
                 background:
-                    size: [ 1200, 1200 ]
+                    size: [ 1600, 1600 ]
                     position: center
                     color: '#fff'
 
