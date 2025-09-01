@@ -1,5 +1,7 @@
 twig:
     file_name_pattern: '*.twig'
+    globals:
+        footer_categories: '@App\Service\FooterCategoryService'
 
 when@test:
     twig:

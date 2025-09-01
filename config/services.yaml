@@ -63,3 +63,7 @@ services:
             $dataManager: '@liip_imagine.data.manager'
 
     App\Service\ImageWarmupService: ~
+
+    # Footer categories service
+    App\Service\FooterCategoryService:
+        public: true

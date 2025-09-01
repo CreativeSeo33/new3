@@ -10,22 +10,66 @@
     <div class="container mx-auto px-4 py-8">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
 
-        <!-- Галерея изображений -->
+              <!-- Галерея изображений -->
         <div class="space-y-4">
           {% set sortedImages = product.image|sort((a,b) => a.sortOrder <=> b.sortOrder) %}
           {% set mainImage = sortedImages|first %}
 
-          <!-- Основное изображение -->
-          <div class="relative overflow-hidden rounded-xl shadow-lg bg-white group">
+          <!-- Слайдер изображений с миниатюрами и loop -->
+          <div class="relative overflow-hidden rounded-xl bg-white group">
             {% if mainImage %}
-              {% set raw = mainImage.imageUrl %}
-              {% set rel = raw|replace({'/media/cache/':''})|split('/')|last %}
-              {% set imgSrc = asset('/img/' ~ rel) | imagine_filter('xl') %}
-              <img id="main-product-image" src="{{ imgSrc }}" alt="{{ product.name }}"
-                   class="w-full h-auto object-cover cursor-zoom-in transition-transform duration-300 group-hover:scale-105"
-                   data-zoom-src="{{ asset('/img/' ~ rel) }}" />
+              {% set sortedImages = product.image|sort((a,b) => a.sortOrder <=> b.sortOrder) %}
+              {% set mainImg = sortedImages|first %}
+
+              <!-- Основной слайдер -->
+              <div class="gallery-main-swiper mb-4">
+                <swiper-container
+                  class="product-gallery-swiper"
+                  slides-per-view="1"
+                  space-between="0"
+                  loop="true"
+                  grab-cursor="true"
+                  navigation="true"
+                  pagination="true"
+                  thumbs-swiper=".gallery-thumbs-swiper"
+                  speed="500"
+                >
+                  {% for image in sortedImages %}
+                    {% set raw = image.imageUrl %}
+                    {% set rel = raw|replace({'/media/cache/':''})|split('/')|last %}
+                    {% set imgSrc = asset('/img/' ~ rel) | imagine_filter('xl') %}
+                    {% set fullImgSrc = asset('/img/' ~ rel) %}
+                    <swiper-slide>
+                      <div class="gallery-slide cursor-pointer h-full flex items-center justify-center" data-image-src="{{ fullImgSrc }}" data-caption="{{ product.name }} - Изображение {{ loop.index }}">
+                        <img src="{{ imgSrc }}" alt="{{ product.name }} - Изображение {{ loop.index }}"
+                             class="max-w-full max-h-full object-contain cursor-zoom-in transition-transform duration-300 hover:scale-105" />
+                      </div>
+                    </swiper-slide>
+                  {% endfor %}
+                </swiper-container>
+              </div>
+
+              <!-- Миниатюры -->
+              {% if sortedImages|length > 1 %}
+                <div class="gallery-thumbs-container">
+                  <div class="gallery-thumbs-grid">
+                    {% for image in sortedImages %}
+                      {% set raw = image.imageUrl %}
+                      {% set rel = raw|replace({'/media/cache/':''})|split('/')|last %}
+                      {% set thumbSrc = asset('/img/' ~ rel) | imagine_filter('sm') %}
+                      {% set fullImgSrc = asset('/img/' ~ rel) %}
+                      <div class="thumbnail-item-wrapper">
+                        <div class="thumbnail-item overflow-hidden rounded-lg border-2 border-gray-200 hover:border-blue-400 cursor-pointer transition-all" data-image-src="{{ fullImgSrc }}" data-caption="{{ product.name }} - Изображение {{ loop.index }}">
+                          <img src="{{ thumbSrc }}" alt="{{ product.name }} - Миниатюра {{ loop.index }}"
+                               class="w-full h-full object-cover" />
+                        </div>
+                      </div>
+                    {% endfor %}
+                  </div>
+                </div>
+              {% endif %}
             {% else %}
-              <img id="main-product-image" src="https://via.placeholder.com/600x600" alt="{{ product.name }}"
+              <img src="https://via.placeholder.com/600x600" alt="{{ product.name }}"
                    class="w-full h-auto object-cover" />
             {% endif %}
 
@@ -46,51 +90,10 @@
             </div>
           </div>
 
-          <!-- Миниатюры (если есть дополнительные изображения) -->
-          {% if sortedImages|length > 1 %}
-            <div class="grid grid-cols-4 gap-2">
-              {% for image in sortedImages %}
-                {% set raw = image.imageUrl %}
-                {% set rel = raw|replace({'/media/cache/':''})|split('/')|last %}
-                {% set thumbSrc = asset('/img/' ~ rel) | imagine_filter('sm') %}
-                {% set fullSrc = asset('/img/' ~ rel) | imagine_filter('xl') %}
-                <div class="aspect-square overflow-hidden rounded-lg border-2 border-gray-200 hover:border-blue-400 cursor-pointer transition-all thumbnail-item {% if loop.first %}border-blue-500{% endif %}"
-                     data-image-src="{{ fullSrc }}"
-                     data-zoom-src="{{ asset('/img/' ~ rel) }}">
-                  <img src="{{ thumbSrc }}" alt="" class="w-full h-full object-cover" />
-                </div>
-              {% endfor %}
-            </div>
-          {% endif %}
+
         </div>
 
-        <!-- Модальное окно для зума -->
-        <div id="image-zoom-modal" class="fixed inset-0 bg-black bg-opacity-90 z-50 hidden items-center justify-center">
-          <div class="relative max-w-4xl max-h-screen p-4">
-            <img id="zoom-image" src="" alt="" class="max-w-full max-h-full object-contain" />
 
-            <!-- Кнопка закрытия -->
-            <button id="close-zoom" class="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors">
-              <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-              </svg>
-            </button>
-
-            <!-- Кнопки навигации -->
-            {% if sortedImages|length > 1 %}
-              <button id="prev-image" class="absolute left-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 transition-colors opacity-75 hover:opacity-100">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                </svg>
-              </button>
-              <button id="next-image" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 transition-colors opacity-75 hover:opacity-100">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                </svg>
-              </button>
-            {% endif %}
-          </div>
-        </div>
 
         <!-- Информация о товаре -->
         <div class="space-y-6">
@@ -472,134 +475,8 @@
     </div>
   </div>
 
-  <!-- JavaScript для галереи изображений -->
+  <!-- JavaScript для функционала товара -->
   <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const mainImage = document.getElementById('main-product-image');
-    const zoomModal = document.getElementById('image-zoom-modal');
-    const zoomImage = document.getElementById('zoom-image');
-    const closeZoom = document.getElementById('close-zoom');
-    const prevImage = document.getElementById('prev-image');
-    const nextImage = document.getElementById('next-image');
-    const thumbnails = document.querySelectorAll('.thumbnail-item');
-
-    let currentImageIndex = 0;
-    const imageSources = Array.from(thumbnails).map(thumb => ({
-      main: thumb.dataset.imageSrc,
-      zoom: thumb.dataset.zoomSrc
-    }));
-
-    // Добавляем основное изображение в массив
-    if (mainImage && mainImage.dataset.zoomSrc) {
-      imageSources.unshift({
-        main: mainImage.src,
-        zoom: mainImage.dataset.zoomSrc
-      });
-    }
-
-    // Обработчик клика по основному изображению
-    if (mainImage) {
-      mainImage.addEventListener('click', function() {
-        if (zoomImage && zoomModal) {
-          zoomImage.src = this.dataset.zoomSrc || this.src;
-          zoomModal.classList.remove('hidden');
-          zoomModal.classList.add('flex');
-          document.body.style.overflow = 'hidden';
-        }
-      });
-    }
-
-    // Обработчики для миниатюр
-    thumbnails.forEach((thumbnail, index) => {
-      thumbnail.addEventListener('click', function() {
-        // Убираем активный класс со всех миниатюр
-        thumbnails.forEach(t => t.classList.remove('border-blue-500'));
-        // Добавляем активный класс к текущей
-        this.classList.add('border-blue-500');
-
-        // Меняем основное изображение
-        if (mainImage && this.dataset.imageSrc) {
-          mainImage.src = this.dataset.imageSrc;
-          mainImage.dataset.zoomSrc = this.dataset.zoomSrc;
-        }
-
-        currentImageIndex = index;
-      });
-    });
-
-    // Закрытие модального окна
-    if (closeZoom) {
-      closeZoom.addEventListener('click', closeModal);
-    }
-
-    // Закрытие по клику вне изображения
-    if (zoomModal) {
-      zoomModal.addEventListener('click', function(e) {
-        if (e.target === this) {
-          closeModal();
-        }
-      });
-    }
-
-    // Обработчики для кнопок навигации
-    if (prevImage) {
-      prevImage.addEventListener('click', function() {
-        currentImageIndex = (currentImageIndex - 1 + imageSources.length) % imageSources.length;
-        updateZoomImage();
-        updateActiveThumbnail();
-      });
-    }
-
-    if (nextImage) {
-      nextImage.addEventListener('click', function() {
-        currentImageIndex = (currentImageIndex + 1) % imageSources.length;
-        updateZoomImage();
-        updateActiveThumbnail();
-      });
-    }
-
-    // Обработка клавиш
-    document.addEventListener('keydown', function(e) {
-      if (!zoomModal.classList.contains('flex')) return;
-
-      switch(e.key) {
-        case 'Escape':
-          closeModal();
-          break;
-        case 'ArrowLeft':
-          if (prevImage) prevImage.click();
-          break;
-        case 'ArrowRight':
-          if (nextImage) nextImage.click();
-          break;
-      }
-    });
-
-    function closeModal() {
-      if (zoomModal) {
-        zoomModal.classList.add('hidden');
-        zoomModal.classList.remove('flex');
-        document.body.style.overflow = '';
-      }
-    }
-
-    function updateZoomImage() {
-      if (zoomImage && imageSources[currentImageIndex]) {
-        zoomImage.src = imageSources[currentImageIndex].zoom;
-      }
-    }
-
-    function updateActiveThumbnail() {
-      // Убираем активный класс со всех миниатюр
-      thumbnails.forEach(t => t.classList.remove('border-blue-500'));
-
-      // Добавляем активный класс к соответствующей миниатюре
-      if (thumbnails[currentImageIndex - 1]) { // -1 потому что первый элемент - основное изображение
-        thumbnails[currentImageIndex - 1].classList.add('border-blue-500');
-      }
-    }
-  });
-
   // Функционал динамического обновления цены при выборе опций
   document.addEventListener('DOMContentLoaded', function() {
     const priceElement = document.getElementById('product-price');

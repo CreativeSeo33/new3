@@ -61,11 +61,16 @@
       <div>
         <h3 class="text-lg font-semibold text-gray-900 mb-4">БЫСТРЫЙ ПОИСК</h3>
         <ul class="space-y-2">
-          <li><a href="#" class="text-gray-600 hover:text-blue-600">Мода</a></li>
-          <li><a href="#" class="text-gray-600 hover:text-blue-600">Мужские</a></li>
-          <li><a href="#" class="text-gray-600 hover:text-blue-600">Мебель</a></li>
-          <li><a href="#" class="text-gray-600 hover:text-blue-600">Декор</a></li>
-          <li><a href="#" class="text-gray-600 hover:text-blue-600">Обувь</a></li>
+          {% for category in footer_categories.getFooterCategories() %}
+            <li>
+              <a href="{{ path('catalog_category_show', {slug: category.slug}) }}"
+                 class="text-gray-600 hover:text-blue-600 transition-colors duration-200">
+                {{ category.name }}
+              </a>
+            </li>
+          {% else %}
+            <li><span class="text-gray-400 text-sm">Категории не найдены</span></li>
+          {% endfor %}
         </ul>
       </div>
       
