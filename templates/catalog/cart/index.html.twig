@@ -18,7 +18,7 @@
             <th class="py-2 pr-4"></th>
           </tr>
         </thead>
-        <tbody id="cart-items">
+        <tbody id="cart-items" data-module="cart-items-manager">
           {% for item in cart.items %}
             <tr class="border-b" data-item-id="{{ item.id }}">
               <td class="py-2 pr-4">{{ item.productName }}</td>
@@ -70,144 +70,7 @@
   {% endif %}
 </div>
 
-<script type="module">
-document.addEventListener('DOMContentLoaded', () => {
-  // Функция форматирования цены
-  const formatPrice = (price) => {
-    return Math.round(price).toLocaleString('ru-RU') + ' ₽';
-  };
 
-  // Функция обновления общей суммы
-  const updateTotal = (total) => {
-    const totalEl = document.getElementById('cart-total');
-    if (totalEl) {
-      totalEl.textContent = formatPrice(total);
-    }
-  };
-
-  // Функция обновления суммы строки
-  const updateRowTotal = (row, rowTotal) => {
-    const rowTotalEl = row.querySelector('.row-total');
-    if (rowTotalEl) {
-      rowTotalEl.textContent = formatPrice(rowTotal);
-    }
-  };
-
-  // Функция отправки события обновления корзины
-  const dispatchCartUpdatedEvent = (data) => {
-    window.dispatchEvent(new CustomEvent('cart:updated', { detail: data }));
-  };
-
-  // Функция обработки ошибок
-  const handleError = (error) => {
-    console.error('Ошибка:', error);
-    alert('Произошла ошибка. Пожалуйста, попробуйте еще раз.');
-  };
-
-  // Функция обновления количества товара
-  const updateItemQuantity = async (itemId, qty) => {
-    try {
-      const response = await fetch(`/api/cart/items/${itemId}`, {
-        method: 'PATCH',
-        headers: { 
-          'Content-Type': 'application/json', 
-          'X-Requested-With': 'XMLHttpRequest' 
-        },
-        body: JSON.stringify({ qty })
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Ошибка при обновлении количества');
-      }
-
-      const data = await response.json();
-      const item = data.items.find(i => i.id == itemId);
-      const row = document.querySelector(`tr[data-item-id="${itemId}"]`);
-      
-      if (item && row) {
-        // Обновляем цену с учетом опций
-        const priceCell = row.querySelector('td:nth-child(2)');
-        if (priceCell) {
-          // В API цена с опциями уже рассчитана и хранится в unitPrice
-          priceCell.textContent = formatPrice(item.unitPrice);
-        }
-        
-        updateRowTotal(row, item.rowTotal);
-      } else if (row) {
-        row.remove();
-      }
-      
-      updateTotal(data.total);
-      dispatchCartUpdatedEvent(data);
-    } catch (error) {
-      handleError(error);
-    }
-  };
-
-  // Функция удаления товара
-  const removeItem = async (itemId) => {
-    try {
-      const response = await fetch(`/api/cart/items/${itemId}`, { 
-        method: 'DELETE', 
-        headers: { 'X-Requested-With': 'XMLHttpRequest' } 
-      });
-
-      if (response.status === 204) {
-        const row = document.querySelector(`tr[data-item-id="${itemId}"]`);
-        if (row) {
-          row.remove();
-        }
-        
-        // Запрос актуальных данных корзины
-        const cartResponse = await fetch('/api/cart', { 
-          headers: { 'X-Requested-With': 'XMLHttpRequest' } 
-        });
-        
-        if (cartResponse.ok) {
-          const cartData = await cartResponse.json();
-          updateTotal(cartData.total);
-          dispatchCartUpdatedEvent(cartData);
-          
-          // Если корзина пуста, перезагружаем страницу
-          if (cartData.items.length === 0) {
-            window.location.reload();
-          }
-        }
-      } else {
-        throw new Error('Ошибка при удалении товара');
-      }
-    } catch (error) {
-      handleError(error);
-    }
-  };
-
-  // Обработчик изменения количества
-  document.getElementById('cart-items')?.addEventListener('change', (e) => {
-    const target = e.target;
-    if (target.classList.contains('qty-input')) {
-      const itemId = target.dataset.itemId;
-      const qty = parseInt(target.value, 10);
-      
-      if (itemId && qty > 0) {
-        updateItemQuantity(itemId, qty);
-      }
-    }
-  });
-
-  // Обработчик удаления товара
-  document.getElementById('cart-items')?.addEventListener('click', (e) => {
-    const target = e.target;
-    if (target.classList.contains('remove')) {
-      const itemId = target.dataset.itemId;
-      
-      if (itemId) {
-        removeItem(itemId);
-      }
-    }
-  });
-});
-</script>
 {% endblock %}
 
 

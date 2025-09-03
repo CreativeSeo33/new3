@@ -11,6 +11,7 @@ export const registry: Record<string, () => Promise<ModuleInitFunction>> = {
   'add-to-cart': () => import('../features/add-to-cart').then(m => m.init),
   'product-options': () => import('../features/product-options').then(m => m.init),
   'product-price-calculator': () => import('../features/product-price-calculator').then(m => m.init),
+  'cart-items-manager': () => import('../features/cart-items-manager').then(m => m.init),
 
   // Виджеты
   'cart-counter': () => import('../widgets/cart-counter').then(m => m.init),
