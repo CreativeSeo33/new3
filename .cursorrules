@@ -1,0 +1,399 @@
+# Frontend Architecture Rules for Cursor AI
+
+## 🏗️ Project Architecture
+
+This is a modern JavaScript/TypeScript project using Feature-Sliced Design (FSD) architecture.
+
+### Structure
+```
+assets/catalog/src/
+├── shared/           # Reusable components and utilities
+│   ├── api/         # HTTP client and API functions
+│   ├── lib/         # Utilities (formatPrice, etc.)
+│   ├── types/       # TypeScript types and interfaces
+│   └── utils/       # Helper functions
+├── features/        # Business logic (features)
+├── widgets/         # UI widgets
+├── entities/        # Business entities
+└── pages/           # Page components
+```
+
+## 📋 Module Creation Rules
+
+### When to Create What
+
+**Feature Module** (with API):
+- Business logic with backend communication
+- User interactions that change data
+- Examples: add-to-cart, product-options, user-auth
+
+**Widget Module** (UI only):
+- Reusable UI components
+- Display-only components
+- Examples: cart-counter, product-gallery, notification-toast
+
+**Shared Component**:
+- Reusable across multiple features
+- Generic utilities and helpers
+
+### File Structure Templates
+
+#### Feature Module Structure
+```
+features/my-feature/
+├── api/
+│   └── index.ts          # API functions
+├── ui/
+│   └── component.ts      # UI component
+└── index.ts              # Main export
+```
+
+#### Widget Module Structure
+```
+widgets/my-widget/
+└── index.ts              # Widget implementation
+```
+
+## 🔧 Code Generation Rules
+
+### 1. Always Use TypeScript
+- All new files must be `.ts` (not `.js`)
+- Strict typing everywhere
+- No `any` types without justification
+
+### 2. Component Base Class
+```typescript
+import { Component } from '@shared/ui/Component';
+
+export class MyComponent extends Component {
+  constructor(el: HTMLElement, opts: MyOptions = {}) {
+    super(el, opts);
+    this.init();
+  }
+
+  init(): void {
+    // Component initialization
+    this.setupEventListeners();
+  }
+
+  private setupEventListeners(): void {
+    this.on('click', this.handleClick.bind(this));
+  }
+
+  private handleClick(e: Event): void {
+    // Handle click
+  }
+
+  destroy(): void {
+    // Cleanup resources
+    super.destroy();
+  }
+}
+```
+
+### 3. API Layer Template
+```typescript
+import { get, post, patch, del } from '@shared/api/http';
+import type { MyData, MyResponse } from '@shared/types/api';
+
+export async function getItems(): Promise<MyResponse[]> {
+  return get<MyResponse[]>('/api/items');
+}
+
+export async function createItem(data: MyData): Promise<MyResponse> {
+  return post<MyResponse>('/api/items', data);
+}
+```
+
+### 4. Main Export Template
+```typescript
+import { MyComponent } from './ui/component';
+
+export interface MyOptions {
+  autoLoad?: boolean;
+  showErrors?: boolean;
+}
+
+export function init(
+  root: HTMLElement,
+  opts: MyOptions = {}
+): () => void {
+  const component = new MyComponent(root, opts);
+  return () => component.destroy();
+}
+
+export { getItems, createItem } from './api';
+export { MyComponent };
+export type { MyOptions };
+```
+
+## 🎯 Naming Conventions
+
+### Files and Folders
+- Use `kebab-case` for file names: `add-to-cart.ts`
+- Use `kebab-case` for folder names: `product-options/`
+- Use `PascalCase` for class names: `AddToCartButton`
+- Use `camelCase` for functions and variables: `handleClick`
+
+### CSS Classes and Data Attributes
+- Use `kebab-case` for CSS classes: `loading-spinner`
+- Use `kebab-case` for data attributes: `data-product-id`
+- Use `snake_case` for data attribute names: `data-option-name`
+
+## 📝 TypeScript Rules
+
+### Interface Definitions
+```typescript
+// Request/Response types
+export interface ItemRequest {
+  name: string;
+  price: number;
+  categoryId?: number;
+}
+
+export interface ItemResponse {
+  id: number;
+  name: string;
+  price: number;
+  createdAt: string;
+}
+
+// Options types
+export interface ComponentOptions {
+  autoLoad?: boolean;
+  theme?: 'light' | 'dark';
+}
+```
+
+### Event Types
+```typescript
+// Custom events
+export interface ItemCreatedEvent {
+  type: 'created';
+  data: ItemResponse;
+}
+
+export type ItemEvent = ItemCreatedEvent;
+```
+
+### Generic Types
+```typescript
+// API Response wrapper
+export interface ApiResponse<T> {
+  data: T;
+  success: boolean;
+  message?: string;
+}
+
+// Pagination
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+}
+```
+
+## 🎨 Code Style Rules
+
+### Imports
+```typescript
+// Group imports by type
+import { Component } from '@shared/ui/Component';
+import { formatPrice } from '@shared/lib/formatPrice';
+import type { CartItem, CartResponse } from '@shared/types/api';
+
+// One import per line for clarity
+import { get } from '@shared/api/http';
+import { $ } from '@shared/utils/dom';
+```
+
+### Error Handling
+```typescript
+try {
+  const result = await apiCall();
+  updateUI(result);
+} catch (error) {
+  console.error('API Error:', error);
+  showError(error instanceof Error ? error.message : 'Unknown error');
+}
+```
+
+### Async/Await
+```typescript
+// ✅ Good
+async function handleSubmit() {
+  this.loading = true;
+  try {
+    const result = await createItem(this.formData);
+    this.updateUI(result);
+  } catch (error) {
+    this.showError(error);
+  } finally {
+    this.loading = false;
+  }
+}
+
+// ❌ Bad - nested promises
+function handleSubmit() {
+  this.loading = true;
+  createItem(this.formData)
+    .then(result => this.updateUI(result))
+    .catch(error => this.showError(error))
+    .finally(() => this.loading = false);
+}
+```
+
+### DOM Manipulation
+```typescript
+// ✅ Good - using component methods
+private updateUI(data: any): void {
+  const titleEl = this.$('[data-title]');
+  if (titleEl) {
+    titleEl.textContent = data.title;
+  }
+}
+
+// ❌ Bad - direct DOM manipulation
+private updateUI(data: any): void {
+  document.querySelector('[data-title]').textContent = data.title;
+}
+```
+
+## 🚀 Module Registration
+
+### Registry Pattern
+```typescript
+// app/registry.ts
+export const registry: Record<string, () => Promise<ModuleInitFunction>> = {
+  'add-to-cart': () => import('@features/add-to-cart'),
+  'my-new-feature': () => import('@features/my-new-feature'),
+};
+```
+
+### HTML Integration
+```html
+<!-- Use data-module attributes -->
+<button data-module="add-to-cart" data-product-id="123">
+  Add to Cart
+</button>
+
+<div data-module="cart-counter">
+  <span data-cart-counter>0</span>
+</div>
+```
+
+## 🔄 Event Communication
+
+### Custom Events
+```typescript
+// Dispatching events
+window.dispatchEvent(new CustomEvent('cart:updated', {
+  detail: { items: cartItems, total: totalPrice }
+}));
+
+// Listening to events
+window.addEventListener('cart:updated', (e: CustomEvent) => {
+  const { items, total } = e.detail;
+  updateCartUI(items, total);
+});
+```
+
+### Component Communication
+```typescript
+// In component
+private emitOptionsChanged(): void {
+  window.dispatchEvent(new CustomEvent('product:options-changed', {
+    detail: { selectedOptions: this.selectedOptions }
+  }));
+}
+```
+
+## 🧪 Testing Guidelines
+
+### Component Testing
+```typescript
+// Basic component test
+describe('MyComponent', () => {
+  it('should initialize correctly', () => {
+    const element = document.createElement('div');
+    const component = new MyComponent(element);
+
+    expect(element.classList.contains('initialized')).toBe(true);
+    component.destroy();
+  });
+});
+```
+
+### API Testing
+```typescript
+describe('API functions', () => {
+  it('should fetch items', async () => {
+    const items = await getItems();
+    expect(Array.isArray(items)).toBe(true);
+  });
+});
+```
+
+## 📋 Checklist for New Modules
+
+When creating a new module, ensure:
+
+- [ ] Correct folder structure created
+- [ ] TypeScript types defined
+- [ ] Component extends base Component class
+- [ ] API functions properly typed
+- [ ] Event listeners cleaned up in destroy()
+- [ ] Module registered in registry
+- [ ] HTML data-module attributes added
+- [ ] No TypeScript errors
+- [ ] Code follows style guidelines
+- [ ] Documentation updated
+
+## 🎯 Quick Module Creation
+
+### Using the Generator Script
+```bash
+# Create feature module
+node docs/generate-module.js feature my-feature
+
+# Create widget module
+node docs/generate-module.js widget my-widget
+```
+
+### Manual Creation Steps
+1. Create folder structure
+2. Copy template files from `docs/templates/`
+3. Replace placeholders with real names
+4. Register in `app/registry.ts`
+5. Add HTML attributes
+6. Test the module
+
+## 🚨 Common Mistakes to Avoid
+
+### ❌ Don't
+- Direct DOM queries outside component methods
+- Using `any` types unnecessarily
+- Not cleaning up event listeners
+- Mixing API calls with UI logic
+- Hardcoding values instead of using configuration
+- Not handling errors properly
+- Using old JavaScript instead of TypeScript
+
+### ✅ Do
+- Use component methods for DOM manipulation
+- Create proper TypeScript interfaces
+- Always clean up resources in destroy()
+- Separate API logic from UI logic
+- Use environment variables and configuration
+- Implement proper error handling
+- Use modern TypeScript features
+
+## 📞 Support
+
+When in doubt:
+1. Check existing modules for examples
+2. Look at `docs/` folder for templates
+3. Follow the patterns used in the codebase
+4. Ask for code review before merging
+
