@@ -290,8 +290,8 @@ final class CartManager
 			$item->setUnitPrice($itemData['price'] ?? 0);
 			$item->setQty($itemData['qty'] ?? 1);
 
-			if (!empty($itemData['options'] ?? $itemData['options'] ?? [])) {
-				$item->setSelectedOptionsData($itemData['options'] ?? $itemData['options'] ?? []);
+			if (!empty($itemData['options'] ?? [])) {
+				$item->setSelectedOptionsData($itemData['options'] ?? []);
 				$item->setOptionsHash($itemData['optionsHash'] ?? $itemData['options_hash'] ?? null);
 			}
 
@@ -319,6 +319,12 @@ final class CartManager
 				$this->em->flush();
 			});
 		});
+
+		// После обновления сохраняем снимок для гостя
+		if (!$cart->getUserId()) {
+			$this->saveCartSnapshotToSession($cart);
+		}
+
 		$this->events->dispatch(new \App\Event\CartUpdatedEvent($cart->getId()));
 		return $cart;
 	}
@@ -429,6 +435,12 @@ final class CartManager
 				$this->em->flush();
 			});
 		});
+
+		// После объединения сохраняем снимок для гостя
+		if (!$target->getUserId()) {
+			$this->saveCartSnapshotToSession($target);
+		}
+
 		return $target;
 	}
 }
