@@ -62,21 +62,34 @@ final class CartManager
         } else {
             // Для гостя - используем сессию
             $token = $this->sessionStorage->getCartToken();
-            
+
             if ($token) {
                 $cart = $this->carts->findActiveByToken($token);
-                
+
                 // Если корзина не найдена в БД, но есть снимок в сессии
                 if (!$cart && $snapshot = $this->sessionStorage->getCartSnapshot()) {
-                    $cart = $this->restoreCartFromSnapshot($snapshot, $token);
+                    // Проверяем, что снимок не пустой
+                    $hasValidItems = false;
+                    foreach ($snapshot as $itemData) {
+                        $productId = $itemData['productId'] ?? $itemData['product_id'] ?? null;
+                        if ($productId && ($itemData['qty'] ?? 0) > 0) {
+                            $hasValidItems = true;
+                            break;
+                        }
+                    }
+
+                    // Восстанавливаем корзину только если есть валидные товары
+                    if ($hasValidItems) {
+                        $cart = $this->restoreCartFromSnapshot($snapshot, $token);
+                    }
                 }
             }
-            
+
             if (!$cart) {
                 $cart = Cart::newGuest();
                 $this->em->persist($cart);
             }
-            
+
             // Сохраняем референс в сессию только для гостей
             if (!$userId && $cart->getToken()) {
                 $this->sessionStorage->saveCartReference(
@@ -86,18 +99,23 @@ final class CartManager
             }
         }
 
-        // Синхронизация контекста доставки и пересчет
-        $this->deliveryContext->syncToCart($cart);
-        $this->calculator->recalculate($cart);
-        $cart->setUpdatedAt(new \DateTimeImmutable());
-        $this->em->flush();
+        		// Синхронизация контекста доставки и пересчет
+		$this->deliveryContext->syncToCart($cart);
+		$this->calculator->recalculate($cart);
+		$cart->setUpdatedAt(new \DateTimeImmutable());
+		$this->em->flush();
 
-        // Сохраняем ссылку на корзину в сессии checkout.cart
-        $this->checkoutContext->setCartRefFromCart($cart);
+		// После flush сохраняем снимок для гостя
+		if (!$userId) {
+			$this->saveCartSnapshotToSession($cart);
+		}
 
-        if (!$userId && $request) {
-            $request->attributes->set('_set_cart_cookie', $cart->getToken());
-        }
+		// Сохраняем ссылку на корзину в сессии checkout.cart
+		$this->checkoutContext->setCartRefFromCart($cart);
+
+		if (!$userId && $request) {
+			$request->attributes->set('_set_cart_cookie', $cart->getToken());
+		}
         
         return $cart;
     }
@@ -114,6 +132,7 @@ final class CartManager
 
 	public function addItem(Cart $cart, int $productId, int $qty, array $optionAssignmentIds = []): Cart
 	{
+
 		$this->lock->withCartLock($cart, function() use ($cart, $productId, $qty, $optionAssignmentIds) {
 			$this->em->wrapInTransaction(function() use ($cart, $productId, $qty, $optionAssignmentIds) {
 				$this->em->lock($cart, LockMode::PESSIMISTIC_WRITE);
@@ -121,13 +140,20 @@ final class CartManager
 				if (!$product) { throw new \DomainException('Product not found'); }
 				$this->inventory->assertAvailable($product, $qty);
 
-				// Генерируем хеш опций для уникальности
+								// Генерируем хеш опций для уникальности
 				$optionsHash = empty($optionAssignmentIds) ? null : $this->generateOptionsHash($optionAssignmentIds);
-				
-				// Ищем существующий товар с учетом опций
-				$item = $optionsHash 
-					? $this->carts->findItemForUpdateWithOptions($cart, $product, $optionsHash)
-					: $this->carts->findItemForUpdate($cart, $product);
+
+								// Ищем существующий товар с учетом опций
+				// Сначала ищем точное совпадение (товар + опции)
+				$item = null;
+
+				if ($optionsHash) {
+					// Ищем товар с точно такими же опциями
+					$item = $this->carts->findItemForUpdateWithOptions($cart, $product, $optionsHash);
+				} else {
+					// Ищем товар без опций
+					$item = $this->carts->findItemForUpdate($cart, $product);
+				}
 				
 				if ($item) {
 					$newQty = $item->getQty() + $qty;
@@ -197,9 +223,10 @@ final class CartManager
 						$item->setSelectedOptionsData($selectedOptionsData);
 						$item->setOptionsSnapshot($optionsSnapshot);
 						$item->setOptionsHash($optionsHash);
-						$item->setEffectiveUnitPrice($optionsPriceModifier);
+						$item->setEffectiveUnitPrice($basePrice + $optionsPriceModifier);
 					} else {
 						$item->setEffectiveUnitPrice($basePrice);
+						$item->setOptionsHash(null); // Явно устанавливаем null для товаров без опций
 					}
 					
 					$item->setQty($qty);
@@ -308,6 +335,12 @@ final class CartManager
 				$this->em->flush();
 			});
 		});
+
+		// После удаления сохраняем обновленный снимок для гостя
+		if (!$cart->getUserId()) {
+			$this->saveCartSnapshotToSession($cart);
+		}
+
 		$this->events->dispatch(new \App\Event\CartUpdatedEvent($cart->getId()));
 		return $cart;
 	}
@@ -317,6 +350,32 @@ final class CartManager
 		$cart->setUserId($userId);
 		$cart->setToken(null); // Убираем token при присвоении пользователю
 		$this->em->flush();
+	}
+
+	public function clearCart(Cart $cart): Cart
+	{
+		$this->lock->withCartLock($cart, function() use ($cart) {
+			$this->em->wrapInTransaction(function() use ($cart) {
+				$this->em->lock($cart, LockMode::PESSIMISTIC_WRITE);
+
+				// Удаляем все товары из корзины
+				foreach ($cart->getItems() as $item) {
+					$this->em->remove($item);
+				}
+
+				$this->calculator->recalculate($cart);
+				$cart->setUpdatedAt(new \DateTimeImmutable());
+				$this->em->flush();
+			});
+		});
+
+		// Очищаем сессию для гостя
+		if (!$cart->getUserId()) {
+			$this->sessionStorage->clearCart();
+		}
+
+		$this->events->dispatch(new \App\Event\CartUpdatedEvent($cart->getId()));
+		return $cart;
 	}
 
 	public function merge(Cart $target, Cart $source): Cart

@@ -9,6 +9,8 @@ export async function addToCart(
   qty: number = 1,
   optionAssignmentIds: number[] = []
 ): Promise<Cart> {
+  console.log('API addToCart called with:', { productId, qty, optionAssignmentIds });
+
   const requestBody: {
     productId: number;
     qty: number;
@@ -19,6 +21,7 @@ export async function addToCart(
     requestBody.optionAssignmentIds = optionAssignmentIds;
   }
 
+  console.log('API request body:', requestBody);
   return post<Cart>('/api/cart/items', requestBody);
 }
 

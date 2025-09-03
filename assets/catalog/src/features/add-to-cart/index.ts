@@ -15,8 +15,24 @@ export function init(
   root: HTMLElement,
   opts: AddToCartButtonOptions = {}
 ): () => void {
+  // Проверяем, не инициализирован ли уже модуль на этом элементе
+  if ((root as any).__addToCartButton) {
+    console.log('AddToCartButton already initialized for element:', root);
+    return () => {};
+  }
+
+  console.log('Initializing AddToCartButton for element:', root);
   const button = new AddToCartButton(root, opts);
-  return () => button.destroy();
+
+  // Сохраняем ссылку на экземпляр
+  (root as any).__addToCartButton = button;
+
+  return () => {
+    if ((root as any).__addToCartButton) {
+      button.destroy();
+      delete (root as any).__addToCartButton;
+    }
+  };
 }
 
 // Экспортируем API для внешнего использования

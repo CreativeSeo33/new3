@@ -34,9 +34,10 @@ final class CartApiController extends AbstractController
 	public function addItem(Request $request): JsonResponse
 	{
 		$data = json_decode($request->getContent(), true) ?? [];
+
 		$productId = (int)($data['productId'] ?? 0);
 		$qty = (int)($data['qty'] ?? 1);
-		
+
 		// Добавляем обработку опций
 		$optionAssignmentIds = [];
 		if (isset($data['optionAssignmentIds']) && is_array($data['optionAssignmentIds'])) {
@@ -81,6 +82,15 @@ final class CartApiController extends AbstractController
 		$user = $this->getUser();
 		$cart = $this->manager->getOrCreateCurrent($user instanceof AppUser ? $user->getId() : null);
 		$this->manager->removeItem($cart, $itemId);
+		return new JsonResponse(null, 204);
+	}
+
+	#[Route('', name: 'api_cart_clear', methods: ['DELETE'])]
+	public function clearCart(): JsonResponse
+	{
+		$user = $this->getUser();
+		$cart = $this->manager->getOrCreateCurrent($user instanceof AppUser ? $user->getId() : null);
+		$this->manager->clearCart($cart);
 		return new JsonResponse(null, 204);
 	}
 
