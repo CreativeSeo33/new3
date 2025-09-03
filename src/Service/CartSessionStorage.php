@@ -55,12 +55,12 @@ final class CartSessionStorage
         
         $snapshot = [
             'items' => array_map(fn($item) => [
-                'product_id' => $item['productId'],
+                'productId' => $item['productId'],
                 'name' => $item['name'],
                 'qty' => $item['qty'],
                 'price' => $item['price'],
                 'options' => $item['options'] ?? [],
-                'options_hash' => $item['optionsHash'] ?? null,
+                'optionsHash' => $item['optionsHash'] ?? null,
             ], $items),
             'updated_at' => time(),
         ];
@@ -133,5 +133,15 @@ final class CartSessionStorage
         // При логине очищаем сессионные данные,
         // так как корзина теперь привязана к пользователю
         $this->clearCart();
+    }
+
+    /**
+     * Очистка только данных снимка корзины (для исправления проблем с ключами)
+     */
+    public function clearCartSnapshot(): void
+    {
+        $session = $this->getSession();
+        $session->remove(self::CART_ITEMS_KEY);
+        $session->remove(self::CART_UPDATED_KEY);
     }
 }

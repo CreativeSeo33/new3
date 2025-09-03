@@ -1,0 +1,44 @@
+import { post, get, patch } from '@shared/api/http';
+import type { Cart } from '@shared/types/api';
+
+/**
+ * Добавляет товар в корзину
+ */
+export async function addToCart(
+  productId: number,
+  qty: number = 1,
+  optionAssignmentIds: number[] = []
+): Promise<Cart> {
+  const requestBody: {
+    productId: number;
+    qty: number;
+    optionAssignmentIds?: number[];
+  } = { productId, qty };
+
+  if (optionAssignmentIds.length > 0) {
+    requestBody.optionAssignmentIds = optionAssignmentIds;
+  }
+
+  return post<Cart>('/cart/items', requestBody);
+}
+
+/**
+ * Получает текущую корзину
+ */
+export async function getCart(): Promise<Cart> {
+  return get<Cart>('/cart');
+}
+
+/**
+ * Обновляет количество товара в корзине
+ */
+export async function updateCartItem(itemId: number, qty: number): Promise<Cart> {
+  return patch<Cart>(`/cart/items/${itemId}`, { qty });
+}
+
+/**
+ * Удаляет товар из корзины
+ */
+export async function removeCartItem(itemId: number): Promise<Cart> {
+  return post<Cart>(`/cart/items/${itemId}`, null);
+}

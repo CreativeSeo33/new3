@@ -55,6 +55,8 @@ final class CartManager
             if (!$cart) {
                 $cart = Cart::newGuest();
                 $cart->setUserId($userId);
+                // Для авторизованного пользователя token должен быть null
+                $cart->setToken(null);
                 $this->em->persist($cart);
             }
         } else {
@@ -75,8 +77,8 @@ final class CartManager
                 $this->em->persist($cart);
             }
             
-            // Сохраняем референс в сессию
-            if ($cart->getToken()) {
+            // Сохраняем референс в сессию только для гостей
+            if (!$userId && $cart->getToken()) {
                 $this->sessionStorage->saveCartReference(
                     $cart->getId() ?? 0,
                     $cart->getToken()
@@ -235,40 +237,43 @@ final class CartManager
 				'optionsHash' => $item->getOptionsHash(),
 			];
 		}
-		
+
 		$this->sessionStorage->saveCartSnapshot($items);
 	}
 	
 	/**
 	 * Восстановление корзины из снимка сессии
 	 */
-	private function restoreCartFromSnapshot(array $snapshot, string $token): Cart
+	private function restoreCartFromSnapshot(array $snapshot, string $oldToken): Cart
 	{
-		$cart = Cart::newGuest();
-		$cart->setToken($token);
-		
+		$cart = Cart::newGuest(); // Генерирует новый уникальный token
+
 		foreach ($snapshot as $itemData) {
-			$product = $this->products->find($itemData['product_id']);
+			// Проверяем наличие ключа productId, если нет - пропускаем элемент
+			$productId = $itemData['productId'] ?? $itemData['product_id'] ?? null;
+			if (!$productId) continue;
+
+			$product = $this->products->find($productId);
 			if (!$product) continue;
-			
+
 			$item = new CartItem();
 			$item->setCart($cart);
 			$item->setProduct($product);
-			$item->setProductName($itemData['name']);
-			$item->setUnitPrice($itemData['price']);
-			$item->setQty($itemData['qty']);
-			
-			if (!empty($itemData['options'])) {
-				$item->setSelectedOptionsData($itemData['options']);
-				$item->setOptionsHash($itemData['optionsHash'] ?? null);
+			$item->setProductName($itemData['name'] ?? '');
+			$item->setUnitPrice($itemData['price'] ?? 0);
+			$item->setQty($itemData['qty'] ?? 1);
+
+			if (!empty($itemData['options'] ?? $itemData['options'] ?? [])) {
+				$item->setSelectedOptionsData($itemData['options'] ?? $itemData['options'] ?? []);
+				$item->setOptionsHash($itemData['optionsHash'] ?? $itemData['options_hash'] ?? null);
 			}
-			
+
 			$cart->addItem($item);
 		}
-		
+
 		$this->em->persist($cart);
 		$this->em->flush();
-		
+
 		return $cart;
 	}
 
@@ -310,7 +315,7 @@ final class CartManager
 	public function assignToUser(Cart $cart, int $userId): void
 	{
 		$cart->setUserId($userId);
-		$cart->setToken(null);
+		$cart->setToken(null); // Убираем token при присвоении пользователю
 		$this->em->flush();
 	}
 
@@ -356,7 +361,11 @@ final class CartManager
 				}
 				$this->calculator->recalculate($target);
 				$target->setUpdatedAt(new \DateTimeImmutable());
+
+				// Помечаем исходную корзину как истекшую и очищаем token
 				$source->setExpiresAt(new \DateTimeImmutable('-1 day'));
+				$source->setToken(null);
+
 				foreach ($source->getItems() as $it) $this->em->remove($it);
 				$this->em->flush();
 			});

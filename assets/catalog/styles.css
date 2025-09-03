@@ -40,22 +40,12 @@
   justify-content: center;
 }
 
-.product-gallery-swiper .gallery-slide img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-  transition: transform 0.3s ease;
-}
-
 .product-gallery-swiper swiper-slide-active .gallery-slide img {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover;
 }
 
-.product-gallery-swiper .gallery-slide img:hover {
-  transform: scale(1.05);
-}
 
 /* Стили для кнопок навигации */
 .product-gallery-swiper::part(button-next),

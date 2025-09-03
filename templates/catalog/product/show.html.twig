@@ -42,7 +42,7 @@
                     <swiper-slide>
                       <div class="gallery-slide cursor-pointer h-full flex items-center justify-center" data-image-src="{{ fullImgSrc }}" data-caption="{{ product.name }} - Изображение {{ loop.index }}">
                         <img src="{{ imgSrc }}" alt="{{ product.name }} - Изображение {{ loop.index }}"
-                             class="max-w-full max-h-full object-contain cursor-zoom-in transition-transform duration-300 hover:scale-105" />
+                             class="max-w-full max-h-full object-contain cursor-zoom-in transition-transform duration-300" />
                       </div>
                     </swiper-slide>
                   {% endfor %}
@@ -122,7 +122,7 @@
           </div>
 
           <!-- Цена -->
-          <div class="bg-gray-50 rounded-xl p-6 space-y-2">
+          <div class="bg-gray-50 rounded-xl p-6 space-y-2" data-module="product-price-calculator">
             {% if product.getEffectivePrice() %}
               <div class="flex items-baseline gap-3">
                 <span id="product-price" class="text-4xl font-bold text-gray-900" data-base-price="{{ product.getEffectivePrice() }}">
@@ -152,7 +152,7 @@
           </div>
 
           <!-- Опции товара -->
-          <form class="space-y-6">
+          <form class="space-y-6" data-module="product-options">
             {% if product.optionAssignments is defined and product.optionAssignments|length > 0 %}
               <div class="space-y-4">
                 <h3 class="text-lg font-semibold text-gray-900">Выберите вариант</h3>
@@ -210,6 +210,7 @@
             <!-- Кнопка покупки -->
             <div class="space-y-4">
               <button type="button" data-product-id="{{ product.id }}"
+                      data-module="add-to-cart"
                       class="js-add-to-cart w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none disabled:transform-none relative overflow-hidden group">
                 <!-- Анимированный фон -->
                 <div class="absolute inset-0 bg-gradient-to-r from-blue-400 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -475,110 +476,7 @@
     </div>
   </div>
 
-  <!-- JavaScript для функционала товара -->
-  <script>
-  // Функционал динамического обновления цены при выборе опций
-  document.addEventListener('DOMContentLoaded', function() {
-    const priceElement = document.getElementById('product-price');
-    const oldPriceElement = document.getElementById('old-price');
-    const discountBadge = document.getElementById('discount-badge');
 
-    if (!priceElement) return;
-
-    const basePrice = parseInt(priceElement.dataset.basePrice) || 0;
-    const oldPrice = parseInt(oldPriceElement?.dataset.oldPrice) || 45000;
-
-    // Функция форматирования цены
-    function formatPrice(price) {
-      return new Intl.NumberFormat('ru-RU', {
-        style: 'currency',
-        currency: 'RUB',
-        minimumFractionDigits: 0
-      }).format(price);
-    }
-
-    // Функция расчета новой цены
-    function calculateNewPrice() {
-      let totalOptionPrice = 0;
-
-      // Находим все выбранные радио-кнопки
-      const selectedOptions = document.querySelectorAll('input[type="radio"]:checked');
-
-      selectedOptions.forEach(option => {
-        const optionName = option.dataset.optionName;
-        const optionPrice = parseInt(option.dataset.optionPrice) || 0;
-
-        // Если это опция "Диаметр" и цена > 0, добавляем к итоговой цене
-        if (optionName === 'Диаметр' && optionPrice > 0) {
-          totalOptionPrice += optionPrice;
-        }
-      });
-
-      return basePrice + totalOptionPrice;
-    }
-
-    // Функция обновления отображения цены
-    function updatePriceDisplay() {
-      const newPrice = calculateNewPrice();
-      const newOldPrice = oldPrice + (newPrice - basePrice); // Пропорционально увеличиваем старую цену
-      const currentPrice = parseInt(priceElement.textContent.replace(/[^\d]/g, '')) || basePrice;
-
-      // Если цена не изменилась, выходим
-      if (newPrice === currentPrice) return;
-
-      // Анимируем изменение цены
-      priceElement.style.transition = 'all 0.3s ease';
-      priceElement.style.transform = 'scale(1.1)';
-      priceElement.style.color = newPrice > currentPrice ? '#dc2626' : '#059669';
-
-      setTimeout(() => {
-        // Обновляем текущую цену
-        priceElement.textContent = formatPrice(newPrice);
-
-        // Обновляем старую цену
-        if (oldPriceElement) {
-          oldPriceElement.textContent = formatPrice(newOldPrice);
-        }
-
-        // Обновляем процент скидки
-        if (discountBadge && newOldPrice > newPrice) {
-          const discountPercent = Math.round((1 - newPrice / newOldPrice) * 100);
-          discountBadge.textContent = `-${discountPercent}%`;
-        }
-
-        // Возвращаем нормальный вид
-        setTimeout(() => {
-          priceElement.style.transform = 'scale(1)';
-          priceElement.style.color = '';
-        }, 200);
-      }, 150);
-    }
-
-    // Слушаем изменения радио-кнопок
-    document.addEventListener('change', function(e) {
-      if (e.target.type === 'radio' && e.target.name.startsWith('option-')) {
-        // Добавляем анимацию для выбранного лейбла
-        const label = e.target.nextElementSibling;
-        if (label) {
-          label.style.transition = 'all 0.2s ease';
-          label.style.transform = 'scale(1.02)';
-          label.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.15)';
-
-          setTimeout(() => {
-            label.style.transform = 'scale(1)';
-            label.style.boxShadow = '';
-          }, 200);
-        }
-
-        // Небольшая задержка для визуального эффекта
-        setTimeout(updatePriceDisplay, 100);
-      }
-    });
-
-    // Инициализируем цену при загрузке страницы
-    updatePriceDisplay();
-  });
-  </script>
 {% endblock %}
 
 

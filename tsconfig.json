@@ -1,19 +1,36 @@
 {
   "compilerOptions": {
-    "target": "esnext",
+    "target": "es2019",
     "module": "esnext",
+    "moduleResolution": "bundler",
     "strict": true,
-    "jsx": "preserve",
-    "moduleResolution": "node",
+    "noImplicitAny": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
+    "allowJs": true,
     "baseUrl": ".",
     "paths": {
+      "@/*": ["assets/catalog/src/*"],
+      "@shared/*": ["assets/catalog/src/shared/*"],
+      "@features/*": ["assets/catalog/src/features/*"],
+      "@entities/*": ["assets/catalog/src/entities/*"],
+      "@widgets/*": ["assets/catalog/src/widgets/*"],
+      "@pages/*": ["assets/catalog/src/pages/*"],
       "@admin/*": ["assets/admin/*"]
     },
-    "types": ["vue-router", "@vue/runtime-dom"]
+    "lib": ["dom", "dom.iterable", "es2019"],
+    "types": ["node"]
   },
-  "include": ["assets/**/*.ts", "assets/**/*.tsx", "assets/**/*.vue", "assets/types/vue.d.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "assets/catalog/src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "public",
+    "var"
+  ]
 }

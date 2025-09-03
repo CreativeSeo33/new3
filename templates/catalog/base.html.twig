@@ -24,8 +24,10 @@
 {% block javascripts %}
   {{ parent() }}
   {{ encore_entry_script_tags('catalog') }}
+
+  {# Мини-обновление счётчика корзины в хедере по событию cart:updated #}
   <script>
-  // Мини-обновление счётчика корзины в хедере по событию cart:updated
+  // Легаси код для совместимости - может быть удален после полной миграции
   window.addEventListener('cart:updated', (e) => {
     try {
       const data = e.detail;
@@ -38,121 +40,6 @@
       if (totalEl) totalEl.textContent = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: (data.currency || 'RUB') }).format(total);
       if (label) label.textContent = `${count} товар(ов)`;
     } catch {}
-  });
-  // Делегирование кликов на кнопки .js-add-to-cart (на листингах)
-  document.addEventListener('click', async (e) => {
-    const btn = e.target.closest('.js-add-to-cart');
-    if (!btn) return;
-    const productId = parseInt(btn.getAttribute('data-product-id'), 10);
-    if (!productId) return;
-
-    // Показываем состояние загрузки
-    const loadingSpinner = btn.querySelector('.loading-spinner');
-    const mainContent = btn.querySelector('.relative');
-    const originalContent = mainContent ? mainContent.innerHTML : '';
-
-    if (loadingSpinner && mainContent) {
-      loadingSpinner.style.opacity = '1';
-      mainContent.classList.add('opacity-0');
-    }
-
-    // Собираем выбранные опции
-    const optionAssignmentIds = [];
-    const optionDetails = [];
-    const form = btn.closest('form');
-    if (form) {
-      // Ищем все выбранные radio кнопки с опциями в пределах формы
-      const selectedOptions = form.querySelectorAll('input[type="radio"][name^="option-"]:checked');
-      selectedOptions.forEach(option => {
-        const assignmentId = parseInt(option.value, 10);
-        if (assignmentId) {
-          optionAssignmentIds.push(assignmentId);
-
-          // Собираем детали опций для отображения в корзине
-          const optionName = option.dataset.optionName;
-          const optionValue = option.dataset.optionValue;
-          const optionPrice = parseInt(option.dataset.optionPrice) || 0;
-
-          if (optionName === 'Диаметр' && optionPrice > 0) {
-            optionDetails.push({
-              name: optionName,
-              value: optionValue,
-              price: optionPrice
-            });
-          }
-        }
-      });
-    }
-
-    btn.disabled = true;
-    let success = false;
-
-    try {
-      const requestBody = { productId, qty: 1 };
-      // Добавляем опции только если они есть
-      if (optionAssignmentIds.length > 0) {
-        requestBody.optionAssignmentIds = optionAssignmentIds;
-      }
-
-      const res = await fetch('{{ path('api_cart_add_item') }}', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-        body: JSON.stringify(requestBody)
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(data.error || 'Не удалось добавить в корзину');
-      }
-
-      success = true;
-      window.dispatchEvent(new CustomEvent('cart:updated', { detail: data }));
-
-      // Показываем успешное состояние
-      if (mainContent) {
-        mainContent.innerHTML = `
-          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-          </svg>
-          <span class="text-lg">Добавлено!</span>
-        `;
-
-        // Возвращаем оригинальное содержимое через 2 секунды
-        setTimeout(() => {
-          if (mainContent) {
-            mainContent.innerHTML = originalContent;
-            mainContent.classList.remove('opacity-0');
-          }
-        }, 2000);
-      }
-
-    } catch(error) {
-      console.error(error);
-
-      // Показываем состояние ошибки
-      if (mainContent) {
-        mainContent.innerHTML = `
-          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-          <span class="text-lg">Ошибка</span>
-        `;
-
-        // Возвращаем оригинальное содержимое через 2 секунды
-        setTimeout(() => {
-          if (mainContent) {
-            mainContent.innerHTML = originalContent;
-            mainContent.classList.remove('opacity-0');
-          }
-        }, 2000);
-      }
-    } finally {
-      // Скрываем спиннер загрузки
-      if (loadingSpinner) {
-        loadingSpinner.style.opacity = '0';
-      }
-
-      btn.disabled = false;
-    }
   });
   </script>
 {% endblock %}

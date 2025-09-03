@@ -1,5 +1,6 @@
 const Encore = require('@symfony/webpack-encore');
 const path = require('path');
+const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const selectedEntry = process.env.APP_ENTRY;
 
 // Manually configure the runtime environment if not already configured yet by the "encore" command.
@@ -27,7 +28,7 @@ if (!selectedEntry || selectedEntry === 'admin') {
     Encore.addEntry('admin', './assets/admin/admin.ts');
 }
 if (!selectedEntry || selectedEntry === 'catalog') {
-    Encore.addEntry('catalog', './assets/catalog/catalog.js');
+    Encore.addEntry('catalog', './assets/catalog/catalog.ts');
 }
 
 Encore
@@ -71,19 +72,29 @@ Encore
     // enables Sass/SCSS support
     //.enableSassLoader()
 
-    // uncomment if you use TypeScript
+    // Enable TypeScript with transpileOnly for faster builds
     .enableTypeScriptLoader((tsConfig) => {
         tsConfig.transpileOnly = true;
-    });
+    })
+    // Add ForkTsChecker for async type checking
+    .addPlugin(new ForkTsCheckerWebpackPlugin());
 
 // Включаем Vue loader только если собирается admin
 if (!selectedEntry || selectedEntry === 'admin') {
     Encore.enableVueLoader(() => {}, { version: 3 });
 }
 
-// Общие алиасы
+// Общие алиасы для совместимости с TS и JS
 Encore.addAliases({
-    '@admin': path.resolve(__dirname, 'assets/admin')
+    '@admin': path.resolve(__dirname, 'assets/admin'),
+    // Алиасы для catalog модульной системы
+    '@': path.resolve(__dirname, 'assets/catalog/src'),
+    '@shared': path.resolve(__dirname, 'assets/catalog/src/shared'),
+    '@features': path.resolve(__dirname, 'assets/catalog/src/features'),
+    '@entities': path.resolve(__dirname, 'assets/catalog/src/entities'),
+    '@widgets': path.resolve(__dirname, 'assets/catalog/src/widgets'),
+    '@pages': path.resolve(__dirname, 'assets/catalog/src/pages'),
+    '@app': path.resolve(__dirname, 'assets/catalog/src/app'),
 });
 
 module.exports = Encore.getWebpackConfig();

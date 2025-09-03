@@ -1,7 +1,8 @@
 {% set list = breadcrumbs|default(items|default([])) %}
 {% if list is not empty %}
-  <nav aria-label="Breadcrumb" class="pt-5">
-    <ol class="flex items-center gap-1 text-sm text-gray-700">
+  <div class="container mx-auto">
+    <nav aria-label="Breadcrumb" class="pt-5">
+      <ol class="flex items-center gap-1 text-sm text-gray-700">
       <li>
         <a href="/" class="block transition-colors hover:text-gray-900" aria-label="Home">
           <svg
@@ -69,5 +70,6 @@
       {% endfor %}
     </ol>
   </nav>
+  </div>
 {% endif %}
 

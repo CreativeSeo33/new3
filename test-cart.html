@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест добавления в корзину</title>
+    <link rel="stylesheet" href="/build/catalog.bad37b93.css">
+</head>
+<body>
+    <div class="container mx-auto p-8">
+        <h1 class="text-2xl font-bold mb-8">Тест добавления в корзину</h1>
+
+        <!-- Счетчик корзины -->
+        <div class="mb-8 p-4 bg-gray-100 rounded-lg" data-module="cart-counter">
+            <h2 class="text-lg font-semibold mb-2">Корзина</h2>
+            <div class="flex items-center space-x-4">
+                <span>Товаров: <span data-cart-counter>0</span></span>
+                <span>Сумма: <span data-cart-total>₽0</span></span>
+                <span data-cart-label>0 товаров</span>
+            </div>
+        </div>
+
+        <!-- Тестовые кнопки -->
+        <div class="space-y-4">
+            <h2 class="text-lg font-semibold mb-4">Тестовые товары</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Товар 1 -->
+                <div class="border rounded-lg p-4">
+                    <h3 class="font-semibold">Анжелика 3 лампы + низ 1</h3>
+                    <p class="text-gray-600 mb-4">ID: 2</p>
+                    <button type="button"
+                            data-product-id="2"
+                            data-module="add-to-cart"
+                            class="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 disabled:opacity-50 relative">
+                        <div class="loading-spinner absolute inset-0 flex items-center justify-center opacity-0">
+                            <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </div>
+                        <span>Добавить в корзину</span>
+                    </button>
+                </div>
+
+                <!-- Товар 2 -->
+                <div class="border rounded-lg p-4">
+                    <h3 class="font-semibold">Люстра</h3>
+                    <p class="text-gray-600 mb-4">ID: 1</p>
+                    <button type="button"
+                            data-product-id="1"
+                            data-module="add-to-cart"
+                            class="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 disabled:opacity-50 relative">
+                        <div class="loading-spinner absolute inset-0 flex items-center justify-center opacity-0">
+                            <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </div>
+                        <span>Добавить в корзину</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Логи -->
+        <div class="mt-8">
+            <h2 class="text-lg font-semibold mb-4">Логи</h2>
+            <div id="logs" class="bg-gray-100 p-4 rounded-lg max-h-60 overflow-y-auto font-mono text-sm"></div>
+        </div>
+    </div>
+
+    <!-- Загрузка скриптов -->
+    <script src="/build/runtime.25c08bc1.js"></script>
+    <script src="/build/850.fe56ffd7.js"></script>
+    <script src="/build/catalog.a9bc14ce.js"></script>
+
+    <script>
+        // Логирование для отладки
+        const logsEl = document.getElementById('logs');
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `mb-1 ${type === 'error' ? 'text-red-600' : type === 'success' ? 'text-green-600' : 'text-gray-800'}`;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logsEl.appendChild(logEntry);
+            logsEl.scrollTop = logsEl.scrollHeight;
+        }
+
+        // Слушаем события корзины
+        window.addEventListener('cart:updated', (e) => {
+            log(`Корзина обновлена: ${JSON.stringify(e.detail)}`, 'success');
+        });
+
+        // Слушаем ошибки
+        window.addEventListener('error', (e) => {
+            log(`Ошибка: ${e.message}`, 'error');
+        });
+
+        log('Тестовая страница загружена');
+    </script>
+</body>
+</html>

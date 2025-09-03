@@ -49,6 +49,23 @@ final class CategoryRepository extends ServiceEntityRepository
 
         return $ancestors;
     }
+
+    /**
+     * @return Category[] Categories visible in footer, ordered by sortOrder
+     */
+    public function findByFooterVisibility(bool $footerVisibility = true): array
+    {
+        return $this->createQueryBuilder('c')
+            ->andWhere('c.footerVisibility = :footerVisible')
+            ->andWhere('c.visibility = :visible')
+            ->andWhere('c.name IS NOT NULL')
+            ->setParameter('footerVisible', $footerVisibility)
+            ->setParameter('visible', true)
+            ->orderBy('c.sortOrder', 'ASC')
+            ->addOrderBy('c.name', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }
 
 
