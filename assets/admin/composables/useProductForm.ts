@@ -10,6 +10,7 @@ export function useProductForm(initialData?: Partial<ProductFormModel>) {
     salePrice: null,
     status: true,
     quantity: 100,
+    type: 'simple',
     description: '',
     metaTitle: '',
     metaDescription: '',
@@ -83,6 +84,11 @@ export function useProductForm(initialData?: Partial<ProductFormModel>) {
           errors.price = 'Цена не может быть отрицательной'
           return false
         }
+        // Для простых товаров цена обязательна
+        if (form.type === 'simple' && (form.price === null || form.price <= 0)) {
+          errors.price = 'Цена обязательна для простого товара'
+          return false
+        }
         break
 
       case 'salePrice':
@@ -94,11 +100,23 @@ export function useProductForm(initialData?: Partial<ProductFormModel>) {
           errors.salePrice = 'Цена со скидкой не может быть больше обычной'
           return false
         }
+        // Если указана цена со скидкой, должна быть указана основная цена
+        if (form.salePrice !== null && form.price === null) {
+          errors.price = 'Укажите основную цену, чтобы задать цену со скидкой'
+          return false
+        }
         break
 
       case 'quantity':
         if (form.quantity !== null && form.quantity < 0) {
           errors.quantity = 'Количество не может быть отрицательным'
+          return false
+        }
+        break
+
+      case 'type':
+        if (!form.type || !['simple', 'variable'].includes(form.type)) {
+          ;(errors as any).type = 'Неверный тип товара'
           return false
         }
         break
@@ -109,7 +127,7 @@ export function useProductForm(initialData?: Partial<ProductFormModel>) {
 
   const validateForm = (): boolean => {
     isValidating.value = true
-    const fields: (keyof ProductFormModel)[] = ['name', 'slug', 'price', 'salePrice', 'quantity', 'description']
+    const fields: (keyof ProductFormModel)[] = ['name', 'slug', 'price', 'salePrice', 'quantity', 'description', 'type']
     const results = fields.map((field) => validateField(field))
     return results.every(Boolean)
   }
@@ -149,12 +167,14 @@ export function useProductForm(initialData?: Partial<ProductFormModel>) {
       salePrice: null,
       status: true,
       quantity: 100,
+      type: 'simple',
       description: '',
       metaTitle: '',
       metaDescription: '',
       h1: '',
       sortOrder: 1,
       optionsJson: [],
+      optionAssignments: [],
       ...initialData,
     })
     Object.keys(errors).forEach((key) => delete (errors as any)[key])

@@ -59,6 +59,9 @@ class ProductResource
     public ?int $sortOrder = null;
 
     #[Groups(['product:read', 'product:write'])]
+    public ?string $type = null;
+
+    #[Groups(['product:read', 'product:write'])]
     public ?string $description = null;
 
     // SEO

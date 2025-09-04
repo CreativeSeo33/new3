@@ -5,6 +5,7 @@ namespace App\Service;
 
 use App\Entity\Product;
 use App\Entity\Manufacturer;
+use App\Entity\ProductOptionValueAssignment;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\String\Slugger\SluggerInterface;
 
@@ -58,9 +59,42 @@ class ProductLifecycleService
         }
     }
 
-    private function materializeEffectivePrice(Product $product): void
+    protected function materializeEffectivePrice(Product $product): void
     {
-        $product->setEffectivePrice($product->getEffectivePrice());
+        if ($product->isVariable()) {
+            // Вариативный товар: обнуляем основные цены и вычисляем effectivePrice
+            $this->handleVariableProduct($product);
+        } else {
+            // Простой товар: используем основную цену
+            $this->handleSimpleProduct($product);
+        }
+    }
+
+    protected function handleVariableProduct(Product $product): void
+    {
+        // Обнуляем основные цены для вариативного товара
+        $product->setPrice(null);
+        $product->setSalePrice(null);
+        $product->setQuantity(null);
+
+        // Вычисляем минимальную цену среди всех вариаций
+        $minPrice = null;
+        /** @var ProductOptionValueAssignment $assignment */
+        foreach ($product->getOptionAssignments() as $assignment) {
+            $currentPrice = $assignment->getSalePrice() ?? $assignment->getPrice();
+            if ($currentPrice !== null && ($minPrice === null || $currentPrice < $minPrice)) {
+                $minPrice = $currentPrice;
+            }
+        }
+
+        $product->setEffectivePrice($minPrice);
+    }
+
+    protected function handleSimpleProduct(Product $product): void
+    {
+        // Для простого товара effectivePrice равна основной цене
+        $effectivePrice = $product->getSalePrice() ?? $product->getPrice();
+        $product->setEffectivePrice($effectivePrice);
     }
 }
 

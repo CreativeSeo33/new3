@@ -9,6 +9,22 @@
       </div>
     </div>
 
+    <div class="flex items-center gap-4 p-4 rounded-md border bg-gray-50 dark:bg-gray-900 dark:border-gray-700">
+      <div class="flex items-center gap-2">
+        <label for="product-type" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+          Тип товара: *
+        </label>
+        <select
+          id="product-type"
+          v-model="form.type"
+          class="h-9 px-3 py-1 text-sm rounded-md border border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        >
+          <option value="simple">Простой товар</option>
+          <option value="variable">Вариативный товар</option>
+        </select>
+      </div>
+    </div>
+
     <div v-if="saveError" class="p-3 rounded border border-red-200 bg-red-50 text-sm text-red-800">
       {{ saveError }}
     </div>
@@ -27,7 +43,7 @@
       </TabsList>
 
       <TabsContent value="description" class="pt-6">
-        <ProductDescriptionForm :form="form" :errors="errors" :validate-field="validateField" />
+        <ProductDescriptionForm :form="form" :errors="errors" :validate-field="validateField" :product-type="form.type" />
       </TabsContent>
 
       <TabsContent value="categories" class="pt-6">
@@ -109,13 +125,21 @@ import { ProductCategoryRepository } from '@admin/repositories/ProductCategoryRe
 import { OptionRepository } from '@admin/repositories/OptionRepository'
 import { OptionValueRepository } from '@admin/repositories/OptionValueRepository'
 
-const tabs: ProductTab[] = [
-  { value: 'description', label: 'Описание товара' },
-  { value: 'categories', label: 'Категории' },
-  { value: 'attributes', label: 'Аттрибуты' },
-  { value: 'options', label: 'Опции' },
-  { value: 'photos', label: 'Фотографии' },
-]
+const tabs = computed<ProductTab[]>(() => {
+  const baseTabs: ProductTab[] = [
+    { value: 'description', label: 'Описание товара' },
+    { value: 'categories', label: 'Категории' },
+    { value: 'attributes', label: 'Аттрибуты' },
+    { value: 'photos', label: 'Фотографии' },
+  ]
+
+  // Добавляем вкладку опций только для вариативных товаров
+  if (form?.type === 'variable') {
+    baseTabs.splice(3, 0, { value: 'options', label: 'Опции' })
+  }
+
+  return baseTabs
+})
 
 const route = useRoute()
 const router = useRouter()
@@ -123,7 +147,7 @@ const id = computed(() => route.params.id as string)
 const isCreating = computed(() => !id.value || id.value === 'new')
 const activeTab = ref<string>('description')
 const tabParamKey = 'tab'
-const validTabs = new Set(tabs.map(t => t.value))
+const validTabs = computed(() => new Set(tabs.value.map(t => t.value)))
 
 const {
   form,
@@ -136,6 +160,11 @@ const {
 } = useProductForm()
 
 const { saving, error: saveError, saveProduct } = useProductSave()
+
+// Дополнительная защита от undefined
+if (!form) {
+  throw new Error('Form is not initialized properly')
+}
 
 // Load existing product for edit
 const repo = new ProductRepository()
@@ -177,7 +206,8 @@ const hydrateForm = (dto: ProductDto) => {
     metaTitle: dto.metaTitle ?? '',
     metaDescription: dto.metaDescription ?? '',
     h1: dto.h1 ?? '',
-    sortOrder: (dto as any).sortOrder ?? 0,    
+    sortOrder: (dto as any).sortOrder ?? 0,
+    type: (dto as any).type || 'simple',
   })
   // map optionAssignments if present
   ;(form as any).optionAssignments = Array.isArray((dto as any).optionAssignments)
@@ -206,7 +236,7 @@ const loadIfEditing = async () => {
 onMounted(() => {
   // sync tab from URL on load
   const q = route.query?.[tabParamKey]
-  if (typeof q === 'string' && validTabs.has(q)) {
+  if (typeof q === 'string' && validTabs.value.has(q)) {
     activeTab.value = q
   }
   loadIfEditing()
@@ -225,7 +255,7 @@ watch(id, async () => {
     if (!isCreating.value) await loadProductCategories()
   } else if (activeTab.value === 'attributes') {
     // handled inside ProductAttributeAssignments
-  } else if (activeTab.value === 'options') {
+  } else if (activeTab.value === 'options' && form?.type === 'variable') {
     if (!optionsPrefetched.value) await loadOptionsBootstrap()
   }
 })
@@ -236,8 +266,16 @@ watch(activeTab, (val) => {
 })
 // react to external URL tab changes
 watch(() => route.query[tabParamKey], (val) => {
-  if (typeof val === 'string' && validTabs.has(val) && val !== activeTab.value) {
+  if (typeof val === 'string' && validTabs.value.has(val) && val !== activeTab.value) {
     activeTab.value = val
+  }
+})
+
+// watch product type changes to handle tab visibility
+watch(() => form?.type, (newType, oldType) => {
+  // Если переключаемся с вариативного на простой товар и активна вкладка options
+  if (newType === 'simple' && activeTab.value === 'options') {
+    activeTab.value = 'description' // Переключаемся на первую доступную вкладку
   }
 })
 
@@ -354,7 +392,7 @@ watch(activeTab, async (val) => {
     }
   }
   // attributes handled inside ProductAttributeAssignments
-  if (val === 'options') {
+  if (val === 'options' && form?.type === 'variable') {
     if (!optionsPrefetched.value) await loadOptionsBootstrap()
   }
 }, { immediate: false })

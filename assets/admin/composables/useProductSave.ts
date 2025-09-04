@@ -26,6 +26,7 @@ export function useProductSave() {
         status: data.status ?? null,
         quantity: toInt(data.quantity),
         sortOrder: data.sortOrder ?? null,
+        type: data.type || null,
         description: (data as any).description ?? null,
         metaTitle: data.metaTitle || null,
         metaDescription: data.metaDescription || null,

@@ -12,6 +12,7 @@ export interface ProductDto extends ApiResource {
   status: boolean | null;
   quantity: number | null;
   sortOrder?: number | null;
+  type?: string | null;
   description?: string | null;
   metaTitle: string | null;
   metaDescription: string | null;

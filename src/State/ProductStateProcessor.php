@@ -95,6 +95,9 @@ class ProductStateProcessor implements ProcessorInterface
         if (($isPatch && array_key_exists('sortOrder', $provided)) || !$isPatch) {
             $entity->setSortOrder($data->sortOrder);
         }
+        if (($isPatch && array_key_exists('type', $provided)) || (!$isPatch && $data->type !== null)) {
+            $entity->setType($data->type);
+        }
         if (($isPatch && array_key_exists('description', $provided)) || !$isPatch) {
             $entity->setDescription($data->description);
         }

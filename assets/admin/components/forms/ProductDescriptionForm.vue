@@ -2,31 +2,33 @@
   <form class="grid grid-cols-1 md:grid-cols-2 gap-4" @submit.prevent>
     <Input
       v-model="form.name"
-      label="Название"
+      :label="nameLabel"
       :error="errors.name"
       @blur="() => validateField('name')"
     />
 
     <Input
       v-model="form.slug"
-      label="Slug"
+      :label="slugLabel"
       :error="errors.slug"
       @blur="() => validateField('slug')"
     />
 
     <Input
       v-model="priceModel"
-      label="Цена"
+      :label="priceLabel"
       type="number"
       :error="errors.price"
+      :disabled="isPriceFieldsDisabled"
       @blur="() => validateField('price')"
     />
 
     <Input
       v-model="salePriceModel"
-      label="Цена со скидкой"
+      :label="salePriceLabel"
       type="number"
       :error="errors.salePrice"
+      :disabled="isPriceFieldsDisabled"
       @blur="() => validateField('salePrice')"
     />
 
@@ -40,20 +42,21 @@
 
     <Input
       v-model="quantityModel"
-      label="Количество"
+      :label="quantityLabel"
       type="number"
       :error="errors.quantity"
+      :disabled="isPriceFieldsDisabled"
       @blur="() => validateField('quantity')"
     />
 
-    <Input v-model="form.h1" label="H1" />
-    <Input v-model="form.description" label="Описание" :error="errors.description" @blur="() => validateField('description')" />
-    <Input v-model="form.metaTitle" label="Meta Title" />
-    <Input v-model="form.metaDescription" label="Meta Description" />
+    <Input v-model="form.h1" :label="h1Label" />
+    <Input v-model="form.description" :label="descriptionLabel" :error="errors.description" @blur="() => validateField('description')" />
+    <Input v-model="form.metaTitle" :label="metaTitleLabel" />
+    <Input v-model="form.metaDescription" :label="metaDescriptionLabel" />
 
     <Input
       v-model="sortOrderModel"
-      label="Сортировка"
+      :label="sortOrderLabel"
       type="number"
       :error="errors.sortOrder"
       @blur="() => validateField('sortOrder')"
@@ -70,9 +73,27 @@ interface Props {
   form: ProductFormModel
   errors: ProductFormErrors
   validateField: (field: keyof ProductFormModel) => boolean
+  productType?: string
 }
 
 const props = defineProps<Props>()
+
+// Определяем, должны ли поля быть disabled для вариативных товаров
+const isPriceFieldsDisabled = computed(() => props.productType === 'variable')
+
+// Динамические лейблы для полей цены
+const priceLabel = computed(() => props.productType === 'simple' ? 'Цена *' : 'Цена')
+const salePriceLabel = computed(() => 'Цена со скидкой')
+
+// Обязательные поля всегда имеют *
+const nameLabel = computed(() => 'Название *')
+const slugLabel = computed(() => 'Slug *')
+const quantityLabel = computed(() => 'Количество')
+const h1Label = computed(() => 'H1')
+const descriptionLabel = computed(() => 'Описание')
+const metaTitleLabel = computed(() => 'Meta Title')
+const metaDescriptionLabel = computed(() => 'Meta Description')
+const sortOrderLabel = computed(() => 'Сортировка')
 
 // локальные computed-обертки, работают и без внешних пропсов
 const priceModel = computed<string>({

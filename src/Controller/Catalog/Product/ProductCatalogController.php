@@ -23,6 +23,7 @@ final class ProductCatalogController extends AbstractController
         /** @var \App\Repository\ProductRepository $repository */
         $repository = $registry->getRepository(Product::class);
         $product = $repository->findOneActiveWithAttributesBySlug($slug);
+        
 
         if ($product === null) {
             throw $this->createNotFoundException('Товар не найден');

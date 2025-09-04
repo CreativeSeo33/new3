@@ -46,6 +46,14 @@ use App\Entity\ProductAttributeAssignment;
     expression: 'this.getSalePrice() === null or this.getPrice() === null or this.getSalePrice() <= this.getPrice()',
     message: 'Sale price must be less than or equal to price'
 )]
+#[Assert\Expression(
+    expression: 'this.getType() === "variable" or this.getPrice() !== null',
+    message: 'Price is required for simple products'
+)]
+#[Assert\Expression(
+    expression: 'this.getType() === "variable" or this.getPrice() === null or this.getPrice() > 0',
+    message: 'Price must be greater than 0 for simple products'
+)]
 #[ApiResource(
     operations: [
         new Get(normalizationContext: ['groups' => ['product:read']]),
@@ -61,7 +69,7 @@ use App\Entity\ProductAttributeAssignment;
     arguments: ['orderParameterName' => 'order']
 )]
 #[ApiFilter(SearchFilter::class,
-    properties: ['name' => 'partial','manufacturerRef' => 'exact','manufacturerRef.name' => 'partial']
+    properties: ['name' => 'partial','manufacturerRef' => 'exact','manufacturerRef.name' => 'partial', 'type' => 'exact']
 )]
 #[ApiFilter(BooleanFilter::class,
     properties: ['status' => 'exact']
@@ -89,6 +97,9 @@ use App\Entity\ProductAttributeAssignment;
 ])]
 class Product
 {
+    // Типы товаров
+    public const TYPE_SIMPLE = 'simple';
+    public const TYPE_VARIABLE = 'variable';
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -130,6 +141,12 @@ class Product
     #[ORM\Column(options: ['default' => false])]
     #[Groups(['product:read', 'product:update', 'product:create', 'product:list'])]
     private ?bool $status = false;
+
+    #[ORM\Column(length: 32, options: ['default' => self::TYPE_SIMPLE])]
+    #[Groups(['product:read', 'product:update', 'product:create', 'product:list'])]
+    #[Assert\Choice(choices: [self::TYPE_SIMPLE, self::TYPE_VARIABLE], message: 'Choose a valid product type.')]
+    #[Assert\NotBlank(message: 'Product type is required.')]
+    private ?string $type = self::TYPE_SIMPLE;
 
     #[ORM\Column(nullable: true)]
     #[Groups(['product:read', 'product:update', 'product:create'])]
@@ -685,6 +702,27 @@ class Product
             ];
         }
         return $out;
+    }
+
+    public function getType(): ?string
+    {
+        return $this->type;
+    }
+
+    public function setType(?string $type): self
+    {
+        $this->type = $type;
+        return $this;
+    }
+
+    public function isSimple(): bool
+    {
+        return $this->type === self::TYPE_SIMPLE;
+    }
+
+    public function isVariable(): bool
+    {
+        return $this->type === self::TYPE_VARIABLE;
     }
 
 }

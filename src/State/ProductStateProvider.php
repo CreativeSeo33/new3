@@ -120,6 +120,7 @@ class ProductStateProvider implements ProviderInterface
         $r->status = $entity->getStatus();
         $r->quantity = $entity->getQuantity();
         $r->sortOrder = $entity->getSortOrder();
+        $r->type = $entity->getType();
         $r->description = $entity->getDescription();
         $r->metaTitle = $entity->getMetaTitle();
         $r->metaDescription = $entity->getMetaDescription();
@@ -185,6 +186,7 @@ class ProductStateProvider implements ProviderInterface
         $r->manufacturerId = $entity->getManufacturerRef()?->getId();
         $r->manufacturerName = $entity->getManufacturerRef()?->getName();
         $r->sortOrder = $entity->getSortOrder();
+        $r->type = $entity->getType();
         $r->createdAt = $entity->getDateAdded();
         $r->categoryNames = [];
         foreach ($entity->getCategory() as $pc) {
