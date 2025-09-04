@@ -7,7 +7,7 @@
       <table class="w-full text-sm">
         <tbody>
           <tr class=" text-neutral-600 dark:bg-neutral-900/40 dark:text-neutral-300">
-            <td colspan="7" class="px-4 py-3">
+            <td colspan="9" class="px-4 py-3">
               <div class="space-y-3">
                 <!-- Header / Actions -->
                 
@@ -38,12 +38,27 @@
                     <Button variant="primary" @click="router.push({ name: 'admin-product-form', params: { id: 'new' } })">
                       + Добавить товар
                     </Button>
+                    <Button
+                      v-if="hasSelectedProducts"
+                      variant="danger"
+                      @click="confirmBulkDelete"
+                    >
+                      Удалить товар ({{ selectedProducts.size }})
+                    </Button>
                   </div>
                 </div>
               </div>
             </td>
           </tr>
           <tr class="bg-neutral-50 text-neutral-600 dark:bg-neutral-900/40 dark:text-neutral-300">
+            <th class="px-4 py-2 text-left">
+              <input
+                type="checkbox"
+                :checked="selectAll"
+                @change="toggleSelectAll"
+                class="rounded border-neutral-300 text-neutral-600 focus:ring-neutral-500 dark:border-neutral-600 dark:bg-neutral-700"
+              />
+            </th>
             <th class="px-4 py-2 text-left">Название товара</th>
             <th class="px-4 py-2 text-left">Изображение</th>
             <th class="px-4 py-2 text-left">Категории</th>
@@ -67,8 +82,17 @@
               <span v-if="sortDateDir === 'desc'">▼</span>
               <span v-else-if="sortDateDir === 'asc'">▲</span>
             </th>
+            <th class="px-4 py-2 text-left">Действия</th>
           </tr>
           <tr v-for="p in products" :key="p.id" class="border-t dark:border-neutral-800">
+            <td class="px-4 py-2">
+              <input
+                type="checkbox"
+                :checked="isProductSelected(Number(p.id))"
+                @change="toggleProductSelection(Number(p.id))"
+                class="rounded border-neutral-300 text-neutral-600 focus:ring-neutral-500 dark:border-neutral-600 dark:bg-neutral-700"
+              />
+            </td>
             <td class="px-4 py-2">
               <RouterLink
                 :to="{ name: 'admin-product-form', params: { id: p.id } }"
@@ -117,12 +141,30 @@
             </td>
             <td class="px-4 py-2">{{ p.sortOrder ?? '—' }}</td>
             <td class="px-4 py-2">{{ formatDate(p.createdAt) }}</td>
+            <td class="px-4 py-2">
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  class="inline-flex items-center rounded-md border border-blue-200 bg-blue-50 px-3 py-1 text-sm text-blue-700 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-900/40"
+                  @click="copyProduct(p)"
+                >
+                  Копировать
+                </button>
+                <button
+                  type="button"
+                  class="inline-flex items-center rounded-md border border-red-200 bg-red-50 px-3 py-1 text-sm text-red-700 hover:bg-red-100 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300 dark:hover:bg-red-900/40"
+                  @click="confirmDelete(p)"
+                >
+                  Удалить
+                </button>
+              </div>
+            </td>
           </tr>
           <tr v-if="!loading && products.length === 0">
-            <td colspan="7" class="px-4 py-8 text-center text-neutral-500">Пока нет товаров</td>
+            <td colspan="9" class="px-4 py-8 text-center text-neutral-500">Пока нет товаров</td>
           </tr>
           <tr v-if="loading">
-            <td colspan="7" class="px-4 py-8 text-center text-neutral-500">Загрузка…</td>
+            <td colspan="9" class="px-4 py-8 text-center text-neutral-500">Загрузка…</td>
           </tr>
         </tbody>
       </table>
@@ -155,6 +197,17 @@
 
     <!-- Delete confirmation -->
     <ConfirmDialog v-model="deleteDialogOpen" title="Удалить товар?" description="Это действие необратимо. Товар будет удалён навсегда." confirm-text="Удалить" :danger="true" @confirm="performDelete" />
+
+    <!-- Bulk delete confirmation -->
+    <ConfirmDialog
+      v-model="bulkDeleteDialogOpen"
+      title="Удалить товары?"
+      :description="`Вы уверены, что хотите удалить ${selectedProducts.size} товар(ов)? Товары, которые используются в корзине покупателей, не будут удалены. Это действие необратимо для успешно удаленных товаров.`"
+      confirm-text="Удалить"
+      :danger="true"
+      @confirm="performBulkDelete"
+    />
+
 
     <!-- Category filter modal -->
     <Modal v-model="categoryModalOpen" title="Выберите категорию" size="xl">
@@ -225,6 +278,11 @@ const selectedCategoryId = vueRef<number | null>(null)
 const categoryTree = vueRef<any[]>([])
 const categoriesLoaded = vueRef(false)
 const categoryRepo = new CategoryRepository()
+
+// Checkbox state for bulk operations
+const selectedProducts = vueRef<Set<number>>(new Set())
+const selectAll = vueRef(false)
+
 const flatCategoryList = computed<{ id: number; label: string; level: number }[]>(() => {
   const out: { id: number; label: string; level: number }[] = []
   const walk = (nodes: any[], level = 0) => {
@@ -237,6 +295,36 @@ const flatCategoryList = computed<{ id: number; label: string; level: number }[]
   return out
 })
 
+const hasSelectedProducts = computed(() => selectedProducts.value.size > 0)
+
+const isProductSelected = (productId: number) => selectedProducts.value.has(productId)
+
+const toggleProductSelection = (productId: number) => {
+  if (selectedProducts.value.has(productId)) {
+    selectedProducts.value.delete(productId)
+  } else {
+    selectedProducts.value.add(productId)
+  }
+  updateSelectAllState()
+}
+
+const toggleSelectAll = () => {
+  if (selectAll.value) {
+    selectedProducts.value.clear()
+  } else {
+    products.value.forEach(p => {
+      if (p.id) selectedProducts.value.add(Number(p.id))
+    })
+  }
+  selectAll.value = !selectAll.value
+}
+
+const updateSelectAllState = () => {
+  const currentPageProductIds = new Set(products.value.map(p => Number(p.id)).filter(id => id))
+  const selectedOnCurrentPage = Array.from(selectedProducts.value).filter(id => currentPageProductIds.has(id))
+  selectAll.value = selectedOnCurrentPage.length === currentPageProductIds.size && currentPageProductIds.size > 0
+}
+
 const hasActiveFilters = computed<boolean>(() => {
   return (
     (appliedSearch.value && appliedSearch.value.length >= 3) ||
@@ -247,6 +335,9 @@ const hasActiveFilters = computed<boolean>(() => {
 })
 
 onMounted(async () => {
+  // 0) Preload categories for faster copying
+  preloadCategories()
+
   // 1) Load pagination options (cached)
   let defaultIpp: number | null = null
   try {
@@ -333,6 +424,10 @@ import { AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDe
 const deleteDialogOpen = vueRef(false)
 const pendingDeleteId = vueRef<number | null>(null)
 
+// Bulk delete state
+const bulkDeleteDialogOpen = vueRef(false)
+
+
 async function confirmDelete(p: ProductDto) {
   if (!p.id) return
   pendingDeleteId.value = Number(p.id)
@@ -340,10 +435,447 @@ async function confirmDelete(p: ProductDto) {
 }
 async function performDelete() {
   if (pendingDeleteId.value == null) return
-  await crud.remove(pendingDeleteId.value)
-  pendingDeleteId.value = null
-  publishToast('Товар удалён')
+
+  try {
+    await crud.remove(pendingDeleteId.value)
+    pendingDeleteId.value = null
+    publishToast('Товар успешно удалён')
+  } catch (error: any) {
+
+    // Обработка конкретных ошибок
+    if (error.response?.status === 409) {
+      // Товар используется в корзине
+      const product = products.value.find(p => Number(p.id) === pendingDeleteId.value)
+      const productName = product ? `"${product.name}"` : `ID ${pendingDeleteId.value}`
+
+      publishToast(`❌ Невозможно удалить товар ${productName} - он используется в корзине покупателей`)
+    } else if (error.response?.status === 404) {
+      // Товар не найден
+      publishToast('❌ Товар не найден или уже был удалён')
+    } else if (error.response?.status === 403) {
+      // Нет прав доступа
+      publishToast('❌ Недостаточно прав для удаления товара')
+    } else {
+      // Общая ошибка
+      const errorMessage = error.response?.data?.['hydra:description'] ||
+                          error.response?.data?.message ||
+                          error.message ||
+                          'Неизвестная ошибка'
+      publishToast(`❌ Ошибка при удалении товара: ${errorMessage}`)
+    }
+  } finally {
+    deleteDialogOpen.value = false
+  }
 }
+
+
+
+// Bulk delete functions
+async function confirmBulkDelete() {
+  if (selectedProducts.value.size === 0) return
+  bulkDeleteDialogOpen.value = true
+}
+
+async function performBulkDelete() {
+  if (selectedProducts.value.size === 0) return
+
+  try {
+    let successCount = 0
+    let failedProducts: string[] = []
+
+    // Delete products one by one to handle individual errors
+    for (const productId of selectedProducts.value) {
+      try {
+        await crud.remove(productId)
+        successCount++
+      } catch (error: any) {
+
+        // Обработка разных типов ошибок
+        const product = products.value.find(p => Number(p.id) === productId)
+        const productName = product ? `"${product.name}"` : `ID ${productId}`
+
+        if (error.response?.status === 409) {
+          // Товар используется в корзине
+          failedProducts.push(`${productName} (используется в корзине)`)
+        } else if (error.response?.status === 404) {
+          // Товар не найден
+          failedProducts.push(`${productName} (не найден)`)
+        } else if (error.response?.status === 403) {
+          // Нет прав доступа
+          failedProducts.push(`${productName} (нет прав доступа)`)
+        } else {
+          // Другая ошибка
+          const errorMessage = error.response?.data?.['hydra:description'] ||
+                              error.response?.data?.message ||
+                              error.message ||
+                              'неизвестная ошибка'
+          failedProducts.push(`${productName} (${errorMessage})`)
+        }
+      }
+    }
+
+    selectedProducts.value.clear()
+    selectAll.value = false
+
+    if (successCount > 0) {
+      const successMessage = successCount === selectedProducts.value.size
+        ? `✅ Успешно удалено ${successCount} товар(ов)`
+        : `✅ Успешно удалено ${successCount} из ${selectedProducts.value.size} товар(ов)`
+      publishToast(successMessage)
+    }
+
+    if (failedProducts.length > 0) {
+      const failedMessage = `❌ Не удалось удалить товары: ${failedProducts.join(', ')}`
+      publishToast(failedMessage)
+    }
+
+  } catch (error) {
+    const errorMessage = error.response?.data?.['hydra:description'] ||
+                        error.response?.data?.message ||
+                        error.message ||
+                        'Неизвестная ошибка'
+    publishToast(`❌ Критическая ошибка при удалении товаров: ${errorMessage}`)
+  } finally {
+    bulkDeleteDialogOpen.value = false
+  }
+}
+
+// Copy product function
+async function copyProduct(product: ProductDto) {
+  if (!product.id) {
+    publishToast('ID товара отсутствует')
+    return
+  }
+
+  const productId = Number(product.id)
+  if (isNaN(productId) || productId <= 0) {
+    publishToast('Неверный ID товара')
+    return
+  }
+
+  try {
+    // Get full product data
+    const fullProductData = await productRepository.findById(productId)
+
+    if (!fullProductData) {
+      publishToast('Не удалось загрузить данные товара')
+      return
+    }
+
+    // Prepare complete copy data with all available fields
+    const originalName = fullProductData.name || 'Без названия'
+    const copyData: any = {
+      name: `${originalName} (Копия ${Date.now()})`,
+      slug: null, // Will be auto-generated
+      price: fullProductData.price,
+      salePrice: fullProductData.salePrice,
+      status: fullProductData.status,
+      quantity: fullProductData.quantity,
+      sortOrder: fullProductData.sortOrder,
+      type: fullProductData.type,
+      description: fullProductData.description,
+      metaTitle: fullProductData.metaTitle,
+      metaDescription: fullProductData.metaDescription,
+      metaKeywords: fullProductData.metaKeywords,
+      h1: fullProductData.h1,
+      manufacturerId: fullProductData.manufacturerId,
+      optionsJson: fullProductData.optionsJson,
+      optionAssignments: fullProductData.optionAssignments,
+      // Note: Categories and images will be handled separately after product creation
+    }
+
+    // Create new product
+    const newProduct = await crud.create(copyData)
+
+    if (newProduct && newProduct.id) {
+      try {
+        // Copy categories and images after product creation
+        await copyProductRelations(fullProductData, newProduct.id)
+      } catch (relationError) {
+        // Don't fail the entire copy operation if relations fail
+      }
+
+      publishToast(`Товар "${originalName}" успешно скопирован`)
+
+      // Optional: redirect to edit the new product
+      if (confirm('Перейти к редактированию копии товара?')) {
+        router.push({ name: 'admin-product-form', params: { id: newProduct.id } })
+      }
+    } else {
+      publishToast('Не удалось создать копию товара')
+    }
+
+  } catch (error: any) {
+    const errorMessage = error.response?.data?.['hydra:description'] ||
+                        error.response?.data?.message ||
+                        error.message ||
+                        'Ошибка при копировании товара'
+
+    // More specific error messages
+    let userMessage = 'Ошибка при копировании товара'
+    if (error.response?.status === 404) {
+      userMessage = 'Товар не найден'
+    } else if (error.response?.status === 403) {
+      userMessage = 'Нет доступа к товару'
+    } else if (error.response?.status === 500) {
+      userMessage = 'Ошибка сервера'
+    } else if (errorMessage) {
+      userMessage = errorMessage
+    }
+
+    publishToast(`Ошибка: ${userMessage}`)
+  }
+}
+
+
+
+// Copy product relations (categories and images)
+async function copyProductRelations(originalProductData: ProductDto, newProductId: number) {
+  try {
+    // Copy categories if available
+    if (originalProductData.categoryNames && originalProductData.categoryNames.length > 0) {
+      await copyProductCategories(originalProductData, newProductId)
+    }
+
+    // Copy images if available
+    if (originalProductData.image && originalProductData.image.length > 0) {
+      await copyProductImages(originalProductData, newProductId)
+    }
+
+  } catch (error) {
+    throw error
+  }
+}
+
+// Copy product categories
+async function copyProductCategories(originalProductData: ProductDto, newProductId: number) {
+  if (!originalProductData.categoryNames || originalProductData.categoryNames.length === 0) {
+    return
+  }
+
+  try {
+    // Get category IDs by names
+    const categoryIds = await getCategoryIdsByNames(originalProductData.categoryNames)
+
+    if (categoryIds.length === 0) {
+      return
+    }
+
+    // Create ProductToCategory relations (parallel processing)
+    if (categoryIds.length > 0) {
+      const categoryPromises = categoryIds.map(categoryId =>
+        createProductToCategoryRelation(newProductId, categoryId)
+          .then(result => ({
+            categoryId,
+            success: result !== null,
+            result
+          }))
+          .catch(error => ({
+            categoryId,
+            success: false,
+            error
+          }))
+      )
+
+      await Promise.all(categoryPromises)
+    }
+
+  } catch (error) {
+    throw error
+  }
+}
+
+// Copy product images
+async function copyProductImages(originalProductData: ProductDto, newProductId: number) {
+  if (!originalProductData.image || originalProductData.image.length === 0) {
+    return
+  }
+
+  try {
+    // Create ProductImage relations (parallel processing)
+    if (originalProductData.image && originalProductData.image.length > 0) {
+      const imagePromises = originalProductData.image.map(imageData =>
+        createProductImageRelation(newProductId, imageData)
+          .then(result => ({
+            imageUrl: imageData.imageUrl,
+            success: result !== null,
+            result
+          }))
+          .catch(error => ({
+            imageUrl: imageData.imageUrl,
+            success: false,
+            error
+          }))
+      )
+
+      await Promise.all(imagePromises)
+    }
+
+  } catch (error) {
+    throw error
+  }
+}
+
+// Category cache for faster lookups
+const categoryNameCache = new Map<string, number>()
+let categoriesPreloaded = false
+
+
+// Preload all categories for faster lookups
+async function preloadCategories() {
+  if (categoriesPreloaded) return
+
+  try {
+
+    const categoryRepo = new CategoryRepository()
+    const allCategories = await categoryRepo.findAll({
+      itemsPerPage: 2000 // Load as many as possible
+    })
+
+    const categoryList = Array.isArray(allCategories)
+      ? allCategories
+      : (allCategories?.['hydra:member'] ?? allCategories?.member ?? [])
+
+    categoryList.forEach(cat => {
+      if (cat.name && cat.id) {
+        categoryNameCache.set(cat.name, Number(cat.id))
+      }
+    })
+
+    categoriesPreloaded = true
+
+  } catch (error) {
+    // Continue without preloaded categories
+  }
+}
+
+// Get category IDs by names (with caching)
+async function getCategoryIdsByNames(categoryNames: string[]): Promise<number[]> {
+  try {
+    // Create a repository for categories (assuming it exists)
+    const categoryRepo = new CategoryRepository()
+
+    const categoryIds: number[] = []
+    const uncachedNames: string[] = []
+
+    // Check cache first
+    for (const categoryName of categoryNames) {
+      if (categoryNameCache.has(categoryName)) {
+        const cachedId = categoryNameCache.get(categoryName)!
+        categoryIds.push(cachedId)
+      } else {
+        uncachedNames.push(categoryName)
+      }
+    }
+
+    // Fetch uncached categories in batch
+    if (uncachedNames.length > 0) {
+      // Try to get all categories at once and filter locally
+      try {
+        const allCategories = await categoryRepo.findAll({
+          itemsPerPage: 1000 // Get more to reduce requests
+        })
+
+        const categoryList = Array.isArray(allCategories)
+          ? allCategories
+          : (allCategories?.['hydra:member'] ?? allCategories?.member ?? [])
+
+        // Create name-to-id mapping
+        const nameToIdMap = new Map<string, number>()
+        categoryList.forEach(cat => {
+          if (cat.name && cat.id) {
+            nameToIdMap.set(cat.name, Number(cat.id))
+            categoryNameCache.set(cat.name, Number(cat.id)) // Cache all found categories
+          }
+        })
+
+        // Find requested categories
+        for (const categoryName of uncachedNames) {
+          if (nameToIdMap.has(categoryName)) {
+            const categoryId = nameToIdMap.get(categoryName)!
+            categoryIds.push(categoryId)
+          }
+        }
+
+      } catch (error) {
+        // Fallback to individual requests
+        for (const categoryName of uncachedNames) {
+          try {
+            const categories = await categoryRepo.findAll({
+              filters: { name: categoryName },
+              itemsPerPage: 1
+            })
+
+            const categoryList = Array.isArray(categories)
+              ? categories
+              : (categories?.['hydra:member'] ?? categories?.member ?? [])
+
+            if (categoryList.length > 0) {
+              const categoryId = categoryList[0].id
+              if (categoryId) {
+                const id = Number(categoryId)
+                categoryIds.push(id)
+                categoryNameCache.set(categoryName, id) // Cache for future use
+              }
+            }
+          } catch (searchError) {
+            // Continue with next category
+          }
+        }
+      }
+    }
+
+    return categoryIds
+
+  } catch (error) {
+    return []
+  }
+}
+
+// Create ProductToCategory relation
+async function createProductToCategoryRelation(productId: number, categoryId: number) {
+  try {
+    const relationData = {
+      productId: productId,
+      categoryId: categoryId,
+      isParent: false,
+      position: 0,
+      visibility: true
+    }
+
+    // Try to create the relation via HTTP POST to ProductToCategory endpoint
+    const response = await httpClient.post('/v2/product_to_categories', relationData)
+    return response.data
+
+  } catch (error: any) {
+    // For now, don't throw error - just log it
+    // This allows the product copy to succeed even if category linking fails
+    return null
+  }
+}
+
+// Create ProductImage relation
+async function createProductImageRelation(productId: number, imageData: any) {
+  try {
+    const imageRelationData = {
+      productId: productId,
+      imageUrl: imageData.imageUrl,
+      sortOrder: imageData.sortOrder || 0
+    }
+
+    // Try to create the image relation
+    // Note: This assumes there's an API endpoint for ProductImage
+    const response = await httpClient.post('/v2/product_images', imageRelationData)
+    return response.data
+
+  } catch (error: any) {
+    // For now, don't throw error - just log it
+    // This allows the product copy to succeed even if image linking fails
+    return null
+  }
+}
+
+
 
 // Imperative toast publisher (per Reka UI)
 const toastCount = vueRef(0)
@@ -518,6 +1050,12 @@ async function resetAllFilters() {
     filters: undefined,
   })
 }
+
+// Watch for products changes to update checkbox state
+watch(products, () => {
+  updateSelectAllState()
+}, { immediate: true })
+
 </script>
 
 <style scoped></style>

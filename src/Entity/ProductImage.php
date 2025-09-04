@@ -10,7 +10,16 @@ use Doctrine\ORM\Mapping\JoinColumn;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
-#[ApiResource]
+#[ApiResource(
+    routePrefix: '/v2',
+    operations: [
+        new \ApiPlatform\Metadata\Get(),
+        new \ApiPlatform\Metadata\GetCollection(),
+        new \ApiPlatform\Metadata\Post(denormalizationContext: ['groups' => ['product:post']]),
+        new \ApiPlatform\Metadata\Patch(denormalizationContext: ['groups' => ['product:post']]),
+        new \ApiPlatform\Metadata\Delete()
+    ]
+)]
 /** не хватает attributes={"order"={"sortOrder": "ASC"}} */
 #[ORM\Table]
 #[ORM\Index(name: 'product_id', columns: ['product_id'])]
@@ -36,6 +45,10 @@ class ProductImage
     #[ORM\ManyToOne(targetEntity: Product::class, inversedBy: 'image')]
     #[JoinColumn(name: 'product_id', referencedColumnName: 'id', onDelete: 'SET NULL')]
     private ?Product $product = null;
+
+    // Helper field for API input
+    #[Groups(['product:post'])]
+    private ?int $productId = null;
 
     public function getId(): ?int
     {
@@ -74,6 +87,18 @@ class ProductImage
     public function setProduct(?Product $product): self
     {
         $this->product = $product;
+
+        return $this;
+    }
+
+    public function getProductId(): ?int
+    {
+        return $this->productId ?? $this->product?->getId();
+    }
+
+    public function setProductId(?int $productId): self
+    {
+        $this->productId = $productId;
 
         return $this;
     }

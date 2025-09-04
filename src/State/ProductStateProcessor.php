@@ -10,8 +10,10 @@ use App\ApiResource\ProductResource;
 use App\Entity\Manufacturer;
 use App\Entity\Product;
 use App\Repository\ProductRepository;
+use App\Repository\CartItemRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Service\PaginationService;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 /**
  * Processes ProductResource writes to Product entity.
@@ -21,6 +23,7 @@ class ProductStateProcessor implements ProcessorInterface
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly ProductRepository $repository,
+        private readonly CartItemRepository $cartItemRepository,
         private readonly \Symfony\Component\HttpFoundation\RequestStack $requestStack,
         private readonly PaginationService $pagination,
     ) {
@@ -36,6 +39,13 @@ class ProductStateProcessor implements ProcessorInterface
             if (isset($uriVariables['id'])) {
                 $entity = $this->repository->find((int) $uriVariables['id']);
                 if ($entity instanceof Product) {
+                    // Check if product is used in any cart items
+                    if ($this->cartItemRepository->isProductUsedInCarts($entity)) {
+                        throw new ConflictHttpException(
+                            sprintf('Невозможно удалить товар "%s" - он используется в корзине покупателей', $entity->getName())
+                        );
+                    }
+
                     $this->em->remove($entity);
                     $this->em->flush();
                 }

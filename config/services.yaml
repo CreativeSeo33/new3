@@ -80,3 +80,8 @@ services:
     # Navbar categories service
     App\Service\NavbarCategoryService:
         public: true
+
+    # Product state processor with cart item repository
+    App\State\ProductStateProcessor:
+        arguments:
+            $cartItemRepository: '@App\Repository\CartItemRepository'

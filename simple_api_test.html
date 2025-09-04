@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Простой тест API</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .success { background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>Простой тест API Endpoints</h1>
+    <div id="output"></div>
+
+    <script>
+        const output = document.getElementById('output');
+
+        async function testEndpoint(name, url, method = 'GET', data = null) {
+            const div = document.createElement('div');
+            div.className = 'result';
+            div.innerHTML = `Тестируем ${name}: ${url}`;
+
+            try {
+                const options = {
+                    method: method,
+                    headers: {
+                        'Accept': 'application/ld+json',
+                        'Content-Type': 'application/json'
+                    }
+                };
+
+                if (data && method !== 'GET') {
+                    options.body = JSON.stringify(data);
+                }
+
+                const response = await fetch(url, options);
+
+                if (response.ok) {
+                    div.innerHTML += `<br>✅ Статус: ${response.status}`;
+                    div.className = 'result success';
+                } else {
+                    const errorText = await response.text();
+                    div.innerHTML += `<br>❌ Статус: ${response.status}<br>Ошибка: ${errorText.substring(0, 200)}`;
+                    div.className = 'result error';
+                }
+            } catch (error) {
+                div.innerHTML += `<br>❌ Ошибка: ${error.message}`;
+                div.className = 'result error';
+            }
+
+            output.appendChild(div);
+        }
+
+        // Test endpoints on page load
+        window.addEventListener('load', async () => {
+            await testEndpoint('Products GET', '/api/v2/products?page=1&itemsPerPage=1');
+            await testEndpoint('Categories GET', '/api/v2/categories?page=1&itemsPerPage=1');
+            await testEndpoint('ProductToCategory GET', '/api/v2/product_to_categories');
+            await testEndpoint('ProductImage GET', '/api/v2/product_images');
+        });
+    </script>
+</body>
+</html>

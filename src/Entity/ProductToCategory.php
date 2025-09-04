@@ -28,6 +28,17 @@ use Symfony\Bridge\Doctrine\Validator\Constraints as DoctrineAssert;
     ]
 )]
 #[ApiResource(
+    routePrefix: '/v2',
+    operations: [
+
+        new \ApiPlatform\Metadata\Get(normalizationContext: ['groups' => ['product:get']]),
+        new \ApiPlatform\Metadata\GetCollection(normalizationContext: ['groups' => ['product:get']]),
+        new \ApiPlatform\Metadata\Post(
+            denormalizationContext: ['groups' => ['product_category:post']],
+            normalizationContext: ['groups' => ['product:get']]
+        ),
+        new \ApiPlatform\Metadata\Delete()
+    ],
     normalizationContext: ['groups' => ['product:get']],
     denormalizationContext: ['groups' => ['product_category:post']]
 )]
@@ -69,6 +80,13 @@ class ProductToCategory
     #[Groups(['product:get', 'product_category:post', 'product:post'])]
     #[JoinColumn(name: 'category_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     private ?Category $category = null;
+
+    // Helper fields for API input
+    #[Groups(['product_category:post'])]
+    private ?int $productId = null;
+
+    #[Groups(['product_category:post'])]
+    private ?int $categoryId = null;
 
     public function getId(): ?int
     {
@@ -131,6 +149,30 @@ class ProductToCategory
     public function setCategory(?Category $category): self
     {
         $this->category = $category;
+
+        return $this;
+    }
+
+    public function getProductId(): ?int
+    {
+        return $this->productId ?? $this->product?->getId();
+    }
+
+    public function setProductId(?int $productId): self
+    {
+        $this->productId = $productId;
+
+        return $this;
+    }
+
+    public function getCategoryId(): ?int
+    {
+        return $this->categoryId ?? $this->category?->getId();
+    }
+
+    public function setCategoryId(?int $categoryId): self
+    {
+        $this->categoryId = $categoryId;
 
         return $this;
     }
