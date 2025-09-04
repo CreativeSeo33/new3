@@ -21,7 +21,11 @@
         <tbody id="cart-items" data-module="cart-items-manager">
           {% for item in cart.items %}
             <tr class="border-b" data-item-id="{{ item.id }}">
-              <td class="py-2 pr-4">{{ item.productName }}</td>
+              <td class="py-2 pr-4">
+                <a href="{{ path('catalog_product_show', {'slug': item.product.slug}) }}" class="text-blue-600 hover:text-blue-800 hover:underline">
+                  {{ item.productName }}
+                </a>
+              </td>
               <td class="py-2 pr-4">
                 {# Используем effectiveUnitPrice, если он больше 0, иначе unitPrice #}
                 {% set displayPrice = item.effectiveUnitPrice > 0 ? item.effectiveUnitPrice : item.unitPrice %}

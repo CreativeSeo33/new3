@@ -268,7 +268,6 @@ final class CartManager
 			});
 		});
 
-
 		$this->events->dispatch(new \App\Event\CartUpdatedEvent($cart->getIdString()));
 		return $cart;
 	}
@@ -324,6 +323,7 @@ final class CartManager
 				$this->em->flush();
 			});
 		});
+
 		return $target;
 	}
 }
