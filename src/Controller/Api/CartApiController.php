@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controller\Api;
 
 use App\Service\CartManager;
+use App\Service\CartContext;
 use App\Repository\CartRepository;
 use App\Repository\ProductRepository;
 use App\Entity\User as AppUser;
@@ -14,18 +15,28 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/api/cart')]
 final class CartApiController extends AbstractController
 {
-	public function __construct(private CartManager $manager, private CartRepository $carts, private ProductRepository $products) {}
+	public function __construct(
+		private CartManager $manager,
+		private CartContext $cartContext,
+		private CartRepository $carts,
+		private ProductRepository $products
+	) {}
 
 	#[Route('', name: 'api_cart_get', methods: ['GET'])]
     public function getCart(Request $request): JsonResponse
 	{
 		$user = $this->getUser();
 		$userId = $user instanceof AppUser ? $user->getId() : null;
-		$cart = $this->manager->getOrCreateCurrent($userId);
+
+		// Создаем объект JsonResponse
+		$response = new JsonResponse();
+		$cart = $this->cartContext->getOrCreate($userId, $response);
+
 		$payload = $this->serializeCart($cart);
 		$etag = md5($cart->getUpdatedAt()->getTimestamp().':'.$cart->getVersion());
-		$response = $this->json($payload);
+		$response->setData($payload);
 		$response->setEtag($etag);
+
 		if ($response->isNotModified($request)) return $response;
 		return $response;
 	}
@@ -49,16 +60,22 @@ final class CartApiController extends AbstractController
 		}
 		
 		$user = $this->getUser();
-		$cart = $this->manager->getOrCreateCurrent($user instanceof AppUser ? $user->getId() : null);
-		
+		$userId = $user instanceof AppUser ? $user->getId() : null;
+
+		// Создаем объект JsonResponse
+		$response = new JsonResponse();
+		$cart = $this->cartContext->getOrCreate($userId, $response);
+
 		try {
 			// Передаем опции в метод addItem
 			$this->manager->addItem($cart, $productId, $qty, $optionAssignmentIds);
 		} catch (\DomainException $e) {
 			return $this->json(['error' => $e->getMessage()], 422);
 		}
-		
-		return $this->json($this->serializeCart($cart), 201);
+
+		$response->setData($this->serializeCart($cart));
+		$response->setStatusCode(201);
+		return $response;
 	}
 
 	#[Route('/items/{itemId}', name: 'api_cart_update_qty', methods: ['PATCH'])]
@@ -67,31 +84,62 @@ final class CartApiController extends AbstractController
 		$data = json_decode($request->getContent(), true) ?? [];
 		$qty = (int)($data['qty'] ?? 0);
 		$user = $this->getUser();
-		$cart = $this->manager->getOrCreateCurrent($user instanceof AppUser ? $user->getId() : null);
+		$userId = $user instanceof AppUser ? $user->getId() : null;
+
+		// Создаем объект JsonResponse
+		$response = new JsonResponse();
+		$cart = $this->cartContext->getOrCreate($userId, $response);
+
 		try {
 			$this->manager->updateQty($cart, $itemId, $qty);
 		} catch (\DomainException $e) {
 			return $this->json(['error' => $e->getMessage()], 422);
 		}
-		return $this->json($this->serializeCart($cart));
+
+		$response->setData($this->serializeCart($cart));
+		return $response;
 	}
 
 	#[Route('/items/{itemId}', name: 'api_cart_remove_item', methods: ['DELETE'])]
-	public function removeItem(int $itemId): JsonResponse
+	public function removeItem(int $itemId, CartContext $ctx): JsonResponse
 	{
 		$user = $this->getUser();
-		$cart = $this->manager->getOrCreateCurrent($user instanceof AppUser ? $user->getId() : null);
-		$this->manager->removeItem($cart, $itemId);
-		return new JsonResponse(null, 204);
+		$userId = $user instanceof AppUser ? $user->getId() : null;
+
+		// Создаем пустой объект JsonResponse
+		$response = new JsonResponse();
+
+		// Передаем Response в getOrCreate
+		$cart = $ctx->getOrCreate($userId, $response);
+
+		$updatedCart = $this->manager->removeItem($cart, $itemId);
+
+		// Устанавливаем данные в объект ответа
+		if ($updatedCart) {
+			$response->setData($this->serializeCart($updatedCart));
+			$response->setStatusCode(200);
+		} else {
+			$response->setData(null);
+			$response->setStatusCode(204);
+		}
+
+		return $response;
 	}
 
 	#[Route('', name: 'api_cart_clear', methods: ['DELETE'])]
 	public function clearCart(): JsonResponse
 	{
 		$user = $this->getUser();
-		$cart = $this->manager->getOrCreateCurrent($user instanceof AppUser ? $user->getId() : null);
+		$userId = $user instanceof AppUser ? $user->getId() : null;
+
+		// Создаем объект JsonResponse
+		$response = new JsonResponse();
+		$cart = $this->cartContext->getOrCreate($userId, $response);
+
 		$this->manager->clearCart($cart);
-		return new JsonResponse(null, 204);
+		$response->setData(null);
+		$response->setStatusCode(204);
+		return $response;
 	}
 
 	#[Route('/products/{productId}/options', name: 'api_product_options', methods: ['GET'])]
@@ -131,7 +179,7 @@ final class CartApiController extends AbstractController
 	private function serializeCart($cart): array
 	{
 		return [
-			'id' => $cart->getId(),
+			'id' => $cart->getIdString(), // Используем строковое представление ULID
 			'currency' => $cart->getCurrency(),
 			'subtotal' => $cart->getSubtotal(),
             'discountTotal' => $cart->getDiscountTotal(),
@@ -143,7 +191,7 @@ final class CartApiController extends AbstractController
                 'data' => $cart->getShippingData(),
             ],
 			'items' => array_map(fn($i) => [
-				'id' => $i->getId(),
+				'id' => $i->getId(), // CartItem ID тоже должен быть строкой
 				'productId' => $i->getProduct()->getId(),
 				'name' => $i->getProductName(),
 				'unitPrice' => $i->getUnitPrice(),

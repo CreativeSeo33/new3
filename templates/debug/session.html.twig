@@ -1,0 +1,265 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Отладка сессии - {{ parent() }}{% endblock %}
+
+{% block styles %}
+<style>
+.debug-session {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.debug-session h1 {
+    color: #333;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.session-info {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.session-info h2 {
+    color: #495057;
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.2em;
+}
+
+.session-info table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 15px;
+}
+
+.session-info th,
+.session-info td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.session-info th {
+    background: #e9ecef;
+    font-weight: 600;
+    color: #495057;
+}
+
+.session-data {
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 15px;
+    margin: 10px 0;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.actions {
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.actions h2 {
+    color: #495057;
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.2em;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+}
+
+.btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c82333;
+}
+
+.btn-warning {
+    background: #ffc107;
+    color: #212529;
+}
+
+.btn-warning:hover {
+    background: #e0a800;
+}
+
+.flash-message {
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    font-weight: 500;
+}
+
+.flash-success {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+.warning {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.warning strong {
+    display: block;
+    margin-bottom: 10px;
+}
+
+@media (max-width: 768px) {
+    .action-buttons {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+        text-align: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="debug-session">
+    <h1>🔧 Отладка сессии</h1>
+
+    {% for message in app.flashes('success') %}
+        <div class="flash-message flash-success">
+            ✅ {{ message }}
+        </div>
+    {% endfor %}
+
+    <div class="warning">
+        <strong>⚠️ Внимание!</strong>
+        Эта страница доступна только в режиме отладки (APP_DEBUG=true).
+        Все действия с сессией влияют на текущую сессию пользователя.
+    </div>
+
+    <div class="session-info">
+        <h2>📊 Информация о сессии</h2>
+
+        <table>
+            <tr>
+                <th>ID сессии:</th>
+                <td>{{ session.id }}</td>
+            </tr>
+            <tr>
+                <th>Имя сессии:</th>
+                <td>{{ session.name }}</td>
+            </tr>
+            <tr>
+                <th>Запущена:</th>
+                <td>{{ session.started ? 'Да' : 'Нет' }}</td>
+            </tr>
+        </table>
+
+        {% if session.metadata.created %}
+        <h3>⏰ Метаданные</h3>
+        <table>
+            <tr>
+                <th>Создана:</th>
+                <td>{{ session.metadata.created|date('d.m.Y H:i:s') }}</td>
+            </tr>
+            <tr>
+                <th>Последнее использование:</th>
+                <td>{{ session.metadata.last_used|date('d.m.Y H:i:s') }}</td>
+            </tr>
+            <tr>
+                <th>Время жизни (секунд):</th>
+                <td>{{ session.metadata.lifetime }}</td>
+            </tr>
+        </table>
+        {% endif %}
+
+        {% if session.all %}
+        <h3>📦 Данные сессии</h3>
+        <div class="session-data">
+            {{ session.all|json_encode(constant('JSON_PRETTY_PRINT')) }}
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="actions">
+        <h2>🎛️ Действия с сессией</h2>
+
+        <div class="action-buttons">
+            <form method="post" action="{{ path('app_debug_session_clear') }}" style="display: inline;">
+                <button type="submit" class="btn btn-warning"
+                        onclick="return confirm('Вы уверены, что хотите очистить все данные сессии?')">
+                    🧹 Очистить сессию
+                </button>
+            </form>
+
+            <form method="post" action="{{ path('app_debug_session_destroy') }}" style="display: inline;">
+                <button type="submit" class="btn btn-danger"
+                        onclick="return confirm('Вы уверены, что хотите уничтожить сессию? Это приведет к выходу из системы.')">
+                    💥 Уничтожить сессию
+                </button>
+            </form>
+
+            <form method="post" action="{{ path('app_debug_session_regenerate') }}" style="display: inline;">
+                <button type="submit" class="btn btn-primary"
+                        onclick="return confirm('Вы уверены, что хотите регенерировать ID сессии?')">
+                    🔄 Регенерировать ID
+                </button>
+            </form>
+        </div>
+
+        <p style="margin-top: 20px; color: #6c757d; font-size: 0.9em;">
+            <strong>Очистить сессию:</strong> Удаляет все данные, но сохраняет ID сессии<br>
+            <strong>Уничтожить сессию:</strong> Полностью уничтожает сессию и создает новую<br>
+            <strong>Регенерировать ID:</strong> Создает новый ID сессии, сохраняя данные
+        </p>
+    </div>
+
+    <div style="text-align: center; margin-top: 30px;">
+        <a href="{{ path('app_home') }}" class="btn btn-primary">🏠 Вернуться на главную</a>
+    </div>
+</div>
+{% endblock %}

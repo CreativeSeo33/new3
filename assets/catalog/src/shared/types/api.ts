@@ -23,7 +23,7 @@ export interface PaginatedResponse<T> {
 
 // Типы для корзины
 export interface CartItem {
-  id: number;
+  id: string; // Теперь ULID в base32 формате
   productId: number;
   name: string;
   unitPrice: number;
@@ -36,7 +36,7 @@ export interface CartItem {
 }
 
 export interface Cart {
-  id: number;
+  id: string; // Теперь ULID в base32 формате
   currency: string;
   subtotal: number;
   discountTotal: number;

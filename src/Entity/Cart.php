@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Component\Uid\Ulid;
 
 #[ORM\Entity(repositoryClass: \App\Repository\CartRepository::class)]
 #[ORM\Table(name: 'cart')]
@@ -16,9 +17,8 @@ use Symfony\Component\Uid\Uuid;
 class Cart
 {
 	#[ORM\Id]
-	#[ORM\GeneratedValue]
-	#[ORM\Column]
-	private ?int $id = null;
+	#[ORM\Column(type: 'ulid', unique: true)]
+	private ?Ulid $id = null;
 
 	#[ORM\Column(name: 'user_id', nullable: true)]
 	private ?int $userId = null;
@@ -78,12 +78,32 @@ class Cart
 	public static function newGuest(): self
 	{
 		$cart = new self();
+		$cart->id = Ulid::fromString(Ulid::generate());
 		$cart->token = Uuid::v4()->toRfc4122();
 		$cart->expiresAt = (new \DateTimeImmutable())->modify('+30 days');
 		return $cart;
 	}
 
-	public function getId(): ?int { return $this->id; }
+	public static function createNew(?int $userId, \DateTimeImmutable $ttlUntil): self
+	{
+		$cart = new self();
+		$cart->id = Ulid::fromString(Ulid::generate());
+		$cart->userId = $userId;
+		$cart->createdAt = new \DateTimeImmutable(); // Явная инициализация
+		$cart->updatedAt = new \DateTimeImmutable();
+		$cart->expiresAt = $ttlUntil;
+		return $cart;
+	}
+
+	public function prolong(\DateTimeImmutable $ttlUntil): void
+	{
+		$this->expiresAt = $ttlUntil;
+		$this->updatedAt = new \DateTimeImmutable();
+	}
+
+	public function getId(): ?Ulid { return $this->id; }
+
+	public function getIdString(): string { return $this->id?->toBase32() ?? ''; }
 
 	public function getUserId(): ?int { return $this->userId; }
 

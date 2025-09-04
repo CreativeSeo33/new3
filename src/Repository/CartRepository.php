@@ -9,6 +9,7 @@ use App\Entity\Product;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\LockMode;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Uid\Ulid;
 
 final class CartRepository extends ServiceEntityRepository
 {
@@ -34,6 +35,27 @@ final class CartRepository extends ServiceEntityRepository
 			->andWhere('c.token = :t')
 			->andWhere('c.expiresAt IS NULL OR c.expiresAt > CURRENT_TIMESTAMP()')
 			->setParameter('t', $token)
+			->setMaxResults(1)
+			->getQuery()->getOneOrNullResult();
+	}
+
+	public function findActiveById(Ulid $id): ?Cart
+	{
+		return $this->createQueryBuilder('c')
+			->andWhere('c.id = :id')
+			->andWhere('c.expiresAt IS NULL OR c.expiresAt > CURRENT_TIMESTAMP()')
+			->setParameter('id', $id, 'ulid')
+			->setMaxResults(1)
+			->getQuery()->getOneOrNullResult();
+	}
+
+	public function findActiveByUserId(int $userId): ?Cart
+	{
+		return $this->createQueryBuilder('c')
+			->andWhere('c.userId = :u')
+			->andWhere('c.expiresAt IS NULL OR c.expiresAt > CURRENT_TIMESTAMP()')
+			->setParameter('u', $userId)
+			->orderBy('c.updatedAt', 'DESC')
 			->setMaxResults(1)
 			->getQuery()->getOneOrNullResult();
 	}

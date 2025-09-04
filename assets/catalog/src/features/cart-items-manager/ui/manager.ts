@@ -361,7 +361,7 @@ export class CartItemsManager extends Component {
    * Обновляет данные строки товара
    */
   private updateRowData(row: HTMLTableRowElement, cartData: Cart, itemId: string): void {
-    const item = cartData.items.find((i: any) => i.id.toString() === itemId);
+    const item = cartData.items.find((i: any) => i.id === itemId);
     if (!item) {
       return;
     }

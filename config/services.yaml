@@ -31,16 +31,25 @@ services:
     App\Doctrine\Listener\ProductEntityListener: ~
     App\Doctrine\Listener\OptionEntityListener: ~
 
-    # Cart session storage services
-    App\Service\CartSessionStorage:
+    # Cart context service
+    App\Service\CartContext:
         arguments:
+            - '@doctrine.orm.entity_manager'
+            - '@App\Repository\CartRepository'
+            - '@lock.factory'
             - '@request_stack'
-    
-    App\EventListener\CartSessionCleanupListener:
-        arguments:
-            - '@App\Service\CartSessionStorage'
+
+    # Cart cookie listener
+    App\EventListener\CartCookieListener:
         tags:
-            - { name: kernel.event_subscriber }
+            - { name: kernel.event_listener, event: kernel.response, method: onKernelResponse }
+
+    # Cart login subscriber
+    App\EventSubscriber\CartLoginSubscriber:
+        arguments:
+            - '@App\Repository\CartRepository'
+            - '@App\Service\CartManager'
+            - '@doctrine.orm.entity_manager'
 
     # Remove Intervention Image wiring (migrated to LiipImagine)
 

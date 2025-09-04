@@ -14,8 +14,14 @@ export async function updateCartItemQuantity(itemId: string | number, qty: numbe
 export async function removeCartItem(itemId: string | number): Promise<Cart> {
   const response = await delWithStatus(`/api/cart/items/${itemId}`);
 
-  // Если удаление успешно, получаем актуальные данные корзины
+  // Если удаление успешно и вернулся JSON с корзиной
+  if (response.status === 200 && response.data) {
+    return response.data as Cart;
+  }
+
+  // Если товар не найден или корзина не существует (204)
   if (response.status === 204) {
+    // Для обратной совместимости получаем актуальные данные корзины
     return await get<Cart>('/api/cart');
   }
 

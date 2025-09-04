@@ -10,6 +10,7 @@ use App\Repository\ProductRepository;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\Uid\Ulid;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use App\Entity\ProductOptionValueAssignment;
 
@@ -26,97 +27,45 @@ final class CartManager
 		private EventDispatcherInterface $events,
         private DeliveryContext $deliveryContext,
         private CheckoutContext $checkoutContext,
-        private CartSessionStorage $sessionStorage,
     ) {}
 
     public function getOrCreateCurrent(?int $userId): Cart
     {
-        $request = $this->requestStack->getCurrentRequest();
-        $cart = null;
-        
+        // Этот метод сохранен для обратной совместимости
+        // Рекомендуется использовать CartContext напрямую
+
         if ($userId) {
-            // Для авторизованного пользователя
-            $cart = $this->carts->findActiveByUser($userId);
-            
-            if (!$cart) {
-                // Проверяем, была ли гостевая корзина в сессии
-                $guestToken = $this->sessionStorage->getCartToken();
-                if ($guestToken) {
-                    $guestCart = $this->carts->findActiveByToken($guestToken);
-                    if ($guestCart) {
-                        // Мигрируем гостевую корзину к пользователю
-                        $this->assignToUser($guestCart, $userId);
-                        $cart = $guestCart;
-                        $this->sessionStorage->migrateToUser($userId);
-                    }
-                }
-            }
-            
-            if (!$cart) {
-                $cart = Cart::newGuest();
-                $cart->setUserId($userId);
-                // Для авторизованного пользователя token должен быть null
-                $cart->setToken(null);
-                $this->em->persist($cart);
-            }
+            $cart = $this->carts->findActiveByUserId($userId);
         } else {
-            // Для гостя - используем сессию
-            $token = $this->sessionStorage->getCartToken();
-
-            if ($token) {
-                $cart = $this->carts->findActiveByToken($token);
-
-                // Если корзина не найдена в БД, но есть снимок в сессии
-                if (!$cart && $snapshot = $this->sessionStorage->getCartSnapshot()) {
-                    // Проверяем, что снимок не пустой
-                    $hasValidItems = false;
-                    foreach ($snapshot as $itemData) {
-                        $productId = $itemData['productId'] ?? $itemData['product_id'] ?? null;
-                        if ($productId && ($itemData['qty'] ?? 0) > 0) {
-                            $hasValidItems = true;
-                            break;
-                        }
-                    }
-
-                    // Восстанавливаем корзину только если есть валидные товары
-                    if ($hasValidItems) {
-                        $cart = $this->restoreCartFromSnapshot($snapshot, $token);
+            // Для гостей пробуем найти корзину по cookie cart_id
+            $request = $this->requestStack->getCurrentRequest();
+            if ($request) {
+                $cartIdCookie = $request->cookies->get('cart_id');
+                if ($cartIdCookie) {
+                    try {
+                        $cartId = \Symfony\Component\Uid\Ulid::fromString($cartIdCookie);
+                        $cart = $this->carts->findActiveById($cartId);
+                    } catch (\InvalidArgumentException) {
+                        $cart = null;
                     }
                 }
-            }
-
-            if (!$cart) {
-                $cart = Cart::newGuest();
-                $this->em->persist($cart);
-            }
-
-            // Сохраняем референс в сессию только для гостей
-            if (!$userId && $cart->getToken()) {
-                $this->sessionStorage->saveCartReference(
-                    $cart->getId() ?? 0,
-                    $cart->getToken()
-                );
             }
         }
 
-        		// Синхронизация контекста доставки и пересчет
-		$this->deliveryContext->syncToCart($cart);
-		$this->calculator->recalculate($cart);
-		$cart->setUpdatedAt(new \DateTimeImmutable());
-		$this->em->flush();
+        if (!$cart) {
+            $cart = Cart::createNew($userId, (new \DateTimeImmutable())->modify('+180 days'));
+            $this->em->persist($cart);
+        }
 
-		// После flush сохраняем снимок для гостя
-		if (!$userId) {
-			$this->saveCartSnapshotToSession($cart);
-		}
+        // Синхронизация контекста доставки и пересчет
+        $this->deliveryContext->syncToCart($cart);
+        $this->calculator->recalculate($cart);
+        $cart->setUpdatedAt(new \DateTimeImmutable());
+        $this->em->flush();
 
-		// Сохраняем ссылку на корзину в сессии checkout.cart
-		$this->checkoutContext->setCartRefFromCart($cart);
+        // Сохраняем ссылку на корзину в сессии checkout.cart
+        $this->checkoutContext->setCartRefFromCart($cart);
 
-		if (!$userId && $request) {
-			$request->attributes->set('_set_cart_cookie', $cart->getToken());
-		}
-        
         return $cart;
     }
 
@@ -238,111 +187,61 @@ final class CartManager
 				$cart->setUpdatedAt(new \DateTimeImmutable());
 				$this->em->flush();
 				
-				// После успешного добавления сохраняем снимок для гостя
-				if (!$cart->getUserId()) {
-					$this->saveCartSnapshotToSession($cart);
+			});
+		});
+		$this->events->dispatch(new \App\Event\CartUpdatedEvent($cart->getIdString()));
+		return $cart;
+	}
+
+
+	public function updateQty(Cart $cart, int $itemId, int $qty): ?Cart
+	{
+		if ($qty <= 0) return $this->removeItem($cart, $itemId);
+
+		try {
+			$this->lock->withCartLock($cart, function() use ($cart, $itemId, $qty) {
+				$this->em->wrapInTransaction(function() use ($cart, $itemId, $qty) {
+					$this->em->lock($cart, LockMode::PESSIMISTIC_WRITE);
+					$item = $this->carts->findItemByIdForUpdate($cart, $itemId);
+					if (!$item) throw new \DomainException('Item not found');
+					$this->inventory->assertAvailable($item->getProduct(), $qty);
+					$item->setQty($qty);
+					$this->calculator->recalculate($cart);
+					$cart->setUpdatedAt(new \DateTimeImmutable());
+					$this->em->flush();
+				});
+			});
+			$this->events->dispatch(new \App\Event\CartUpdatedEvent($cart->getIdString()));
+			return $cart;
+		} catch (\DomainException) {
+			return null; // Товар не найден
+		}
+	}
+
+	public function removeItem(Cart $cart, int $itemId): ?Cart
+	{
+		$itemRemoved = false;
+
+		$this->lock->withCartLock($cart, function() use ($cart, $itemId, &$itemRemoved) {
+			$this->em->wrapInTransaction(function() use ($cart, $itemId, &$itemRemoved) {
+				$this->em->lock($cart, LockMode::PESSIMISTIC_WRITE);
+				$item = $this->carts->findItemByIdForUpdate($cart, $itemId);
+				if ($item) {
+					$this->em->remove($item);
+					$itemRemoved = true;
+					$this->calculator->recalculate($cart);
+					$cart->setUpdatedAt(new \DateTimeImmutable());
+					$this->em->flush();
 				}
 			});
 		});
-		$this->events->dispatch(new \App\Event\CartUpdatedEvent($cart->getId()));
-		return $cart;
-	}
 
-	/**
-	 * Сохранение снимка корзины в сессию для гостя
-	 */
-	private function saveCartSnapshotToSession(Cart $cart): void
-	{
-		$items = [];
-		foreach ($cart->getItems() as $item) {
-			$items[] = [
-				'productId' => $item->getProduct()->getId(),
-				'name' => $item->getProductName(),
-				'qty' => $item->getQty(),
-				'price' => $item->getUnitPrice(),
-				'options' => $item->getSelectedOptionsData() ?? [],
-				'optionsHash' => $item->getOptionsHash(),
-			];
+		if ($itemRemoved) {
+			$this->events->dispatch(new \App\Event\CartUpdatedEvent($cart->getIdString()));
+			return $cart;
 		}
 
-		$this->sessionStorage->saveCartSnapshot($items);
-	}
-	
-	/**
-	 * Восстановление корзины из снимка сессии
-	 */
-	private function restoreCartFromSnapshot(array $snapshot, string $oldToken): Cart
-	{
-		$cart = Cart::newGuest(); // Генерирует новый уникальный token
-
-		foreach ($snapshot as $itemData) {
-			// Проверяем наличие ключа productId, если нет - пропускаем элемент
-			$productId = $itemData['productId'] ?? $itemData['product_id'] ?? null;
-			if (!$productId) continue;
-
-			$product = $this->products->find($productId);
-			if (!$product) continue;
-
-			$item = new CartItem();
-			$item->setCart($cart);
-			$item->setProduct($product);
-			$item->setProductName($itemData['name'] ?? '');
-			$item->setUnitPrice($itemData['price'] ?? 0);
-			$item->setQty($itemData['qty'] ?? 1);
-
-			if (!empty($itemData['options'] ?? $itemData['options'] ?? [])) {
-				$item->setSelectedOptionsData($itemData['options'] ?? $itemData['options'] ?? []);
-				$item->setOptionsHash($itemData['optionsHash'] ?? $itemData['options_hash'] ?? null);
-			}
-
-			$cart->addItem($item);
-		}
-
-		$this->em->persist($cart);
-		$this->em->flush();
-
-		return $cart;
-	}
-
-	public function updateQty(Cart $cart, int $itemId, int $qty): Cart
-	{
-		if ($qty <= 0) return $this->removeItem($cart, $itemId);
-		$this->lock->withCartLock($cart, function() use ($cart, $itemId, $qty) {
-			$this->em->wrapInTransaction(function() use ($cart, $itemId, $qty) {
-				$this->em->lock($cart, LockMode::PESSIMISTIC_WRITE);
-				$item = $this->carts->findItemByIdForUpdate($cart, $itemId);
-				if (!$item) throw new \DomainException('Item not found');
-				$this->inventory->assertAvailable($item->getProduct(), $qty);
-				$item->setQty($qty);
-				$this->calculator->recalculate($cart);
-				$cart->setUpdatedAt(new \DateTimeImmutable());
-				$this->em->flush();
-			});
-		});
-		$this->events->dispatch(new \App\Event\CartUpdatedEvent($cart->getId()));
-		return $cart;
-	}
-
-	public function removeItem(Cart $cart, int $itemId): Cart
-	{
-		$this->lock->withCartLock($cart, function() use ($cart, $itemId) {
-			$this->em->wrapInTransaction(function() use ($cart, $itemId) {
-				$this->em->lock($cart, LockMode::PESSIMISTIC_WRITE);
-				$item = $this->carts->findItemByIdForUpdate($cart, $itemId);
-				if ($item) $this->em->remove($item);
-				$this->calculator->recalculate($cart);
-				$cart->setUpdatedAt(new \DateTimeImmutable());
-				$this->em->flush();
-			});
-		});
-
-		// После удаления сохраняем обновленный снимок для гостя
-		if (!$cart->getUserId()) {
-			$this->saveCartSnapshotToSession($cart);
-		}
-
-		$this->events->dispatch(new \App\Event\CartUpdatedEvent($cart->getId()));
-		return $cart;
+		return null; // Товар не найден или не был удален
 	}
 
 	public function assignToUser(Cart $cart, int $userId): void
@@ -369,12 +268,8 @@ final class CartManager
 			});
 		});
 
-		// Очищаем сессию для гостя
-		if (!$cart->getUserId()) {
-			$this->sessionStorage->clearCart();
-		}
 
-		$this->events->dispatch(new \App\Event\CartUpdatedEvent($cart->getId()));
+		$this->events->dispatch(new \App\Event\CartUpdatedEvent($cart->getIdString()));
 		return $cart;
 	}
 

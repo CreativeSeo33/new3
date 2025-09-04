@@ -5,7 +5,7 @@ namespace App\Event;
 
 final class CartUpdatedEvent
 {
-	public function __construct(public readonly int $cartId) {}
+	public function __construct(public readonly string $cartId) {}
 }
 
 
