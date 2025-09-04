@@ -76,3 +76,7 @@ services:
     # Footer categories service
     App\Service\FooterCategoryService:
         public: true
+
+    # Navbar categories service
+    App\Service\NavbarCategoryService:
+        public: true

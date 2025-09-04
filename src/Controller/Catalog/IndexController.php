@@ -10,6 +10,7 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/catalog', name: 'catalog_')]
 final class IndexController extends AbstractController
 {
+
     #[Route('', name: 'index', methods: ['GET'])]
     public function index(): Response
     {

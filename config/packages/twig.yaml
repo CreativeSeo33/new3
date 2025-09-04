@@ -2,6 +2,7 @@ twig:
     file_name_pattern: '*.twig'
     globals:
         footer_categories: '@App\Service\FooterCategoryService'
+        navbar_categories: '@App\Service\NavbarCategoryService'
 
 when@test:
     twig:

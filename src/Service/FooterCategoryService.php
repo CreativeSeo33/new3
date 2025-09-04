@@ -20,3 +20,18 @@ final class FooterCategoryService
         return $this->categoryRepository->findByFooterVisibility(true);
     }
 }
+
+final class NavbarCategoryService
+{
+    public function __construct(
+        private readonly CategoryRepository $categoryRepository,
+    ) {}
+
+    /**
+     * @return Category[]
+     */
+    public function getNavbarCategories(): array
+    {
+        return $this->categoryRepository->findByNavbarVisibility(true);
+    }
+}

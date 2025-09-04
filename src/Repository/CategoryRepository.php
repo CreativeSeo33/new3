@@ -66,6 +66,23 @@ final class CategoryRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    /**
+     * @return Category[] Categories visible in navbar, ordered by sortOrder
+     */
+    public function findByNavbarVisibility(bool $navbarVisibility = true): array
+    {
+        return $this->createQueryBuilder('c')
+            ->andWhere('c.navbarVisibility = :navbarVisible')
+            ->andWhere('c.visibility = :visible')
+            ->andWhere('c.name IS NOT NULL')
+            ->setParameter('navbarVisible', $navbarVisibility)
+            ->setParameter('visible', true)
+            ->orderBy('c.sortOrder', 'ASC')
+            ->addOrderBy('c.name', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }
 
 
