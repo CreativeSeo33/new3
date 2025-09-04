@@ -14,6 +14,17 @@ use Symfony\Component\Uid\Ulid;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use App\Entity\ProductOptionValueAssignment;
 
+/**
+ * CartManager - сервис для управления корзиной покупок
+ *
+ * РЕФАКТОРИНГ: Класс был разбит на более мелкие методы для улучшения читаемости и поддержки.
+ * Основные изменения:
+ * - addItem() разбит на validateAddItemInput(), doAddItem(), createNewCartItem() и т.д.
+ * - Добавлена общая логика executeWithLock() для всех операций
+ * - Улучшена обработка опций товара
+ * - Добавлена валидация входных параметров
+ */
+
 final class CartManager
 {
     public function __construct(
@@ -81,167 +92,204 @@ final class CartManager
 
 	public function addItem(Cart $cart, int $productId, int $qty, array $optionAssignmentIds = []): Cart
 	{
+		$this->validateAddItemInput($productId, $qty);
 
-		$this->lock->withCartLock($cart, function() use ($cart, $productId, $qty, $optionAssignmentIds) {
-			$this->em->wrapInTransaction(function() use ($cart, $productId, $qty, $optionAssignmentIds) {
+		return $this->executeWithLock($cart, function() use ($cart, $productId, $qty, $optionAssignmentIds) {
+			return $this->doAddItem($cart, $productId, $qty, $optionAssignmentIds);
+		});
+	}
+
+	private function validateAddItemInput(int $productId, int $qty): void
+	{
+		if ($productId <= 0) {
+			throw new \InvalidArgumentException('Product ID must be positive');
+		}
+		if ($qty <= 0) {
+			throw new \InvalidArgumentException('Quantity must be positive');
+		}
+	}
+
+	private function executeWithLock(Cart $cart, callable $operation): Cart
+	{
+		$this->lock->withCartLock($cart, function() use ($cart, $operation) {
+			$this->em->wrapInTransaction(function() use ($cart, $operation) {
 				$this->em->lock($cart, LockMode::PESSIMISTIC_WRITE);
-				$product = $this->products->find($productId);
-				if (!$product) { throw new \DomainException('Product not found'); }
-				$this->inventory->assertAvailable($product, $qty);
-
-								// Генерируем хеш опций для уникальности
-				$optionsHash = empty($optionAssignmentIds) ? null : $this->generateOptionsHash($optionAssignmentIds);
-
-								// Ищем существующий товар с учетом опций
-				// Сначала ищем точное совпадение (товар + опции)
-				$item = null;
-
-				if ($optionsHash) {
-					// Ищем товар с точно такими же опциями
-					$item = $this->carts->findItemForUpdateWithOptions($cart, $product, $optionsHash);
-				} else {
-					// Ищем товар без опций
-					$item = $this->carts->findItemForUpdate($cart, $product);
-				}
-				
-				if ($item) {
-					$newQty = $item->getQty() + $qty;
-					$this->inventory->assertAvailable($product, $newQty);
-					$item->setQty($newQty);
-				} else {
-					$item = new CartItem();
-					$item->setCart($cart);
-					$item->setProduct($product);
-					$item->setProductName($product->getName() ?? '');
-					
-					// Базовая цена товара
-					$basePrice = $product->getEffectivePrice() ?? ($product->getPrice() ?? 0);
-					$item->setUnitPrice($basePrice);
-					
-					// Обрабатываем опции, если они есть
-					if (!empty($optionAssignmentIds)) {
-						$optionsPriceModifier = 0;
-						$selectedOptionsData = [];
-						$optionsSnapshot = [];
-						
-						foreach ($optionAssignmentIds as $assignmentId) {
-							$assignment = $this->em->getRepository(ProductOptionValueAssignment::class)->find($assignmentId);
-							if (!$assignment || $assignment->getProduct()->getId() !== $productId) {
-								throw new \DomainException('Invalid option assignment');
-							}
-							
-							// Добавляем связь с опцией
-							$item->addOptionAssignment($assignment);
-							
-							// Рассчитываем модификатор цены
-							$optionPrice = $assignment->getSalePrice() ?? $assignment->getPrice() ?? 0;
-							$optionsPriceModifier += $optionPrice;
-							
-							// Сохраняем данные опций для истории
-							$optionData = [
-								'assignmentId' => $assignment->getId(),
-								'optionCode' => $assignment->getOption()->getCode(),
-								'optionName' => $assignment->getOption()->getName(),
-								'valueCode' => $assignment->getValue()->getCode(),
-								'valueName' => $assignment->getValue()->getValue(),
-								'price' => $optionPrice,
-								'sku' => $assignment->getSku(),
-							];
-							
-							$selectedOptionsData[] = $optionData;
-							
-							// Создаем полный снимок опции для истории
-							$optionsSnapshot[] = [
-								'assignment_id' => $assignment->getId(),
-								'option_code' => $assignment->getOption()->getCode(),
-								'option_name' => $assignment->getOption()->getName(),
-								'value_code' => $assignment->getValue()->getCode(),
-								'value_name' => $assignment->getValue()->getValue(),
-								'price' => $assignment->getPrice(),
-								'sale_price' => $assignment->getSalePrice(),
-								'sku' => $assignment->getSku(),
-								'original_sku' => $assignment->getOriginalSku(),
-								'height' => $assignment->getHeight(),
-								'bulbs_count' => $assignment->getBulbsCount(),
-								'lighting_area' => $assignment->getLightingArea(),
-								'attributes' => $assignment->getAttributes(),
-							];
-						}
-						
-						$item->setOptionsPriceModifier($optionsPriceModifier);
-						$item->setSelectedOptionsData($selectedOptionsData);
-						$item->setOptionsSnapshot($optionsSnapshot);
-						$item->setOptionsHash($optionsHash);
-						$item->setEffectiveUnitPrice($basePrice + $optionsPriceModifier);
-					} else {
-						$item->setEffectiveUnitPrice($basePrice);
-						$item->setOptionsHash(null); // Явно устанавливаем null для товаров без опций
-					}
-					
-					$item->setQty($qty);
-					$cart->addItem($item);
-					$this->em->persist($item);
-				}
-
-				$this->calculator->recalculate($cart);
-				$cart->setUpdatedAt(new \DateTimeImmutable());
-				$this->em->flush();
-				
+				$operation();
+				$this->finishCartOperation($cart);
 			});
 		});
+
 		$this->events->dispatch(new \App\Event\CartUpdatedEvent($cart->getIdString()));
 		return $cart;
+	}
+
+	private function doAddItem(Cart $cart, int $productId, int $qty, array $optionAssignmentIds): void
+	{
+		$product = $this->products->find($productId);
+		if (!$product) {
+			throw new \DomainException('Product not found');
+		}
+
+		$this->inventory->assertAvailable($product, $qty);
+		$optionsHash = $this->generateOptionsHash($optionAssignmentIds);
+		$existingItem = $this->findExistingCartItem($cart, $product, $optionsHash);
+
+		if ($existingItem) {
+			$this->updateExistingItem($existingItem, $product, $qty);
+		} else {
+			$this->createNewCartItem($cart, $product, $qty, $optionAssignmentIds, $optionsHash);
+		}
+	}
+
+	private function findExistingCartItem(Cart $cart, $product, ?string $optionsHash): ?CartItem
+	{
+		return $optionsHash
+			? $this->carts->findItemForUpdateWithOptions($cart, $product, $optionsHash)
+			: $this->carts->findItemForUpdate($cart, $product);
+	}
+
+	private function updateExistingItem(CartItem $item, $product, int $additionalQty): void
+	{
+		$newQty = $item->getQty() + $additionalQty;
+		$this->inventory->assertAvailable($product, $newQty);
+		$item->setQty($newQty);
+	}
+
+	private function createNewCartItem(Cart $cart, $product, int $qty, array $optionAssignmentIds, ?string $optionsHash): void
+	{
+		$item = new CartItem();
+		$item->setCart($cart);
+		$item->setProduct($product);
+		$item->setProductName($product->getName() ?? '');
+		$item->setQty($qty);
+
+		$basePrice = $product->getEffectivePrice() ?? ($product->getPrice() ?? 0);
+		$item->setUnitPrice((int) round($basePrice * 100));
+
+		if (!empty($optionAssignmentIds)) {
+			$this->applyProductOptions($item, $product, $optionAssignmentIds, $basePrice, $optionsHash);
+		} else {
+			$item->setEffectiveUnitPrice((int) round($basePrice * 100));
+			$item->setOptionsHash(null);
+		}
+
+		$cart->addItem($item);
+		$this->em->persist($item);
+	}
+
+	private function applyProductOptions(CartItem $item, $product, array $optionAssignmentIds, float $basePrice, ?string $optionsHash): void
+	{
+		$optionsPriceModifier = 0;
+		$selectedOptionsData = [];
+		$optionsSnapshot = [];
+
+		foreach ($optionAssignmentIds as $assignmentId) {
+			$assignment = $this->em->getRepository(ProductOptionValueAssignment::class)->find($assignmentId);
+			if (!$assignment || $assignment->getProduct()->getId() !== $product->getId()) {
+				throw new \DomainException('Invalid option assignment');
+			}
+
+			$item->addOptionAssignment($assignment);
+
+			$optionPrice = $assignment->getSalePrice() ?? $assignment->getPrice() ?? 0;
+			$optionsPriceModifier += $optionPrice;
+
+			$selectedOptionsData[] = $this->createOptionData($assignment, $optionPrice);
+			$optionsSnapshot[] = $this->createOptionSnapshot($assignment);
+		}
+
+		$item->setOptionsPriceModifier($optionsPriceModifier);
+		$item->setSelectedOptionsData($selectedOptionsData);
+		$item->setOptionsSnapshot($optionsSnapshot);
+		$item->setOptionsHash($optionsHash);
+		$item->setEffectiveUnitPrice((int) round(($basePrice + $optionsPriceModifier) * 100));
+	}
+
+	private function createOptionData($assignment, float $optionPrice): array
+	{
+		return [
+			'assignmentId' => $assignment->getId(),
+			'optionCode' => $assignment->getOption()->getCode(),
+			'optionName' => $assignment->getOption()->getName(),
+			'valueCode' => $assignment->getValue()->getCode(),
+			'valueName' => $assignment->getValue()->getValue(),
+			'price' => $optionPrice,
+			'sku' => $assignment->getSku(),
+		];
+	}
+
+	private function createOptionSnapshot($assignment): array
+	{
+		return [
+			'assignment_id' => $assignment->getId(),
+			'option_code' => $assignment->getOption()->getCode(),
+			'option_name' => $assignment->getOption()->getName(),
+			'value_code' => $assignment->getValue()->getCode(),
+			'value_name' => $assignment->getValue()->getValue(),
+			'price' => $assignment->getPrice(),
+			'sale_price' => $assignment->getSalePrice(),
+			'sku' => $assignment->getSku(),
+			'original_sku' => $assignment->getOriginalSku(),
+			'height' => $assignment->getHeight(),
+			'bulbs_count' => $assignment->getBulbsCount(),
+			'lighting_area' => $assignment->getLightingArea(),
+			'attributes' => $assignment->getAttributes(),
+		];
+	}
+
+	private function finishCartOperation(Cart $cart): void
+	{
+		$this->calculator->recalculate($cart);
+		$cart->setUpdatedAt(new \DateTimeImmutable());
+		$this->em->flush();
 	}
 
 
 	public function updateQty(Cart $cart, int $itemId, int $qty): ?Cart
 	{
-		if ($qty <= 0) return $this->removeItem($cart, $itemId);
+		if ($qty <= 0) {
+			return $this->removeItem($cart, $itemId);
+		}
 
 		try {
-			$this->lock->withCartLock($cart, function() use ($cart, $itemId, $qty) {
-				$this->em->wrapInTransaction(function() use ($cart, $itemId, $qty) {
-					$this->em->lock($cart, LockMode::PESSIMISTIC_WRITE);
-					$item = $this->carts->findItemByIdForUpdate($cart, $itemId);
-					if (!$item) throw new \DomainException('Item not found');
-					$this->inventory->assertAvailable($item->getProduct(), $qty);
-					$item->setQty($qty);
-					$this->calculator->recalculate($cart);
-					$cart->setUpdatedAt(new \DateTimeImmutable());
-					$this->em->flush();
-				});
+			return $this->executeWithLock($cart, function() use ($cart, $itemId, $qty) {
+				$this->doUpdateQty($cart, $itemId, $qty);
 			});
-			$this->events->dispatch(new \App\Event\CartUpdatedEvent($cart->getIdString()));
-			return $cart;
 		} catch (\DomainException) {
 			return null; // Товар не найден
 		}
+	}
+
+	private function doUpdateQty(Cart $cart, int $itemId, int $qty): void
+	{
+		$item = $this->carts->findItemByIdForUpdate($cart, $itemId);
+		if (!$item) {
+			throw new \DomainException('Item not found');
+		}
+
+		$this->inventory->assertAvailable($item->getProduct(), $qty);
+		$item->setQty($qty);
 	}
 
 	public function removeItem(Cart $cart, int $itemId): ?Cart
 	{
 		$itemRemoved = false;
 
-		$this->lock->withCartLock($cart, function() use ($cart, $itemId, &$itemRemoved) {
-			$this->em->wrapInTransaction(function() use ($cart, $itemId, &$itemRemoved) {
-				$this->em->lock($cart, LockMode::PESSIMISTIC_WRITE);
-				$item = $this->carts->findItemByIdForUpdate($cart, $itemId);
-				if ($item) {
-					$this->em->remove($item);
-					$itemRemoved = true;
-					$this->calculator->recalculate($cart);
-					$cart->setUpdatedAt(new \DateTimeImmutable());
-					$this->em->flush();
-				}
-			});
+		$this->executeWithLock($cart, function() use ($cart, $itemId, &$itemRemoved) {
+			$itemRemoved = $this->doRemoveItem($cart, $itemId);
 		});
 
-		if ($itemRemoved) {
-			$this->events->dispatch(new \App\Event\CartUpdatedEvent($cart->getIdString()));
-			return $cart;
-		}
+		return $itemRemoved ? $cart : null;
+	}
 
-		return null; // Товар не найден или не был удален
+	private function doRemoveItem(Cart $cart, int $itemId): bool
+	{
+		$item = $this->carts->findItemByIdForUpdate($cart, $itemId);
+		if ($item) {
+			$this->em->remove($item);
+			return true;
+		}
+		return false;
 	}
 
 	public function assignToUser(Cart $cart, int $userId): void
@@ -253,23 +301,16 @@ final class CartManager
 
 	public function clearCart(Cart $cart): Cart
 	{
-		$this->lock->withCartLock($cart, function() use ($cart) {
-			$this->em->wrapInTransaction(function() use ($cart) {
-				$this->em->lock($cart, LockMode::PESSIMISTIC_WRITE);
-
-				// Удаляем все товары из корзины
-				foreach ($cart->getItems() as $item) {
-					$this->em->remove($item);
-				}
-
-				$this->calculator->recalculate($cart);
-				$cart->setUpdatedAt(new \DateTimeImmutable());
-				$this->em->flush();
-			});
+		return $this->executeWithLock($cart, function() use ($cart) {
+			$this->doClearCart($cart);
 		});
+	}
 
-		$this->events->dispatch(new \App\Event\CartUpdatedEvent($cart->getIdString()));
-		return $cart;
+	private function doClearCart(Cart $cart): void
+	{
+		foreach ($cart->getItems() as $item) {
+			$this->em->remove($item);
+		}
 	}
 
 	public function merge(Cart $target, Cart $source): Cart
