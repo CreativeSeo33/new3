@@ -34,10 +34,13 @@
 
     <div class="grid gap-1.5">
       <label class="text-sm font-medium text-foreground/80">Статус</label>
-      <select v-model="form.status" class="h-9 rounded-md border bg-background px-3 text-sm">
+      <select v-model="form.status" class="h-9 rounded-md border bg-background px-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed" :disabled="isStatusDisabled">
         <option :value="true">Активен</option>
         <option :value="false">Выключен</option>
       </select>
+      <p v-if="isStatusDisabled" class="text-xs text-red-600 dark:text-red-400">
+        Нельзя активировать товар без вариаций
+      </p>
     </div>
 
     <Input
@@ -74,12 +77,16 @@ interface Props {
   errors: ProductFormErrors
   validateField: (field: keyof ProductFormModel) => boolean
   productType?: string
+  isVariableWithoutVariations?: boolean
 }
 
 const props = defineProps<Props>()
 
 // Определяем, должны ли поля быть disabled для вариативных товаров
 const isPriceFieldsDisabled = computed(() => props.productType === 'variable')
+
+// Определяем, заблокировано ли поле статуса
+const isStatusDisabled = computed(() => props.isVariableWithoutVariations || false)
 
 // Динамические лейблы для полей цены
 const priceLabel = computed(() => props.productType === 'simple' ? 'Цена *' : 'Цена')

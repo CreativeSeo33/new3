@@ -5,7 +5,7 @@
         {{ isCreating ? 'Новый товар' : `Товар #${id}` }}
       </h1>
       <div class="flex gap-2">
-        <Button variant="secondary" :disabled="saving" @click="handleSave">Сохранить</Button>
+        <Button variant="secondary" :disabled="!canSave" @click="handleSave">Сохранить</Button>
       </div>
     </div>
 
@@ -22,6 +22,24 @@
           <option value="simple">Простой товар</option>
           <option value="variable">Вариативный товар</option>
         </select>
+      </div>
+    </div>
+
+    <!-- Предупреждение для вариативного товара без вариаций -->
+    <div v-if="isVariableWithoutVariations" class="p-6 rounded-lg border-2 border-red-500 bg-red-50 dark:bg-red-900/20 dark:border-red-400">
+      <div class="flex items-start gap-3">
+        <div class="text-2xl">⚠️</div>
+        <div class="flex-1">
+          <h3 class="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">
+            Вариативный товар без вариаций
+          </h3>
+          <p class="text-red-700 dark:text-red-300 mb-3">
+            У этого вариативного товара нет ни одной вариации. Он не будет отображаться для покупки на сайте.
+          </p>
+          <p class="text-sm text-red-600 dark:text-red-400">
+            Перейдите на вкладку "Опции" и добавьте хотя бы одну вариацию товара.
+          </p>
+        </div>
       </div>
     </div>
 
@@ -43,7 +61,7 @@
       </TabsList>
 
       <TabsContent value="description" class="pt-6">
-        <ProductDescriptionForm :form="form" :errors="errors" :validate-field="validateField" :product-type="form.type" />
+        <ProductDescriptionForm :form="form" :errors="errors" :validate-field="validateField" :product-type="form.type" :is-variable-without-variations="isVariableWithoutVariations" />
       </TabsContent>
 
       <TabsContent value="categories" class="pt-6">
@@ -149,6 +167,16 @@ const activeTab = ref<string>('description')
 const tabParamKey = 'tab'
 const validTabs = computed(() => new Set(tabs.value.map(t => t.value)))
 
+// Проверка, является ли товар вариативным без вариаций
+const isVariableWithoutVariations = computed(() => {
+  return form?.type === 'variable' && (!form?.optionAssignments || form?.optionAssignments.length === 0)
+})
+
+// Проверка, можно ли сохранить товар
+const canSave = computed(() => {
+  return !isVariableWithoutVariations.value && !saving.value
+})
+
 const {
   form,
   errors,
@@ -208,6 +236,7 @@ const hydrateForm = (dto: ProductDto) => {
     h1: dto.h1 ?? '',
     sortOrder: (dto as any).sortOrder ?? 0,
     type: (dto as any).type || 'simple',
+    optionAssignments: (dto as any).optionAssignments || [],
   })
   // map optionAssignments if present
   ;(form as any).optionAssignments = Array.isArray((dto as any).optionAssignments)
@@ -278,6 +307,14 @@ watch(() => form?.type, (newType, oldType) => {
     activeTab.value = 'description' // Переключаемся на первую доступную вкладку
   }
 })
+
+// watch для управления статусом вариативных товаров без вариаций
+watch([() => form?.type, () => form?.optionAssignments], ([newType, newOptionAssignments]) => {
+  // Если товар вариативный без вариаций, автоматически устанавливаем статус в false
+  if (newType === 'variable' && (!newOptionAssignments || newOptionAssignments.length === 0)) {
+    form.status = false
+  }
+}, { deep: true })
 
 // Categories tree and selection
 const selectedCategoryIds = ref<Set<number>>(new Set())
@@ -460,6 +497,13 @@ async function saveProductCategories(productNumericId: number | string) {
 }
 
 const handleSave = async () => {
+  // Проверяем, что вариативный товар имеет вариации
+  if (isVariableWithoutVariations.value) {
+    publishToast('Невозможно сохранить: вариативный товар должен иметь хотя бы одну вариацию')
+    activeTab.value = 'options'
+    return
+  }
+
   if (!validateForm()) {
     activeTab.value = 'description'
     return

@@ -54,6 +54,8 @@ use App\Entity\ProductAttributeAssignment;
     expression: 'this.getType() === "variable" or this.getPrice() === null or this.getPrice() > 0',
     message: 'Price must be greater than 0 for simple products'
 )]
+#[Assert\Callback(callback: 'validateVariableProduct')]
+#[Assert\Callback(callback: 'validateOptionAssignments', groups: ['product:create', 'product:update'])]
 #[ApiResource(
     operations: [
         new Get(normalizationContext: ['groups' => ['product:read']]),
@@ -723,6 +725,35 @@ class Product
     public function isVariable(): bool
     {
         return $this->type === self::TYPE_VARIABLE;
+    }
+
+    /**
+     * @param \Symfony\Component\Validator\Context\ExecutionContextInterface $context
+     */
+    public function validateVariableProduct(\Symfony\Component\Validator\Context\ExecutionContextInterface $context): void
+    {
+        // Дополнительная валидация для вариативных товаров может быть добавлена здесь
+        // Пока оставляем пустым, основная логика будет в validateOptionAssignments
+    }
+
+    /**
+     * @param \Symfony\Component\Validator\Context\ExecutionContextInterface $context
+     */
+    public function validateOptionAssignments(\Symfony\Component\Validator\Context\ExecutionContextInterface $context): void
+    {
+        // Проверяем, что вариативный товар имеет хотя бы одну вариацию
+        if ($this->isVariable() && $this->optionAssignments->isEmpty()) {
+            $context->buildViolation('Вариативный товар должен иметь хотя бы одну вариацию')
+                ->atPath('type')
+                ->addViolation();
+        }
+
+        // Для простого товара вариации не должны существовать
+        if (!$this->isVariable() && !$this->optionAssignments->isEmpty()) {
+            $context->buildViolation('Простой товар не должен иметь вариаций')
+                ->atPath('type')
+                ->addViolation();
+        }
     }
 
 }

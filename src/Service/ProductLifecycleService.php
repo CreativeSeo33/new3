@@ -72,6 +72,11 @@ class ProductLifecycleService
 
     protected function handleVariableProduct(Product $product): void
     {
+        // Проверяем, что вариативный товар имеет хотя бы одну вариацию
+        if ($product->getOptionAssignments()->isEmpty()) {
+            throw new \InvalidArgumentException('Вариативный товар должен иметь хотя бы одну вариацию');
+        }
+
         // Обнуляем основные цены для вариативного товара
         $product->setPrice(null);
         $product->setSalePrice(null);
@@ -92,6 +97,11 @@ class ProductLifecycleService
 
     protected function handleSimpleProduct(Product $product): void
     {
+        // Проверяем, что простой товар не имеет вариаций
+        if (!$product->getOptionAssignments()->isEmpty()) {
+            throw new \InvalidArgumentException('Простой товар не должен иметь вариаций');
+        }
+
         // Для простого товара effectivePrice равна основной цене
         $effectivePrice = $product->getSalePrice() ?? $product->getPrice();
         $product->setEffectivePrice($effectivePrice);
