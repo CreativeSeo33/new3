@@ -143,6 +143,19 @@
             <td class="px-4 py-2">{{ formatDate(p.createdAt) }}</td>
             <td class="px-4 py-2">
               <div class="flex items-center gap-2">
+                <RouterLink
+                  :to="{ name: 'admin-product-form', params: { id: p.id } }"
+                  class="inline-flex items-center rounded-md border border-blue-200 bg-blue-50 px-3 py-1 text-sm text-blue-700 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-900/40"
+                >
+                  Изменить
+                </RouterLink>
+                <button
+                  type="button"
+                  class="inline-flex items-center rounded-md border border-green-200 bg-green-50 px-3 py-1 text-sm text-green-700 hover:bg-green-100 dark:border-green-800 dark:bg-green-900/20 dark:text-green-300 dark:hover:bg-green-900/40"
+                  @click="confirmCopy(p)"
+                >
+                  Копировать
+                </button>
                 <button
                   type="button"
                   class="inline-flex items-center rounded-md border border-red-200 bg-red-50 px-3 py-1 text-sm text-red-700 hover:bg-red-100 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300 dark:hover:bg-red-900/40"
@@ -190,6 +203,15 @@
 
     <!-- Delete confirmation -->
     <ConfirmDialog v-model="deleteDialogOpen" title="Удалить товар?" description="Это действие необратимо. Товар будет удалён навсегда." confirm-text="Удалить" :danger="true" @confirm="performDelete" />
+
+    <!-- Copy confirmation -->
+    <ConfirmDialog
+      v-model="copyDialogOpen"
+      title="Копировать товар?"
+      :description="`Создать копию товара &quot;${pendingCopyProduct?.name ?? 'Неизвестный товар'}&quot; с префиксом &quot;Копия &quot;`"
+      confirm-text="Копировать"
+      @confirm="performCopy"
+    />
 
     <!-- Bulk delete confirmation -->
     <ConfirmDialog
@@ -414,6 +436,11 @@ import { AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDe
 const deleteDialogOpen = vueRef(false)
 const pendingDeleteId = vueRef<number | null>(null)
 
+// Copy with confirmation + toast
+const copyDialogOpen = vueRef(false)
+const pendingCopyId = vueRef<number | null>(null)
+const pendingCopyProduct = vueRef<ProductDto | null>(null)
+
 // Bulk delete state
 const bulkDeleteDialogOpen = vueRef(false)
 
@@ -458,6 +485,46 @@ async function performDelete() {
   }
 }
 
+async function confirmCopy(p: ProductDto) {
+  if (!p.id) return
+  pendingCopyId.value = Number(p.id)
+  pendingCopyProduct.value = p
+  copyDialogOpen.value = true
+}
+
+async function performCopy() {
+  if (pendingCopyId.value == null) return
+
+  try {
+    const response = await httpClient.post(`/admin/products/${pendingCopyId.value}/copy`, {
+      copyCategories: true,
+      copyImages: true,
+      copyAttributes: true,
+      copySeo: true,
+      namePrefix: 'Копия ',
+      setInactive: true
+    })
+
+    if (response.data.success) {
+      publishToast(`✅ Товар успешно скопирован: "${response.data.data.name}"`)
+      // Обновляем список товаров
+      await crud.fetchAll({ page: crudState.pagination.page, itemsPerPage: crudState.pagination.itemsPerPage })
+    } else {
+      publishToast(`❌ Ошибка копирования: ${response.data.message}`)
+    }
+
+    pendingCopyId.value = null
+    pendingCopyProduct.value = null
+  } catch (error: any) {
+    const errorMessage = error.response?.data?.message ||
+                        error.response?.data?.['hydra:description'] ||
+                        error.message ||
+                        'Неизвестная ошибка'
+    publishToast(`❌ Ошибка при копировании товара: ${errorMessage}`)
+  } finally {
+    copyDialogOpen.value = false
+  }
+}
 
 
 // Bulk delete functions

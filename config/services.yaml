@@ -85,3 +85,8 @@ services:
     App\State\ProductStateProcessor:
         arguments:
             $cartItemRepository: '@App\Repository\CartItemRepository'
+
+    # Product copy service
+    App\Service\ProductCopyService:
+        arguments:
+            $lifecycleService: '@App\Service\ProductLifecycleService'
