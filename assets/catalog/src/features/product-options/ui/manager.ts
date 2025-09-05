@@ -76,7 +76,8 @@ export class ProductOptionsManager extends Component {
         id: parseInt(input.value, 10),
         name: input.dataset.optionName || '',
         value: input.dataset.optionValue || '',
-        price: parseInt(input.dataset.optionPrice || '0', 10)
+        price: parseInt(input.dataset.optionPrice || '0', 10),
+        setPrice: input.dataset.setPrice === 'true'
       };
       this.selectedOptions.set(input.name, optionData);
     });

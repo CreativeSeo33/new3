@@ -51,18 +51,29 @@ export class ProductOptionPriceUpdater extends Component {
       return;
     }
 
-    // Находим опцию с ценой (обычно последняя выбранная)
-    const optionWithPrice = selectedOptions.find((option: any) => option.price > 0);
+    // Находим опцию с setPrice = true, если такая есть
+    const setPriceOption = selectedOptions.find((option: any) => option.setPrice === true);
 
-    if (optionWithPrice && optionWithPrice.price > 0) {
-      // Показываем цену выбранной опции
-      const optionPrice = optionWithPrice.price;
-      const optionOldPrice = optionWithPrice.price; // Для простоты, старая цена = новой
+    if (setPriceOption && setPriceOption.price > 0) {
+      // Показываем цену опции с setPrice = true
+      const optionPrice = setPriceOption.price;
+      const optionOldPrice = setPriceOption.salePrice || setPriceOption.price;
 
       this.updatePriceDisplay(optionPrice, optionOldPrice);
     } else {
-      // Если у выбранной опции нет цены, показываем базовую
-      this.updatePriceDisplay(this.basePrice, this.baseOldPrice);
+      // Ищем любую опцию с ценой (fallback)
+      const optionWithPrice = selectedOptions.find((option: any) => option.price > 0);
+
+      if (optionWithPrice && optionWithPrice.price > 0) {
+        // Показываем цену выбранной опции
+        const optionPrice = optionWithPrice.price;
+        const optionOldPrice = optionWithPrice.salePrice || optionWithPrice.price;
+
+        this.updatePriceDisplay(optionPrice, optionOldPrice);
+      } else {
+        // Если у выбранной опции нет цены, показываем базовую
+        this.updatePriceDisplay(this.basePrice, this.baseOldPrice);
+      }
     }
   }
 

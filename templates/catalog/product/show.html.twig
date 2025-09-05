@@ -130,10 +130,25 @@
               {% set currentPrice = product.getPrice() %}
               {% set salePrice = product.getSalePrice() %}
             {% elseif product.getType() == 'variable' %}
-              {% set firstOption = product.getOptionAssignments().first() %}
-              {% if firstOption and firstOption.getPrice() is not null %}
-                {% set currentPrice = firstOption.getPrice() %}
-                {% set salePrice = firstOption.getSalePrice() %}
+              {# Ищем опцию с setPrice = true #}
+              {% set setPriceOption = null %}
+              {% for option in product.getOptionAssignments() %}
+                {% if option.getSetPrice() %}
+                  {% set setPriceOption = option %}
+                {% endif %}
+              {% endfor %}
+
+              {% if setPriceOption and setPriceOption.getPrice() is not null %}
+                {# Используем цену опции с setPrice = true #}
+                {% set currentPrice = setPriceOption.getPrice() %}
+                {% set salePrice = setPriceOption.getSalePrice() %}
+              {% else %}
+                {# Fallback: первая опция по sortOrder #}
+                {% set firstOption = product.getOptionAssignments().first() %}
+                {% if firstOption and firstOption.getPrice() is not null %}
+                  {% set currentPrice = firstOption.getPrice() %}
+                  {% set salePrice = firstOption.getSalePrice() %}
+                {% endif %}
               {% endif %}
             {% endif %}
 
@@ -194,6 +209,17 @@
                   <div class="space-y-3">
                     <div class="text-sm font-medium text-gray-700">{{ optionName }}</div>
                     <div class="grid grid-cols-1 gap-2">
+                      {# Определяем, какую опцию выбрать по умолчанию #}
+                      {% set defaultOption = null %}
+                      {% for a in optionValues %}
+                        {% if a.getSetPrice() %}
+                          {% set defaultOption = a %}
+                        {% endif %}
+                      {% endfor %}
+                      {% if defaultOption is null %}
+                        {% set defaultOption = optionValues|first %}
+                      {% endif %}
+
                       {% for a in optionValues %}
                         <div class="relative">
                           <input
@@ -205,7 +231,8 @@
                             data-option-name="{{ optionName }}"
                             data-option-price="{{ a.price|default(0) }}"
                             data-option-value="{{ a.value.value ?? ('Значение #' ~ a.value.id) }}"
-                            {% if loop.first %}checked{% endif %}
+                            data-set-price="{{ a.getSetPrice() ? 'true' : 'false' }}"
+                            {% if a.id == defaultOption.id %}checked{% endif %}
                           >
                           <label for="option-{{ a.id }}" class="flex items-center justify-between p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-400 peer-checked:border-blue-500 peer-checked:bg-blue-50 transition-all">
                             <div class="flex items-center">
