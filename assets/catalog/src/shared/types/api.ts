@@ -113,4 +113,5 @@ export type ProductOptionData = {
   value: string;
   price: number;
   setPrice?: boolean;
+  salePrice?: number;
 };

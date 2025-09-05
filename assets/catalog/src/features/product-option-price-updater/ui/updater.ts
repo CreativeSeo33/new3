@@ -51,13 +51,13 @@ export class ProductOptionPriceUpdater extends Component {
       return;
     }
 
-    // Находим опцию с setPrice = true, если такая есть
-    const setPriceOption = selectedOptions.find((option: any) => option.setPrice === true);
+    // Ищем опцию с salePrice (скидкой)
+    const optionWithSale = selectedOptions.find((option: any) => option.salePrice && option.salePrice > 0);
 
-    if (setPriceOption && setPriceOption.price > 0) {
-      // Показываем цену опции с setPrice = true
-      const optionPrice = setPriceOption.price;
-      const optionOldPrice = setPriceOption.salePrice || setPriceOption.price;
+    if (optionWithSale && optionWithSale.price > 0) {
+      // Показываем цену опции со скидкой
+      const optionPrice = optionWithSale.salePrice;
+      const optionOldPrice = optionWithSale.price;
 
       this.updatePriceDisplay(optionPrice, optionOldPrice);
     } else {
@@ -67,7 +67,7 @@ export class ProductOptionPriceUpdater extends Component {
       if (optionWithPrice && optionWithPrice.price > 0) {
         // Показываем цену выбранной опции
         const optionPrice = optionWithPrice.price;
-        const optionOldPrice = optionWithPrice.salePrice || optionWithPrice.price;
+        const optionOldPrice = optionWithPrice.price;
 
         this.updatePriceDisplay(optionPrice, optionOldPrice);
       } else {
@@ -90,24 +90,32 @@ export class ProductOptionPriceUpdater extends Component {
     this.animatePriceChange(newPrice > this.currentPrice);
 
     setTimeout(() => {
-      // Обновляем текущую цену
-      this.priceElement!.textContent = formatPrice(newPrice);
+      // Формируем HTML аналогично Twig шаблону
+      if (oldPrice > newPrice) {
+        // Есть скидка - показываем новую цену, зачеркнутую старую и процент
+        this.priceElement!.textContent = `${newPrice} руб.`;
 
-      // Обновляем старую цену
-      if (this.oldPriceElement && oldPrice > newPrice) {
-        this.oldPriceElement.textContent = formatPrice(oldPrice);
-        this.oldPriceElement.style.display = 'block';
-      } else if (this.oldPriceElement) {
-        this.oldPriceElement.style.display = 'none';
-      }
+        if (this.oldPriceElement) {
+          this.oldPriceElement.textContent = `${oldPrice} руб.`;
+          this.oldPriceElement.classList.remove('hidden');
+        }
 
-      // Обновляем процент скидки
-      if (this.discountBadge && oldPrice > newPrice) {
-        const discountPercent = Math.round((1 - newPrice / oldPrice) * 100);
-        this.discountBadge.textContent = `-${discountPercent}%`;
-        this.discountBadge.style.display = 'block';
-      } else if (this.discountBadge) {
-        this.discountBadge.style.display = 'none';
+        if (this.discountBadge) {
+          const discountPercent = Math.round((1 - newPrice / oldPrice) * 100);
+          this.discountBadge.textContent = `-${discountPercent}%`;
+          this.discountBadge.classList.remove('hidden');
+        }
+      } else {
+        // Нет скидки - показываем только текущую цену
+        this.priceElement!.textContent = `${newPrice} руб.`;
+
+        if (this.oldPriceElement) {
+          this.oldPriceElement.classList.add('hidden');
+        }
+
+        if (this.discountBadge) {
+          this.discountBadge.classList.add('hidden');
+        }
       }
 
       // Возвращаем нормальный вид после анимации
@@ -124,8 +132,8 @@ export class ProductOptionPriceUpdater extends Component {
    * Извлекает числовую цену из текстового содержимого
    */
   private extractPriceFromText(text: string): number {
-    // Убираем все нецифровые символы кроме точки и запятой
-    const cleanText = text.replace(/[^\d.,]/g, '').replace(',', '.');
+    // Убираем "руб." и все нецифровые символы кроме точки и запятой
+    const cleanText = text.replace(/руб\.?/gi, '').replace(/[^\d.,]/g, '').replace(',', '.');
     const price = parseFloat(cleanText);
     return isNaN(price) ? 0 : price;
   }

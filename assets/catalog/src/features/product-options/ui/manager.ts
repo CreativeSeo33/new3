@@ -71,14 +71,20 @@ export class ProductOptionsManager extends Component {
     this.selectedOptions.clear();
 
     const optionInputs = this.$$<HTMLInputElement>('input[type="radio"][name^="option-"]:checked');
+
     optionInputs.forEach(input => {
+      const salePriceAttr = input.getAttribute('data-sale-price');
+      const salePriceValue = salePriceAttr ? parseInt(salePriceAttr, 10) : 0;
+
       const optionData: ProductOptionData = {
         id: parseInt(input.value, 10),
         name: input.dataset.optionName || '',
         value: input.dataset.optionValue || '',
         price: parseInt(input.dataset.optionPrice || '0', 10),
-        setPrice: input.dataset.setPrice === 'true'
+        setPrice: input.dataset.setPrice === 'true',
+        salePrice: salePriceValue
       };
+
       this.selectedOptions.set(input.name, optionData);
     });
   }

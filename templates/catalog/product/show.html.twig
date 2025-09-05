@@ -156,15 +156,19 @@
               <div class="flex items-baseline gap-3">
                 {% if salePrice is not null and salePrice > 0 %}
                   <span id="product-price" class="text-4xl font-bold text-gray-900">
-                    {{ salePrice }}
+                    {{ salePrice }} руб.
                   </span>
-                  <span class="text-lg text-gray-500 line-through" id="old-price">{{ currentPrice }}</span>
+                  <span class="text-lg text-gray-500 line-through" id="old-price">{{ currentPrice }} руб.</span>
                   <span class="bg-red-500 text-white px-2 py-1 rounded text-sm font-medium" id="discount-badge">
                     -{{ ((currentPrice - salePrice) / currentPrice * 100)|round }}%
                   </span>
                 {% else %}
                   <span id="product-price" class="text-4xl font-bold text-gray-900">
-                    {{ currentPrice }}
+                    {{ currentPrice }} руб.
+                  </span>
+                  <span class="text-lg text-gray-500 line-through hidden" id="old-price">{{ currentPrice }} руб.</span>
+                  <span class="bg-red-500 text-white px-2 py-1 rounded text-sm font-medium hidden" id="discount-badge">
+                    0%
                   </span>
                 {% endif %}
               </div>
@@ -232,6 +236,7 @@
                             data-option-price="{{ a.price|default(0) }}"
                             data-option-value="{{ a.value.value ?? ('Значение #' ~ a.value.id) }}"
                             data-set-price="{{ a.getSetPrice() ? 'true' : 'false' }}"
+                            data-sale-price="{{ a.salePrice is not null ? a.salePrice : 0 }}"
                             {% if a.id == defaultOption.id %}checked{% endif %}
                           >
                           <label for="option-{{ a.id }}" class="flex items-center justify-between p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-400 peer-checked:border-blue-500 peer-checked:bg-blue-50 transition-all">
@@ -244,7 +249,14 @@
                               </span>
                             </div>
                             {% if a.price is not null and a.price > 0 %}
-                              <span class="text-sm font-medium text-gray-900">{{ a.price }}</span>
+                              {% if a.salePrice is not null and a.salePrice > 0 %}
+                                <div class="flex items-center gap-2">
+                                  <span class="text-sm text-gray-500 line-through">{{ a.price }} руб.</span>
+                                  <span class="text-sm font-medium text-red-600">{{ a.salePrice }} руб.</span>
+                                </div>
+                              {% else %}
+                                <span class="text-sm font-medium text-gray-900">{{ a.price }} руб.</span>
+                              {% endif %}
                             {% endif %}
                           </label>
                         </div>
