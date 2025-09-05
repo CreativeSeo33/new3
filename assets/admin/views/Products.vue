@@ -94,12 +94,24 @@
               />
             </td>
             <td class="px-4 py-2">
-              <RouterLink
-                :to="{ name: 'admin-product-form', params: { id: p.id } }"
-                class="text-neutral-900 underline-offset-2 hover:underline dark:text-neutral-100"
-              >
-                {{ p.name || 'Без названия' }}
-              </RouterLink>
+              <div class="flex items-center gap-2">
+                <RouterLink
+                  :to="{ name: 'admin-product-form', params: { id: p.id } }"
+                  class="text-neutral-900 underline-offset-2 hover:underline dark:text-neutral-100"
+                >
+                  {{ p.name || 'Без названия' }}
+                </RouterLink>
+                <a
+                  v-if="p.slug"
+                  :href="`/product/${p.slug}`"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center justify-center w-5 h-5 text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 transition-colors"
+                  title="Открыть в каталоге"
+                >
+                  <ArrowUpRightIcon class="w-4 h-4" />
+                </a>
+              </div>
               <div v-if="p.slug" class="text-xs text-neutral-500">/{{ p.slug }}</div>
             </td>
             <td class="px-4 py-2">
@@ -258,6 +270,7 @@ import { useCrud } from '@admin/composables/useCrud'
 import { ProductRepository, type ProductDto } from '@admin/repositories/ProductRepository'
 import Modal from '@admin/ui/components/Modal.vue'
 import { CategoryRepository, type CategoryDto } from '@admin/repositories/CategoryRepository'
+import { ArrowUpRightIcon } from '@heroicons/vue/24/outline'
 
 // Data fetching via repository + useCrud
 const productRepository = new ProductRepository()

@@ -7,9 +7,7 @@
           aria-label="Toggle navigation"
           @click="$emit('toggle-sidebar')"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-          </svg>
+          <Bars3Icon class="w-6 h-6" />
         </button>
         <div class="truncate">
           <div class="font-semibold truncate">Админ-панель</div>
@@ -27,9 +25,7 @@
         </div>
         <router-link to="/design-system" class="h-9 px-3 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700">DS</router-link>
         <button class="h-9 w-9 grid place-items-center rounded-full border border-slate-200 hover:bg-gray-50">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-slate-600">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0112 20.25a8.967 8.967 0 01-8.312-4.478 23.848 23.848 0 005.454 1.31m5.715 0a24.255 24.255 0 01-5.715 0m5.715 0a3 3 0 10-5.715 0" />
-          </svg>
+          <UserIcon class="w-5 h-5 text-slate-600" />
         </button>
       </div>
     </div>
@@ -37,6 +33,8 @@
 </template>
 
 <script setup lang="ts">
+import { Bars3Icon, UserIcon } from '@heroicons/vue/24/outline'
+
 defineEmits<{ (e: 'toggle-sidebar'): void }>()
 </script>
 
