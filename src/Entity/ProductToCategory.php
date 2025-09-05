@@ -28,7 +28,6 @@ use Symfony\Bridge\Doctrine\Validator\Constraints as DoctrineAssert;
     ]
 )]
 #[ApiResource(
-    routePrefix: '/v2',
     operations: [
 
         new \ApiPlatform\Metadata\Get(normalizationContext: ['groups' => ['product:get']]),
