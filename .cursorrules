@@ -360,7 +360,6 @@ node docs/generate-module.js feature my-feature
 # Create widget module
 node docs/generate-module.js widget my-widget
 ```
-
 ### Manual Creation Steps
 1. Create folder structure
 2. Copy template files from `docs/templates/`
@@ -396,4 +395,5 @@ When in doubt:
 2. Look at `docs/` folder for templates
 3. Follow the patterns used in the codebase
 4. Ask for code review before merging
+
 
