@@ -248,6 +248,7 @@ const hydrateForm = (dto: ProductDto) => {
         sku: r.sku ?? null,
         originalSku: r.originalSku ?? null,
         price: toNum(r.price),
+        setPrice: r.setPrice ?? null,
         salePrice: toNum(r.salePrice),
         lightingArea: toNum(r.lightingArea),
         sortOrder: toNum(r.sortOrder),

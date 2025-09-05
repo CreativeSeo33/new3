@@ -157,6 +157,7 @@ class ProductStateProcessor implements ProcessorInterface
                 $assignment->setSku(isset($row['sku']) && is_string($row['sku']) ? $row['sku'] : null);
                 $assignment->setOriginalSku(isset($row['originalSku']) && is_string($row['originalSku']) ? $row['originalSku'] : null);
                 $assignment->setPrice(isset($row['price']) && is_numeric($row['price']) ? (int)$row['price'] : null);
+                $assignment->setSetPrice(isset($row['setPrice']) ? (bool)$row['setPrice'] : null);
                 $assignment->setSalePrice(isset($row['salePrice']) && is_numeric($row['salePrice']) ? (int)$row['salePrice'] : null);
                 $assignment->setSortOrder(isset($row['sortOrder']) && is_numeric($row['sortOrder']) ? (int)$row['sortOrder'] : null);
                 $assignment->setQuantity(isset($row['quantity']) && is_numeric($row['quantity']) ? (int)$row['quantity'] : null);
@@ -164,6 +165,30 @@ class ProductStateProcessor implements ProcessorInterface
                 if (isset($row['attributes']) && is_array($row['attributes'])) { $assignment->setAttributes($row['attributes']); }
                 $entity->addOptionAssignment($assignment);
                 $this->em->persist($assignment);
+            }
+
+            // Валидация: только один setPrice может быть true среди всех ProductOptionAssignments товара
+            $optionAssignments = $entity->getOptionAssignments();
+            $setPriceCount = 0;
+            $firstTrueAssignment = null;
+
+            // Считаем количество true и находим первое
+            foreach ($optionAssignments as $assignment) {
+                if ($assignment->getSetPrice() === true) {
+                    $setPriceCount++;
+                    if ($firstTrueAssignment === null) {
+                        $firstTrueAssignment = $assignment;
+                    }
+                }
+            }
+
+            // Если больше одного setPrice = true, оставляем только первый
+            if ($setPriceCount > 1 && $firstTrueAssignment !== null) {
+                foreach ($optionAssignments as $assignment) {
+                    if ($assignment !== $firstTrueAssignment && $assignment->getSetPrice() === true) {
+                        $assignment->setSetPrice(false);
+                    }
+                }
             }
         }
         if (($isPatch && array_key_exists('manufacturerId', $provided)) || !$isPatch) {

@@ -31,6 +31,7 @@
 									<th class="px-3 py-2 text-left w-40">Артикул</th>
 									<th class="px-3 py-2 text-left w-40">Ориг. артикул</th>
 									<th class="px-3 py-2 text-left w-28">Цена</th>
+									<th class="px-3 py-2 text-left w-32">Базовая цена</th>
 									<th class="px-3 py-2 text-left w-28">Цена со скидкой</th>
 									<th class="px-3 py-2 text-left w-32">Площадь освещения</th>
 									<th class="px-3 py-2 text-left w-24">Кол-во</th>
@@ -62,6 +63,14 @@
 										<input v-model="row.priceStr" type="number" class="h-9 w-full rounded-md border px-2 text-sm dark:border-neutral-800 dark:bg-neutral-900" />
 									</td>
 									<td class="px-3 py-2">
+										<input
+											v-model="row.setPrice"
+											type="checkbox"
+											class="h-4 w-4 rounded border dark:border-neutral-800 dark:bg-neutral-900"
+											:title="row.setPrice ? 'Базовая цена (только одна может быть выбрана для всего товара)' : 'Установить как базовую цену'"
+										/>
+									</td>
+									<td class="px-3 py-2">
 										<input v-model="row.salePriceStr" type="number" class="h-9 w-full rounded-md border px-2 text-sm dark:border-neutral-800 dark:bg-neutral-900" />
 									</td>
 									<td class="px-3 py-2">
@@ -78,7 +87,7 @@
 									</td>
 								</tr>
 								<tr v-if="rowsByOption(opt).length === 0">
-									<td colspan="7" class="px-3 py-6 text-center text-neutral-500">Нет записей</td>
+									<td colspan="12" class="px-3 py-6 text-center text-neutral-500">Нет записей</td>
 								</tr>
 							</tbody>
 						</table>
@@ -127,7 +136,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import Button from '@admin/ui/components/Button.vue'
 import { DialogContent, DialogOverlay, DialogPortal, DialogRoot, DialogTitle } from 'reka-ui'
 import { OptionRepository, type Option } from '@admin/repositories/OptionRepository'
@@ -137,14 +146,45 @@ import type { ProductOptionValueAssignment } from '@admin/types/product'
 const props = defineProps<{ optionAssignments: ProductOptionValueAssignment[] | null }>()
 const emit = defineEmits<{ 'update:optionAssignments': [val: ProductOptionValueAssignment[] | null], toast: [message: string] }>()
 
-const rows = computed<ProductOptionValueAssignment[]>({
-    get: () => props.optionAssignments ?? [],
-    set: (val) => emit('update:optionAssignments', val),
-})
+// Используем ref для локального состояния
+const rows = ref<ProductOptionValueAssignment[]>([])
+
+// Синхронизируем с props при изменении
+watch(() => props.optionAssignments, (newAssignments) => {
+
+    if (newAssignments) {
+        const processedRows = newAssignments.map((row, index) => {
+            const normalized = normalizeSetPrice(row.setPrice)
+            return {
+                ...row,
+                setPrice: normalized
+            }
+        })
+
+
+        rows.value = processedRows
+    } else {
+        rows.value = []
+    }
+}, { immediate: true })
+
+// Функция для надежной нормализации setPrice
+function normalizeSetPrice(value: any): boolean {
+    if (value === null || value === undefined) return false
+    if (typeof value === 'boolean') return value
+    if (typeof value === 'number') return value === 1
+    if (typeof value === 'string') return value === '1' || value.toLowerCase() === 'true'
+    return Boolean(value)
+}
+
+// Эмитим изменения при обновлении rows
+watch(rows, (newRows) => {
+    emit('update:optionAssignments', newRows)
+}, { deep: true })
 
 const optionCodes = computed<string[]>(() => {
     const set = new Set<string>()
-    for (const r of rows.value ?? []) if (r.option) set.add(r.option)
+    for (const r of rows.value) if (r.option) set.add(r.option)
     const arr = Array.from(set.values())
     const getOrder = (iri: string): number => {
         const found = optionsSorted.value.find(o => (o as any)['@id'] === iri) as any
@@ -266,32 +306,33 @@ async function loadOptionValues(optionIri: string) {
 
 function ensureOption(optionIri: string) {
     void loadOptionValues(optionIri)
-    if (!(rows.value ?? []).some(r => r.option === optionIri)) {
-        rows.value = [...(rows.value ?? []), { option: optionIri, value: null, height: null, bulbsCount: null, sku: null, originalSku: null, price: null, salePrice: null, lightingArea: null, sortOrder: null }]
+    if (!rows.value.some(r => r.option === optionIri)) {
+        rows.value = [...rows.value, { option: optionIri, value: null, height: null, bulbsCount: null, sku: null, originalSku: null, price: null, setPrice: false, salePrice: null, lightingArea: null, sortOrder: null }]
     }
     void ensureOptionMeta(optionIri)
 }
 function removeOption(optionIri: string) {
-    rows.value = (rows.value ?? []).filter(r => r.option !== optionIri)
+    rows.value = rows.value.filter(r => r.option !== optionIri)
 }
 function rowsByOption(optionIri: string) {
-    return (rows.value ?? []).filter(r => r.option === optionIri).map(r => withProxies(r))
+    return rows.value.filter(r => r.option === optionIri).map(r => withProxies(r))
 }
 function addRow(optionIri: string) {
-    const next = (rows.value ?? []).slice()
-    next.push({ option: optionIri, value: null, height: null, bulbsCount: null, sku: null, originalSku: null, price: null, salePrice: null, lightingArea: null, sortOrder: null })
+    const next = rows.value.slice()
+    next.push({ option: optionIri, value: null, height: null, bulbsCount: null, sku: null, originalSku: null, price: null, setPrice: false, salePrice: null, lightingArea: null, sortOrder: null })
     rows.value = next
 }
 function removeRow(optionIri: string, idx: number) {
     let seen = -1
-    rows.value = (rows.value ?? []).filter(r => {
+    rows.value = rows.value.filter(r => {
         if (r.option !== optionIri) return true
         seen++
         return seen !== idx
     })
 }
 
-type RowProxy = ProductOptionValueAssignment & { heightStr: string; bulbsCountStr: string; priceStr: string; salePriceStr: string; lightingAreaStr: string; quantityStr: string; sortOrderStr: string }
+
+type RowProxy = ProductOptionValueAssignment & { heightStr: string; bulbsCountStr: string; priceStr: string; setPrice: boolean | null; salePriceStr: string; lightingAreaStr: string; quantityStr: string; sortOrderStr: string }
 function withProxies(row: ProductOptionValueAssignment): RowProxy {
     const normalize = (n: number | null | undefined): string => (n == null ? '' : String(n))
     const proxy: any = {}
@@ -330,6 +371,22 @@ function withProxies(row: ProductOptionValueAssignment): RowProxy {
         priceStr: {
             get() { return normalize(row.price as any) },
             set(v: string) { row.price = v === '' ? null : Number(v) },
+            enumerable: true,
+        },
+        setPrice: {
+            get() { return normalizeSetPrice((row as any).setPrice) },
+            set(v: boolean | null) {
+                (row as any).setPrice = v
+
+                // Если устанавливаем true, снимаем setPrice со всех остальных записей товара
+                if (v === true) {
+                    rows.value.forEach(r => {
+                        if (r !== row) {
+                            (r as any).setPrice = false
+                        }
+                    })
+                }
+            },
             enumerable: true,
         },
         salePriceStr: {

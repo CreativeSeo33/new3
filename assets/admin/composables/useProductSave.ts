@@ -41,6 +41,7 @@ export function useProductSave() {
               sku: r.sku ?? null,
               originalSku: r.originalSku ?? null,
               price: toInt(r.price),
+              setPrice: r.setPrice ?? false,
               salePrice: toInt(r.salePrice),
               lightingArea: toInt(r.lightingArea),
               sortOrder: toInt(r.sortOrder),

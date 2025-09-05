@@ -33,6 +33,7 @@ export interface ProductDto extends ApiResource {
     sku: string | null;
     originalSku?: string | null;
     price: number | null;
+    setPrice?: boolean | null;
     salePrice?: number | null;
     lightingArea: number | null;
     sortOrder?: number | null;

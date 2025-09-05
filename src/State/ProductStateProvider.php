@@ -138,6 +138,7 @@ class ProductStateProvider implements ProviderInterface
                 'sku' => $a->getSku(),
                 'originalSku' => $a->getOriginalSku(),
                 'price' => $a->getPrice(),
+                'setPrice' => $a->getSetPrice() === null ? false : (bool) $a->getSetPrice(),
                 'salePrice' => $a->getSalePrice(),
                 'sortOrder' => $a->getSortOrder(),
                 'quantity' => $a->getQuantity(),

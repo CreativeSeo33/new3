@@ -20,6 +20,7 @@ use Doctrine\Common\Collections\ArrayCollection;
         new ORM\Index(name: 'idx_pova_option_value', columns: ['option_id', 'value_id']),
         new ORM\Index(name: 'idx_pova_height', columns: ['height']),
         new ORM\Index(name: 'idx_pova_price', columns: ['price']),
+        new ORM\Index(name: 'idx_pova_set_price', columns: ['set_price']),
         new ORM\Index(name: 'idx_pova_bulbs', columns: ['bulbs_count']),
         new ORM\Index(name: 'idx_pova_area', columns: ['lighting_area']),
         new ORM\Index(name: 'idx_pova_sort', columns: ['sort_order'])
@@ -53,6 +54,10 @@ class ProductOptionValueAssignment
     #[ORM\Column(type: 'integer', nullable: true)]
     #[Groups(['product:read', 'product:create', 'product:update'])]
     private ?int $price = null;
+
+    #[ORM\Column(name: 'set_price', type: 'boolean', nullable: true)]
+    #[Groups(['product:read', 'product:create', 'product:update'])]
+    private ?bool $setPrice = null;
 
     #[ORM\Column(name: 'bulbs_count', type: 'integer', nullable: true)]
     #[Groups(['product:read', 'product:create', 'product:update'])]
@@ -154,6 +159,21 @@ class ProductOptionValueAssignment
     public function setPrice(?int $price): self
     {
         $this->price = $price;
+        return $this;
+    }
+
+    public function getSetPrice(): ?bool
+    {
+        // Явная конвертация для обеспечения правильного типа
+        if ($this->setPrice === null) {
+            return null;
+        }
+        return (bool) $this->setPrice;
+    }
+
+    public function setSetPrice(?bool $setPrice): self
+    {
+        $this->setPrice = $setPrice;
         return $this;
     }
 
