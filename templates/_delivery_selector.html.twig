@@ -2,7 +2,7 @@
   <div class="flex gap-2 items-end mb-3">
     <div class="flex-1">
       <label class="block text-sm mb-1">Город</label>
-      <input id="city-input" class="w-full border rounded px-3 py-2" value="{{ app.session.get('delivery')['cityName'] ?? '' }}" placeholder="Ваш город">
+      <input id="city-input" class="w-full border rounded px-3 py-2" value="{{ app.session.get('checkout')['delivery']['city']['cityName'] ?? '' }}" placeholder="Ваш город">
     </div>
     <button id="set-city" class="px-3 py-2 border rounded">OK</button>
   </div>
