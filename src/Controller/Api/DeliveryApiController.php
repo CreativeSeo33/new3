@@ -113,7 +113,7 @@ final class DeliveryApiController extends AbstractController
 		$userId = $user instanceof AppUser ? $user->getId() : null;
 		$cart = $this->carts->getOrCreateCurrent($userId);
 		$this->ctx->syncToCart($cart);
-		$cost = $this->shipping->quote($cart);
+		$cost = $this->delivery->quote($cart);
 		$cart->setShippingCost($cost);
 		$this->calculator->recalculate($cart);
 		$this->em->flush();
