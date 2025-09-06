@@ -91,7 +91,9 @@
         }
     },
     "require-dev": {
+        "symfony/debug-bundle": "7.3.*",
         "symfony/maker-bundle": "^1.64",
+        "symfony/var-dumper": "7.3.*",
         "symfony/web-profiler-bundle": "7.3.*"
     }
 }

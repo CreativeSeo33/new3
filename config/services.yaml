@@ -90,3 +90,18 @@ services:
     App\Service\ProductCopyService:
         arguments:
             $lifecycleService: '@App\Service\ProductLifecycleService'
+
+    # Delivery methods auto-registration
+    App\Service\Delivery\Method\PvzDeliveryMethod:
+        tags: ['app.delivery_method']
+        bind:
+            # Указываем, что в конструктор этого класса в аргумент с именем $calculationType
+            # нужно передать строку 'cost_per_item'.
+            # Чтобы отключить расчет по количеству, просто измените на 'flat_rate'.
+            $calculationType: 'cost_per_item'
+
+    App\Service\Delivery\Method\CourierDeliveryMethod:
+        tags: ['app.delivery_method']
+        bind:
+            # Для курьера тоже можно задать свой тип расчета.
+            $calculationType: 'cost_per_item'

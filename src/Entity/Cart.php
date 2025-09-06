@@ -176,6 +176,19 @@ class Cart
 	public function getShippingData(): ?array { return $this->shippingData; }
 
 	public function setShippingData(?array $shippingData): void { $this->shippingData = $shippingData; }
+
+    /**
+     * Рассчитывает общее количество товарных единиц в корзине.
+     * Например, 2 стула + 3 стола = 5.
+     */
+    public function getTotalItemQuantity(): int
+    {
+        $totalQuantity = 0;
+        foreach ($this->items as $item) {
+            $totalQuantity += $item->getQty();
+        }
+        return $totalQuantity;
+    }
 }
 
 

@@ -164,12 +164,12 @@ final class CartManager
 		$item->setQty($qty);
 
 		$basePrice = $product->getEffectivePrice() ?? ($product->getPrice() ?? 0);
-		$item->setUnitPrice((int) round($basePrice * 100));
+		$item->setUnitPrice((int) round($basePrice));
 
 		if (!empty($optionAssignmentIds)) {
 			$this->applyProductOptions($item, $product, $optionAssignmentIds, $basePrice, $optionsHash);
 		} else {
-			$item->setEffectiveUnitPrice((int) round($basePrice * 100));
+			$item->setEffectiveUnitPrice((int) round($basePrice));
 			$item->setOptionsHash(null);
 		}
 
@@ -202,7 +202,7 @@ final class CartManager
 		$item->setSelectedOptionsData($selectedOptionsData);
 		$item->setOptionsSnapshot($optionsSnapshot);
 		$item->setOptionsHash($optionsHash);
-		$item->setEffectiveUnitPrice((int) round(($basePrice + $optionsPriceModifier) * 100));
+		$item->setEffectiveUnitPrice((int) round($basePrice + $optionsPriceModifier));
 	}
 
 	private function createOptionData($assignment, float $optionPrice): array
@@ -275,20 +275,61 @@ final class CartManager
 	{
 		$itemRemoved = false;
 
-		$this->executeWithLock($cart, function() use ($cart, $itemId, &$itemRemoved) {
-			$itemRemoved = $this->doRemoveItem($cart, $itemId);
+		$this->lock->withCartLock($cart, function() use ($cart, $itemId, &$itemRemoved) {
+			$this->em->wrapInTransaction(function() use ($cart, $itemId, &$itemRemoved) {
+				$this->em->lock($cart, LockMode::PESSIMISTIC_WRITE);
+				$itemRemoved = $this->doRemoveItem($cart, $itemId);
+				$this->finishCartOperation($cart);
+			});
 		});
 
-		return $itemRemoved ? $cart : null;
+		if ($itemRemoved) {
+			$this->events->dispatch(new \App\Event\CartUpdatedEvent($cart->getIdString()));
+			return $cart;
+		}
+
+		return null;
 	}
 
 	private function doRemoveItem(Cart $cart, int $itemId): bool
 	{
-		$item = $this->carts->findItemByIdForUpdate($cart, $itemId);
+		error_log("CartManager: doRemoveItem called for item {$itemId}, cart ID: {$cart->getIdString()}");
+
+		// Пробуем найти товар напрямую через SQL, игнорируя проблемы с Doctrine
+		$cartId = $cart->getId();
+		$sql = 'SELECT ci.* FROM cart_item ci WHERE ci.cart_id = ? AND ci.id = ? LIMIT 1 FOR UPDATE';
+		$stmt = $this->em->getConnection()->prepare($sql);
+		$result = $stmt->executeQuery([$cartId, $itemId])->fetchAssociative();
+
+		if ($result) {
+			error_log("CartManager: Found item {$itemId} via direct SQL");
+			$item = $this->em->find(CartItem::class, $result['id']);
+		} else {
+			error_log("CartManager: Item {$itemId} not found via direct SQL");
+			$item = null;
+		}
+
+		if (!$item) {
+			// Попытка найти товар без учета корзины (для отладки)
+			$item = $this->em->find(CartItem::class, $itemId);
+			if ($item) {
+				$itemCartId = $item->getCart() ? $item->getCart()->getId() : null;
+				error_log("CartManager: Found item {$itemId} in cart {$itemCartId}, expected cart {$cartId}");
+				// Не удаляем товар из другой корзины
+				if ($itemCartId !== $cartId) {
+					return false;
+				}
+			}
+		}
+
 		if ($item) {
+			error_log("CartManager: Removing item ID {$itemId} from cart {$cart->getIdString()}");
 			$this->em->remove($item);
+			error_log("CartManager: Item removed, will flush in finishCartOperation");
 			return true;
 		}
+
+		error_log("CartManager: Item ID {$itemId} not found in cart {$cart->getIdString()}");
 		return false;
 	}
 

@@ -4,7 +4,8 @@ declare(strict_types=1);
 namespace App\Controller\Api;
 
 use App\Entity\User as AppUser;
-use App\Service\{CartManager, DeliveryContext, ShippingCalculator, CartCalculator};
+use App\Service\{CartManager, DeliveryContext, CartCalculator};
+use App\Service\Delivery\DeliveryService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\{JsonResponse, Request};
@@ -16,7 +17,7 @@ final class DeliveryApiController extends AbstractController
     public function __construct(
         private DeliveryContext $ctx,
         private CartManager $carts,
-        private ShippingCalculator $shipping,
+        private DeliveryService $delivery,
         private CartCalculator $calculator,
         private EntityManagerInterface $em,
     ) {}
@@ -70,7 +71,7 @@ final class DeliveryApiController extends AbstractController
 		$userId = $user instanceof AppUser ? $user->getId() : null;
 		$cart = $this->carts->getOrCreateCurrent($userId);
 		$this->ctx->syncToCart($cart);
-        $cost = $this->shipping->quote($cart);
+        $cost = $this->delivery->quote($cart);
         $cart->setShippingCost($cost);
         $this->calculator->recalculate($cart);
         $this->em->flush();

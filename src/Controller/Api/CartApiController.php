@@ -8,6 +8,7 @@ use App\Service\CartContext;
 use App\Repository\CartRepository;
 use App\Repository\ProductRepository;
 use App\Entity\User as AppUser;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\{Request, JsonResponse};
 use Symfony\Component\Routing\Attribute\Route;
@@ -19,7 +20,8 @@ final class CartApiController extends AbstractController
 		private CartManager $manager,
 		private CartContext $cartContext,
 		private CartRepository $carts,
-		private ProductRepository $products
+		private ProductRepository $products,
+		private \Doctrine\ORM\EntityManagerInterface $em
 	) {}
 
 	#[Route('', name: 'api_cart_get', methods: ['GET'])]
@@ -101,29 +103,34 @@ final class CartApiController extends AbstractController
 	}
 
 	#[Route('/items/{itemId}', name: 'api_cart_remove_item', methods: ['DELETE'])]
-	public function removeItem(int $itemId, CartContext $ctx): JsonResponse
+	public function removeItem(int $itemId): JsonResponse
 	{
-		$user = $this->getUser();
-		$userId = $user instanceof AppUser ? $user->getId() : null;
+		error_log("CartApiController: Starting removal of item ID {$itemId}");
 
-		// Создаем пустой объект JsonResponse
-		$response = new JsonResponse();
+		// Пробуем найти товар напрямую в базе данных
+		$item = $this->em->getRepository(\App\Entity\CartItem::class)->find($itemId);
 
-		// Передаем Response в getOrCreate
-		$cart = $ctx->getOrCreate($userId, $response);
-
-		$updatedCart = $this->manager->removeItem($cart, $itemId);
-
-		// Устанавливаем данные в объект ответа
-		if ($updatedCart) {
-			$response->setData($this->serializeCart($updatedCart));
-			$response->setStatusCode(200);
-		} else {
-			$response->setData(null);
-			$response->setStatusCode(204);
+		if (!$item) {
+			error_log("CartApiController: Item {$itemId} not found");
+			return new JsonResponse(null, 204);
 		}
 
-		return $response;
+		$cart = $item->getCart();
+		error_log("CartApiController: Found item in cart " . ($cart ? $cart->getIdString() : 'null'));
+
+		if (!$cart) {
+			error_log("CartApiController: Item has no cart");
+			return new JsonResponse(null, 204);
+		}
+
+		// Удаляем товар напрямую
+		$this->em->remove($item);
+		$this->em->flush();
+
+		error_log("CartApiController: Item {$itemId} removed successfully");
+
+		// Возвращаем обновленные данные корзины
+		return new JsonResponse($this->serializeCart($cart), 200);
 	}
 
 	#[Route('', name: 'api_cart_clear', methods: ['DELETE'])]

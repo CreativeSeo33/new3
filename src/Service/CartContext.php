@@ -43,7 +43,13 @@ final class CartContext
                 $cartId = Ulid::fromString($cartIdString);
                 error_log("CartContext: parsed ULID=" . $cartId->toBase32());
             } catch (\InvalidArgumentException $e) {
-                error_log("CartContext: invalid ULID format - " . $e->getMessage());
+                error_log("CartContext: invalid ULID format - " . $e->getMessage() . ", trying to find cart by token");
+                // Если cart_id не ULID, пробуем найти корзину по token
+                $cart = $this->carts->findActiveByToken($cartIdString);
+                if ($cart) {
+                    error_log("CartContext: found cart by token: " . $cart->getIdString());
+                    return $cart;
+                }
             }
         }
 

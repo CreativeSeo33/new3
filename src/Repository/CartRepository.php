@@ -84,13 +84,29 @@ final class CartRepository extends ServiceEntityRepository
 
     public function findItemByIdForUpdate(Cart $cart, int $itemId): ?CartItem
     {
-        return $this->getEntityManager()->createQuery(
+        // Сначала пробуем через DQL
+        $item = $this->getEntityManager()->createQuery(
             'SELECT ci FROM App\\Entity\\CartItem ci WHERE ci.cart = :c AND ci.id = :i'
         )
         ->setParameters(['c' => $cart, 'i' => $itemId])
         ->setLockMode(LockMode::PESSIMISTIC_WRITE)
         ->setMaxResults(1)
         ->getOneOrNullResult();
+
+        // Если не нашли, пробуем через прямой SQL с cart_id
+        if (!$item) {
+            $cartId = $cart->getId();
+            $sql = 'SELECT ci.* FROM cart_item ci WHERE ci.cart_id = ? AND ci.id = ? LIMIT 1 FOR UPDATE';
+            $stmt = $this->getEntityManager()->getConnection()->prepare($sql);
+            $stmt->executeStatement([$cartId, $itemId]);
+
+            $result = $stmt->fetchAssociative();
+            if ($result) {
+                $item = $this->getEntityManager()->find(CartItem::class, $result['id']);
+            }
+        }
+
+        return $item;
     }
 }
 

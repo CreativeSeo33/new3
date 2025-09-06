@@ -26,6 +26,7 @@ node docs/generate-module.js widget my-new-widget
 ### Основная документация
 - **[Полное руководство](js-architecture-guide.md)** - подробное описание архитектуры
 - **[Добавление модуля](add-new-module.md)** - пошаговое руководство
+- **[Система доставки](delivery-system-guide.md)** - руководство по работе с доставкой
 
 ### Шаблоны
 - **[API слой](templates/feature-api-template.ts)** - шаблон для HTTP запросов
