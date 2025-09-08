@@ -190,6 +190,18 @@ class Cart
 
 	public function setShippingData(?array $shippingData): void { $this->shippingData = $shippingData; }
 
+	/**
+	 * Гарантирует наличие токена для гостевой корзины.
+	 * Генерирует новый UUID токен, если его нет.
+	 */
+	public function ensureToken(): string
+	{
+		if (!$this->token) {
+			$this->token = Uuid::v4()->toRfc4122();
+		}
+		return $this->token;
+	}
+
     /**
      * Рассчитывает общее количество товарных единиц в корзине.
      * Например, 2 стула + 3 стола = 5.

@@ -15,7 +15,7 @@ use Symfony\Component\Uid\Ulid;
 
 final class CartLoginSubscriber implements EventSubscriberInterface
 {
-    private const CART_ID_COOKIE = 'cart_id';
+    private const CART_ID_COOKIE = '__Host-cart_id';
     private const CART_TTL_DAYS = 180;
 
     public function __construct(
@@ -40,18 +40,31 @@ final class CartLoginSubscriber implements EventSubscriberInterface
         $userId = $user->getId();
         $request = $event->getRequest();
 
-        // 1. Получить cart_id из cookie запроса
-        $cartIdString = $request->cookies->get(self::CART_ID_COOKIE);
-        if (!$cartIdString) {
-            return; // 3. Если cart_id нет, ничего не делать
+        // 1. Читаем cookie: новый формат как токен, fallback на legacy как ULID
+        $tokenCookie = $request->cookies->get(self::CART_ID_COOKIE);
+        $legacyCookie = $request->cookies->get('cart_id');
+
+        $guestCart = null;
+
+        // 2. Сначала пытаемся найти гостевую корзину по токену (новый формат)
+        if ($tokenCookie) {
+            $guestCart = $this->carts->findActiveByToken($tokenCookie);
+            if ($guestCart) {
+                error_log("CartLoginSubscriber: found guest cart by token: " . $guestCart->getIdString());
+            }
         }
 
-        // 2. Найти гостевую корзину по cart_id
-        try {
-            $guestCartId = Ulid::fromString($cartIdString);
-            $guestCart = $this->carts->findActiveById($guestCartId);
-        } catch (\InvalidArgumentException) {
-            return; // Неверный формат cart_id
+        // 3. Fallback: legacy cookie как ULID (временная поддержка миграции)
+        if (!$guestCart && $legacyCookie) {
+            try {
+                $guestCartId = Ulid::fromString($legacyCookie);
+                $guestCart = $this->carts->findActiveById($guestCartId);
+                if ($guestCart) {
+                    error_log("CartLoginSubscriber: legacy ULID fallback used for cart: " . $guestCart->getIdString());
+                }
+            } catch (\InvalidArgumentException) {
+                // Игнорируем неверный формат ULID
+            }
         }
 
         if (!$guestCart) {
@@ -64,20 +77,20 @@ final class CartLoginSubscriber implements EventSubscriberInterface
         $finalCart = null;
 
         if ($userCart && $guestCart) {
-            // 6. Сливаем гостевую в корзину юзера
+            // 5. Сливаем гостевую в корзину юзера
             $finalCart = $this->manager->merge($userCart, $guestCart);
             // УДАЛЯЕМ гостевую корзину
             $this->em->remove($guestCart);
         } elseif ($guestCart) {
             // Просто привязываем гостевую корзину к пользователю
             $guestCart->setUserId($userId);
+            $guestCart->setToken(null); // Убираем токен при присвоении пользователю
             $finalCart = $guestCart;
         }
 
         if ($finalCart) {
-            // Продлеваем cookie для итоговой корзины через фабрику
-            $cookieValue = $finalCart->getToken() ?? $finalCart->getIdString(); // fallback на ULID если токена нет
-            $cookie = $this->cookieFactory->build($request, $cookieValue);
+            // Устанавливаем cookie только с токеном для итоговой корзины
+            $cookie = $this->cookieFactory->build($request, $finalCart->ensureToken());
 
             $response = $event->getResponse();
             if ($response) {

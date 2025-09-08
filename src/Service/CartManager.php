@@ -56,28 +56,30 @@ final class CartManager
         if ($userId) {
             $cart = $this->carts->findActiveByUserId($userId);
         } else {
-            // Для гостей пробуем найти корзину по cookie (используем ту же логику, что и CartContext)
+            // Для гостей пробуем найти корзину по cookie
             $request = $this->requestStack->getCurrentRequest();
             if ($request) {
-                // Получаем cookie по новому имени (с префиксом __Host-)
-                $cartIdString = $request->cookies->get('__Host-cart_id');
-                $legacyCartIdString = $request->cookies->get('cart_id'); // legacy fallback
+                // Читаем cookie: новый формат (__Host-cart_id) как токен
+                $tokenCookie = $request->cookies->get('__Host-cart_id');
+                // Fallback на legacy cookie (cart_id) как ULID для миграции
+                $legacyCookie = $request->cookies->get('cart_id');
 
-                // Сначала пытаемся найти по токену (новый формат)
-                if ($cartIdString) {
-                    $cart = $this->carts->findActiveByToken($cartIdString);
+                // 1) Сначала пытаемся найти корзину по токену (новый формат)
+                if ($tokenCookie) {
+                    $cart = $this->carts->findActiveByToken($tokenCookie);
                 }
 
-                // Fallback на старый формат ULID
-                if (!$cart) {
-                    $cartIdString = $cartIdString ?: $legacyCartIdString;
-                    if ($cartIdString) {
-                        try {
-                            $cartId = Ulid::fromString($cartIdString);
-                            $cart = $this->carts->findActiveById($cartId);
-                        } catch (\InvalidArgumentException) {
-                            $cart = null;
+                // 2) Fallback: legacy cookie как ULID (временная поддержка миграции)
+                if (!$cart && $legacyCookie) {
+                    try {
+                        $cartId = Ulid::fromString($legacyCookie);
+                        $cart = $this->carts->findActiveById($cartId);
+                        if ($cart) {
+                            // Логируем использование legacy fallback
+                            error_log("CartManager: legacy ULID fallback used for cart: " . $cart->getIdString());
                         }
+                    } catch (\InvalidArgumentException) {
+                        // Игнорируем неверный формат ULID
                     }
                 }
             }
