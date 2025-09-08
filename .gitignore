@@ -65,3 +65,7 @@ Thumbs.db
 # Custom files
 /warmup_cache.bat
 /warmup_md2.bat
+###> phpunit/phpunit ###
+/phpunit.xml
+/.phpunit.cache/
+###< phpunit/phpunit ###

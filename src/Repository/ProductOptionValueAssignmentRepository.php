@@ -7,7 +7,7 @@ use App\Entity\ProductOptionValueAssignment;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
-final class ProductOptionValueAssignmentRepository extends ServiceEntityRepository
+class ProductOptionValueAssignmentRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {

@@ -12,8 +12,10 @@ use App\Repository\ProductRepository;
 use App\Entity\User as AppUser;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\{Request, JsonResponse};
+use Symfony\Component\HttpFoundation\{Request, JsonResponse, Response};
 use Symfony\Component\Routing\Attribute\Route;
+use App\Service\CartLockException;
+use App\Entity\Cart;
 
 #[Route('/api/cart')]
 final class CartApiController extends AbstractController
@@ -54,17 +56,18 @@ final class CartApiController extends AbstractController
 
 		$productId = (int)($data['productId'] ?? 0);
 		$qty = (int)($data['qty'] ?? 1);
+		$clientVersion = $data['version'] ?? null;
 
 		// Добавляем обработку опций
 		$optionAssignmentIds = [];
 		if (isset($data['optionAssignmentIds']) && is_array($data['optionAssignmentIds'])) {
 			$optionAssignmentIds = array_map('intval', $data['optionAssignmentIds']);
 		}
-		
+
 		if ($productId < 1 || $qty < 1) {
 			return $this->json(['error' => 'Invalid input'], 422);
 		}
-		
+
 		$user = $this->getUser();
 		$userId = $user instanceof AppUser ? $user->getId() : null;
 
@@ -72,11 +75,20 @@ final class CartApiController extends AbstractController
 		$response = new JsonResponse();
 		$cart = $this->cartContext->getOrCreate($userId, $response);
 
+		// Проверяем версию корзины для условного доступа
+		if ($clientVersion !== null && $cart->getVersion() !== $clientVersion) {
+			return $this->createPreconditionFailedResponse($cart);
+		}
+
 		try {
 			// Передаем опции в метод addItem
 			$this->manager->addItem($cart, $productId, $qty, $optionAssignmentIds);
+		} catch (CartLockException $e) {
+			return $this->createBusyResponse($e);
 		} catch (\DomainException $e) {
 			return $this->json(['error' => $e->getMessage()], 422);
+		} catch (\Doctrine\ORM\OptimisticLockException|\Doctrine\DBAL\Exception\DeadlockException $e) {
+			return $this->createConflictResponse();
 		}
 
 		$response->setData($this->serializeCart($cart));
@@ -89,6 +101,7 @@ final class CartApiController extends AbstractController
 	{
 		$data = json_decode($request->getContent(), true) ?? [];
 		$qty = (int)($data['qty'] ?? 0);
+		$clientVersion = $data['version'] ?? null;
 		$user = $this->getUser();
 		$userId = $user instanceof AppUser ? $user->getId() : null;
 
@@ -96,10 +109,19 @@ final class CartApiController extends AbstractController
 		$response = new JsonResponse();
 		$cart = $this->cartContext->getOrCreate($userId, $response);
 
+		// Проверяем версию корзины для условного доступа
+		if ($clientVersion !== null && $cart->getVersion() !== $clientVersion) {
+			return $this->createPreconditionFailedResponse($cart);
+		}
+
 		try {
 			$this->manager->updateQty($cart, $itemId, $qty);
+		} catch (CartLockException $e) {
+			return $this->createBusyResponse($e);
 		} catch (\DomainException $e) {
 			return $this->json(['error' => $e->getMessage()], 422);
+		} catch (\Doctrine\ORM\OptimisticLockException|\Doctrine\DBAL\Exception\DeadlockException $e) {
+			return $this->createConflictResponse();
 		}
 
 		$response->setData($this->serializeCart($cart));
@@ -107,39 +129,13 @@ final class CartApiController extends AbstractController
 	}
 
 	#[Route('/items/{itemId}', name: 'api_cart_remove_item', methods: ['DELETE'])]
-	public function removeItem(int $itemId): JsonResponse
+	public function removeItem(int $itemId, Request $request): JsonResponse
 	{
-		error_log("CartApiController: Starting removal of item ID {$itemId}");
-
-		// Пробуем найти товар напрямую в базе данных
-		$item = $this->em->getRepository(\App\Entity\CartItem::class)->find($itemId);
-
-		if (!$item) {
-			error_log("CartApiController: Item {$itemId} not found");
-			return new JsonResponse(null, 204);
+		$clientVersion = $request->query->get('version');
+		if ($clientVersion !== null) {
+			$clientVersion = (int)$clientVersion;
 		}
 
-		$cart = $item->getCart();
-		error_log("CartApiController: Found item in cart " . ($cart ? $cart->getIdString() : 'null'));
-
-		if (!$cart) {
-			error_log("CartApiController: Item has no cart");
-			return new JsonResponse(null, 204);
-		}
-
-		// Удаляем товар напрямую
-		$this->em->remove($item);
-		$this->em->flush();
-
-		error_log("CartApiController: Item {$itemId} removed successfully");
-
-		// Возвращаем обновленные данные корзины
-		return new JsonResponse($this->serializeCart($cart), 200);
-	}
-
-	#[Route('', name: 'api_cart_clear', methods: ['DELETE'])]
-	public function clearCart(): JsonResponse
-	{
 		$user = $this->getUser();
 		$userId = $user instanceof AppUser ? $user->getId() : null;
 
@@ -147,7 +143,54 @@ final class CartApiController extends AbstractController
 		$response = new JsonResponse();
 		$cart = $this->cartContext->getOrCreate($userId, $response);
 
-		$this->manager->clearCart($cart);
+		// Проверяем версию корзины для условного доступа
+		if ($clientVersion !== null && $cart->getVersion() !== $clientVersion) {
+			return $this->createPreconditionFailedResponse($cart);
+		}
+
+		try {
+			$result = $this->manager->removeItem($cart, $itemId);
+			if (!$result) {
+				return new JsonResponse(null, 204);
+			}
+		} catch (CartLockException $e) {
+			return $this->createBusyResponse($e);
+		} catch (\Doctrine\ORM\OptimisticLockException|\Doctrine\DBAL\Exception\DeadlockException $e) {
+			return $this->createConflictResponse();
+		}
+
+		$response->setData($this->serializeCart($cart));
+		return $response;
+	}
+
+	#[Route('', name: 'api_cart_clear', methods: ['DELETE'])]
+	public function clearCart(Request $request): JsonResponse
+	{
+		$clientVersion = $request->query->get('version');
+		if ($clientVersion !== null) {
+			$clientVersion = (int)$clientVersion;
+		}
+
+		$user = $this->getUser();
+		$userId = $user instanceof AppUser ? $user->getId() : null;
+
+		// Создаем объект JsonResponse
+		$response = new JsonResponse();
+		$cart = $this->cartContext->getOrCreate($userId, $response);
+
+		// Проверяем версию корзины для условного доступа
+		if ($clientVersion !== null && $cart->getVersion() !== $clientVersion) {
+			return $this->createPreconditionFailedResponse($cart);
+		}
+
+		try {
+			$this->manager->clearCart($cart);
+		} catch (CartLockException $e) {
+			return $this->createBusyResponse($e);
+		} catch (\Doctrine\ORM\OptimisticLockException|\Doctrine\DBAL\Exception\DeadlockException $e) {
+			return $this->createConflictResponse();
+		}
+
 		$response->setData(null);
 		$response->setStatusCode(204);
 		return $response;
@@ -289,6 +332,42 @@ final class CartApiController extends AbstractController
 				return $data;
 			}, $cart->getItems()->toArray()),
 		];
+	}
+
+	/**
+	 * Создает ответ при занятости корзины (423 Locked)
+	 */
+	private function createBusyResponse(CartLockException $e): JsonResponse
+	{
+		return new JsonResponse([
+			'error' => 'cart_busy',
+			'message' => 'Cart is busy, try again',
+			'retryAfterMs' => $e->getRetryAfterMs(),
+		], Response::HTTP_LOCKED);
+	}
+
+	/**
+	 * Создает ответ при конфликте версий (409 Conflict)
+	 */
+	private function createConflictResponse(): JsonResponse
+	{
+		return new JsonResponse([
+			'error' => 'version_conflict',
+			'message' => 'Cart was modified by another request, please retry',
+		], Response::HTTP_CONFLICT);
+	}
+
+	/**
+	 * Создает ответ при несоответствии версии (412 Precondition Failed)
+	 */
+	private function createPreconditionFailedResponse(Cart $cart): JsonResponse
+	{
+		return new JsonResponse([
+			'error' => 'precondition_failed',
+			'message' => 'Cart version mismatch',
+			'currentVersion' => $cart->getVersion(),
+			'cart' => $this->serializeCart($cart),
+		], Response::HTTP_PRECONDITION_FAILED);
 	}
 }
 

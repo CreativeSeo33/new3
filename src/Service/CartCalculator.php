@@ -15,41 +15,65 @@ final class CartCalculator
         private LivePriceCalculator $livePrice
     ) {}
 
-    public function recalculate(Cart $cart): void
+    /**
+     * Быстрый пересчет только итоговых сумм позиций без внешних IO
+     * Используется в критической секции под блокировкой
+     */
+    public function recalculateTotalsOnly(Cart $cart): void
     {
         $subtotal = 0;
         $policy = $cart->getPricingPolicy();
 
         if ($policy === 'SNAPSHOT') {
-            // SNAPSHOT: используем зафиксированные цены, не обращаемся к каталогу
+            // SNAPSHOT: используем зафиксированные цены
             foreach ($cart->getItems() as $item) {
                 $rowTotal = $item->getEffectiveUnitPrice() * $item->getQty();
                 $item->setRowTotal($rowTotal);
                 $subtotal += $rowTotal;
             }
         } else {
-            // LIVE: вычисляем актуальные цены на лету, но не перезаписываем снепшот
+            // LIVE: используем актуальные цены, но только из уже рассчитанных данных
+            // (предполагается, что live цены уже были рассчитаны ранее)
             foreach ($cart->getItems() as $item) {
-                $liveEffectiveUnitPrice = $this->livePrice->effectiveUnitPriceLive($item);
-                $rowTotal = $liveEffectiveUnitPrice * $item->getQty();
-                // Не перезаписываем снепшот-поля позиции
+                $effectivePrice = $item->getEffectiveUnitPrice(); // Используем кэшированное значение
+                $rowTotal = $effectivePrice * $item->getQty();
+                $item->setRowTotal($rowTotal);
                 $subtotal += $rowTotal;
             }
         }
 
+        $cart->setSubtotal($subtotal);
+        // total пока не трогаем - его доуточним после доставки/скидок
+    }
+
+    /**
+     * Пересчет доставки и скидок с внешними IO
+     * Выполняется вне критической секции
+     */
+    public function recalculateShippingAndDiscounts(Cart $cart): void
+    {
         $discountTotal = 0;
         $shippingCost = 0;
 
         if ($cart->getShippingMethod()) {
-            $shippingCost = $this->delivery->quote($cart);
+            $shippingCost = $this->delivery->quote($cart); // Может быть медленным
             $cart->setShippingCost($shippingCost);
         }
 
-        $total = max(0, $subtotal - $discountTotal + $shippingCost);
+        $total = max(0, $cart->getSubtotal() - $discountTotal + $shippingCost);
 
-        $cart->setSubtotal($subtotal);
         $cart->setDiscountTotal($discountTotal);
         $cart->setTotal($total);
+    }
+
+    /**
+     * Полный пересчет (для обратной совместимости)
+     * @deprecated Используйте recalculateTotalsOnly + recalculateShippingAndDiscounts
+     */
+    public function recalculate(Cart $cart): void
+    {
+        $this->recalculateTotalsOnly($cart);
+        $this->recalculateShippingAndDiscounts($cart);
     }
 }
 

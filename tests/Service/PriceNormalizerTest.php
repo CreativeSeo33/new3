@@ -33,7 +33,8 @@ final class PriceNormalizerTest extends TestCase
     public function testToRubIntWithFloat(): void
     {
         $this->assertEquals(1999, PriceNormalizer::toRubInt(1999.0));
-        $this->assertEquals(1999, PriceNormalizer::toRubInt(1999.99));
+        // Целые числа с плавающей точкой должны работать
+        $this->assertEquals(2000, PriceNormalizer::toRubInt(2000.0));
     }
 
     public function testToRubIntWithFractionalFloatThrowsException(): void

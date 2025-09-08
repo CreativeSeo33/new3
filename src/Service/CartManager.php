@@ -14,6 +14,7 @@ use Symfony\Component\Uid\Ulid;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use App\Entity\ProductOptionValueAssignment;
 use App\Service\PriceNormalizer;
+use App\Service\CartLockException;
 
 /**
  * CartManager - сервис для управления корзиной покупок
@@ -111,18 +112,114 @@ final class CartManager
 		}
 	}
 
-	private function executeWithLock(Cart $cart, callable $operation): Cart
+	/**
+	 * Выполняет операцию под блокировкой с суженной критической секцией
+	 */
+	private function executeWithLock(Cart $cart, callable $operation, array $lockOpts = []): Cart
 	{
-		$this->lock->withCartLock($cart, function() use ($cart, $operation) {
-			$this->em->wrapInTransaction(function() use ($cart, $operation) {
-				$this->em->lock($cart, LockMode::PESSIMISTIC_WRITE);
-				$operation();
-				$this->finishCartOperation($cart);
-			});
+		// Настройки лока по умолчанию для обычных операций
+		$defaultOpts = [
+			'ttl' => 3.0,
+			'attempts' => 3,
+			'minSleepMs' => 25,
+			'maxSleepMs' => 120,
+		];
+		$opts = array_merge($defaultOpts, $lockOpts);
+
+		$result = $this->retryOnConflict(function() use ($cart, $operation, $opts) {
+			return $this->lock->withCartLock($cart, function() use ($cart, $operation) {
+				return $this->em->wrapInTransaction(function() use ($cart, $operation) {
+					// Устанавливаем таймаут ожидания блокировок в зависимости от типа БД
+					$connection = $this->em->getConnection();
+					$platform = $connection->getDatabasePlatform()->getName();
+
+					try {
+						if ($platform === 'postgresql') {
+							$connection->executeStatement("SET LOCAL lock_timeout = '2s'");
+						} elseif ($platform === 'mysql') {
+							$connection->executeStatement("SET innodb_lock_wait_timeout = 2");
+						}
+					} catch (\Doctrine\DBAL\Exception\DriverException $e) {
+						// Fallback: если переменная не поддерживается, просто продолжаем без таймаута
+						if (str_contains($e->getMessage(), 'Unknown system variable') ||
+							str_contains($e->getMessage(), 'Unknown variable')) {
+							// Игнорируем ошибку и продолжаем без установки таймаута
+							error_log("Database lock timeout not supported, continuing without timeout: " . $e->getMessage());
+						} else {
+							// Для других ошибок пробрасываем исключение
+							throw $e;
+						}
+					}
+
+					$this->em->lock($cart, LockMode::PESSIMISTIC_WRITE);
+					$operation();
+					// Быстрый пересчет только итогов без внешних IO
+					$this->calculator->recalculateTotalsOnly($cart);
+					$cart->setUpdatedAt(new \DateTimeImmutable());
+					$this->em->flush();
+					return $cart;
+				});
+			}, $opts);
 		});
 
+		// ВНЕ лока/транзакции — тяжелые части (доставка/LIVE), события
+		$this->calculator->recalculateShippingAndDiscounts($cart);
 		$this->events->dispatch(new \App\Event\CartUpdatedEvent($cart->getIdString()));
-		return $cart;
+
+		return $result;
+	}
+
+	/**
+	 * Профиль настроек блокировки для merge операций (более долгий)
+	 */
+	private function getMergeLockOptions(): array
+	{
+		return [
+			'ttl' => 8.0,
+			'attempts' => 5,
+			'minSleepMs' => 50,
+			'maxSleepMs' => 200,
+		];
+	}
+
+	/**
+	 * Профиль настроек блокировки для простых операций (короткий)
+	 */
+	private function getSimpleLockOptions(): array
+	{
+		return [
+			'ttl' => 2.0,
+			'attempts' => 2,
+			'minSleepMs' => 20,
+			'maxSleepMs' => 80,
+		];
+	}
+
+	/**
+	 * Выполняет операцию с ретраями при конфликтах версий и дедлоках
+	 */
+	private function retryOnConflict(callable $fn, int $maxRetries = 3): mixed
+	{
+		$lastException = null;
+
+		for ($i = 0; $i <= $maxRetries; $i++) {
+			try {
+				return $fn();
+			} catch (\Doctrine\ORM\OptimisticLockException|\Doctrine\DBAL\Exception\DeadlockException $e) {
+				$lastException = $e;
+
+				if ($i === $maxRetries) {
+					throw $e; // Последняя попытка - пробрасываем исключение
+				}
+
+				// Экспоненциальный backoff с джиттером
+				$delayMs = (int)(50 * (2 ** $i) + random_int(0, 50));
+				usleep($delayMs * 1000);
+			}
+		}
+
+		// Это никогда не должно случиться, но для линтера
+		throw $lastException ?? new \RuntimeException('Unexpected retry failure');
 	}
 
 	private function doAddItem(Cart $cart, int $productId, int $qty, array $optionAssignmentIds): void
@@ -153,7 +250,11 @@ final class CartManager
 	private function updateExistingItem(CartItem $item, $product, int $additionalQty): void
 	{
 		$newQty = $item->getQty() + $additionalQty;
-		$this->inventory->assertAvailable($product, $newQty);
+
+		// Извлекаем optionAssignmentIds из существующего товара
+		$optionAssignmentIds = $this->getOptionAssignmentIdsFromItem($item);
+
+		$this->inventory->assertAvailable($product, $newQty, $optionAssignmentIds);
 		$item->setQty($newQty);
 	}
 
@@ -254,12 +355,6 @@ final class CartManager
 		];
 	}
 
-	private function finishCartOperation(Cart $cart): void
-	{
-		$this->calculator->recalculate($cart);
-		$cart->setUpdatedAt(new \DateTimeImmutable());
-		$this->em->flush();
-	}
 
 
 	public function updateQty(Cart $cart, int $itemId, int $qty): ?Cart
@@ -284,7 +379,10 @@ final class CartManager
 			throw new \DomainException('Item not found');
 		}
 
-		$this->inventory->assertAvailable($item->getProduct(), $qty);
+		// Извлекаем optionAssignmentIds из товара
+		$optionAssignmentIds = $this->getOptionAssignmentIdsFromItem($item);
+
+		$this->inventory->assertAvailable($item->getProduct(), $qty, $optionAssignmentIds);
 		$item->setQty($qty);
 	}
 
@@ -292,20 +390,13 @@ final class CartManager
 	{
 		$itemRemoved = false;
 
-		$this->lock->withCartLock($cart, function() use ($cart, $itemId, &$itemRemoved) {
-			$this->em->wrapInTransaction(function() use ($cart, $itemId, &$itemRemoved) {
-				$this->em->lock($cart, LockMode::PESSIMISTIC_WRITE);
+		try {
+			return $this->executeWithLock($cart, function() use ($cart, $itemId, &$itemRemoved) {
 				$itemRemoved = $this->doRemoveItem($cart, $itemId);
-				$this->finishCartOperation($cart);
 			});
-		});
-
-		if ($itemRemoved) {
-			$this->events->dispatch(new \App\Event\CartUpdatedEvent($cart->getIdString()));
-			return $cart;
+		} catch (\DomainException) {
+			return null; // Товар не найден
 		}
-
-		return null;
 	}
 
 	private function doRemoveItem(Cart $cart, int $itemId): bool
@@ -372,60 +463,71 @@ final class CartManager
 
 	public function merge(Cart $target, Cart $source): Cart
 	{
-		$this->lock->withCartLock($target, function() use ($target, $source) {
-			$this->em->wrapInTransaction(function() use ($target, $source) {
-				$this->em->lock($target, LockMode::PESSIMISTIC_WRITE);
-				foreach ($source->getItems() as $srcItem) {
-					// Ищем существующий товар с учетом опций
-					$optionsHash = $srcItem->getOptionsHash();
-					$existing = $optionsHash 
-						? $this->carts->findItemForUpdateWithOptions($target, $srcItem->getProduct(), $optionsHash)
-						: $this->carts->findItemForUpdate($target, $srcItem->getProduct());
-					
-					$qty = $existing ? $existing->getQty() + $srcItem->getQty() : $srcItem->getQty();
-					$this->inventory->assertAvailable($srcItem->getProduct(), $qty);
-					
-					if ($existing) {
-						$existing->setQty($qty);
-					} else {
-						$clone = new CartItem();
-						$clone->setCart($target);
-						$clone->setProduct($srcItem->getProduct());
-						$clone->setProductName($srcItem->getProductName());
-						$clone->setUnitPrice($srcItem->getUnitPrice());
-						$clone->setQty($srcItem->getQty());
+		return $this->executeWithLock($target, function() use ($target, $source) {
+			foreach ($source->getItems() as $srcItem) {
+				// Ищем существующий товар с учетом опций
+				$optionsHash = $srcItem->getOptionsHash();
+				$existing = $optionsHash
+					? $this->carts->findItemForUpdateWithOptions($target, $srcItem->getProduct(), $optionsHash)
+					: $this->carts->findItemForUpdate($target, $srcItem->getProduct());
 
-						// Копируем данные опций
-						$clone->setOptionsPriceModifier($srcItem->getOptionsPriceModifier());
-						$clone->setEffectiveUnitPrice($srcItem->getEffectiveUnitPrice());
-						$clone->setOptionsHash($srcItem->getOptionsHash());
-						$clone->setSelectedOptionsData($srcItem->getSelectedOptionsData());
-						$clone->setOptionsSnapshot($srcItem->getOptionsSnapshot());
+				$qty = $existing ? $existing->getQty() + $srcItem->getQty() : $srcItem->getQty();
 
-						// Копируем время фиксации цены
-						$clone->setPricedAt($srcItem->getPricedAt());
+				// Извлекаем optionAssignmentIds из исходного товара
+				$optionAssignmentIds = $this->getOptionAssignmentIdsFromItem($srcItem);
+				$this->inventory->assertAvailable($srcItem->getProduct(), $qty, $optionAssignmentIds);
 
-						// Копируем связи с опциями
-						foreach ($srcItem->getOptionAssignments() as $assignment) {
-							$clone->addOptionAssignment($assignment);
-						}
+				if ($existing) {
+					$existing->setQty($qty);
+				} else {
+					$clone = new CartItem();
+					$clone->setCart($target);
+					$clone->setProduct($srcItem->getProduct());
+					$clone->setProductName($srcItem->getProductName());
+					$clone->setUnitPrice($srcItem->getUnitPrice());
+					$clone->setQty($srcItem->getQty());
 
-						$this->em->persist($clone);
+					// Копируем данные опций
+					$clone->setOptionsPriceModifier($srcItem->getOptionsPriceModifier());
+					$clone->setEffectiveUnitPrice($srcItem->getEffectiveUnitPrice());
+					$clone->setOptionsHash($srcItem->getOptionsHash());
+					$clone->setSelectedOptionsData($srcItem->getSelectedOptionsData());
+					$clone->setOptionsSnapshot($srcItem->getOptionsSnapshot());
+
+					// Копируем время фиксации цены
+					$clone->setPricedAt($srcItem->getPricedAt());
+
+					// Копируем связи с опциями
+					foreach ($srcItem->getOptionAssignments() as $assignment) {
+						$clone->addOptionAssignment($assignment);
 					}
+
+					$this->em->persist($clone);
 				}
-				$this->calculator->recalculate($target);
-				$target->setUpdatedAt(new \DateTimeImmutable());
+			}
 
-				// Помечаем исходную корзину как истекшую и очищаем token
-				$source->setExpiresAt(new \DateTimeImmutable('-1 day'));
-				$source->setToken(null);
+			// Помечаем исходную корзину как истекшую и очищаем token
+			$source->setExpiresAt(new \DateTimeImmutable('-1 day'));
+			$source->setToken(null);
 
-				foreach ($source->getItems() as $it) $this->em->remove($it);
-				$this->em->flush();
-			});
-		});
+			foreach ($source->getItems() as $it) $this->em->remove($it);
+		}, $this->getMergeLockOptions());
 
+		// Для merge не диспатчим событие здесь - оно уже диспатчится в executeWithLock
 		return $target;
+	}
+
+	/**
+	 * Извлекает ID опций из CartItem
+	 */
+	private function getOptionAssignmentIdsFromItem(CartItem $item): array
+	{
+		$optionAssignments = $item->getOptionAssignments();
+		if ($optionAssignments->isEmpty()) {
+			return [];
+		}
+
+		return $optionAssignments->map(fn($assignment) => $assignment->getId())->toArray();
 	}
 }
 
