@@ -115,3 +115,21 @@ export type ProductOptionData = {
   setPrice?: boolean;
   salePrice?: number;
 };
+
+// Delta ответы для оптимизации
+export interface CartDelta {
+  version: number;
+  changedItems: Array<{
+    id: number;
+    qty: number;
+    rowTotal: number;
+    effectiveUnitPrice: number;
+  }>;
+  removedItemIds: number[];
+  totals: {
+    itemsCount: number;
+    subtotal: number;
+    discountTotal: number;
+    total: number;
+  };
+}

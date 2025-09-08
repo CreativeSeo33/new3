@@ -1,13 +1,17 @@
 import { Component } from '@shared/ui/Component';
-import { updateCartItemQuantity, removeCartItem, getCart } from '../api';
+import { updateCartItemQuantity, removeCartItem, getCart, getCartSummary } from '../api';
 import { formatPrice } from '@shared/lib/formatPrice';
-import type { Cart } from '@shared/types/api';
+import type { Cart, CartDelta } from '@shared/types/api';
+import { getCart as getFullCart } from '@features/add-to-cart/api';
 
 // Импортируем модальное окно
 import { Modal } from '@shared/ui/modal-simple.js';
 
 export interface CartItemsManagerOptions {
   formatPrice?: (price: number) => string;
+  useFullMode?: boolean; // Принудительно использовать полный режим вместо delta
+  debugMode?: boolean; // Включить подробное логирование для отладки
+  suppressItemNotFoundErrors?: boolean; // Подавлять ошибки "товар не найден"
 }
 
 export class CartItemsManager extends Component {
@@ -65,19 +69,50 @@ export class CartItemsManager extends Component {
     const originalValue = target.value;
 
     try {
-      const cartData = await updateCartItemQuantity(itemId, qty);
+      let resultData;
 
-      // Находим строку товара и обновляем данные
-      const row = target.closest('tr') as HTMLTableRowElement;
-      if (row) {
-        this.updateRowData(row, cartData, itemId);
+      // Проверяем, нужно ли использовать полный режим
+      if (this.options.useFullMode) {
+        console.log('Using full mode for cart update (debug mode)');
+        const fullCartData = await getFullCart();
+        resultData = {
+          version: 0, // Не важно для отображения
+          changedItems: fullCartData.items.map(item => ({
+            id: Number(item.id),
+            qty: item.qty,
+            rowTotal: item.rowTotal,
+            effectiveUnitPrice: item.effectiveUnitPrice
+          })),
+          removedItemIds: [],
+          totals: {
+            itemsCount: fullCartData.items.length,
+            subtotal: fullCartData.subtotal,
+            discountTotal: fullCartData.discountTotal,
+            total: fullCartData.total
+          }
+        } as CartDelta;
+      } else {
+        // Используем оптимизированную функцию с delta ответом
+        resultData = await updateCartItemQuantity(itemId, qty);
+
+        // Проверяем, что получили корректные delta данные
+        if (!resultData || typeof resultData !== 'object') {
+          throw new Error('Invalid delta response received');
+        }
       }
 
-      // Обновляем общую сумму
-      this.updateTotal(cartData.total);
+      // Находим строку товара и обновляем данные на основе delta
+      const row = target.closest('tr') as HTMLTableRowElement;
+      if (row) {
+        this.updateRowDataFromDelta(row, resultData, itemId);
+      }
 
-      // Отправляем событие обновления корзины
-      this.dispatchCartUpdatedEvent(cartData);
+      // Обновляем общую сумму из delta данных
+      this.updateTotalFromDelta(resultData);
+
+      // Отправляем событие обновления корзины с полными данными (для совместимости)
+      // Получаем полную корзину асинхронно, но не блокируем UI
+      this.dispatchCartUpdatedEventAsync(resultData);
 
     } catch (error: any) {
       console.error('Error updating item quantity:', error);
@@ -87,6 +122,20 @@ export class CartItemsManager extends Component {
 
       // Показываем ошибку
       this.showError('Не удалось обновить количество товара');
+
+      // В случае ошибки пытаемся получить полную корзину для восстановления состояния
+      try {
+        const fullCartData = await getFullCart();
+        // Обновляем UI с полными данными
+        const row = target.closest('tr') as HTMLTableRowElement;
+        if (row) {
+          this.updateRowData(row, fullCartData, itemId);
+        }
+        this.updateTotal(fullCartData.total);
+        this.dispatchCartUpdatedEvent(fullCartData);
+      } catch (fallbackError) {
+        console.error('Fallback update also failed:', fallbackError);
+      }
     } finally {
       target.disabled = false;
     }
@@ -104,12 +153,31 @@ export class CartItemsManager extends Component {
 
     const itemId = target.dataset.itemId;
     if (!itemId) {
+      console.warn('Remove button clicked but no itemId found');
       return;
+    }
+
+    // Проверяем, что ID является числом
+    const numericId = parseInt(itemId, 10);
+    if (isNaN(numericId) || numericId <= 0) {
+      console.error('Invalid item ID:', itemId);
+      this.showError('Некорректный ID товара');
+      return;
+    }
+
+    if (this.options.debugMode) {
+      console.log('Remove button clicked for item:', numericId, {
+        itemId: itemId,
+        button: target,
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      console.log('Remove button clicked for item:', numericId);
     }
 
     // Сохраняем информацию о товаре для удаления
     this.pendingRemoveItem = {
-      itemId,
+      itemId: String(numericId), // Сохраняем как строку для совместимости
       button: target
     };
 
@@ -280,6 +348,22 @@ export class CartItemsManager extends Component {
     const { itemId, button } = this.pendingRemoveItem;
     console.log('Removing item:', itemId, 'with button:', button);
 
+    // Дополнительная проверка ID перед отправкой
+    const numericId = parseInt(itemId, 10);
+    if (isNaN(numericId) || numericId <= 0) {
+      console.error('Invalid item ID for removal:', itemId);
+      this.showError('Некорректный ID товара для удаления');
+
+      // Закрываем модальное окно
+      setTimeout(() => {
+        if (this.removeModal) {
+          this.removeModal.close();
+        }
+        this.pendingRemoveItem = null;
+      }, 500);
+      return;
+    }
+
     // Показываем загрузку
     const originalText = button.textContent;
     button.textContent = 'Удаление...';
@@ -289,8 +373,37 @@ export class CartItemsManager extends Component {
 
     try {
       console.log('Starting removal of item:', itemId);
-      const cartData = await removeCartItem(itemId);
-      console.log('Item removal successful, cart data:', cartData);
+      let resultData;
+
+      // Проверяем, нужно ли использовать полный режим
+      if (this.options.useFullMode) {
+        console.log('Using full mode for cart removal (debug mode)');
+        const fullCartData = await getFullCart();
+        resultData = {
+          version: 0, // Не важно для отображения
+          changedItems: [],
+          removedItemIds: [Number(itemId)],
+          totals: {
+            itemsCount: fullCartData.items.length,
+            subtotal: fullCartData.subtotal,
+            discountTotal: fullCartData.discountTotal,
+            total: fullCartData.total
+          }
+        } as CartDelta;
+      } else {
+        // Используем оптимизированную функцию с delta ответом
+        console.log('Sending remove request for item:', numericId);
+        resultData = await removeCartItem(numericId);
+        console.log('Item removal successful, delta data:', resultData);
+
+        // Проверяем, что получили корректные delta данные
+        if (!resultData || typeof resultData !== 'object' || !resultData.totals) {
+          console.error('Invalid delta response received for removal:', resultData);
+          throw new Error('Invalid delta response received for removal');
+        }
+
+        console.log('Delta data validation passed for item removal');
+      }
 
       // Удаляем строку из DOM
       const row = button.closest('tr') as HTMLTableRowElement;
@@ -298,14 +411,14 @@ export class CartItemsManager extends Component {
         row.remove();
       }
 
-      // Обновляем общую сумму
-      this.updateTotal(cartData.total);
+      // Обновляем общую сумму из delta данных
+      this.updateTotalFromDelta(resultData);
 
-      // Отправляем событие обновления корзины
-      this.dispatchCartUpdatedEvent(cartData);
+      // Отправляем событие обновления корзины асинхронно (для совместимости)
+      this.dispatchCartUpdatedEventAsync(resultData);
 
-      // Если корзина пуста, перезагружаем страницу
-      if (cartData.items.length === 0) {
+      // Если корзина пуста (проверяем по delta данным), перезагружаем страницу
+      if (resultData.totals.itemsCount === 0) {
         window.location.reload();
         return; // Не закрываем окно, так как страница перезагрузится
       }
@@ -328,7 +441,65 @@ export class CartItemsManager extends Component {
     } catch (error) {
       console.error('Error removing item:', error);
       console.error('Error details:', (error as any)?.message, (error as any)?.stack);
-      this.showError('Не удалось удалить товар из корзины');
+
+      // Проверяем, является ли ошибка "товар не найден"
+      const errorMessage = (error as any)?.message || '';
+      const responseData = (error as any)?.response?.data;
+      const responseStatus = (error as any)?.response?.status || (error as any)?.status;
+
+      const isItemNotFound = errorMessage.includes('cart_item_not_found') ||
+                            errorMessage.includes('HTTP 404') ||
+                            responseData?.error === 'cart_item_not_found' ||
+                            responseStatus === 404;
+
+      console.log('Error analysis:', {
+        errorMessage,
+        responseData,
+        responseStatus,
+        isItemNotFound
+      });
+
+      if (isItemNotFound) {
+        console.warn('Item not found, it may have been already removed. Refreshing cart...', {
+          itemId: itemId,
+          error: error,
+          userId: (window as any).userId || 'unknown'
+        });
+
+        // Показываем более понятное сообщение пользователю (если не подавлено)
+        if (!this.options.suppressItemNotFoundErrors) {
+          this.showError('Товар был удален из корзины ранее');
+        }
+
+        // Обновляем корзину, так как товар мог быть удален другим способом
+        try {
+          console.log('Refreshing cart data after item not found error...');
+          const fullCartData = await getFullCart();
+          console.log('Cart refreshed successfully, new item count:', fullCartData.items.length);
+
+          this.updateTotal(fullCartData.total);
+          this.dispatchCartUpdatedEvent(fullCartData);
+
+          // Если товар все еще отображается в UI, скрываем его
+          const row = button.closest('tr') as HTMLTableRowElement;
+          if (row) {
+            console.log('Removing item row from UI after 404 error');
+            row.remove();
+          }
+
+          // Показываем уведомление об успешном обновлении
+          setTimeout(() => {
+            this.showError('Корзина обновлена');
+          }, 1500);
+
+        } catch (refreshError) {
+          console.error('Failed to refresh cart after item not found:', refreshError);
+          this.showError('Не удалось обновить корзину');
+        }
+      } else {
+        console.error('Unexpected error during item removal:', error);
+        this.showError('Не удалось удалить товар из корзины');
+      }
 
       // В случае ошибки закрываем окно через небольшую задержку
       setTimeout(() => {
@@ -394,6 +565,86 @@ export class CartItemsManager extends Component {
    */
   private dispatchCartUpdatedEvent(data: Cart): void {
     window.dispatchEvent(new CustomEvent('cart:updated', { detail: data }));
+  }
+
+  /**
+   * Обновляет данные строки товара на основе delta ответа
+   */
+  private updateRowDataFromDelta(row: HTMLTableRowElement, deltaData: CartDelta, itemId: string): void {
+    // Проверяем, что deltaData и changedItems существуют
+    if (!deltaData || !deltaData.changedItems || !Array.isArray(deltaData.changedItems)) {
+      console.warn('Invalid delta data received:', deltaData);
+      return;
+    }
+
+    // Находим измененный товар в delta данных
+    const changedItem = deltaData.changedItems.find((item: { id: number; qty: number; rowTotal: number; effectiveUnitPrice: number }) => {
+      return item.id === Number(itemId);
+    });
+
+    if (!changedItem) {
+      console.warn('Changed item not found in delta data:', itemId, deltaData.changedItems);
+      return;
+    }
+
+    // Обновляем количество
+    const qtyInput = row.querySelector('.qty-input') as HTMLInputElement;
+    if (qtyInput) {
+      qtyInput.value = changedItem.qty.toString();
+    }
+
+    // Обновляем цену (с учетом опций)
+    const priceCell = row.querySelector('td:nth-child(2)') as HTMLTableCellElement;
+    if (priceCell) {
+      priceCell.textContent = this.options.formatPrice!(changedItem.effectiveUnitPrice);
+    }
+
+    // Обновляем сумму строки
+    const rowTotalCell = row.querySelector('.row-total') as HTMLTableCellElement;
+    if (rowTotalCell) {
+      rowTotalCell.textContent = this.options.formatPrice!(changedItem.rowTotal);
+    }
+  }
+
+  /**
+   * Обновляет общую сумму на основе delta данных
+   */
+  private updateTotalFromDelta(deltaData: CartDelta): void {
+    // Проверяем, что deltaData и totals существуют
+    if (!deltaData || !deltaData.totals) {
+      console.warn('Invalid delta data for totals update:', deltaData);
+      return;
+    }
+
+    const totalEl = document.getElementById('cart-total');
+    if (totalEl) {
+      totalEl.textContent = this.options.formatPrice!(deltaData.totals.total);
+    }
+  }
+
+  /**
+   * Асинхронно отправляет событие обновления корзины с полными данными
+   * для совместимости с существующими компонентами
+   */
+  private async dispatchCartUpdatedEventAsync(deltaData: CartDelta): Promise<void> {
+    try {
+      // Получаем полную корзину асинхронно
+      const fullCartData = await getFullCart();
+      this.dispatchCartUpdatedEvent(fullCartData);
+    } catch (error) {
+      console.warn('Failed to fetch full cart data for event, using delta data:', error);
+      // Fallback: создаем минимальный объект для совместимости
+      const minimalCartData = {
+        id: 'cart',
+        currency: 'RUB',
+        subtotal: deltaData.totals.subtotal,
+        discountTotal: deltaData.totals.discountTotal,
+        total: deltaData.totals.total,
+        shipping: { cost: 0 },
+        items: [] // Пустой массив, так как у нас только delta данные
+      };
+      this.dispatchCartUpdatedEvent(minimalCartData);
+    }
   }
 
   /**

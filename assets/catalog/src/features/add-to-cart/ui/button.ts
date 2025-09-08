@@ -104,8 +104,14 @@ export class AddToCartButton extends Component {
     this.showLoading();
 
     try {
-      // Добавляем товар в корзину
-      const cartData: Cart = await addToCart(this.productId, this.qty, optionAssignmentIds);
+      // Генерируем Idempotency-Key для предотвращения дублирования
+      const idempotencyKey = this.generateIdempotencyKey(this.productId, this.qty, optionAssignmentIds);
+
+      // Добавляем товар в корзину (всегда запрашиваем полный ответ для UI)
+      const cartData = await addToCart(this.productId, this.qty, optionAssignmentIds, {
+        responseMode: 'full',
+        idempotencyKey
+      }) as Cart;
 
       // Отправляем событие обновления корзины
       window.dispatchEvent(new CustomEvent('cart:updated', { detail: cartData }));
@@ -265,6 +271,24 @@ export class AddToCartButton extends Component {
     // Сбрасываем флаг обработки
     this.isProcessing = false;
     console.log('Button state reset, isProcessing = false');
+  }
+
+  /**
+   * Генерирует Idempotency-Key для предотвращения дублирования запросов
+   */
+  private generateIdempotencyKey(productId: number, qty: number, optionAssignmentIds: number[]): string {
+    const timestamp = Date.now();
+    const data = `${productId}-${qty}-${optionAssignmentIds.sort().join(',')}-${timestamp}`;
+
+    // Простой хэш для создания уникального ключа
+    let hash = 0;
+    for (let i = 0; i < data.length; i++) {
+      const char = data.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Конвертируем в 32-bit integer
+    }
+
+    return `cart-add-${Math.abs(hash)}-${timestamp}`;
   }
 
   destroy(): void {

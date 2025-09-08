@@ -533,6 +533,308 @@ final class CartManager
 
 		return $optionAssignments->map(fn($assignment) => $assignment->getId())->toArray();
 	}
+
+	/**
+	 * Выполняет addItem с возвратом информации об изменениях
+	 */
+	public function addItemWithChanges(Cart $cart, int $productId, int $qty, array $optionAssignmentIds = []): array
+	{
+		$beforeItems = $this->createItemsSnapshot($cart);
+
+		$result = $this->addItem($cart, $productId, $qty, $optionAssignmentIds);
+
+		$afterItems = $this->createItemsSnapshot($cart);
+		$changes = $this->analyzeChanges($cart, $beforeItems, $afterItems);
+
+		return [
+			'cart' => $result,
+			'changes' => $changes,
+			'operation' => [
+				'type' => 'add',
+				'productId' => $productId,
+				'qty' => $qty,
+				'optionAssignmentIds' => $optionAssignmentIds,
+			],
+		];
+	}
+
+	/**
+	 * Выполняет updateQty с возвратом информации об изменениях
+	 */
+	public function updateQtyWithChanges(Cart $cart, int $itemId, int $qty): array
+	{
+		$beforeItems = $this->createItemsSnapshot($cart);
+
+		$result = $this->updateQty($cart, $itemId, $qty);
+
+		$afterItems = $this->createItemsSnapshot($cart);
+		$changes = $this->analyzeChanges($cart, $beforeItems, $afterItems);
+
+		return [
+			'cart' => $result,
+			'changes' => $changes,
+			'operation' => [
+				'type' => 'update',
+				'itemId' => $itemId,
+				'qty' => $qty,
+			],
+		];
+	}
+
+	/**
+	 * Выполняет removeItem с возвратом информации об изменениях
+	 */
+	public function removeItemWithChanges(Cart $cart, int $itemId): array
+	{
+		$beforeItems = $this->createItemsSnapshot($cart);
+
+		$result = $this->removeItem($cart, $itemId);
+
+		$afterItems = $this->createItemsSnapshot($cart);
+		$changes = $this->analyzeChanges($cart, $beforeItems, $afterItems);
+
+		return [
+			'cart' => $result,
+			'changes' => $changes,
+			'operation' => [
+				'type' => 'remove',
+				'itemId' => $itemId,
+			],
+		];
+	}
+
+	/**
+	 * Выполняет clearCart с возвратом информации об изменениях
+	 */
+	public function clearCartWithChanges(Cart $cart): array
+	{
+		$beforeItems = $this->createItemsSnapshot($cart);
+
+		$result = $this->clearCart($cart);
+
+		$afterItems = $this->createItemsSnapshot($cart);
+		$changes = $this->analyzeChanges($cart, $beforeItems, $afterItems);
+
+		return [
+			'cart' => $result,
+			'changes' => $changes,
+			'operation' => [
+				'type' => 'clear',
+			],
+		];
+	}
+
+	/**
+	 * Выполняет батч операций с атомарностью
+	 */
+	public function executeBatch(Cart $cart, array $operations, bool $atomic = true): array
+	{
+		$beforeItems = $this->createItemsSnapshot($cart);
+		$results = [];
+		$allChanges = [];
+		$hasErrors = false;
+
+		if ($atomic) {
+			// Атомарный режим: все или ничего
+			return $this->executeWithLock($cart, function() use ($cart, $operations, $beforeItems) {
+				return $this->doExecuteBatch($cart, $operations, $beforeItems, true);
+			});
+		} else {
+			// Неатомарный режим: best-effort
+			try {
+				$batchResult = $this->executeWithLock($cart, function() use ($cart, $operations, $beforeItems) {
+					return $this->doExecuteBatch($cart, $operations, $beforeItems, false);
+				});
+				return $batchResult;
+			} catch (\Exception $e) {
+				// В неатомарном режиме возвращаем частичный результат
+				$afterItems = $this->createItemsSnapshot($cart);
+				$changes = $this->analyzeChanges($cart, $beforeItems, $afterItems);
+
+				return [
+					'cart' => $cart,
+					'changes' => $changes,
+					'results' => array_map(fn($op) => [
+						'index' => $op['index'] ?? 0,
+						'status' => 'error',
+						'error' => $e->getMessage(),
+					], $operations),
+					'success' => false,
+				];
+			}
+		}
+	}
+
+	/**
+	 * Выполняет батч операций внутри транзакции
+	 */
+	private function doExecuteBatch(Cart $cart, array $operations, array $beforeItems, bool $atomic): array
+	{
+		$results = [];
+		$allChanges = [];
+
+		foreach ($operations as $index => $operation) {
+			try {
+				$result = $this->executeSingleOperation($cart, $operation);
+				$results[] = [
+					'index' => $index,
+					'status' => 'ok',
+					...$result,
+				];
+
+				if (isset($result['changes'])) {
+					$allChanges = array_merge($allChanges, $result['changes']);
+				}
+
+			} catch (\Exception $e) {
+				if ($atomic) {
+					// В атомарном режиме откатываем всю транзакцию
+					throw $e;
+				}
+
+				$results[] = [
+					'index' => $index,
+					'status' => 'error',
+					'error' => $e->getMessage(),
+				];
+			}
+		}
+
+		return [
+			'cart' => $cart,
+			'changes' => $allChanges,
+			'results' => $results,
+			'success' => !in_array('error', array_column($results, 'status')),
+		];
+	}
+
+	/**
+	 * Выполняет одну операцию из батча
+	 */
+	private function executeSingleOperation(Cart $cart, array $operation): array
+	{
+		return match ($operation['op']) {
+			'add' => $this->doAddItemForBatch($cart, $operation),
+			'update' => $this->doUpdateQtyForBatch($cart, $operation),
+			'remove' => $this->doRemoveItemForBatch($cart, $operation),
+			default => throw new \InvalidArgumentException("Unsupported operation: {$operation['op']}"),
+		};
+	}
+
+	/**
+	 * Добавление товара для батч-операции
+	 */
+	private function doAddItemForBatch(Cart $cart, array $operation): array
+	{
+		$beforeItems = $this->createItemsSnapshot($cart);
+
+		$this->doAddItem(
+			$cart,
+			$operation['productId'],
+			$operation['qty'] ?? 1,
+			$operation['optionAssignmentIds'] ?? []
+		);
+
+		$afterItems = $this->createItemsSnapshot($cart);
+		$changes = $this->analyzeChanges($cart, $beforeItems, $afterItems);
+
+		// Находим добавленный/обновленный товар
+		$addedItem = null;
+		foreach ($changes as $change) {
+			if ($change['type'] === 'changed') {
+				$addedItem = $change['item'];
+				break;
+			}
+		}
+
+		return [
+			'itemId' => $addedItem?->getId(),
+			'changes' => $changes,
+		];
+	}
+
+	/**
+	 * Обновление количества для батч-операции
+	 */
+	private function doUpdateQtyForBatch(Cart $cart, array $operation): array
+	{
+		$beforeItems = $this->createItemsSnapshot($cart);
+
+		$this->doUpdateQty($cart, $operation['itemId'], $operation['qty']);
+
+		$afterItems = $this->createItemsSnapshot($cart);
+		$changes = $this->analyzeChanges($cart, $beforeItems, $afterItems);
+
+		return ['changes' => $changes];
+	}
+
+	/**
+	 * Удаление товара для батч-операции
+	 */
+	private function doRemoveItemForBatch(Cart $cart, array $operation): array
+	{
+		$beforeItems = $this->createItemsSnapshot($cart);
+
+		$this->doRemoveItem($cart, $operation['itemId']);
+
+		$afterItems = $this->createItemsSnapshot($cart);
+		$changes = $this->analyzeChanges($cart, $beforeItems, $afterItems);
+
+		return ['changes' => $changes];
+	}
+
+	/**
+	 * Создает снимок позиций корзины
+	 */
+	private function createItemsSnapshot(Cart $cart): array
+	{
+		$snapshot = [];
+		foreach ($cart->getItems() as $item) {
+			$snapshot[$item->getId()] = [
+				'id' => $item->getId(),
+				'qty' => $item->getQty(),
+				'item' => $item,
+			];
+		}
+		return $snapshot;
+	}
+
+	/**
+	 * Анализирует изменения между двумя снимками
+	 */
+	private function analyzeChanges(Cart $cart, array $beforeItems, array $afterItems): array
+	{
+		$changes = [];
+
+		// Анализ удаленных позиций
+		foreach ($beforeItems as $itemId => $beforeItem) {
+			if (!isset($afterItems[$itemId])) {
+				$changes[] = [
+					'type' => 'removed',
+					'itemId' => $itemId,
+				];
+			}
+		}
+
+		// Анализ измененных позиций
+		foreach ($afterItems as $itemId => $afterItem) {
+			if (!isset($beforeItems[$itemId])) {
+				// Новая позиция
+				$changes[] = [
+					'type' => 'changed',
+					'item' => $afterItem['item'],
+				];
+			} elseif ($beforeItems[$itemId]['qty'] !== $afterItem['qty']) {
+				// Измененное количество
+				$changes[] = [
+					'type' => 'changed',
+					'item' => $afterItem['item'],
+				];
+			}
+		}
+
+		return $changes;
+	}
 }
 
 

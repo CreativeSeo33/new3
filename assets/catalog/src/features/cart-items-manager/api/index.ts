@@ -1,31 +1,359 @@
-import { patch, delWithStatus, get } from '@shared/api/http';
-import type { Cart, CartItem } from '@shared/types/api';
+import { get, patch, del } from '@shared/api/http';
+import {
+  createCartHeaders,
+  type Cart,
+  type CartDelta,
+  type CartRequestOptions,
+  type CartSummary
+} from '../../add-to-cart/api';
 
 /**
- * Обновляет количество товара в корзине
+ * Утилита для парсинга HTTP статуса из error.message
  */
-export async function updateCartItemQuantity(itemId: string | number, qty: number): Promise<Cart> {
-  return patch<Cart>(`/api/cart/items/${itemId}`, { qty });
+function parseHttpStatus(error: any): number | null {
+  if (!error?.message) return null;
+
+  const match = error.message.match(/^\s*HTTP\s+(\d{3})\b/);
+  return match ? parseInt(match[1], 10) : null;
 }
 
 /**
- * Удаляет товар из корзины и возвращает актуальные данные корзины
+ * Утилита для проверки является ли ответ полным объектом корзины
  */
-export async function removeCartItem(itemId: string | number): Promise<Cart> {
-  const response = await delWithStatus(`/api/cart/items/${itemId}`);
+function isFullCartResponse(response: any): response is Cart {
+  return response &&
+         typeof response.id === 'string' &&
+         typeof response.currency === 'string' &&
+         typeof response.subtotal === 'number';
+}
 
-  // Если удаление успешно и вернулся JSON с корзиной
-  if (response.status === 200 && response.data) {
-    return response.data as Cart;
+/**
+ * Нормализует полный ответ корзины в delta-формат
+ */
+function normalizeFullCartToDelta(cart: Cart, changes?: {
+  changedItemId?: number;
+  changedQty?: number;
+  removedItemId?: number;
+}): CartDelta {
+  let changedItems: CartDelta['changedItems'] = [];
+
+  // Если есть изменения, попробуем найти реальные данные товара в корзине
+  if (changes?.changedItemId && cart.items) {
+    const cartItem = cart.items.find(item => Number(item.id) === Number(changes.changedItemId));
+    if (cartItem) {
+      changedItems = [{
+        id: changes.changedItemId,
+        qty: changes.changedQty || cartItem.qty,
+        rowTotal: cartItem.rowTotal,
+        effectiveUnitPrice: cartItem.effectiveUnitPrice
+      }];
+    } else if (changes.changedQty !== undefined) {
+      // Товар не найден в корзине, но указано количество - создаем с минимальными данными
+      changedItems = [{
+        id: changes.changedItemId,
+        qty: changes.changedQty,
+        rowTotal: 0,
+        effectiveUnitPrice: 0
+      }];
+    }
   }
 
-  // Если товар не найден или корзина не существует (204)
-  if (response.status === 204) {
-    // Для обратной совместимости получаем актуальные данные корзины
-    return await get<Cart>('/api/cart');
-  }
+  const removedItemIds = changes?.removedItemId ? [changes.removedItemId] : [];
 
-  throw new Error('Ошибка при удалении товара');
+  return {
+    version: (cart as any).version || Date.now(),
+    changedItems,
+    removedItemIds,
+    totals: {
+      itemsCount: cart.items?.length || 0,
+      subtotal: cart.subtotal,
+      discountTotal: cart.discountTotal || 0,
+      total: cart.total,
+      version: (cart as any).version || Date.now() // workaround for CartSummary type
+    } as any
+  };
+}
+
+
+/**
+ * Обновляет количество товара в корзине с оптимизированным ответом
+ */
+export async function updateCartItemQuantity(
+  itemId: string | number,
+  qty: number,
+  options: CartRequestOptions = {}
+): Promise<CartDelta> {
+  try {
+    // По умолчанию используем delta-режим
+    const requestOptions = {
+      ...options,
+      responseMode: options.responseMode || 'delta'
+    };
+    if (options.ifMatchVersion !== undefined) {
+      requestOptions.ifMatchVersion = options.ifMatchVersion;
+    }
+    const headers = createCartHeaders(requestOptions);
+
+    // Выполняем PATCH запрос
+    const response = await patch(`/api/cart/items/${Number(itemId)}`, { qty }, { headers });
+
+    // Обрабатываем различные типы ответов
+    if (isFullCartResponse(response)) {
+      // 200 OK с полным объектом корзины
+      console.log('Received full cart response for quantity update, normalizing to delta');
+      return normalizeFullCartToDelta(response, { changedItemId: Number(itemId), changedQty: qty });
+    } else if (response === null || response === undefined || response === '') {
+      // 204 No Content - нужно добрать summary
+      console.log('Received 204 No Content for quantity update, fetching summary');
+      const summary = await getCartSummary();
+      return {
+        version: summary.version,
+        changedItems: [{
+          id: Number(itemId),
+          qty,
+          rowTotal: 0,
+          effectiveUnitPrice: 0
+        }],
+        removedItemIds: [],
+        totals: {
+          itemsCount: summary.itemsCount,
+          subtotal: summary.subtotal,
+          discountTotal: summary.discountTotal,
+          total: summary.total,
+          version: summary.version
+        } as any
+      };
+    } else {
+      // Предполагаем что это корректный delta-ответ
+      if (!response.totals) {
+        throw new Error('Invalid delta response format for quantity update');
+      }
+      return response;
+    }
+  } catch (error: any) {
+    const status = parseHttpStatus(error);
+    console.warn('Delta mode failed for updateCartItemQuantity:', { error: error.message, status });
+
+    // Обработка конфликтов версий - не делаем фолбэк
+    if (status === 412 || status === 409 || status === 428) {
+      console.warn('Version conflict detected, throwing precondition_failed');
+      throw new Error('precondition_failed');
+    }
+
+    // Обработка специальных случаев
+    if (status === 404) {
+      console.warn('Item not found during quantity update, fetching summary');
+      // Товар не найден - получаем summary для актуальных данных
+      const summary = await getCartSummary();
+      return {
+        version: summary.version,
+        changedItems: [],
+        removedItemIds: [Number(itemId)], // Позиция исчезла
+        totals: {
+          itemsCount: summary.itemsCount,
+          subtotal: summary.subtotal,
+          discountTotal: summary.discountTotal,
+          total: summary.total,
+          version: summary.version
+        } as any
+      };
+    }
+
+    // Fallback: используем полный режим и нормализуем результат
+    const fullCart = await updateCartItemQuantityFull(itemId, qty, options);
+    return normalizeFullCartToDelta(fullCart, { changedItemId: Number(itemId), changedQty: qty });
+  }
+}
+
+/**
+ * Обновляет количество товара в корзине с полным ответом (для обратной совместимости)
+ */
+export async function updateCartItemQuantityFull(
+  itemId: string | number,
+  qty: number,
+  options: CartRequestOptions = {}
+): Promise<Cart> {
+  try {
+    // Выполняем PATCH с полными заголовками
+    const fullOptions = {
+      ...options,
+      responseMode: 'full' as const
+    };
+    if (options.ifMatchVersion !== undefined) {
+      fullOptions.ifMatchVersion = options.ifMatchVersion;
+    }
+    const headers = createCartHeaders(fullOptions);
+    const response = await patch(`/api/cart/items/${Number(itemId)}`, { qty }, { headers });
+
+    // Обрабатываем ответ
+    if (isFullCartResponse(response)) {
+      // 200 OK с полным объектом корзины
+      return response;
+    } else if (response === null || response === undefined || response === '') {
+      // 204 No Content - получаем полную корзину
+      console.log('Received 204 No Content for full quantity update, fetching full cart');
+      return get<Cart>('/api/cart');
+    } else {
+      // Неожиданный ответ - получаем полную корзину
+      console.warn('Unexpected response format in full mode, fetching full cart');
+      return get<Cart>('/api/cart');
+    }
+  } catch (error: any) {
+    const status = parseHttpStatus(error);
+    console.warn('Full mode failed for updateCartItemQuantityFull:', { error: error.message, status });
+
+    // Обработка конфликтов версий
+    if (status === 412 || status === 409 || status === 428) {
+      console.warn('Version conflict detected in full mode, throwing precondition_failed');
+      throw new Error('precondition_failed');
+    }
+
+    if (status === 404) {
+      // Товар не найден - возвращаем актуальную корзину
+      console.warn('Item not found during full quantity update');
+      return get<Cart>('/api/cart');
+    }
+
+    // Для других ошибок пробрасываем дальше
+    throw error;
+  }
+}
+
+/**
+ * Удаляет товар из корзины с оптимизированным ответом
+ */
+export async function removeCartItem(
+  itemId: string | number,
+  options: CartRequestOptions = {}
+): Promise<CartDelta> {
+  try {
+    // По умолчанию используем delta-режим
+    const requestOptions = {
+      ...options,
+      responseMode: options.responseMode || 'delta'
+    };
+    if (options.ifMatchVersion !== undefined) {
+      requestOptions.ifMatchVersion = options.ifMatchVersion;
+    }
+    const headers = createCartHeaders(requestOptions);
+
+    // Выполняем DELETE запрос
+    const response = await del(`/api/cart/items/${Number(itemId)}`, { headers });
+
+    // Обрабатываем различные типы ответов
+    if (isFullCartResponse(response)) {
+      // 200 OK с полным объектом корзины
+      console.log('Received full cart response for removal, normalizing to delta');
+      return normalizeFullCartToDelta(response, { removedItemId: Number(itemId) });
+    } else if (response === null || response === undefined || response === '') {
+      // 204 No Content - нужно добрать summary
+      console.log('Received 204 No Content for removal, fetching summary');
+      const summary = await getCartSummary();
+      return {
+        version: summary.version,
+        changedItems: [],
+        removedItemIds: [Number(itemId)],
+        totals: {
+          itemsCount: summary.itemsCount,
+          subtotal: summary.subtotal,
+          discountTotal: summary.discountTotal,
+          total: summary.total,
+          version: summary.version
+        } as any
+      };
+    } else {
+      // Предполагаем что это корректный delta-ответ
+      if (!response.totals) {
+        throw new Error('Invalid delta response format for removal');
+      }
+      return response;
+    }
+  } catch (error: any) {
+    const status = parseHttpStatus(error);
+    console.warn('Delta mode failed for removeCartItem:', { error: error.message, status });
+
+    // Обработка конфликтов версий - не делаем фолбэк
+    if (status === 412 || status === 409 || status === 428) {
+      console.warn('Version conflict detected, throwing precondition_failed');
+      throw new Error('precondition_failed');
+    }
+
+    // Обработка специальных случаев
+    if (status === 404) {
+      console.warn('Item not found during removal, fetching summary');
+      // Товар уже удален - получаем summary для актуальных данных
+      const summary = await getCartSummary();
+      return {
+        version: summary.version,
+        changedItems: [],
+        removedItemIds: [Number(itemId)],
+        totals: {
+          itemsCount: summary.itemsCount,
+          subtotal: summary.subtotal,
+          discountTotal: summary.discountTotal,
+          total: summary.total,
+          version: summary.version
+        } as any
+      };
+    }
+
+    // Fallback: используем полный режим и нормализуем результат
+    const fullCart = await removeCartItemFull(itemId, options);
+    return normalizeFullCartToDelta(fullCart, { removedItemId: Number(itemId) });
+  }
+}
+
+/**
+ * Удаляет товар из корзины с полным ответом (для обратной совместимости)
+ */
+export async function removeCartItemFull(
+  itemId: string | number,
+  options: CartRequestOptions = {}
+): Promise<Cart> {
+  try {
+    // Выполняем DELETE с полными заголовками
+    const fullOptions = {
+      ...options,
+      responseMode: 'full' as const
+    };
+    if (options.ifMatchVersion !== undefined) {
+      fullOptions.ifMatchVersion = options.ifMatchVersion;
+    }
+    const headers = createCartHeaders(fullOptions);
+    const response = await del(`/api/cart/items/${Number(itemId)}`, { headers });
+
+    // Обрабатываем ответ
+    if (isFullCartResponse(response)) {
+      // 200 OK с полным объектом корзины
+      return response;
+    } else if (response === null || response === undefined || response === '') {
+      // 204 No Content - получаем полную корзину
+      console.log('Received 204 No Content for full removal, fetching full cart');
+      return get<Cart>('/api/cart');
+    } else {
+      // Неожиданный ответ - получаем полную корзину
+      console.warn('Unexpected response format in full removal mode, fetching full cart');
+      return get<Cart>('/api/cart');
+    }
+  } catch (error: any) {
+    const status = parseHttpStatus(error);
+    console.warn('Full mode failed for removeCartItemFull:', { error: error.message, status });
+
+    // Обработка конфликтов версий
+    if (status === 412 || status === 409 || status === 428) {
+      console.warn('Version conflict detected in full removal mode, throwing precondition_failed');
+      throw new Error('precondition_failed');
+    }
+
+    if (status === 404) {
+      // Товар не найден - возвращаем актуальную корзину
+      console.warn('Item not found during full removal');
+      return get<Cart>('/api/cart');
+    }
+
+    // Для других ошибок пробрасываем дальше
+    throw error;
+  }
 }
 
 /**
@@ -33,4 +361,12 @@ export async function removeCartItem(itemId: string | number): Promise<Cart> {
  */
 export async function getCart(): Promise<Cart> {
   return get<Cart>('/api/cart');
+}
+
+/**
+ * Получает summary данные корзины (оптимизированный вариант)
+ */
+export async function getCartSummary(): Promise<CartSummary> {
+  const headers = createCartHeaders({ responseMode: 'summary' });
+  return get<CartSummary>('/api/cart', { headers });
 }

@@ -3,6 +3,17 @@ import { formatPrice } from '@shared/lib/formatPrice';
 import type { CartUpdatedDetail } from '@shared/types/events';
 
 /**
+ * Summary данные корзины для быстрого обновления
+ */
+interface CartSummaryData {
+  version: number;
+  itemsCount: number;
+  subtotal: number;
+  discountTotal: number;
+  total: number;
+}
+
+/**
  * Опции для виджета счетчика корзины
  */
 interface CartCounterOptions {
@@ -42,7 +53,7 @@ export class CartCounter extends Component {
   /**
    * Обработчик обновления корзины
    */
-  private handleCartUpdate(e: CustomEvent<CartUpdatedDetail>): void {
+  private handleCartUpdate(e: CustomEvent<CartUpdatedDetail | CartSummaryData>): void {
     const data = e.detail;
     this.updateDisplay(data);
   }
@@ -50,16 +61,25 @@ export class CartCounter extends Component {
   /**
    * Обновляет отображение счетчика корзины
    */
-  private updateDisplay(data?: CartUpdatedDetail): void {
+  private updateDisplay(data?: CartUpdatedDetail | CartSummaryData): void {
     try {
       let count = this.counterOptions.defaultCount || 0;
       let total = this.counterOptions.defaultTotal || 0;
       let currency = this.counterOptions.currency || 'RUB';
 
       if (data) {
-        count = (data.items || []).length;
-        total = (data.total || 0) / 100; // Предполагаем, что total в копейках
-        currency = data.currency || 'RUB';
+        // Определяем тип данных и извлекаем нужную информацию
+        if ('items' in data) {
+          // Полные данные корзины
+          count = (data.items || []).length;
+          total = (data.total || 0) / 100; // Предполагаем, что total в копейках
+          currency = data.currency || 'RUB';
+        } else if ('itemsCount' in data) {
+          // Summary данные
+          count = data.itemsCount;
+          total = (data.total || 0) / 100; // Предполагаем, что total в копейках
+          currency = 'RUB'; // Для summary данных используем RUB по умолчанию
+        }
       }
 
       // Обновляем счетчик товаров
@@ -94,6 +114,52 @@ export class CartCounter extends Component {
   getCurrentTotal(): number {
     const text = this.totalEl?.textContent || '0';
     return parseFloat(text.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
+  }
+
+  /**
+   * Быстро обновляет счетчик с использованием summary данных
+   */
+  async updateFromSummary(): Promise<void> {
+    try {
+      const response = await fetch('/api/cart', {
+        headers: {
+          'Prefer': 'return=representation; profile="cart.summary"'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch cart summary');
+      }
+
+      const summaryData: CartSummaryData = await response.json();
+      this.updateDisplay(summaryData);
+    } catch (error) {
+      console.error('Error updating cart counter from summary:', error);
+      // Fallback: пробуем получить полную корзину
+      try {
+        const response = await fetch('/api/cart');
+        if (response.ok) {
+          const fullData = await response.json();
+          this.updateDisplay(fullData);
+        }
+      } catch (fallbackError) {
+        console.error('Fallback update also failed:', fallbackError);
+      }
+    }
+  }
+
+  /**
+   * Обновляет счетчик на основе delta данных (оптимизированный способ)
+   */
+  updateFromDelta(deltaData: { totals: { itemsCount: number; subtotal: number; discountTotal: number; total: number } }): void {
+    const summaryLikeData: CartSummaryData = {
+      version: 0, // Не важен для отображения
+      itemsCount: deltaData.totals.itemsCount,
+      subtotal: deltaData.totals.subtotal,
+      discountTotal: deltaData.totals.discountTotal,
+      total: deltaData.totals.total
+    };
+    this.updateDisplay(summaryLikeData);
   }
 
   destroy(): void {

@@ -7,6 +7,7 @@ use App\Service\CartManager;
 use App\Service\CartContext;
 use App\Service\CartCalculator;
 use App\Service\LivePriceCalculator;
+use App\Service\CartDeltaBuilder;
 use App\Repository\CartRepository;
 use App\Repository\ProductRepository;
 use App\Entity\User as AppUser;
@@ -34,7 +35,8 @@ final class CartApiController extends AbstractController
 		private CartCalculator $calculator,
 		private CartWriteGuard $guard,
 		private CartResponse $cartResponse,
-		private CartEtags $etags
+		private CartEtags $etags,
+		private CartDeltaBuilder $deltaBuilder
 	) {}
 
 	#[Route('', name: 'api_cart_get', methods: ['GET'])]
@@ -89,9 +91,25 @@ final class CartApiController extends AbstractController
 			return new JsonResponse(['error' => 'precondition_required', 'message' => $e->getMessage()], 428);
 		}
 
+		// Проверка Idempotency-Key
+		$idempotencyKey = $request->headers->get('Idempotency-Key');
+		if ($idempotencyKey) {
+			$cacheKey = "cart_add_{$cart->getIdString()}_{$idempotencyKey}_{$productId}_{$qty}_" . md5(serialize($optionAssignmentIds));
+			$cachedResult = $this->getCachedCartResult($cacheKey);
+
+			if ($cachedResult) {
+				$response->setData($cachedResult['payload']);
+				$this->setResponseHeaders($response, $cachedResult['cart']);
+				return $response;
+			}
+		}
+
 		try {
-			// Передаем опции в метод addItem
-			$this->manager->addItem($cart, $productId, $qty, $optionAssignmentIds);
+			// Используем новый метод с отслеживанием изменений
+			$result = $this->manager->addItemWithChanges($cart, $productId, $qty, $optionAssignmentIds);
+			$cart = $result['cart'];
+			$changes = $result['changes'];
+
 		} catch (CartLockException $e) {
 			return $this->createBusyResponse($e);
 		} catch (\DomainException $e) {
@@ -100,9 +118,18 @@ final class CartApiController extends AbstractController
 			return $this->createConflictResponse();
 		}
 
-		$payload = $this->serializeCart($cart);
+		// Определяем режим ответа
+		$responseMode = $this->deltaBuilder->determineResponseMode($request);
+
 		$response->setStatusCode(201);
-		return $this->cartResponse->withCart($response, $cart, $payload);
+		$jsonResponse = $this->cartResponse->withCart($response, $cart, $request, $responseMode, $changes);
+
+		// Кэшируем результат для Idempotency-Key
+		if ($idempotencyKey && $responseMode === 'full') {
+			$this->cacheCartResult($cacheKey, $cart, $jsonResponse->getData());
+		}
+
+		return $jsonResponse;
 	}
 
 	#[Route('/items/{itemId}', name: 'api_cart_update_qty', methods: ['PATCH'])]
@@ -125,8 +152,25 @@ final class CartApiController extends AbstractController
 			return new JsonResponse(['error' => 'precondition_required', 'message' => $e->getMessage()], 428);
 		}
 
+		// Проверка Idempotency-Key
+		$idempotencyKey = $request->headers->get('Idempotency-Key');
+		if ($idempotencyKey) {
+			$cacheKey = "cart_update_{$cart->getIdString()}_{$idempotencyKey}_{$itemId}_{$qty}";
+			$cachedResult = $this->getCachedCartResult($cacheKey);
+
+			if ($cachedResult) {
+				$response->setData($cachedResult['payload']);
+				$this->setResponseHeaders($response, $cachedResult['cart']);
+				return $response;
+			}
+		}
+
 		try {
-			$this->manager->updateQty($cart, $itemId, $qty);
+			// Используем новый метод с отслеживанием изменений
+			$result = $this->manager->updateQtyWithChanges($cart, $itemId, $qty);
+			$cart = $result['cart'];
+			$changes = $result['changes'];
+
 		} catch (CartItemNotFoundException) {
 			return new JsonResponse(['error' => 'cart_item_not_found'], 404);
 		} catch (CartLockException $e) {
@@ -137,8 +181,17 @@ final class CartApiController extends AbstractController
 			return $this->createConflictResponse();
 		}
 
-		$payload = $this->serializeCart($cart);
-		return $this->cartResponse->withCart($response, $cart, $payload);
+		// Определяем режим ответа
+		$responseMode = $this->deltaBuilder->determineResponseMode($request);
+
+		$jsonResponse = $this->cartResponse->withCart($response, $cart, $request, $responseMode, $changes);
+
+		// Кэшируем результат для Idempotency-Key
+		if ($idempotencyKey && $responseMode === 'full') {
+			$this->cacheCartResult($cacheKey, $cart, $jsonResponse->getData());
+		}
+
+		return $jsonResponse;
 	}
 
 	#[Route('/items/{itemId}', name: 'api_cart_remove_item', methods: ['DELETE'])]
@@ -159,8 +212,25 @@ final class CartApiController extends AbstractController
 			return new JsonResponse(['error' => 'precondition_required', 'message' => $e->getMessage()], 428);
 		}
 
+		// Проверка Idempotency-Key
+		$idempotencyKey = $request->headers->get('Idempotency-Key');
+		if ($idempotencyKey) {
+			$cacheKey = "cart_remove_{$cart->getIdString()}_{$idempotencyKey}_{$itemId}";
+			$cachedResult = $this->getCachedCartResult($cacheKey);
+
+			if ($cachedResult) {
+				$response->setData($cachedResult['payload']);
+				$this->setResponseHeaders($response, $cachedResult['cart']);
+				return $response;
+			}
+		}
+
 		try {
-			$this->manager->removeItem($cart, $itemId);
+			// Используем новый метод с отслеживанием изменений
+			$result = $this->manager->removeItemWithChanges($cart, $itemId);
+			$cart = $result['cart'];
+			$changes = $result['changes'];
+
 		} catch (CartItemNotFoundException) {
 			return new JsonResponse(['error' => 'cart_item_not_found'], 404);
 		} catch (CartLockException $e) {
@@ -169,8 +239,17 @@ final class CartApiController extends AbstractController
 			return $this->createConflictResponse();
 		}
 
-		$payload = $this->serializeCart($cart);
-		return $this->cartResponse->withCart($response, $cart, $payload);
+		// Определяем режим ответа
+		$responseMode = $this->deltaBuilder->determineResponseMode($request);
+
+		$jsonResponse = $this->cartResponse->withCart($response, $cart, $request, $responseMode, $changes);
+
+		// Кэшируем результат для Idempotency-Key
+		if ($idempotencyKey && $responseMode === 'full') {
+			$this->cacheCartResult($cacheKey, $cart, $jsonResponse->getData());
+		}
+
+		return $jsonResponse;
 	}
 
 	#[Route('', name: 'api_cart_clear', methods: ['DELETE'])]
@@ -192,15 +271,23 @@ final class CartApiController extends AbstractController
 		}
 
 		try {
-			$this->manager->clearCart($cart);
+			// Используем новый метод с отслеживанием изменений
+			$result = $this->manager->clearCartWithChanges($cart);
+			$cart = $result['cart'];
+			$changes = $result['changes'];
+
 		} catch (CartLockException $e) {
 			return $this->createBusyResponse($e);
 		} catch (\Doctrine\ORM\OptimisticLockException|\Doctrine\DBAL\Exception\DeadlockException $e) {
 			return $this->createConflictResponse();
 		}
 
+		// Определяем режим ответа
+		$responseMode = $this->deltaBuilder->determineResponseMode($request);
+
+		// Для clear всегда возвращаем 204, независимо от режима
 		$response->setStatusCode(204);
-		return $this->cartResponse->withCart($response, $cart, []);
+		return $this->cartResponse->withCart($response, $cart, $request, $responseMode, $changes);
 	}
 
 	#[Route('', name: 'api_cart_update_pricing_policy', methods: ['PATCH'])]
@@ -391,6 +478,166 @@ final class CartApiController extends AbstractController
 			'currentVersion' => $cart->getVersion(),
 			'cart' => $this->serializeCart($cart),
 		], Response::HTTP_PRECONDITION_FAILED);
+	}
+
+	#[Route('/batch', name: 'api_cart_batch', methods: ['POST'])]
+	public function batch(Request $request): JsonResponse
+	{
+		$data = json_decode($request->getContent(), true) ?? [];
+
+		$user = $this->getUser();
+		$userId = $user instanceof AppUser ? $user->getId() : null;
+
+		$response = new JsonResponse();
+		$cart = $this->cartContext->getOrCreateForWrite($userId, $response);
+
+		// Проверяем предикаты записи
+		try {
+			$this->guard->assertPrecondition($request, $cart);
+		} catch (\Symfony\Component\HttpKernel\Exception\PreconditionFailedHttpException $e) {
+			return $this->createPreconditionFailedResponse($cart);
+		} catch (\Symfony\Component\HttpKernel\Exception\PreconditionRequiredHttpException $e) {
+			return new JsonResponse(['error' => 'precondition_required', 'message' => $e->getMessage()], 428);
+		}
+
+		// Валидация входных данных
+		$operations = $data['operations'] ?? [];
+		$atomic = $data['atomic'] ?? true;
+		$idempotencyKey = $request->headers->get('Idempotency-Key');
+
+		if (empty($operations)) {
+			return new JsonResponse(['error' => 'No operations provided'], 400);
+		}
+
+		if (!is_array($operations)) {
+			return new JsonResponse(['error' => 'Operations must be an array'], 400);
+		}
+
+		// Валидация операций
+		foreach ($operations as $index => $operation) {
+			if (!is_array($operation) || !isset($operation['op'])) {
+				return new JsonResponse(['error' => "Invalid operation at index {$index}"], 400);
+			}
+
+			if (!in_array($operation['op'], ['add', 'update', 'remove'], true)) {
+				return new JsonResponse(['error' => "Unsupported operation '{$operation['op']}' at index {$index}"], 400);
+			}
+		}
+
+		// Проверка Idempotency-Key
+		if ($idempotencyKey) {
+			$cacheKey = "cart_batch_{$cart->getIdString()}_{$idempotencyKey}";
+			$cachedResult = $this->getCachedBatchResult($cacheKey);
+
+			if ($cachedResult) {
+				$response->setData($cachedResult);
+				$this->cartResponse->setResponseHeaders($response, $cart);
+				return $response;
+			}
+		}
+
+		try {
+			$batchResult = $this->manager->executeBatch($cart, $operations, $atomic);
+
+			// Кэшируем результат для Idempotency-Key
+			if ($idempotencyKey && $batchResult['success']) {
+				$this->cacheBatchResult($cacheKey, $batchResult);
+			}
+
+			if (!$batchResult['success']) {
+				// Частичный успех или полный провал в атомарном режиме
+				return $this->cartResponse->withBatchError(
+					$response,
+					$atomic ? 'Batch operation failed' : 'Some operations failed',
+					$batchResult['results'],
+					$atomic ? 400 : 207 // 207 Multi-Status для частичного успеха
+				);
+			}
+
+			// Успешное выполнение
+			return $this->cartResponse->withBatchResult(
+				$response,
+				$batchResult['cart'],
+				$batchResult['results'],
+				$batchResult['changes']
+			);
+
+		} catch (CartLockException $e) {
+			return $this->createBusyResponse($e);
+		} catch (\DomainException $e) {
+			return new JsonResponse(['error' => $e->getMessage()], 422);
+		} catch (\Doctrine\ORM\OptimisticLockException|\Doctrine\DBAL\Exception\DeadlockException $e) {
+			return $this->createConflictResponse();
+		} catch (\Exception $e) {
+			return new JsonResponse(['error' => 'Batch operation failed: ' . $e->getMessage()], 500);
+		}
+	}
+
+	/**
+	 * Получает кэшированный результат батч-операции
+	 */
+	private function getCachedBatchResult(string $cacheKey): ?array
+	{
+		// Простая in-memory реализация, в продакшене использовать Redis/APCu
+		static $cache = [];
+		return $cache[$cacheKey] ?? null;
+	}
+
+	/**
+	 * Кэширует результат батч-операции
+	 */
+	private function cacheBatchResult(string $cacheKey, array $result, int $ttl = 3600): void
+	{
+		// Простая in-memory реализация, в продакшене использовать Redis/APCu
+		static $cache = [];
+		$cache[$cacheKey] = $result;
+
+		// Очистка старых записей (простая реализация)
+		if (count($cache) > 1000) {
+			$cache = array_slice($cache, -500, null, true);
+		}
+	}
+
+	/**
+	 * Получает кэшированный результат операции корзины
+	 */
+	private function getCachedCartResult(string $cacheKey): ?array
+	{
+		// Простая in-memory реализация, в продакшене использовать Redis/APCu
+		static $cache = [];
+		return $cache[$cacheKey] ?? null;
+	}
+
+	/**
+	 * Кэширует результат операции корзины
+	 */
+	private function cacheCartResult(string $cacheKey, $cart, $payload, int $ttl = 3600): void
+	{
+		// Простая in-memory реализация, в продакшене использовать Redis/APCu
+		static $cache = [];
+		$cache[$cacheKey] = [
+			'cart' => $cart,
+			'payload' => $payload,
+			'expires' => time() + $ttl,
+		];
+
+		// Очистка старых записей
+		if (count($cache) > 1000) {
+			$cache = array_filter($cache, fn($item) => $item['expires'] > time());
+			if (count($cache) > 500) {
+				// Сортируем по времени истечения и оставляем только самые свежие
+				uasort($cache, fn($a, $b) => $b['expires'] <=> $a['expires']);
+				$cache = array_slice($cache, 0, 500, true);
+			}
+		}
+	}
+
+	/**
+	 * Устанавливает заголовки ответа для кэшированного результата
+	 */
+	private function setResponseHeaders(JsonResponse $response, $cart): void
+	{
+		$this->cartResponse->setResponseHeaders($response, $cart);
 	}
 }
 

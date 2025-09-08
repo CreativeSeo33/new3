@@ -126,6 +126,9 @@ services:
 
     App\Http\CartResponse: ~
 
+    # Cart delta builder for optimized responses
+    App\Service\CartDeltaBuilder: ~
+
     # Cart cookie factory for secure cookie management
     App\Http\CartCookieFactory:
         arguments:
