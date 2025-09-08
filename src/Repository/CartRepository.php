@@ -18,17 +18,6 @@ final class CartRepository extends ServiceEntityRepository
 		parent::__construct($registry, Cart::class);
 	}
 
-	public function findActiveByUser(int $userId): ?Cart
-	{
-		return $this->createQueryBuilder('c')
-			->andWhere('c.userId = :u')
-			->andWhere('c.expiresAt IS NULL OR c.expiresAt > CURRENT_TIMESTAMP()')
-			->setParameter('u', $userId)
-			->orderBy('c.updatedAt', 'DESC')
-			->setMaxResults(1)
-			->getQuery()->getOneOrNullResult();
-	}
-
 	public function findActiveByToken(string $token): ?Cart
 	{
 		return $this->createQueryBuilder('c')
@@ -73,27 +62,17 @@ final class CartRepository extends ServiceEntityRepository
 
     public function findItemByIdForUpdate(Cart $cart, int $itemId): ?CartItem
     {
-        // Сначала пробуем через DQL
-        $item = $this->getEntityManager()->createQuery(
-            'SELECT ci FROM App\\Entity\\CartItem ci WHERE ci.cart = :c AND ci.id = :i'
-        )
-        ->setParameters(['c' => $cart, 'i' => $itemId])
-        ->setLockMode(LockMode::PESSIMISTIC_WRITE)
-        ->setMaxResults(1)
-        ->getOneOrNullResult();
+        // Сначала найдем товар по ID
+        $item = $this->getEntityManager()->find(CartItem::class, $itemId);
 
-        // Если не нашли, пробуем через прямой SQL с cart_id
-        if (!$item) {
-            $cartId = $cart->getId();
-            $sql = 'SELECT ci.* FROM cart_item ci WHERE ci.cart_id = ? AND ci.id = ? LIMIT 1 FOR UPDATE';
-            $result = $this->getEntityManager()->getConnection()->executeQuery($sql, [$cartId, $itemId])->fetchAssociative();
-
-            if ($result && isset($result['id'])) {
-                $item = $this->getEntityManager()->find(CartItem::class, $result['id']);
-            }
+        // Проверим, что товар принадлежит указанной корзине
+        if ($item && $item->getCart()->getId()->equals($cart->getId())) {
+            // Для обеспечения консистентности используем lock
+            $this->getEntityManager()->lock($item, LockMode::PESSIMISTIC_WRITE);
+            return $item;
         }
 
-        return $item;
+        return null;
     }
 }
 

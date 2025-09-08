@@ -60,7 +60,7 @@ final class CartManager
             $request = $this->requestStack->getCurrentRequest();
             if ($request) {
                 // Читаем cookie: новый формат (__Host-cart_id) как токен
-                $tokenCookie = $request->cookies->get('__Host-cart_id');
+                $tokenCookie = $request->cookies->get($this->cookieFactory->getCookieName());
                 // Fallback на legacy cookie (cart_id) как ULID для миграции
                 $legacyCookie = $request->cookies->get('cart_id');
 
@@ -439,19 +439,10 @@ final class CartManager
 
 	private function doRemoveItem(Cart $cart, int $itemId): void
 	{
-		$cartId = $cart->getId();
-		$sql = 'SELECT ci.id FROM cart_item ci WHERE ci.cart_id = ? AND ci.id = ? LIMIT 1 FOR UPDATE';
-		$row = $this->em->getConnection()->executeQuery($sql, [$cartId, $itemId])->fetchOne();
-
-		if (!$row) {
-			throw new CartItemNotFoundException('Cart item not found');
-		}
-
-		$item = $this->em->find(CartItem::class, (int)$row);
+		$item = $this->carts->findItemByIdForUpdate($cart, $itemId);
 		if (!$item) {
 			throw new CartItemNotFoundException('Cart item not found');
 		}
-
 		$this->em->remove($item);
 	}
 

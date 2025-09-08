@@ -14,7 +14,6 @@ use Symfony\Component\Uid\Ulid;
 
 final class CartContext
 {
-    private const CART_ID_COOKIE = '__Host-cart_id';
     private const CART_TTL_DAYS = 180;
 
     public function __construct(
@@ -25,6 +24,11 @@ final class CartContext
         private CartCookieFactory $cookieFactory,
     ) {}
 
+    private function getTokenCookieName(): string
+    {
+        return $this->cookieFactory->getCookieName();
+    }
+
     public function getOrCreate(?int $userId, Response $response): Cart
     {
         $request = $this->requestStack->getCurrentRequest();
@@ -33,7 +37,7 @@ final class CartContext
         }
 
         // Читаем cookie: новый формат (__Host-cart_id) как токен
-        $tokenCookie = $request->cookies->get(self::CART_ID_COOKIE);
+        $tokenCookie = $request->cookies->get($this->getTokenCookieName());
         // Fallback на legacy cookie (cart_id) как ULID для миграции
         $legacyCookie = $request->cookies->get('cart_id');
 
@@ -56,8 +60,6 @@ final class CartContext
                 $cartId = Ulid::fromString($legacyCookie);
                 $cart = $this->carts->findActiveById($cartId);
                 if ($cart) {
-                    // Логируем использование legacy fallback
-                    error_log("CartContext: legacy ULID fallback used for cart: " . $cart->getIdString());
                     // Устанавливаем новый cookie с токеном для будущих запросов
                     $cookie = $this->cookieFactory->build($request, $cart->ensureToken());
                     $response->headers->setCookie($cookie);

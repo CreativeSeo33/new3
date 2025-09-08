@@ -15,7 +15,6 @@ use Symfony\Component\Uid\Ulid;
 
 final class CartLoginSubscriber implements EventSubscriberInterface
 {
-    private const CART_ID_COOKIE = '__Host-cart_id';
     private const CART_TTL_DAYS = 180;
 
     public function __construct(
@@ -39,9 +38,8 @@ final class CartLoginSubscriber implements EventSubscriberInterface
 
         $userId = $user->getId();
         $request = $event->getRequest();
-
         // 1. Читаем cookie: новый формат как токен, fallback на legacy как ULID
-        $tokenCookie = $request->cookies->get(self::CART_ID_COOKIE);
+        $tokenCookie = $request->cookies->get($this->cookieFactory->getCookieName());
         $legacyCookie = $request->cookies->get('cart_id');
 
         $guestCart = null;

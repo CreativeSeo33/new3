@@ -2,8 +2,14 @@
 framework:
     secret: '%env(APP_SECRET)%'
 
+    # CSRF protection for API endpoints
+    csrf_protection: true
+
     # Note that the session will be started ONLY if you read or write from it.
-    session: true
+    session:
+        cookie_secure: 'auto'
+        cookie_samesite: 'lax'
+        cookie_httponly: true
 
     # Trusted proxies configuration for proper HTTPS detection behind reverse proxy
     trusted_proxies: '%env(TRUSTED_PROXIES)%'

@@ -1,4 +1,4 @@
-import { post, get, patch } from '@shared/api/http';
+import { post, get, patch, del } from '@shared/api/http';
 import type { Cart } from '@shared/types/api';
 
 /**
@@ -43,5 +43,5 @@ export async function updateCartItem(itemId: number, qty: number): Promise<Cart>
  * Удаляет товар из корзины
  */
 export async function removeCartItem(itemId: number): Promise<Cart> {
-  return post<Cart>(`/api/cart/items/${itemId}`, null);
+  return del<Cart>(`/api/cart/items/${itemId}`);
 }

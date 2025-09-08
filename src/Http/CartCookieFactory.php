@@ -17,6 +17,11 @@ final class CartCookieFactory
         private readonly string $sameSite = Cookie::SAMESITE_LAX,
     ) {}
 
+    public function getCookieName(): string
+    {
+        return $this->cookieName();
+    }
+
     public function build(Request $request, string $value): Cookie
     {
         $expires = (new \DateTimeImmutable())->modify(sprintf('+%d days', $this->ttlDays));

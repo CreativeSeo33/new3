@@ -1,10 +1,11 @@
 import type { HttpOptions, HttpGetOptions, HttpPostOptions, HttpPutOptions, HttpPatchOptions, HttpDeleteOptions } from '../types/api';
+import { getCsrfToken, requiresCsrfToken } from './csrf';
 
 const base = '';
 const defaultHeaders = {
   'X-Requested-With': 'XMLHttpRequest',
   'Content-Type': 'application/json'
-} as const;
+};
 
 /**
  * Основная функция для HTTP запросов с типизацией
@@ -16,10 +17,22 @@ export async function http<T = any>(
   const { method = 'GET', headers = {}, body } = options;
   const url = base + path;
 
+  // Добавляем CSRF токен для state-changing методов
+  const finalHeaders: Record<string, string> = { ...defaultHeaders, ...headers };
+  if (requiresCsrfToken(method)) {
+    try {
+      const csrfToken = await getCsrfToken();
+      finalHeaders['X-CSRF-Token'] = csrfToken;
+    } catch (error) {
+      console.error('Failed to get CSRF token:', error);
+      throw new Error('Unable to obtain CSRF token for secure request');
+    }
+  }
+
   const config: RequestInit = {
     method,
     credentials: 'same-origin',
-    headers: { ...defaultHeaders, ...headers }
+    headers: finalHeaders
   };
 
   // Обработка тела запроса
@@ -108,10 +121,20 @@ export async function delWithStatus(
   const { headers = {} } = options;
   const url = base + path;
 
+  // Добавляем CSRF токен для DELETE запросов
+  const finalHeaders: Record<string, string> = { ...defaultHeaders, ...headers };
+  try {
+    const csrfToken = await getCsrfToken();
+    finalHeaders['X-CSRF-Token'] = csrfToken;
+  } catch (error) {
+    console.error('Failed to get CSRF token for DELETE:', error);
+    throw new Error('Unable to obtain CSRF token for secure request');
+  }
+
   const config: RequestInit = {
     method: 'DELETE',
     credentials: 'same-origin',
-    headers: { ...defaultHeaders, ...headers }
+    headers: finalHeaders
   };
 
   try {
