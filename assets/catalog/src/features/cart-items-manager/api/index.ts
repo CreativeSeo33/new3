@@ -22,7 +22,7 @@ function parseHttpStatus(error: any): number | null {
  */
 function isFullCartResponse(response: any): response is Cart {
   return response &&
-         typeof response.id === 'string' &&
+         (typeof response.id === 'string' || typeof response.id === 'number') &&
          typeof response.currency === 'string' &&
          typeof response.subtotal === 'number';
 }
@@ -41,20 +41,24 @@ function normalizeFullCartToDelta(cart: Cart, changes?: {
   if (changes?.changedItemId && cart.items) {
     const cartItem = cart.items.find(item => Number(item.id) === Number(changes.changedItemId));
     if (cartItem) {
-      changedItems = [{
+      // Создаем объект с опциональными полями - не подставляем фиктивные значения
+      const itemData: any = {
         id: changes.changedItemId,
-        qty: changes.changedQty || cartItem.qty,
-        rowTotal: cartItem.rowTotal,
-        effectiveUnitPrice: cartItem.effectiveUnitPrice
-      }];
+        qty: changes.changedQty || cartItem.qty
+      };
+      if (cartItem.rowTotal !== undefined) {
+        itemData.rowTotal = cartItem.rowTotal;
+      }
+      if (cartItem.effectiveUnitPrice !== undefined) {
+        itemData.effectiveUnitPrice = cartItem.effectiveUnitPrice;
+      }
+      changedItems = [itemData];
     } else if (changes.changedQty !== undefined) {
-      // Товар не найден в корзине, но указано количество - создаем с минимальными данными
+      // Товар не найден в корзине, но указано количество - создаем без прайсинга
       changedItems = [{
         id: changes.changedItemId,
-        qty: changes.changedQty,
-        rowTotal: 0,
-        effectiveUnitPrice: 0
-      }];
+        qty: changes.changedQty
+      } as any]; // workaround: required fields not available
     }
   }
 
@@ -100,20 +104,16 @@ export async function updateCartItemQuantity(
     // Обрабатываем различные типы ответов
     if (isFullCartResponse(response)) {
       // 200 OK с полным объектом корзины
-      console.log('Received full cart response for quantity update, normalizing to delta');
       return normalizeFullCartToDelta(response, { changedItemId: Number(itemId), changedQty: qty });
     } else if (response === null || response === undefined || response === '') {
       // 204 No Content - нужно добрать summary
-      console.log('Received 204 No Content for quantity update, fetching summary');
       const summary = await getCartSummary();
       return {
         version: summary.version,
         changedItems: [{
           id: Number(itemId),
-          qty,
-          rowTotal: 0,
-          effectiveUnitPrice: 0
-        }],
+          qty
+        } as any], // workaround: pricing fields not available
         removedItemIds: [],
         totals: {
           itemsCount: summary.itemsCount,
@@ -191,7 +191,6 @@ export async function updateCartItemQuantityFull(
       return response;
     } else if (response === null || response === undefined || response === '') {
       // 204 No Content - получаем полную корзину
-      console.log('Received 204 No Content for full quantity update, fetching full cart');
       return get<Cart>('/api/cart');
     } else {
       // Неожиданный ответ - получаем полную корзину
@@ -243,11 +242,9 @@ export async function removeCartItem(
     // Обрабатываем различные типы ответов
     if (isFullCartResponse(response)) {
       // 200 OK с полным объектом корзины
-      console.log('Received full cart response for removal, normalizing to delta');
       return normalizeFullCartToDelta(response, { removedItemId: Number(itemId) });
     } else if (response === null || response === undefined || response === '') {
       // 204 No Content - нужно добрать summary
-      console.log('Received 204 No Content for removal, fetching summary');
       const summary = await getCartSummary();
       return {
         version: summary.version,
@@ -328,7 +325,6 @@ export async function removeCartItemFull(
       return response;
     } else if (response === null || response === undefined || response === '') {
       // 204 No Content - получаем полную корзину
-      console.log('Received 204 No Content for full removal, fetching full cart');
       return get<Cart>('/api/cart');
     } else {
       // Неожиданный ответ - получаем полную корзину
