@@ -19,6 +19,7 @@ use App\Entity\Cart;
 use App\Http\CartWriteGuard;
 use App\Http\CartResponse;
 use App\Http\CartEtags;
+use App\Exception\CartItemNotFoundException;
 
 #[Route('/api/cart')]
 final class CartApiController extends AbstractController
@@ -126,6 +127,8 @@ final class CartApiController extends AbstractController
 
 		try {
 			$this->manager->updateQty($cart, $itemId, $qty);
+		} catch (CartItemNotFoundException) {
+			return new JsonResponse(['error' => 'cart_item_not_found'], 404);
 		} catch (CartLockException $e) {
 			return $this->createBusyResponse($e);
 		} catch (\DomainException $e) {
@@ -157,10 +160,9 @@ final class CartApiController extends AbstractController
 		}
 
 		try {
-			$result = $this->manager->removeItem($cart, $itemId);
-			if (!$result) {
-				return $this->cartResponse->withCart($response, $cart, []);
-			}
+			$this->manager->removeItem($cart, $itemId);
+		} catch (CartItemNotFoundException) {
+			return new JsonResponse(['error' => 'cart_item_not_found'], 404);
 		} catch (CartLockException $e) {
 			return $this->createBusyResponse($e);
 		} catch (\Doctrine\ORM\OptimisticLockException|\Doctrine\DBAL\Exception\DeadlockException $e) {

@@ -17,6 +17,7 @@ use App\Entity\ProductOptionValueAssignment;
 use App\Service\PriceNormalizer;
 use App\Service\CartLockException;
 use App\Http\CartCookieFactory;
+use App\Exception\CartItemNotFoundException;
 
 /**
  * CartManager - сервис для управления корзиной покупок
@@ -402,26 +403,22 @@ final class CartManager
 
 
 
-	public function updateQty(Cart $cart, int $itemId, int $qty): ?Cart
+	public function updateQty(Cart $cart, int $itemId, int $qty): Cart
 	{
 		if ($qty <= 0) {
 			return $this->removeItem($cart, $itemId);
 		}
 
-		try {
-			return $this->executeWithLock($cart, function() use ($cart, $itemId, $qty) {
-				$this->doUpdateQty($cart, $itemId, $qty);
-			});
-		} catch (\DomainException) {
-			return null; // Товар не найден
-		}
+		return $this->executeWithLock($cart, function() use ($cart, $itemId, $qty) {
+			$this->doUpdateQty($cart, $itemId, $qty);
+		});
 	}
 
 	private function doUpdateQty(Cart $cart, int $itemId, int $qty): void
 	{
 		$item = $this->carts->findItemByIdForUpdate($cart, $itemId);
 		if (!$item) {
-			throw new \DomainException('Item not found');
+			throw new CartItemNotFoundException('Cart item not found');
 		}
 
 		// Извлекаем optionAssignmentIds из товара
@@ -431,58 +428,29 @@ final class CartManager
 		$item->setQty($qty);
 	}
 
-	public function removeItem(Cart $cart, int $itemId): ?Cart
+	public function removeItem(Cart $cart, int $itemId): Cart
 	{
-		$itemRemoved = false;
-
-		try {
-			return $this->executeWithLock($cart, function() use ($cart, $itemId, &$itemRemoved) {
-				$itemRemoved = $this->doRemoveItem($cart, $itemId);
-			});
-		} catch (\DomainException) {
-			return null; // Товар не найден
-		}
+		return $this->executeWithLock($cart, function() use ($cart, $itemId) {
+			$this->doRemoveItem($cart, $itemId);
+		});
 	}
 
-	private function doRemoveItem(Cart $cart, int $itemId): bool
+	private function doRemoveItem(Cart $cart, int $itemId): void
 	{
-		error_log("CartManager: doRemoveItem called for item {$itemId}, cart ID: {$cart->getIdString()}");
-
-		// Пробуем найти товар напрямую через SQL, игнорируя проблемы с Doctrine
 		$cartId = $cart->getId();
-		$sql = 'SELECT ci.* FROM cart_item ci WHERE ci.cart_id = ? AND ci.id = ? LIMIT 1 FOR UPDATE';
-		$result = $this->em->getConnection()->executeQuery($sql, [$cartId, $itemId])->fetchAssociative();
+		$sql = 'SELECT ci.id FROM cart_item ci WHERE ci.cart_id = ? AND ci.id = ? LIMIT 1 FOR UPDATE';
+		$row = $this->em->getConnection()->executeQuery($sql, [$cartId, $itemId])->fetchOne();
 
-		if ($result) {
-			error_log("CartManager: Found item {$itemId} via direct SQL");
-			$item = $this->em->find(CartItem::class, $result['id']);
-		} else {
-			error_log("CartManager: Item {$itemId} not found via direct SQL");
-			$item = null;
+		if (!$row) {
+			throw new CartItemNotFoundException('Cart item not found');
 		}
 
+		$item = $this->em->find(CartItem::class, (int)$row);
 		if (!$item) {
-			// Попытка найти товар без учета корзины (для отладки)
-			$item = $this->em->find(CartItem::class, $itemId);
-			if ($item) {
-				$itemCartId = $item->getCart() ? $item->getCart()->getId() : null;
-				error_log("CartManager: Found item {$itemId} in cart {$itemCartId}, expected cart {$cartId}");
-				// Не удаляем товар из другой корзины
-				if ($itemCartId !== $cartId) {
-					return false;
-				}
-			}
+			throw new CartItemNotFoundException('Cart item not found');
 		}
 
-		if ($item) {
-			error_log("CartManager: Removing item ID {$itemId} from cart {$cart->getIdString()}");
-			$this->em->remove($item);
-			error_log("CartManager: Item removed, will flush in finishCartOperation");
-			return true;
-		}
-
-		error_log("CartManager: Item ID {$itemId} not found in cart {$cart->getIdString()}");
-		return false;
+		$this->em->remove($item);
 	}
 
 	public function assignToUser(Cart $cart, int $userId): void
