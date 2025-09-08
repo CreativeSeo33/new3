@@ -175,13 +175,17 @@ final class CartManager
 			$item->setOptionsHash(null);
 		}
 
+		// Устанавливаем время фиксации цены
+		$item->setPricedAt(new \DateTimeImmutable());
+
 		$cart->addItem($item);
 		$this->em->persist($item);
 	}
 
 	private function applyProductOptions(CartItem $item, $product, array $optionAssignmentIds, int $basePriceRub, ?string $optionsHash): void
 	{
-		$optionsPriceModifierRub = 0;
+		$setPrices = [];
+		$modifier = 0;
 		$selectedOptionsData = [];
 		$optionsSnapshot = [];
 
@@ -193,19 +197,29 @@ final class CartManager
 
 			$item->addOptionAssignment($assignment);
 
-			$raw = $assignment->getSalePrice() ?? $assignment->getPrice() ?? 0;
-			$optionPriceRub = PriceNormalizer::toRubInt($raw);
-			$optionsPriceModifierRub += $optionPriceRub;
+			$price = $assignment->getSalePrice() ?? $assignment->getPrice() ?? 0;
+			$optionPriceRub = PriceNormalizer::toRubInt($price);
+
+			// Логика setPrice: если опция задаёт цену, она влияет на базовую цену, а не на модификатор
+			if ($assignment->getSetPrice() === true && $optionPriceRub > 0) {
+				$setPrices[] = $optionPriceRub;
+			} else {
+				$modifier += $optionPriceRub;
+			}
 
 			$selectedOptionsData[] = $this->createOptionData($assignment, $optionPriceRub);
 			$optionsSnapshot[] = $this->createOptionSnapshot($assignment);
 		}
 
-		$item->setOptionsPriceModifier($optionsPriceModifierRub);
+		// Если есть опции с setPrice, берём максимум из них как базовую цену
+		$unitPrice = !empty($setPrices) ? max($setPrices) : $basePriceRub;
+
+		$item->setUnitPrice($unitPrice);
+		$item->setOptionsPriceModifier($modifier);
 		$item->setSelectedOptionsData($selectedOptionsData);
 		$item->setOptionsSnapshot($optionsSnapshot);
 		$item->setOptionsHash($optionsHash);
-		$item->setEffectiveUnitPrice($basePriceRub + $optionsPriceModifierRub);
+		$item->setEffectiveUnitPrice($unitPrice + $modifier);
 	}
 
 	private function createOptionData($assignment, int $optionPriceRub): array
@@ -380,19 +394,22 @@ final class CartManager
 						$clone->setProductName($srcItem->getProductName());
 						$clone->setUnitPrice($srcItem->getUnitPrice());
 						$clone->setQty($srcItem->getQty());
-						
+
 						// Копируем данные опций
 						$clone->setOptionsPriceModifier($srcItem->getOptionsPriceModifier());
 						$clone->setEffectiveUnitPrice($srcItem->getEffectiveUnitPrice());
 						$clone->setOptionsHash($srcItem->getOptionsHash());
 						$clone->setSelectedOptionsData($srcItem->getSelectedOptionsData());
 						$clone->setOptionsSnapshot($srcItem->getOptionsSnapshot());
-						
+
+						// Копируем время фиксации цены
+						$clone->setPricedAt($srcItem->getPricedAt());
+
 						// Копируем связи с опциями
 						foreach ($srcItem->getOptionAssignments() as $assignment) {
 							$clone->addOptionAssignment($assignment);
 						}
-						
+
 						$this->em->persist($clone);
 					}
 				}

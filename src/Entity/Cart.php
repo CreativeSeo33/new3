@@ -29,6 +29,9 @@ class Cart
 	#[ORM\Column(length: 3)]
 	private string $currency = 'RUB';
 
+	#[ORM\Column(length: 16, options: ['default' => 'SNAPSHOT'])]
+	private string $pricingPolicy = 'SNAPSHOT';
+
 	#[ORM\Column(type: 'integer', options: ['default' => 0])]
 	private int $subtotal = 0;
 
@@ -116,6 +119,15 @@ class Cart
 	public function getCurrency(): string { return $this->currency; }
 
 	public function setCurrency(string $currency): void { $this->currency = $currency; }
+
+	public function getPricingPolicy(): string { return $this->pricingPolicy; }
+
+	public function setPricingPolicy(string $policy): void {
+		if (!in_array($policy, ['SNAPSHOT', 'LIVE'], true)) {
+			throw new \InvalidArgumentException('Invalid pricing policy. Allowed: SNAPSHOT, LIVE');
+		}
+		$this->pricingPolicy = $policy;
+	}
 
 	public function getSubtotal(): int { return $this->subtotal; }
 

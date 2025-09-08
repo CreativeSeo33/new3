@@ -10,55 +10,46 @@ use App\Service\PriceNormalizer;
 
 final class CartCalculator
 {
-    public function __construct(private DeliveryService $delivery) {}
+    public function __construct(
+        private DeliveryService $delivery,
+        private LivePriceCalculator $livePrice
+    ) {}
 
     public function recalculate(Cart $cart): void
     {
         $subtotal = 0;
+        $policy = $cart->getPricingPolicy();
 
-        foreach ($cart->getItems() as $item) {
-            // Определяем эффективную цену с учетом опций
-            $effectiveUnitPrice = $this->calculateEffectivePrice($item);
-
-            // Сохраняем эффективную цену
-            $item->setEffectiveUnitPrice($effectiveUnitPrice);
-
-            // Вычисляем итоговую сумму по строке
-            $rowTotal = $effectiveUnitPrice * $item->getQty();
-
-            // Сохраняем вычисленную сумму
-            $item->setRowTotal($rowTotal);
-
-            // Добавляем к общей сумме
-            $subtotal += $rowTotal;
+        if ($policy === 'SNAPSHOT') {
+            // SNAPSHOT: используем зафиксированные цены, не обращаемся к каталогу
+            foreach ($cart->getItems() as $item) {
+                $rowTotal = $item->getEffectiveUnitPrice() * $item->getQty();
+                $item->setRowTotal($rowTotal);
+                $subtotal += $rowTotal;
+            }
+        } else {
+            // LIVE: вычисляем актуальные цены на лету, но не перезаписываем снепшот
+            foreach ($cart->getItems() as $item) {
+                $liveEffectiveUnitPrice = $this->livePrice->effectiveUnitPriceLive($item);
+                $rowTotal = $liveEffectiveUnitPrice * $item->getQty();
+                // Не перезаписываем снепшот-поля позиции
+                $subtotal += $rowTotal;
+            }
         }
 
         $discountTotal = 0;
         $shippingCost = 0;
-        
+
         if ($cart->getShippingMethod()) {
-            // Используем новый сервис. Он вернет 0, если расчет невозможен.
             $shippingCost = $this->delivery->quote($cart);
             $cart->setShippingCost($shippingCost);
         }
-        
+
         $total = max(0, $subtotal - $discountTotal + $shippingCost);
 
         $cart->setSubtotal($subtotal);
         $cart->setDiscountTotal($discountTotal);
         $cart->setTotal($total);
-    }
-    
-    /**
-     * Вычисление эффективной цены товара
-     *
-     * Единая модель ценообразования: базовая цена + модификатор опций
-     * Это гарантирует консистентность с логикой CartManager
-     */
-    private function calculateEffectivePrice(CartItem $item): int
-    {
-        // Единая модель: базовая цена + модификатор опций
-        return $item->getUnitPrice() + $item->getOptionsPriceModifier();
     }
 }
 

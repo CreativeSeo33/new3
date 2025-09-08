@@ -53,6 +53,9 @@ class CartItem
 	#[ORM\Column(type: 'json', nullable: true)]
 	private ?array $optionsSnapshot = null;
 
+	#[ORM\Column(type: 'datetime_immutable')]
+	private \DateTimeImmutable $pricedAt;
+
 	/**
 	 * @var Collection<int, ProductOptionValueAssignment>
 	 */
@@ -114,6 +117,10 @@ class CartItem
 	public function getOptionsSnapshot(): ?array { return $this->optionsSnapshot; }
 
 	public function setOptionsSnapshot(?array $snapshot): void { $this->optionsSnapshot = $snapshot; }
+
+	public function getPricedAt(): \DateTimeImmutable { return $this->pricedAt; }
+
+	public function setPricedAt(\DateTimeImmutable $pricedAt): void { $this->pricedAt = $pricedAt; }
 
 	/**
 	 * @return Collection<int, ProductOptionValueAssignment>
