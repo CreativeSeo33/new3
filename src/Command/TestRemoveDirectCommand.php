@@ -63,3 +63,5 @@ final class TestRemoveDirectCommand extends Command
         return $count == 0 ? Command::SUCCESS : Command::FAILURE;
     }
 }
+
+
