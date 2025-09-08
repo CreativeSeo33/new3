@@ -80,13 +80,9 @@ final class CartContext
             }
 
             if ($cart) {
-                // Корзина найдена, продлеваем её
+                // Корзина найдена, продлеваем её только для write-операций
                 error_log("CartContext: using existing cart with " . $cart->getItems()->count() . " items");
-                if ($userId && !$cart->getUserId()) {
-                    $cart->setUserId($userId);
-                }
-                $cart->prolong($ttl);
-                $this->em->flush();
+                // Мутации выполняются только в getOrCreateForWrite()
             } else {
                 // Создаем новую корзину
                 error_log("CartContext: creating new cart");
@@ -114,5 +110,25 @@ final class CartContext
         } finally {
             $lock->release();
         }
+    }
+
+    /**
+     * Получает корзину для операций записи с продлением TTL
+     */
+    public function getOrCreateForWrite(?int $userId, Response $response): Cart
+    {
+        $cart = $this->getOrCreate($userId, $response);
+
+        // Выполняем мутации только для write-операций
+        $now = new \DateTimeImmutable();
+        $ttl = $now->modify('+' . self::CART_TTL_DAYS . ' days');
+
+        if ($userId && !$cart->getUserId()) {
+            $cart->setUserId($userId);
+        }
+        $cart->prolong($ttl);
+        $this->em->flush();
+
+        return $cart;
     }
 }

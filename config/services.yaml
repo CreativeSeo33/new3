@@ -9,6 +9,7 @@ parameters:
         - 'md'
         - 'md2'
         - 'xl'
+    cart.require_precondition: false
 
 services:
     # default configuration for services in *this* file
@@ -105,3 +106,12 @@ services:
         bind:
             # Для курьера тоже можно задать свой тип расчета.
             $calculationType: 'cost_per_item'
+
+    # Cart ETag and write guard services
+    App\Http\CartEtags: ~
+
+    App\Http\CartWriteGuard:
+        arguments:
+            $requirePrecondition: '%cart.require_precondition%'
+
+    App\Http\CartResponse: ~

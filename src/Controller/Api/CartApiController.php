@@ -16,6 +16,9 @@ use Symfony\Component\HttpFoundation\{Request, JsonResponse, Response};
 use Symfony\Component\Routing\Attribute\Route;
 use App\Service\CartLockException;
 use App\Entity\Cart;
+use App\Http\CartWriteGuard;
+use App\Http\CartResponse;
+use App\Http\CartEtags;
 
 #[Route('/api/cart')]
 final class CartApiController extends AbstractController
@@ -27,7 +30,10 @@ final class CartApiController extends AbstractController
 		private ProductRepository $products,
 		private \Doctrine\ORM\EntityManagerInterface $em,
 		private LivePriceCalculator $livePrice,
-		private CartCalculator $calculator
+		private CartCalculator $calculator,
+		private CartWriteGuard $guard,
+		private CartResponse $cartResponse,
+		private CartEtags $etags
 	) {}
 
 	#[Route('', name: 'api_cart_get', methods: ['GET'])]
@@ -36,14 +42,14 @@ final class CartApiController extends AbstractController
 		$user = $this->getUser();
 		$userId = $user instanceof AppUser ? $user->getId() : null;
 
-		// Создаем объект JsonResponse
+		// Создаем response объект для получения cookies от CartContext
 		$response = new JsonResponse();
 		$cart = $this->cartContext->getOrCreate($userId, $response);
 
 		$payload = $this->serializeCart($cart);
-		$etag = md5($cart->getUpdatedAt()->getTimestamp().':'.$cart->getVersion());
 		$response->setData($payload);
-		$response->setEtag($etag);
+		$response->setEtag($this->etags->make($cart));
+		$response->headers->set('Cache-Control', 'private, no-cache, must-revalidate');
 
 		if ($response->isNotModified($request)) return $response;
 		return $response;
@@ -56,7 +62,6 @@ final class CartApiController extends AbstractController
 
 		$productId = (int)($data['productId'] ?? 0);
 		$qty = (int)($data['qty'] ?? 1);
-		$clientVersion = $data['version'] ?? null;
 
 		// Добавляем обработку опций
 		$optionAssignmentIds = [];
@@ -71,13 +76,16 @@ final class CartApiController extends AbstractController
 		$user = $this->getUser();
 		$userId = $user instanceof AppUser ? $user->getId() : null;
 
-		// Создаем объект JsonResponse
 		$response = new JsonResponse();
-		$cart = $this->cartContext->getOrCreate($userId, $response);
+		$cart = $this->cartContext->getOrCreateForWrite($userId, $response);
 
-		// Проверяем версию корзины для условного доступа
-		if ($clientVersion !== null && $cart->getVersion() !== $clientVersion) {
+		// Проверяем предикаты записи
+		try {
+			$this->guard->assertPrecondition($request, $cart);
+		} catch (\Symfony\Component\HttpKernel\Exception\PreconditionFailedHttpException $e) {
 			return $this->createPreconditionFailedResponse($cart);
+		} catch (\Symfony\Component\HttpKernel\Exception\PreconditionRequiredHttpException $e) {
+			return new JsonResponse(['error' => 'precondition_required', 'message' => $e->getMessage()], 428);
 		}
 
 		try {
@@ -91,9 +99,9 @@ final class CartApiController extends AbstractController
 			return $this->createConflictResponse();
 		}
 
-		$response->setData($this->serializeCart($cart));
+		$payload = $this->serializeCart($cart);
 		$response->setStatusCode(201);
-		return $response;
+		return $this->cartResponse->withCart($response, $cart, $payload);
 	}
 
 	#[Route('/items/{itemId}', name: 'api_cart_update_qty', methods: ['PATCH'])]
@@ -101,17 +109,19 @@ final class CartApiController extends AbstractController
 	{
 		$data = json_decode($request->getContent(), true) ?? [];
 		$qty = (int)($data['qty'] ?? 0);
-		$clientVersion = $data['version'] ?? null;
 		$user = $this->getUser();
 		$userId = $user instanceof AppUser ? $user->getId() : null;
 
-		// Создаем объект JsonResponse
 		$response = new JsonResponse();
-		$cart = $this->cartContext->getOrCreate($userId, $response);
+		$cart = $this->cartContext->getOrCreateForWrite($userId, $response);
 
-		// Проверяем версию корзины для условного доступа
-		if ($clientVersion !== null && $cart->getVersion() !== $clientVersion) {
+		// Проверяем предикаты записи
+		try {
+			$this->guard->assertPrecondition($request, $cart);
+		} catch (\Symfony\Component\HttpKernel\Exception\PreconditionFailedHttpException $e) {
 			return $this->createPreconditionFailedResponse($cart);
+		} catch (\Symfony\Component\HttpKernel\Exception\PreconditionRequiredHttpException $e) {
+			return new JsonResponse(['error' => 'precondition_required', 'message' => $e->getMessage()], 428);
 		}
 
 		try {
@@ -124,34 +134,32 @@ final class CartApiController extends AbstractController
 			return $this->createConflictResponse();
 		}
 
-		$response->setData($this->serializeCart($cart));
-		return $response;
+		$payload = $this->serializeCart($cart);
+		return $this->cartResponse->withCart($response, $cart, $payload);
 	}
 
 	#[Route('/items/{itemId}', name: 'api_cart_remove_item', methods: ['DELETE'])]
 	public function removeItem(int $itemId, Request $request): JsonResponse
 	{
-		$clientVersion = $request->query->get('version');
-		if ($clientVersion !== null) {
-			$clientVersion = (int)$clientVersion;
-		}
-
 		$user = $this->getUser();
 		$userId = $user instanceof AppUser ? $user->getId() : null;
 
-		// Создаем объект JsonResponse
 		$response = new JsonResponse();
-		$cart = $this->cartContext->getOrCreate($userId, $response);
+		$cart = $this->cartContext->getOrCreateForWrite($userId, $response);
 
-		// Проверяем версию корзины для условного доступа
-		if ($clientVersion !== null && $cart->getVersion() !== $clientVersion) {
+		// Проверяем предикаты записи
+		try {
+			$this->guard->assertPrecondition($request, $cart);
+		} catch (\Symfony\Component\HttpKernel\Exception\PreconditionFailedHttpException $e) {
 			return $this->createPreconditionFailedResponse($cart);
+		} catch (\Symfony\Component\HttpKernel\Exception\PreconditionRequiredHttpException $e) {
+			return new JsonResponse(['error' => 'precondition_required', 'message' => $e->getMessage()], 428);
 		}
 
 		try {
 			$result = $this->manager->removeItem($cart, $itemId);
 			if (!$result) {
-				return new JsonResponse(null, 204);
+				return $this->cartResponse->withCart($response, $cart, []);
 			}
 		} catch (CartLockException $e) {
 			return $this->createBusyResponse($e);
@@ -159,28 +167,26 @@ final class CartApiController extends AbstractController
 			return $this->createConflictResponse();
 		}
 
-		$response->setData($this->serializeCart($cart));
-		return $response;
+		$payload = $this->serializeCart($cart);
+		return $this->cartResponse->withCart($response, $cart, $payload);
 	}
 
 	#[Route('', name: 'api_cart_clear', methods: ['DELETE'])]
 	public function clearCart(Request $request): JsonResponse
 	{
-		$clientVersion = $request->query->get('version');
-		if ($clientVersion !== null) {
-			$clientVersion = (int)$clientVersion;
-		}
-
 		$user = $this->getUser();
 		$userId = $user instanceof AppUser ? $user->getId() : null;
 
-		// Создаем объект JsonResponse
 		$response = new JsonResponse();
-		$cart = $this->cartContext->getOrCreate($userId, $response);
+		$cart = $this->cartContext->getOrCreateForWrite($userId, $response);
 
-		// Проверяем версию корзины для условного доступа
-		if ($clientVersion !== null && $cart->getVersion() !== $clientVersion) {
+		// Проверяем предикаты записи
+		try {
+			$this->guard->assertPrecondition($request, $cart);
+		} catch (\Symfony\Component\HttpKernel\Exception\PreconditionFailedHttpException $e) {
 			return $this->createPreconditionFailedResponse($cart);
+		} catch (\Symfony\Component\HttpKernel\Exception\PreconditionRequiredHttpException $e) {
+			return new JsonResponse(['error' => 'precondition_required', 'message' => $e->getMessage()], 428);
 		}
 
 		try {
@@ -191,9 +197,8 @@ final class CartApiController extends AbstractController
 			return $this->createConflictResponse();
 		}
 
-		$response->setData(null);
 		$response->setStatusCode(204);
-		return $response;
+		return $this->cartResponse->withCart($response, $cart, []);
 	}
 
 	#[Route('', name: 'api_cart_update_pricing_policy', methods: ['PATCH'])]
@@ -204,9 +209,17 @@ final class CartApiController extends AbstractController
 		$user = $this->getUser();
 		$userId = $user instanceof AppUser ? $user->getId() : null;
 
-		// Создаем объект JsonResponse
 		$response = new JsonResponse();
-		$cart = $this->cartContext->getOrCreate($userId, $response);
+		$cart = $this->cartContext->getOrCreateForWrite($userId, $response);
+
+		// Проверяем предикаты записи
+		try {
+			$this->guard->assertPrecondition($request, $cart);
+		} catch (\Symfony\Component\HttpKernel\Exception\PreconditionFailedHttpException $e) {
+			return $this->createPreconditionFailedResponse($cart);
+		} catch (\Symfony\Component\HttpKernel\Exception\PreconditionRequiredHttpException $e) {
+			return new JsonResponse(['error' => 'precondition_required', 'message' => $e->getMessage()], 428);
+		}
 
 		$policy = $data['pricingPolicy'] ?? null;
 		if (!in_array($policy, ['SNAPSHOT', 'LIVE'], true)) {
@@ -220,19 +233,27 @@ final class CartApiController extends AbstractController
 			return $this->json(['error' => $e->getMessage()], 422);
 		}
 
-		$response->setData($this->serializeCart($cart));
-		return $response;
+		$payload = $this->serializeCart($cart);
+		return $this->cartResponse->withCart($response, $cart, $payload);
 	}
 
 	#[Route('/reprice', name: 'api_cart_reprice', methods: ['POST'])]
-	public function repriceCart(): JsonResponse
+	public function repriceCart(Request $request): JsonResponse
 	{
 		$user = $this->getUser();
 		$userId = $user instanceof AppUser ? $user->getId() : null;
 
-		// Создаем объект JsonResponse
 		$response = new JsonResponse();
-		$cart = $this->cartContext->getOrCreate($userId, $response);
+		$cart = $this->cartContext->getOrCreateForWrite($userId, $response);
+
+		// Проверяем предикаты записи
+		try {
+			$this->guard->assertPrecondition($request, $cart);
+		} catch (\Symfony\Component\HttpKernel\Exception\PreconditionFailedHttpException $e) {
+			return $this->createPreconditionFailedResponse($cart);
+		} catch (\Symfony\Component\HttpKernel\Exception\PreconditionRequiredHttpException $e) {
+			return new JsonResponse(['error' => 'precondition_required', 'message' => $e->getMessage()], 428);
+		}
 
 		// Обновляем снепшот всех позиций актуальными live-ценами
 		foreach ($cart->getItems() as $item) {
@@ -249,8 +270,8 @@ final class CartApiController extends AbstractController
 		// Пересчитываем корзину
 		$this->calculator->recalculate($cart);
 
-		$response->setData($this->serializeCart($cart));
-		return $response;
+		$payload = $this->serializeCart($cart);
+		return $this->cartResponse->withCart($response, $cart, $payload);
 	}
 
 	#[Route('/products/{productId}/options', name: 'api_product_options', methods: ['GET'])]

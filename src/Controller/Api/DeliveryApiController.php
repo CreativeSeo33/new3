@@ -10,6 +10,8 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\{JsonResponse, Request};
 use Symfony\Component\Routing\Attribute\Route;
+use App\Http\CartWriteGuard;
+use App\Http\CartResponse;
 
 #[Route('/api/delivery')]
 final class DeliveryApiController extends AbstractController
@@ -20,6 +22,8 @@ final class DeliveryApiController extends AbstractController
         private DeliveryService $delivery,
         private CartCalculator $calculator,
         private EntityManagerInterface $em,
+        private CartWriteGuard $guard,
+        private CartResponse $cartResponse,
     ) {}
 
 	#[Route('/context', name: 'api_delivery_context', methods: ['GET'])]
@@ -39,13 +43,26 @@ final class DeliveryApiController extends AbstractController
 
 		$user = $this->getUser();
 		$userId = $user instanceof AppUser ? $user->getId() : null;
-		$cart = $this->carts->getOrCreateCurrent($userId);
+		$cart = $this->carts->getOrCreateForWrite($userId);
+
+		// Проверяем предикаты записи
+		try {
+			$this->guard->assertPrecondition($r, $cart);
+		} catch (\Symfony\Component\HttpKernel\Exception\PreconditionFailedHttpException $e) {
+			return new JsonResponse(['error' => 'precondition_failed', 'message' => 'Cart ETag mismatch'], 412);
+		} catch (\Symfony\Component\HttpKernel\Exception\PreconditionRequiredHttpException $e) {
+			return new JsonResponse(['error' => 'precondition_required', 'message' => $e->getMessage()], 428);
+		}
+
         $this->ctx->syncToCart($cart);
         $cart->setShippingCost(0);
         $cart->setShippingMethod(null);
         $this->calculator->recalculate($cart);
         $this->em->flush();
-		return $this->json(['ok' => true]);
+
+        $payload = ['ok' => true];
+        $response = new JsonResponse();
+        return $this->cartResponse->withCart($response, $cart, $payload);
 	}
 
 	#[Route('/select-method', name: 'api_delivery_select_method', methods: ['POST'])]
@@ -69,17 +86,29 @@ final class DeliveryApiController extends AbstractController
 
 		$user = $this->getUser();
 		$userId = $user instanceof AppUser ? $user->getId() : null;
-		$cart = $this->carts->getOrCreateCurrent($userId);
+		$cart = $this->carts->getOrCreateForWrite($userId);
+
+		// Проверяем предикаты записи
+		try {
+			$this->guard->assertPrecondition($r, $cart);
+		} catch (\Symfony\Component\HttpKernel\Exception\PreconditionFailedHttpException $e) {
+			return new JsonResponse(['error' => 'precondition_failed', 'message' => 'Cart ETag mismatch'], 412);
+		} catch (\Symfony\Component\HttpKernel\Exception\PreconditionRequiredHttpException $e) {
+			return new JsonResponse(['error' => 'precondition_required', 'message' => $e->getMessage()], 428);
+		}
+
 		$this->ctx->syncToCart($cart);
         $cost = $this->delivery->quote($cart);
         $cart->setShippingCost($cost);
         $this->calculator->recalculate($cart);
         $this->em->flush();
 
-		return $this->json([
-			'shippingCost' => $cart->getShippingCost(),
-			'total' => $cart->getTotal(),
-		]);
+        $payload = [
+            'shippingCost' => $cart->getShippingCost(),
+            'total' => $cart->getTotal(),
+        ];
+        $response = new JsonResponse();
+        return $this->cartResponse->withCart($response, $cart, $payload);
 	}
 
 	#[Route('/select-pvz', name: 'api_delivery_select_pvz', methods: ['POST'])]
@@ -111,17 +140,29 @@ final class DeliveryApiController extends AbstractController
 
 		$user = $this->getUser();
 		$userId = $user instanceof AppUser ? $user->getId() : null;
-		$cart = $this->carts->getOrCreateCurrent($userId);
+		$cart = $this->carts->getOrCreateForWrite($userId);
+
+		// Проверяем предикаты записи
+		try {
+			$this->guard->assertPrecondition($r, $cart);
+		} catch (\Symfony\Component\HttpKernel\Exception\PreconditionFailedHttpException $e) {
+			return new JsonResponse(['error' => 'precondition_failed', 'message' => 'Cart ETag mismatch'], 412);
+		} catch (\Symfony\Component\HttpKernel\Exception\PreconditionRequiredHttpException $e) {
+			return new JsonResponse(['error' => 'precondition_required', 'message' => $e->getMessage()], 428);
+		}
+
 		$this->ctx->syncToCart($cart);
 		$cost = $this->delivery->quote($cart);
 		$cart->setShippingCost($cost);
 		$this->calculator->recalculate($cart);
 		$this->em->flush();
 
-		return $this->json([
+		$payload = [
 			'shippingCost' => $cart->getShippingCost(),
 			'total' => $cart->getTotal(),
-		]);
+		];
+		$response = new JsonResponse();
+		return $this->cartResponse->withCart($response, $cart, $payload);
 	}
 }
 

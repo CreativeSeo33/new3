@@ -71,14 +71,27 @@ final class CartManager
             $this->em->persist($cart);
         }
 
-        // Синхронизация контекста доставки и пересчет
+        // Для GET-запросов не выполняем мутации корзины
+        // Синхронизация контекста доставки и пересчет выполняются только при модификации
+
+        // Сохраняем ссылку на корзину в сессии checkout.cart
+        $this->checkoutContext->setCartRefFromCart($cart);
+
+        return $cart;
+    }
+
+    /**
+     * Получает корзину для операций записи с синхронизацией и пересчетом
+     */
+    public function getOrCreateForWrite(?int $userId): Cart
+    {
+        $cart = $this->getOrCreateCurrent($userId);
+
+        // Синхронизация контекста доставки и пересчет только при модификации
         $this->deliveryContext->syncToCart($cart);
         $this->calculator->recalculate($cart);
         $cart->setUpdatedAt(new \DateTimeImmutable());
         $this->em->flush();
-
-        // Сохраняем ссылку на корзину в сессии checkout.cart
-        $this->checkoutContext->setCartRefFromCart($cart);
 
         return $cart;
     }
