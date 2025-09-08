@@ -16,6 +16,7 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use App\Entity\ProductOptionValueAssignment;
 use App\Service\PriceNormalizer;
 use App\Service\CartLockException;
+use App\Http\CartCookieFactory;
 
 /**
  * CartManager - сервис для управления корзиной покупок
@@ -41,6 +42,7 @@ final class CartManager
 		private EventDispatcherInterface $events,
         private DeliveryContext $deliveryContext,
         private CheckoutContext $checkoutContext,
+        private CartCookieFactory $cookieFactory,
     ) {}
 
     public function getOrCreateCurrent(?int $userId): Cart
@@ -48,19 +50,33 @@ final class CartManager
         // Этот метод сохранен для обратной совместимости
         // Рекомендуется использовать CartContext напрямую
 
+        $cart = null; // Инициализируем переменную
+
         if ($userId) {
             $cart = $this->carts->findActiveByUserId($userId);
         } else {
-            // Для гостей пробуем найти корзину по cookie cart_id
+            // Для гостей пробуем найти корзину по cookie (используем ту же логику, что и CartContext)
             $request = $this->requestStack->getCurrentRequest();
             if ($request) {
-                $cartIdCookie = $request->cookies->get('cart_id');
-                if ($cartIdCookie) {
-                    try {
-                        $cartId = \Symfony\Component\Uid\Ulid::fromString($cartIdCookie);
-                        $cart = $this->carts->findActiveById($cartId);
-                    } catch (\InvalidArgumentException) {
-                        $cart = null;
+                // Получаем cookie по новому имени (с префиксом __Host-)
+                $cartIdString = $request->cookies->get('__Host-cart_id');
+                $legacyCartIdString = $request->cookies->get('cart_id'); // legacy fallback
+
+                // Сначала пытаемся найти по токену (новый формат)
+                if ($cartIdString) {
+                    $cart = $this->carts->findActiveByToken($cartIdString);
+                }
+
+                // Fallback на старый формат ULID
+                if (!$cart) {
+                    $cartIdString = $cartIdString ?: $legacyCartIdString;
+                    if ($cartIdString) {
+                        try {
+                            $cartId = Ulid::fromString($cartIdString);
+                            $cart = $this->carts->findActiveById($cartId);
+                        } catch (\InvalidArgumentException) {
+                            $cart = null;
+                        }
                     }
                 }
             }

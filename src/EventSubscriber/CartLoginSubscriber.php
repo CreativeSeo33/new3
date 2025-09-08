@@ -3,12 +3,12 @@ declare(strict_types=1);
 
 namespace App\EventSubscriber;
 
+use App\Http\CartCookieFactory;
 use App\Repository\CartRepository;
 use App\Service\CartManager;
 use App\Entity\User as AppUser;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Http\Event\LoginSuccessEvent;
 use Symfony\Component\Uid\Ulid;
@@ -22,6 +22,7 @@ final class CartLoginSubscriber implements EventSubscriberInterface
         private CartRepository $carts,
         private CartManager $manager,
         private EntityManagerInterface $em,
+        private CartCookieFactory $cookieFactory,
     ) {}
 
     public static function getSubscribedEvents(): array
@@ -74,19 +75,9 @@ final class CartLoginSubscriber implements EventSubscriberInterface
         }
 
         if ($finalCart) {
-            // Продлеваем cookie для итоговой корзины
-            $ttl = (new \DateTimeImmutable())->modify('+' . self::CART_TTL_DAYS . ' days');
-            $cookie = Cookie::create(
-                self::CART_ID_COOKIE,
-                $finalCart->getIdString(),
-                $ttl,
-                '/',
-                null,
-                $request->isSecure(),
-                true, // httpOnly
-                false,
-                Cookie::SAMESITE_LAX
-            );
+            // Продлеваем cookie для итоговой корзины через фабрику
+            $cookieValue = $finalCart->getToken() ?? $finalCart->getIdString(); // fallback на ULID если токена нет
+            $cookie = $this->cookieFactory->build($request, $cookieValue);
 
             $response = $event->getResponse();
             if ($response) {

@@ -91,6 +91,7 @@ class Cart
 	{
 		$cart = new self();
 		$cart->id = Ulid::fromString(Ulid::generate());
+		$cart->token = Uuid::v4()->toRfc4122(); // Генерируем токен для безопасности
 		$cart->userId = $userId;
 		$cart->createdAt = new \DateTimeImmutable(); // Явная инициализация
 		$cart->updatedAt = new \DateTimeImmutable();

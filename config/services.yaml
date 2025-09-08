@@ -11,6 +11,14 @@ parameters:
         - 'xl'
     cart.require_precondition: false
 
+    # Cart cookie configuration
+    cart.cookie.force_secure_in_prod: true
+    cart.cookie.use_host_prefix: true
+    cart.cookie.name: 'cart_id'
+    cart.cookie.ttl_days: 180
+    cart.cookie.domain: null
+    cart.cookie.same_site: 'lax'
+
 services:
     # default configuration for services in *this* file
     _defaults:
@@ -39,6 +47,7 @@ services:
             - '@App\Repository\CartRepository'
             - '@lock.factory'
             - '@request_stack'
+            - '@App\Http\CartCookieFactory'
 
     # Cart cookie listener
     App\EventListener\CartCookieListener:
@@ -51,6 +60,7 @@ services:
             - '@App\Repository\CartRepository'
             - '@App\Service\CartManager'
             - '@doctrine.orm.entity_manager'
+            - '@App\Http\CartCookieFactory'
 
     # Remove Intervention Image wiring (migrated to LiipImagine)
 
@@ -115,3 +125,13 @@ services:
             $requirePrecondition: '%cart.require_precondition%'
 
     App\Http\CartResponse: ~
+
+    # Cart cookie factory for secure cookie management
+    App\Http\CartCookieFactory:
+        arguments:
+            $forceSecureInProd: '%cart.cookie.force_secure_in_prod%'
+            $useHostPrefix: '%cart.cookie.use_host_prefix%'
+            $cookieName: '%cart.cookie.name%'
+            $ttlDays: '%cart.cookie.ttl_days%'
+            $domain: '%cart.cookie.domain%'
+            $sameSite: !php/const Symfony\Component\HttpFoundation\Cookie::SAMESITE_LAX
