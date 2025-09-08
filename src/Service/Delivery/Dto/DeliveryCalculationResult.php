@@ -11,7 +11,7 @@ final class DeliveryCalculationResult
 {
     public function __construct(
         // Рассчитанная стоимость. null, если требуется расчет менеджером.
-        public readonly ?float $cost,
+        public readonly ?int $cost,
         // Срок доставки (например, "2-3 дня")
         public readonly string $term,
         // Специальное сообщение для клиента (например, "Бесплатно" или "Расчет менеджером")

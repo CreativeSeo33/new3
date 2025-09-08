@@ -93,9 +93,9 @@ class PvzPoints
     private $tariffZone;
 
     /**
-     * @var float|null
+     * @var int|null
      */
-    #[ORM\Column(name: 'price', type: 'float', precision: 10, scale: 0, nullable: true)]
+    #[ORM\Column(name: 'price', type: 'integer', nullable: true)]
     private $price;
 
     /**
@@ -243,12 +243,12 @@ class PvzPoints
         return $this;
     }
 
-    public function getPrice(): ?float
+    public function getPrice(): ?int
     {
         return $this->price;
     }
 
-    public function setPrice(?float $price): self
+    public function setPrice(?int $price): self
     {
         $this->price = $price;
 

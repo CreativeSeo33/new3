@@ -43,7 +43,7 @@ final class PvzDeliveryMethod implements DeliveryMethodInterface
         // 1. Проверка на бесплатную доставку по сумме заказа
         if ($freeDeliveryThreshold !== null && $freeDeliveryThreshold > 0 && $cart->getSubtotal() >= $freeDeliveryThreshold) {
             return new DeliveryCalculationResult(
-                cost: 0.0,
+                cost: 0,
                 term: $term,
                 message: 'Бесплатно',
                 isFree: true
@@ -72,7 +72,7 @@ final class PvzDeliveryMethod implements DeliveryMethodInterface
         }
 
         return new DeliveryCalculationResult(
-            cost: (float) $totalCost,
+            cost: $totalCost,
             term: $term
         );
     }

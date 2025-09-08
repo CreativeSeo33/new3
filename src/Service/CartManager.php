@@ -13,6 +13,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Uid\Ulid;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use App\Entity\ProductOptionValueAssignment;
+use App\Service\PriceNormalizer;
 
 /**
  * CartManager - сервис для управления корзиной покупок
@@ -85,9 +86,10 @@ final class CartManager
 	 */
 	private function generateOptionsHash(array $optionAssignmentIds): string
 	{
-		// Сортируем ID для обеспечения одинакового хеша при одинаковом наборе опций
-		sort($optionAssignmentIds);
-		return md5(implode(',', $optionAssignmentIds));
+		// Приводим ID к int, удаляем дубликаты и сортируем
+		$ids = array_values(array_unique(array_map('intval', $optionAssignmentIds)));
+		sort($ids, SORT_NUMERIC);
+		return md5(implode(',', $ids));
 	}
 
 	public function addItem(Cart $cart, int $productId, int $qty, array $optionAssignmentIds = []): Cart
@@ -163,13 +165,13 @@ final class CartManager
 		$item->setProductName($product->getName() ?? '');
 		$item->setQty($qty);
 
-		$basePrice = $product->getEffectivePrice() ?? ($product->getPrice() ?? 0);
-		$item->setUnitPrice((int) round($basePrice));
+		$basePriceRub = PriceNormalizer::toRubInt($product->getEffectivePrice() ?? $product->getPrice() ?? 0);
+		$item->setUnitPrice($basePriceRub);
 
 		if (!empty($optionAssignmentIds)) {
-			$this->applyProductOptions($item, $product, $optionAssignmentIds, $basePrice, $optionsHash);
+			$this->applyProductOptions($item, $product, $optionAssignmentIds, $basePriceRub, $optionsHash);
 		} else {
-			$item->setEffectiveUnitPrice((int) round($basePrice));
+			$item->setEffectiveUnitPrice($basePriceRub);
 			$item->setOptionsHash(null);
 		}
 
@@ -177,35 +179,36 @@ final class CartManager
 		$this->em->persist($item);
 	}
 
-	private function applyProductOptions(CartItem $item, $product, array $optionAssignmentIds, float $basePrice, ?string $optionsHash): void
+	private function applyProductOptions(CartItem $item, $product, array $optionAssignmentIds, int $basePriceRub, ?string $optionsHash): void
 	{
-		$optionsPriceModifier = 0;
+		$optionsPriceModifierRub = 0;
 		$selectedOptionsData = [];
 		$optionsSnapshot = [];
 
 		foreach ($optionAssignmentIds as $assignmentId) {
-			$assignment = $this->em->getRepository(ProductOptionValueAssignment::class)->find($assignmentId);
+			$assignment = $this->em->getRepository(ProductOptionValueAssignment::class)->find((int)$assignmentId);
 			if (!$assignment || $assignment->getProduct()->getId() !== $product->getId()) {
 				throw new \DomainException('Invalid option assignment');
 			}
 
 			$item->addOptionAssignment($assignment);
 
-			$optionPrice = $assignment->getSalePrice() ?? $assignment->getPrice() ?? 0;
-			$optionsPriceModifier += $optionPrice;
+			$raw = $assignment->getSalePrice() ?? $assignment->getPrice() ?? 0;
+			$optionPriceRub = PriceNormalizer::toRubInt($raw);
+			$optionsPriceModifierRub += $optionPriceRub;
 
-			$selectedOptionsData[] = $this->createOptionData($assignment, $optionPrice);
+			$selectedOptionsData[] = $this->createOptionData($assignment, $optionPriceRub);
 			$optionsSnapshot[] = $this->createOptionSnapshot($assignment);
 		}
 
-		$item->setOptionsPriceModifier($optionsPriceModifier);
+		$item->setOptionsPriceModifier($optionsPriceModifierRub);
 		$item->setSelectedOptionsData($selectedOptionsData);
 		$item->setOptionsSnapshot($optionsSnapshot);
 		$item->setOptionsHash($optionsHash);
-		$item->setEffectiveUnitPrice((int) round($basePrice + $optionsPriceModifier));
+		$item->setEffectiveUnitPrice($basePriceRub + $optionsPriceModifierRub);
 	}
 
-	private function createOptionData($assignment, float $optionPrice): array
+	private function createOptionData($assignment, int $optionPriceRub): array
 	{
 		return [
 			'assignmentId' => $assignment->getId(),
@@ -213,7 +216,7 @@ final class CartManager
 			'optionName' => $assignment->getOption()->getName(),
 			'valueCode' => $assignment->getValue()->getCode(),
 			'valueName' => $assignment->getValue()->getValue(),
-			'price' => $optionPrice,
+			'price' => $optionPriceRub,
 			'sku' => $assignment->getSku(),
 		];
 	}
@@ -298,8 +301,7 @@ final class CartManager
 		// Пробуем найти товар напрямую через SQL, игнорируя проблемы с Doctrine
 		$cartId = $cart->getId();
 		$sql = 'SELECT ci.* FROM cart_item ci WHERE ci.cart_id = ? AND ci.id = ? LIMIT 1 FOR UPDATE';
-		$stmt = $this->em->getConnection()->prepare($sql);
-		$result = $stmt->executeQuery([$cartId, $itemId])->fetchAssociative();
+		$result = $this->em->getConnection()->executeQuery($sql, [$cartId, $itemId])->fetchAssociative();
 
 		if ($result) {
 			error_log("CartManager: Found item {$itemId} via direct SQL");

@@ -72,7 +72,7 @@ final class DeliveryService
     {
         $result = $this->calculateForCart($cart);
 
-        return (int) round($result->cost ?? 0);
+        return $result->cost ?? 0;
     }
 
     /**

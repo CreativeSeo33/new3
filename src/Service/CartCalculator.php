@@ -6,6 +6,7 @@ namespace App\Service;
 use App\Entity\Cart;
 use App\Entity\CartItem;
 use App\Service\Delivery\DeliveryService;
+use App\Service\PriceNormalizer;
 
 final class CartCalculator
 {
@@ -50,35 +51,14 @@ final class CartCalculator
     
     /**
      * Вычисление эффективной цены товара
-     * Если есть опции - суммируем цены всех опций
-     * Если опций нет - берем базовую цену товара
+     *
+     * Единая модель ценообразования: базовая цена + модификатор опций
+     * Это гарантирует консистентность с логикой CartManager
      */
     private function calculateEffectivePrice(CartItem $item): int
     {
-        $optionAssignments = $item->getOptionAssignments();
-        $optionsPrice = 0;
-
-        // Если есть опции, суммируем цены всех опций
-        if (!$optionAssignments->isEmpty()) {
-            foreach ($optionAssignments as $option) {
-                // Приоритет у sale_price если есть
-                if ($option->getSalePrice() !== null && $option->getSalePrice() > 0) {
-                    $optionPrice = $option->getSalePrice();
-                } else {
-                    // Иначе обычная цена опции
-                    $optionPrice = $option->getPrice() ?? 0;
-                }
-                $optionsPrice += $optionPrice;
-            }
-
-            // Если сумма цен опций больше 0, используем её
-            if ($optionsPrice > 0) {
-                return $optionsPrice;
-            }
-        }
-
-        // Если опций нет или у них нет цены - используем базовую цену товара
-        return $item->getUnitPrice();
+        // Единая модель: базовая цена + модификатор опций
+        return $item->getUnitPrice() + $item->getOptionsPriceModifier();
     }
 }
 

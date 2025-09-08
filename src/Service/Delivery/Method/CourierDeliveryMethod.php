@@ -44,7 +44,7 @@ final class CourierDeliveryMethod implements DeliveryMethodInterface
         // 1. Проверка на бесплатную доставку (правило общее)
         if ($freeDeliveryThreshold !== null && $freeDeliveryThreshold > 0 && $cart->getSubtotal() >= $freeDeliveryThreshold) {
             return new DeliveryCalculationResult(
-                cost: 0.0,
+                cost: 0,
                 term: $term,
                 message: 'Бесплатно',
                 isFree: true
@@ -74,7 +74,7 @@ final class CourierDeliveryMethod implements DeliveryMethodInterface
         $totalCost = $baseTotalCost + self::SURCHARGE;
 
         return new DeliveryCalculationResult(
-            cost: (float) $totalCost,
+            cost: $totalCost,
             term: $term
         );
     }
