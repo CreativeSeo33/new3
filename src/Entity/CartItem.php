@@ -44,8 +44,8 @@ class CartItem
 	#[ORM\Column(type: 'integer', options: ['default' => 0])]
 	private int $effectiveUnitPrice = 0;
 
-	#[ORM\Column(type: 'string', length: 32, nullable: true)]
-	private ?string $optionsHash = null;
+	#[ORM\Column(type: 'string', length: 32, options: ['default' => ''])]
+	private string $optionsHash = '';
 
 	#[ORM\Column(type: 'json', nullable: true)]
 	private ?array $selectedOptionsData = null;
@@ -106,9 +106,9 @@ class CartItem
 
 	public function setEffectiveUnitPrice(int $price): void { $this->effectiveUnitPrice = $price; }
 
-	public function getOptionsHash(): ?string { return $this->optionsHash; }
+	public function getOptionsHash(): string { return $this->optionsHash; }
 
-	public function setOptionsHash(?string $hash): void { $this->optionsHash = $hash; }
+	public function setOptionsHash(string $hash): void { $this->optionsHash = $hash; }
 
 	public function getSelectedOptionsData(): ?array { return $this->selectedOptionsData; }
 

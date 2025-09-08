@@ -60,18 +60,7 @@ final class CartRepository extends ServiceEntityRepository
 			->getQuery()->getOneOrNullResult();
 	}
 
-    public function findItemForUpdate(Cart $cart, Product $product): ?CartItem
-    {
-        return $this->getEntityManager()->createQuery(
-            'SELECT ci FROM App\\Entity\\CartItem ci WHERE ci.cart = :c AND ci.product = :p AND ci.optionsHash IS NULL'
-        )
-        ->setParameters(['c' => $cart, 'p' => $product])
-        ->setLockMode(LockMode::PESSIMISTIC_WRITE)
-        ->setMaxResults(1)
-        ->getOneOrNullResult();
-    }
-
-    public function findItemForUpdateWithOptions(Cart $cart, Product $product, string $optionsHash): ?CartItem
+    public function findItemForUpdate(Cart $cart, Product $product, string $optionsHash): ?CartItem
     {
         return $this->getEntityManager()->createQuery(
             'SELECT ci FROM App\\Entity\\CartItem ci WHERE ci.cart = :c AND ci.product = :p AND ci.optionsHash = :h'
@@ -97,11 +86,9 @@ final class CartRepository extends ServiceEntityRepository
         if (!$item) {
             $cartId = $cart->getId();
             $sql = 'SELECT ci.* FROM cart_item ci WHERE ci.cart_id = ? AND ci.id = ? LIMIT 1 FOR UPDATE';
-            $stmt = $this->getEntityManager()->getConnection()->prepare($sql);
-            $stmt->executeStatement([$cartId, $itemId]);
+            $result = $this->getEntityManager()->getConnection()->executeQuery($sql, [$cartId, $itemId])->fetchAssociative();
 
-            $result = $stmt->fetchAssociative();
-            if ($result) {
+            if ($result && isset($result['id'])) {
                 $item = $this->getEntityManager()->find(CartItem::class, $result['id']);
             }
         }

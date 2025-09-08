@@ -7,6 +7,7 @@ use App\Entity\Cart;
 use App\Entity\CartItem;
 use App\Repository\CartRepository;
 use App\Repository\ProductRepository;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -84,12 +85,19 @@ final class CartManager
 
 	/**
 	 * Генерирует уникальный хеш для набора опций
+	 * Возвращает пустую строку для товаров без опций
 	 */
-	private function generateOptionsHash(array $optionAssignmentIds): string
+	public function generateOptionsHash(array $optionAssignmentIds): string
 	{
 		// Приводим ID к int, удаляем дубликаты и сортируем
 		$ids = array_values(array_unique(array_map('intval', $optionAssignmentIds)));
 		sort($ids, SORT_NUMERIC);
+
+		// Для товаров без опций возвращаем пустую строку
+		if (empty($ids)) {
+			return '';
+		}
+
 		return md5(implode(',', $ids));
 	}
 
@@ -233,18 +241,26 @@ final class CartManager
 		$optionsHash = $this->generateOptionsHash($optionAssignmentIds);
 		$existingItem = $this->findExistingCartItem($cart, $product, $optionsHash);
 
-		if ($existingItem) {
-			$this->updateExistingItem($existingItem, $product, $qty);
-		} else {
-			$this->createNewCartItem($cart, $product, $qty, $optionAssignmentIds, $optionsHash);
+		try {
+			if ($existingItem) {
+				$this->updateExistingItem($existingItem, $product, $qty);
+			} else {
+				$this->createNewCartItem($cart, $product, $qty, $optionAssignmentIds, $optionsHash);
+			}
+		} catch (UniqueConstraintViolationException) {
+			// Гонка: параллельно вставили такую же строку — мёрджим
+			$conflict = $this->findExistingCartItem($cart, $product, $optionsHash);
+			if ($conflict) {
+				$this->updateExistingItem($conflict, $product, $qty);
+			} else {
+				throw new \RuntimeException('Unique constraint violation without conflict resolution');
+			}
 		}
 	}
 
-	private function findExistingCartItem(Cart $cart, $product, ?string $optionsHash): ?CartItem
+	private function findExistingCartItem(Cart $cart, $product, string $optionsHash): ?CartItem
 	{
-		return $optionsHash
-			? $this->carts->findItemForUpdateWithOptions($cart, $product, $optionsHash)
-			: $this->carts->findItemForUpdate($cart, $product);
+		return $this->carts->findItemForUpdate($cart, $product, $optionsHash);
 	}
 
 	private function updateExistingItem(CartItem $item, $product, int $additionalQty): void
@@ -258,13 +274,14 @@ final class CartManager
 		$item->setQty($newQty);
 	}
 
-	private function createNewCartItem(Cart $cart, $product, int $qty, array $optionAssignmentIds, ?string $optionsHash): void
+	private function createNewCartItem(Cart $cart, $product, int $qty, array $optionAssignmentIds, string $optionsHash): void
 	{
 		$item = new CartItem();
 		$item->setCart($cart);
 		$item->setProduct($product);
 		$item->setProductName($product->getName() ?? '');
 		$item->setQty($qty);
+		$item->setOptionsHash($optionsHash);
 
 		$basePriceRub = PriceNormalizer::toRubInt($product->getEffectivePrice() ?? $product->getPrice() ?? 0);
 		$item->setUnitPrice($basePriceRub);
@@ -273,7 +290,6 @@ final class CartManager
 			$this->applyProductOptions($item, $product, $optionAssignmentIds, $basePriceRub, $optionsHash);
 		} else {
 			$item->setEffectiveUnitPrice($basePriceRub);
-			$item->setOptionsHash(null);
 		}
 
 		// Устанавливаем время фиксации цены
@@ -283,7 +299,7 @@ final class CartManager
 		$this->em->persist($item);
 	}
 
-	private function applyProductOptions(CartItem $item, $product, array $optionAssignmentIds, int $basePriceRub, ?string $optionsHash): void
+	private function applyProductOptions(CartItem $item, $product, array $optionAssignmentIds, int $basePriceRub, string $optionsHash): void
 	{
 		$setPrices = [];
 		$modifier = 0;
@@ -467,9 +483,7 @@ final class CartManager
 			foreach ($source->getItems() as $srcItem) {
 				// Ищем существующий товар с учетом опций
 				$optionsHash = $srcItem->getOptionsHash();
-				$existing = $optionsHash
-					? $this->carts->findItemForUpdateWithOptions($target, $srcItem->getProduct(), $optionsHash)
-					: $this->carts->findItemForUpdate($target, $srcItem->getProduct());
+				$existing = $this->carts->findItemForUpdate($target, $srcItem->getProduct(), $optionsHash);
 
 				$qty = $existing ? $existing->getQty() + $srcItem->getQty() : $srcItem->getQty();
 
