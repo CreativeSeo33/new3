@@ -138,3 +138,14 @@ services:
             $ttlDays: '%cart.cookie.ttl_days%'
             $domain: '%cart.cookie.domain%'
             $sameSite: !php/const Symfony\Component\HttpFoundation\Cookie::SAMESITE_LAX
+
+    # Idempotency services for Cart API
+    App\Service\Idempotency\IdempotencyService: ~
+    App\Service\Idempotency\IdempotencyRequestHasher: ~
+
+    # Idempotency logger channel
+    monolog.logger.idempotency:
+        class: Psr\Log\LoggerInterface
+        factory: ['@monolog.logger', 'getLogger']
+        arguments:
+            - idempotency

@@ -8,6 +8,10 @@ doctrine:
 
         profiling_collect_backtrace: '%kernel.debug%'
         use_savepoints: true
+
+        # Устанавливаем UTC timezone для соединения с БД
+        options:
+            1002: "SET time_zone = '+00:00'"  # PDO::MYSQL_ATTR_INIT_COMMAND
     orm:
         auto_generate_proxy_classes: true
         enable_lazy_ghost_objects: true
@@ -17,6 +21,8 @@ doctrine:
         identity_generation_preferences:
             Doctrine\DBAL\Platforms\PostgreSQLPlatform: identity
         auto_mapping: true
+        schema_ignore_classes:
+            - cart_idempotency
         mappings:
             App:
                 type: attribute

@@ -1,0 +1,29 @@
+warning: LF will be replaced by CRLF in assets/catalog/src/app/bootstrap.ts.
+The file will have its original line endings in your working directory
+warning: LF will be replaced by CRLF in assets/catalog/src/app/registry.ts.
+The file will have its original line endings in your working directory
+warning: LF will be replaced by CRLF in assets/catalog/src/features/add-to-cart/api/index.ts.
+The file will have its original line endings in your working directory
+warning: LF will be replaced by CRLF in assets/catalog/src/features/add-to-cart/index.ts.
+The file will have its original line endings in your working directory
+warning: LF will be replaced by CRLF in assets/catalog/src/features/add-to-cart/ui/button.ts.
+The file will have its original line endings in your working directory
+warning: LF will be replaced by CRLF in assets/catalog/src/features/cart-items-manager/ui/manager.ts.
+The file will have its original line endings in your working directory
+warning: LF will be replaced by CRLF in assets/catalog/src/shared/api/http.ts.
+The file will have its original line endings in your working directory
+warning: LF will be replaced by CRLF in config/packages/doctrine.yaml.
+The file will have its original line endings in your working directory
+warning: LF will be replaced by CRLF in config/services.yaml.
+The file will have its original line endings in your working directory
+assets/catalog/src/app/bootstrap.ts
+assets/catalog/src/app/registry.ts
+assets/catalog/src/features/add-to-cart/api/index.ts
+assets/catalog/src/features/add-to-cart/index.ts
+assets/catalog/src/features/add-to-cart/ui/button.ts
+assets/catalog/src/features/cart-items-manager/ui/manager.ts
+assets/catalog/src/shared/api/http.ts
+config/packages/doctrine.yaml
+config/packages/monolog.yaml
+config/services.yaml
+src/Controller/Api/DeliveryApiController.php

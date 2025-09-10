@@ -1,5 +1,5 @@
 monolog:
-    channels: ['app', 'security', 'doctrine', 'request', 'deprecation']
+    channels: ['app', 'security', 'doctrine', 'request', 'deprecation', 'idempotency']
     handlers:
         main:
             type: stream
@@ -30,3 +30,8 @@ monolog:
             path: '%kernel.logs_dir%/deprecation_%kernel.environment%.log'
             level: info
             channels: [deprecation]
+        idempotency:
+            type: stream
+            path: '%kernel.logs_dir%/idempotency_%kernel.environment%.log'
+            level: info
+            channels: [idempotency]

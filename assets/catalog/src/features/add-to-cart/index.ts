@@ -17,11 +17,9 @@ export function init(
 ): () => void {
   // Проверяем, не инициализирован ли уже модуль на этом элементе
   if ((root as any).__addToCartButton) {
-    console.log('AddToCartButton already initialized for element:', root);
     return () => {};
   }
 
-  console.log('Initializing AddToCartButton for element:', root);
   const button = new AddToCartButton(root, opts);
 
   // Сохраняем ссылку на экземпляр

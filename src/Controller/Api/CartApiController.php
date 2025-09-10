@@ -122,18 +122,14 @@ final class CartApiController extends AbstractController
 				$response->setStatusCode($begin->httpStatus);
 				if ($begin->httpStatus !== 204) {
 					$response->setData($begin->responseData);
+				} else {
+					$response->setContent(null); // Для 204 обнуляем тело
 				}
-				// Устанавливаем заголовки корзины вручную
-				$response->setEtag($this->etags->make($cart));
-				$response->headers->set('Cache-Control', 'no-store');
-				$response->headers->set('Cart-Version', (string)$cart->getVersion());
-				$response->headers->set('Items-Count', (string)$cart->getItems()->count());
-				$response->headers->set('Totals-Subtotal', (string)$cart->getSubtotal());
-				$response->headers->set('Totals-Discount', (string)$cart->getDiscountTotal());
-				$response->headers->set('Totals-Total', (string)$cart->getTotal());
+				$this->cartResponse->setResponseHeaders($response, $cart); // ETag, версии, totals, cookie
 				$response->headers->set('Idempotency-Replay', 'true');
 				$response->headers->set('Idempotency-Key', $idempotencyKey);
-				$response->headers->set('Idempotency-Expires', $begin->expiresAt->format(\DATE_ATOM));
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$response->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
 				return $response;
 			}
 			if ($begin->type === 'conflict') {
@@ -152,7 +148,8 @@ final class CartApiController extends AbstractController
 					]
 				], 409);
 				$conflictResponse->headers->set('Idempotency-Key', $idempotencyKey);
-				$conflictResponse->headers->set('Idempotency-Expires', $begin->expiresAt->format(\DATE_ATOM));
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$conflictResponse->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
 				return $conflictResponse;
 			}
 			if ($begin->type === 'in_flight') {
@@ -162,7 +159,8 @@ final class CartApiController extends AbstractController
 					'retry_after' => $begin->retryAfter
 				], 409, ['Retry-After' => (string)$begin->retryAfter]);
 				$inFlightResponse->headers->set('Idempotency-Key', $idempotencyKey);
-				$inFlightResponse->headers->set('Idempotency-Expires', $begin->expiresAt->format(\DATE_ATOM));
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$inFlightResponse->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
 				return $inFlightResponse;
 			}
 
@@ -191,7 +189,7 @@ final class CartApiController extends AbstractController
 
 		// Завершение идемпотентности
 		if ($idempotencyKey) {
-			$finishPayload = $jsonResponse->getStatusCode() === 204 ? null : $this->deltaBuilder->buildFull($cart);
+			$finishPayload = $jsonResponse->getStatusCode() === 204 ? null : json_decode($jsonResponse->getContent(), true);
 			$this->idem->finish($idempotencyKey, $jsonResponse->getStatusCode(), $finishPayload);
 			$jsonResponse->headers->set('Idempotency-Key', $idempotencyKey);
 			$jsonResponse->headers->set('Idempotency-Expires', (new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC')))->format(\DATE_ATOM));
@@ -245,18 +243,14 @@ final class CartApiController extends AbstractController
 				$response->setStatusCode($begin->httpStatus);
 				if ($begin->httpStatus !== 204) {
 					$response->setData($begin->responseData);
+				} else {
+					$response->setContent(null); // Для 204 обнуляем тело
 				}
-				// Устанавливаем заголовки корзины вручную
-				$response->setEtag($this->etags->make($cart));
-				$response->headers->set('Cache-Control', 'no-store');
-				$response->headers->set('Cart-Version', (string)$cart->getVersion());
-				$response->headers->set('Items-Count', (string)$cart->getItems()->count());
-				$response->headers->set('Totals-Subtotal', (string)$cart->getSubtotal());
-				$response->headers->set('Totals-Discount', (string)$cart->getDiscountTotal());
-				$response->headers->set('Totals-Total', (string)$cart->getTotal());
+				$this->cartResponse->setResponseHeaders($response, $cart); // ETag, версии, totals, cookie
 				$response->headers->set('Idempotency-Replay', 'true');
 				$response->headers->set('Idempotency-Key', $idempotencyKey);
-				$response->headers->set('Idempotency-Expires', $begin->expiresAt->format(\DATE_ATOM));
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$response->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
 				return $response;
 			}
 			if ($begin->type === 'conflict') {
@@ -275,7 +269,8 @@ final class CartApiController extends AbstractController
 					]
 				], 409);
 				$conflictResponse->headers->set('Idempotency-Key', $idempotencyKey);
-				$conflictResponse->headers->set('Idempotency-Expires', $begin->expiresAt->format(\DATE_ATOM));
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$conflictResponse->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
 				return $conflictResponse;
 			}
 			if ($begin->type === 'in_flight') {
@@ -285,7 +280,8 @@ final class CartApiController extends AbstractController
 					'retry_after' => $begin->retryAfter
 				], 409, ['Retry-After' => (string)$begin->retryAfter]);
 				$inFlightResponse->headers->set('Idempotency-Key', $idempotencyKey);
-				$inFlightResponse->headers->set('Idempotency-Expires', $begin->expiresAt->format(\DATE_ATOM));
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$inFlightResponse->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
 				return $inFlightResponse;
 			}
 
@@ -315,7 +311,7 @@ final class CartApiController extends AbstractController
 
 		// Завершение идемпотентности
 		if ($idempotencyKey) {
-			$finishPayload = $jsonResponse->getStatusCode() === 204 ? null : $this->deltaBuilder->buildFull($cart);
+			$finishPayload = $jsonResponse->getStatusCode() === 204 ? null : json_decode($jsonResponse->getContent(), true);
 			$this->idem->finish($idempotencyKey, $jsonResponse->getStatusCode(), $finishPayload);
 			$jsonResponse->headers->set('Idempotency-Key', $idempotencyKey);
 			$jsonResponse->headers->set('Idempotency-Expires', (new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC')))->format(\DATE_ATOM));
@@ -367,18 +363,14 @@ final class CartApiController extends AbstractController
 				$response->setStatusCode($begin->httpStatus);
 				if ($begin->httpStatus !== 204) {
 					$response->setData($begin->responseData);
+				} else {
+					$response->setContent(null); // Для 204 обнуляем тело
 				}
-				// Устанавливаем заголовки корзины вручную
-				$response->setEtag($this->etags->make($cart));
-				$response->headers->set('Cache-Control', 'no-store');
-				$response->headers->set('Cart-Version', (string)$cart->getVersion());
-				$response->headers->set('Items-Count', (string)$cart->getItems()->count());
-				$response->headers->set('Totals-Subtotal', (string)$cart->getSubtotal());
-				$response->headers->set('Totals-Discount', (string)$cart->getDiscountTotal());
-				$response->headers->set('Totals-Total', (string)$cart->getTotal());
+				$this->cartResponse->setResponseHeaders($response, $cart); // ETag, версии, totals, cookie
 				$response->headers->set('Idempotency-Replay', 'true');
 				$response->headers->set('Idempotency-Key', $idempotencyKey);
-				$response->headers->set('Idempotency-Expires', $begin->expiresAt->format(\DATE_ATOM));
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$response->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
 				return $response;
 			}
 			if ($begin->type === 'conflict') {
@@ -397,7 +389,8 @@ final class CartApiController extends AbstractController
 					]
 				], 409);
 				$conflictResponse->headers->set('Idempotency-Key', $idempotencyKey);
-				$conflictResponse->headers->set('Idempotency-Expires', $begin->expiresAt->format(\DATE_ATOM));
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$conflictResponse->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
 				return $conflictResponse;
 			}
 			if ($begin->type === 'in_flight') {
@@ -407,7 +400,8 @@ final class CartApiController extends AbstractController
 					'retry_after' => $begin->retryAfter
 				], 409, ['Retry-After' => (string)$begin->retryAfter]);
 				$inFlightResponse->headers->set('Idempotency-Key', $idempotencyKey);
-				$inFlightResponse->headers->set('Idempotency-Expires', $begin->expiresAt->format(\DATE_ATOM));
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$inFlightResponse->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
 				return $inFlightResponse;
 			}
 
@@ -435,7 +429,7 @@ final class CartApiController extends AbstractController
 
 		// Завершение идемпотентности
 		if ($idempotencyKey) {
-			$finishPayload = $jsonResponse->getStatusCode() === 204 ? null : $this->deltaBuilder->buildFull($cart);
+			$finishPayload = $jsonResponse->getStatusCode() === 204 ? null : json_decode($jsonResponse->getContent(), true);
 			$this->idem->finish($idempotencyKey, $jsonResponse->getStatusCode(), $finishPayload);
 			$jsonResponse->headers->set('Idempotency-Key', $idempotencyKey);
 			$jsonResponse->headers->set('Idempotency-Expires', (new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC')))->format(\DATE_ATOM));
@@ -487,18 +481,14 @@ final class CartApiController extends AbstractController
 				$response->setStatusCode($begin->httpStatus);
 				if ($begin->httpStatus !== 204) {
 					$response->setData($begin->responseData);
+				} else {
+					$response->setContent(null); // Для 204 обнуляем тело
 				}
-				// Устанавливаем заголовки корзины вручную
-				$response->setEtag($this->etags->make($cart));
-				$response->headers->set('Cache-Control', 'no-store');
-				$response->headers->set('Cart-Version', (string)$cart->getVersion());
-				$response->headers->set('Items-Count', (string)$cart->getItems()->count());
-				$response->headers->set('Totals-Subtotal', (string)$cart->getSubtotal());
-				$response->headers->set('Totals-Discount', (string)$cart->getDiscountTotal());
-				$response->headers->set('Totals-Total', (string)$cart->getTotal());
+				$this->cartResponse->setResponseHeaders($response, $cart); // ETag, версии, totals, cookie
 				$response->headers->set('Idempotency-Replay', 'true');
 				$response->headers->set('Idempotency-Key', $idempotencyKey);
-				$response->headers->set('Idempotency-Expires', $begin->expiresAt->format(\DATE_ATOM));
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$response->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
 				return $response;
 			}
 			if ($begin->type === 'conflict') {
@@ -517,7 +507,8 @@ final class CartApiController extends AbstractController
 					]
 				], 409);
 				$conflictResponse->headers->set('Idempotency-Key', $idempotencyKey);
-				$conflictResponse->headers->set('Idempotency-Expires', $begin->expiresAt->format(\DATE_ATOM));
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$conflictResponse->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
 				return $conflictResponse;
 			}
 			if ($begin->type === 'in_flight') {
@@ -527,7 +518,8 @@ final class CartApiController extends AbstractController
 					'retry_after' => $begin->retryAfter
 				], 409, ['Retry-After' => (string)$begin->retryAfter]);
 				$inFlightResponse->headers->set('Idempotency-Key', $idempotencyKey);
-				$inFlightResponse->headers->set('Idempotency-Expires', $begin->expiresAt->format(\DATE_ATOM));
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$inFlightResponse->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
 				return $inFlightResponse;
 			}
 
@@ -553,9 +545,14 @@ final class CartApiController extends AbstractController
 		$response->setStatusCode(204);
 		$jsonResponse = $this->cartResponse->withCart($response, $cart, $request, $responseMode, $changes);
 
+		// Для 204 не устанавливаем тело вообще
+		if ($jsonResponse->getStatusCode() === 204) {
+			$jsonResponse->setContent(null);
+		}
+
 		// Завершение идемпотентности
 		if ($idempotencyKey) {
-			$finishPayload = $jsonResponse->getStatusCode() === 204 ? null : $this->deltaBuilder->buildFull($cart);
+			$finishPayload = $jsonResponse->getStatusCode() === 204 ? null : json_decode($jsonResponse->getContent(), true);
 			$this->idem->finish($idempotencyKey, $jsonResponse->getStatusCode(), $finishPayload);
 			$jsonResponse->headers->set('Idempotency-Key', $idempotencyKey);
 			$jsonResponse->headers->set('Idempotency-Expires', (new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC')))->format(\DATE_ATOM));
@@ -609,18 +606,14 @@ final class CartApiController extends AbstractController
 				$response->setStatusCode($begin->httpStatus);
 				if ($begin->httpStatus !== 204) {
 					$response->setData($begin->responseData);
+				} else {
+					$response->setContent(null); // Для 204 обнуляем тело
 				}
-				// Устанавливаем заголовки корзины вручную
-				$response->setEtag($this->etags->make($cart));
-				$response->headers->set('Cache-Control', 'no-store');
-				$response->headers->set('Cart-Version', (string)$cart->getVersion());
-				$response->headers->set('Items-Count', (string)$cart->getItems()->count());
-				$response->headers->set('Totals-Subtotal', (string)$cart->getSubtotal());
-				$response->headers->set('Totals-Discount', (string)$cart->getDiscountTotal());
-				$response->headers->set('Totals-Total', (string)$cart->getTotal());
+				$this->cartResponse->setResponseHeaders($response, $cart); // ETag, версии, totals, cookie
 				$response->headers->set('Idempotency-Replay', 'true');
 				$response->headers->set('Idempotency-Key', $idempotencyKey);
-				$response->headers->set('Idempotency-Expires', $begin->expiresAt->format(\DATE_ATOM));
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$response->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
 				return $response;
 			}
 			if ($begin->type === 'conflict') {
@@ -639,7 +632,8 @@ final class CartApiController extends AbstractController
 					]
 				], 409);
 				$conflictResponse->headers->set('Idempotency-Key', $idempotencyKey);
-				$conflictResponse->headers->set('Idempotency-Expires', $begin->expiresAt->format(\DATE_ATOM));
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$conflictResponse->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
 				return $conflictResponse;
 			}
 			if ($begin->type === 'in_flight') {
@@ -649,7 +643,8 @@ final class CartApiController extends AbstractController
 					'retry_after' => $begin->retryAfter
 				], 409, ['Retry-After' => (string)$begin->retryAfter]);
 				$inFlightResponse->headers->set('Idempotency-Key', $idempotencyKey);
-				$inFlightResponse->headers->set('Idempotency-Expires', $begin->expiresAt->format(\DATE_ATOM));
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$inFlightResponse->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
 				return $inFlightResponse;
 			}
 
@@ -673,7 +668,7 @@ final class CartApiController extends AbstractController
 
 		// Завершение идемпотентности
 		if ($idempotencyKey) {
-			$finishPayload = $jsonResponse->getStatusCode() === 204 ? null : $payload;
+			$finishPayload = $jsonResponse->getStatusCode() === 204 ? null : json_decode($jsonResponse->getContent(), true);
 			$this->idem->finish($idempotencyKey, $jsonResponse->getStatusCode(), $finishPayload);
 			$jsonResponse->headers->set('Idempotency-Key', $idempotencyKey);
 			$jsonResponse->headers->set('Idempotency-Expires', (new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC')))->format(\DATE_ATOM));
@@ -725,18 +720,14 @@ final class CartApiController extends AbstractController
 				$response->setStatusCode($begin->httpStatus);
 				if ($begin->httpStatus !== 204) {
 					$response->setData($begin->responseData);
+				} else {
+					$response->setContent(null); // Для 204 обнуляем тело
 				}
-				// Устанавливаем заголовки корзины вручную
-				$response->setEtag($this->etags->make($cart));
-				$response->headers->set('Cache-Control', 'no-store');
-				$response->headers->set('Cart-Version', (string)$cart->getVersion());
-				$response->headers->set('Items-Count', (string)$cart->getItems()->count());
-				$response->headers->set('Totals-Subtotal', (string)$cart->getSubtotal());
-				$response->headers->set('Totals-Discount', (string)$cart->getDiscountTotal());
-				$response->headers->set('Totals-Total', (string)$cart->getTotal());
+				$this->cartResponse->setResponseHeaders($response, $cart); // ETag, версии, totals, cookie
 				$response->headers->set('Idempotency-Replay', 'true');
 				$response->headers->set('Idempotency-Key', $idempotencyKey);
-				$response->headers->set('Idempotency-Expires', $begin->expiresAt->format(\DATE_ATOM));
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$response->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
 				return $response;
 			}
 			if ($begin->type === 'conflict') {
@@ -755,7 +746,8 @@ final class CartApiController extends AbstractController
 					]
 				], 409);
 				$conflictResponse->headers->set('Idempotency-Key', $idempotencyKey);
-				$conflictResponse->headers->set('Idempotency-Expires', $begin->expiresAt->format(\DATE_ATOM));
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$conflictResponse->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
 				return $conflictResponse;
 			}
 			if ($begin->type === 'in_flight') {
@@ -765,7 +757,8 @@ final class CartApiController extends AbstractController
 					'retry_after' => $begin->retryAfter
 				], 409, ['Retry-After' => (string)$begin->retryAfter]);
 				$inFlightResponse->headers->set('Idempotency-Key', $idempotencyKey);
-				$inFlightResponse->headers->set('Idempotency-Expires', $begin->expiresAt->format(\DATE_ATOM));
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$inFlightResponse->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
 				return $inFlightResponse;
 			}
 
@@ -792,7 +785,7 @@ final class CartApiController extends AbstractController
 
 		// Завершение идемпотентности
 		if ($idempotencyKey) {
-			$finishPayload = $jsonResponse->getStatusCode() === 204 ? null : $payload;
+			$finishPayload = $jsonResponse->getStatusCode() === 204 ? null : json_decode($jsonResponse->getContent(), true);
 			$this->idem->finish($idempotencyKey, $jsonResponse->getStatusCode(), $finishPayload);
 			$jsonResponse->headers->set('Idempotency-Key', $idempotencyKey);
 			$jsonResponse->headers->set('Idempotency-Expires', (new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC')))->format(\DATE_ATOM));
@@ -986,18 +979,14 @@ final class CartApiController extends AbstractController
 				$response->setStatusCode($begin->httpStatus);
 				if ($begin->httpStatus !== 204) {
 					$response->setData($begin->responseData);
+				} else {
+					$response->setContent(null); // Для 204 обнуляем тело
 				}
-				// Устанавливаем заголовки корзины вручную
-				$response->setEtag($this->etags->make($cart));
-				$response->headers->set('Cache-Control', 'no-store');
-				$response->headers->set('Cart-Version', (string)$cart->getVersion());
-				$response->headers->set('Items-Count', (string)$cart->getItems()->count());
-				$response->headers->set('Totals-Subtotal', (string)$cart->getSubtotal());
-				$response->headers->set('Totals-Discount', (string)$cart->getDiscountTotal());
-				$response->headers->set('Totals-Total', (string)$cart->getTotal());
+				$this->cartResponse->setResponseHeaders($response, $cart); // ETag, версии, totals, cookie
 				$response->headers->set('Idempotency-Replay', 'true');
 				$response->headers->set('Idempotency-Key', $idempotencyKey);
-				$response->headers->set('Idempotency-Expires', $begin->expiresAt->format(\DATE_ATOM));
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$response->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
 				return $response;
 			}
 			if ($begin->type === 'conflict') {
@@ -1016,7 +1005,8 @@ final class CartApiController extends AbstractController
 					]
 				], 409);
 				$conflictResponse->headers->set('Idempotency-Key', $idempotencyKey);
-				$conflictResponse->headers->set('Idempotency-Expires', $begin->expiresAt->format(\DATE_ATOM));
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$conflictResponse->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
 				return $conflictResponse;
 			}
 			if ($begin->type === 'in_flight') {
@@ -1026,7 +1016,8 @@ final class CartApiController extends AbstractController
 					'retry_after' => $begin->retryAfter
 				], 409, ['Retry-After' => (string)$begin->retryAfter]);
 				$inFlightResponse->headers->set('Idempotency-Key', $idempotencyKey);
-				$inFlightResponse->headers->set('Idempotency-Expires', $begin->expiresAt->format(\DATE_ATOM));
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$inFlightResponse->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
 				return $inFlightResponse;
 			}
 
@@ -1040,6 +1031,7 @@ final class CartApiController extends AbstractController
 				// Частичный успех или полный провал в атомарном режиме
 				$jsonResponse = $this->cartResponse->withBatchError(
 					$response,
+					$cart,
 					$atomic ? 'Batch operation failed' : 'Some operations failed',
 					$batchResult['results'],
 					$atomic ? 400 : 207 // 207 Multi-Status для частичного успеха
@@ -1047,7 +1039,7 @@ final class CartApiController extends AbstractController
 
 				// Завершение идемпотентности
 				if ($idempotencyKey) {
-					$finishPayload = $jsonResponse->getStatusCode() === 204 ? null : $batchResult['results'];
+					$finishPayload = $jsonResponse->getStatusCode() === 204 ? null : json_decode($jsonResponse->getContent(), true);
 					$this->idem->finish($idempotencyKey, $jsonResponse->getStatusCode(), $finishPayload);
 					$jsonResponse->headers->set('Idempotency-Key', $idempotencyKey);
 					$jsonResponse->headers->set('Idempotency-Expires', (new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC')))->format(\DATE_ATOM));
@@ -1094,7 +1086,7 @@ final class CartApiController extends AbstractController
 
 			// Завершение идемпотентности
 			if ($idempotencyKey) {
-				$finishPayload = $jsonResponse->getStatusCode() === 204 ? null : $batchPayload;
+				$finishPayload = $jsonResponse->getStatusCode() === 204 ? null : json_decode($jsonResponse->getContent(), true);
 				$this->idem->finish($idempotencyKey, $jsonResponse->getStatusCode(), $finishPayload);
 				$jsonResponse->headers->set('Idempotency-Key', $idempotencyKey);
 				$jsonResponse->headers->set('Idempotency-Expires', (new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC')))->format(\DATE_ATOM));

@@ -62,7 +62,7 @@ final class DeliveryApiController extends AbstractController
 
         $payload = ['ok' => true];
         $response = new JsonResponse();
-        return $this->cartResponse->withCart($response, $cart, $payload);
+        return $this->cartResponse->withCart($response, $cart, $r, 'full', []);
 	}
 
 	#[Route('/select-method', name: 'api_delivery_select_method', methods: ['POST'])]
@@ -108,7 +108,7 @@ final class DeliveryApiController extends AbstractController
             'total' => $cart->getTotal(),
         ];
         $response = new JsonResponse();
-        return $this->cartResponse->withCart($response, $cart, $payload);
+        return $this->cartResponse->withCart($response, $cart, $r, 'full', []);
 	}
 
 	#[Route('/select-pvz', name: 'api_delivery_select_pvz', methods: ['POST'])]
@@ -162,7 +162,7 @@ final class DeliveryApiController extends AbstractController
 			'total' => $cart->getTotal(),
 		];
 		$response = new JsonResponse();
-		return $this->cartResponse->withCart($response, $cart, $payload);
+		return $this->cartResponse->withCart($response, $cart, $r, 'full', []);
 	}
 }
 

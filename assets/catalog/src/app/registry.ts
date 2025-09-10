@@ -32,7 +32,7 @@ export async function initModule(
 ): Promise<(() => void) | null> {
   const name = el.dataset.module;
   if (!name || !registry[name]) {
-    console.warn(`Module "${name}" not found in registry`);
+    // Module not found in registry
     return null;
   }
 
@@ -45,7 +45,7 @@ export async function initModule(
 
     return destroy || null;
   } catch (error) {
-    console.error(`Error initializing module "${name}":`, error);
+    // Error initializing module
     return null;
   }
 }

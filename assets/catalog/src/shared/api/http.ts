@@ -24,7 +24,7 @@ export async function http<T = any>(
       const csrfToken = await getCsrfToken();
       finalHeaders['X-CSRF-Token'] = csrfToken;
     } catch (error) {
-      console.error('Failed to get CSRF token:', error);
+      // Failed to get CSRF token
       throw new Error('Unable to obtain CSRF token for secure request');
     }
   }
@@ -127,7 +127,7 @@ export async function delWithStatus(
     const csrfToken = await getCsrfToken();
     finalHeaders['X-CSRF-Token'] = csrfToken;
   } catch (error) {
-    console.error('Failed to get CSRF token for DELETE:', error);
+    // Failed to get CSRF token for DELETE
     throw new Error('Unable to obtain CSRF token for secure request');
   }
 
@@ -145,7 +145,6 @@ export async function delWithStatus(
       throw new Error(`HTTP ${response.status}: ${errorText}`);
     }
 
-    console.log(`DELETE ${url}: status ${response.status}`);
 
     return {
       status: response.status,
