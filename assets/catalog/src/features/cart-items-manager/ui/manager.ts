@@ -65,6 +65,7 @@ export class CartItemsManager extends Component {
     }
 
     // Показываем загрузку
+    this.showSpinner();
     target.disabled = true;
     const originalValue = target.value;
 
@@ -137,6 +138,7 @@ export class CartItemsManager extends Component {
       }
     } finally {
       target.disabled = false;
+      this.hideSpinner();
     }
   }
 
@@ -364,6 +366,7 @@ export class CartItemsManager extends Component {
     }
 
     // Показываем загрузку
+    this.showSpinner();
     const originalText = button.textContent;
     button.textContent = 'Удаление...';
     button.setAttribute('disabled', 'true');
@@ -511,6 +514,7 @@ export class CartItemsManager extends Component {
     } finally {
       button.textContent = originalText;
       button.removeAttribute('disabled');
+      this.hideSpinner();
     }
   }
 
@@ -533,19 +537,44 @@ export class CartItemsManager extends Component {
   private updateRowData(row: HTMLTableRowElement, cartData: Cart, itemId: string): void {
     const item = cartData.items.find((i: any) => i.id === itemId);
     if (!item) {
+      console.warn('Item not found in cart data:', itemId);
       return;
     }
 
-    // Обновляем цену (с учетом опций)
-    const priceCell = row.querySelector('td:nth-child(2)') as HTMLTableCellElement;
-    if (priceCell) {
-      priceCell.textContent = this.options.formatPrice!(item.effectiveUnitPrice || item.unitPrice);
+    console.log('Updating row data for item:', itemId, {
+      effectiveUnitPrice: item.effectiveUnitPrice,
+      unitPrice: item.unitPrice,
+      rowTotal: item.rowTotal
+    });
+
+    // Обновляем цену (колонка 3 - Цена)
+    const priceCell = row.querySelector('td:nth-child(3)') as HTMLTableCellElement;
+    const priceValue = item.effectiveUnitPrice || item.unitPrice;
+    console.log('Price update debug:', {
+      itemId,
+      effectiveUnitPrice: item.effectiveUnitPrice,
+      unitPrice: item.unitPrice,
+      priceValue,
+      priceValueType: typeof priceValue,
+      isValid: priceValue !== undefined && priceValue !== null && !isNaN(priceValue)
+    });
+
+    if (priceCell && priceValue !== undefined && priceValue !== null && !isNaN(priceValue)) {
+      const newPrice = this.options.formatPrice!(priceValue);
+      console.log('Updating price cell from:', priceCell.textContent, 'to:', newPrice);
+      priceCell.textContent = newPrice;
+    } else {
+      console.warn('Invalid price value for item:', itemId, { effectiveUnitPrice: item.effectiveUnitPrice, unitPrice: item.unitPrice });
     }
 
-    // Обновляем сумму строки
-    const rowTotalCell = row.querySelector('.row-total') as HTMLTableCellElement;
-    if (rowTotalCell) {
-      rowTotalCell.textContent = this.options.formatPrice!(item.rowTotal);
+    // Обновляем сумму строки (колонка 5 - Сумма)
+    const rowTotalCell = row.querySelector('td:nth-child(5)') as HTMLTableCellElement;
+    if (rowTotalCell && item.rowTotal !== undefined && item.rowTotal !== null && !isNaN(item.rowTotal)) {
+      const newRowTotal = this.options.formatPrice!(item.rowTotal);
+      console.log('Updating row total cell from:', rowTotalCell.textContent, 'to:', newRowTotal);
+      rowTotalCell.textContent = newRowTotal;
+    } else {
+      console.warn('Invalid rowTotal for item:', itemId, item.rowTotal);
     }
   }
 
@@ -554,8 +583,10 @@ export class CartItemsManager extends Component {
    */
   private updateTotal(total: number): void {
     const totalEl = document.getElementById('cart-total');
-    if (totalEl) {
+    if (totalEl && total !== undefined && total !== null && !isNaN(total)) {
       totalEl.textContent = this.options.formatPrice!(total);
+    } else {
+      console.warn('Invalid total value:', total);
     }
   }
 
@@ -592,16 +623,31 @@ export class CartItemsManager extends Component {
       qtyInput.value = changedItem.qty.toString();
     }
 
-    // Обновляем цену (с учетом опций)
-    const priceCell = row.querySelector('td:nth-child(2)') as HTMLTableCellElement;
-    if (priceCell) {
-      priceCell.textContent = this.options.formatPrice!(changedItem.effectiveUnitPrice);
+    // Обновляем цену (колонка 3 - Цена)
+    const priceCell = row.querySelector('td:nth-child(3)') as HTMLTableCellElement;
+    console.log('Delta price update debug:', {
+      itemId,
+      effectiveUnitPrice: changedItem.effectiveUnitPrice,
+      rowTotal: changedItem.rowTotal,
+      qty: changedItem.qty,
+      effectiveUnitPriceType: typeof changedItem.effectiveUnitPrice,
+      isValid: changedItem.effectiveUnitPrice !== undefined && changedItem.effectiveUnitPrice !== null && !isNaN(changedItem.effectiveUnitPrice)
+    });
+
+    if (priceCell && changedItem.effectiveUnitPrice !== undefined && changedItem.effectiveUnitPrice !== null && !isNaN(changedItem.effectiveUnitPrice)) {
+      const formattedPrice = this.options.formatPrice!(changedItem.effectiveUnitPrice);
+      console.log('Setting price cell to:', formattedPrice, 'from value:', changedItem.effectiveUnitPrice);
+      priceCell.textContent = formattedPrice;
+    } else {
+      console.warn('Invalid effectiveUnitPrice for item:', itemId, changedItem.effectiveUnitPrice);
     }
 
     // Обновляем сумму строки
     const rowTotalCell = row.querySelector('.row-total') as HTMLTableCellElement;
-    if (rowTotalCell) {
+    if (rowTotalCell && changedItem.rowTotal !== undefined && changedItem.rowTotal !== null && !isNaN(changedItem.rowTotal)) {
       rowTotalCell.textContent = this.options.formatPrice!(changedItem.rowTotal);
+    } else {
+      console.warn('Invalid rowTotal for item:', itemId, changedItem.rowTotal);
     }
   }
 
@@ -616,8 +662,10 @@ export class CartItemsManager extends Component {
     }
 
     const totalEl = document.getElementById('cart-total');
-    if (totalEl) {
+    if (totalEl && deltaData.totals.total !== undefined && deltaData.totals.total !== null && !isNaN(deltaData.totals.total)) {
       totalEl.textContent = this.options.formatPrice!(deltaData.totals.total);
+    } else {
+      console.warn('Invalid total value in delta data:', deltaData.totals?.total);
     }
   }
 
@@ -643,6 +691,42 @@ export class CartItemsManager extends Component {
         items: [] // Пустой массив, так как у нас только delta данные
       };
       this.dispatchCartUpdatedEvent(minimalCartData);
+    }
+  }
+
+  /**
+   * Показывает спиннер
+   */
+  private showSpinner(): void {
+    const spinnerEl = document.getElementById('cart-spinner');
+    if (spinnerEl) {
+      // Прямое управление DOM вместо методов компонента
+      spinnerEl.style.display = 'flex';
+      const overlay = spinnerEl.querySelector('.spinner-overlay') as HTMLElement;
+      if (overlay) {
+        overlay.style.display = 'block';
+      }
+      console.log('Spinner shown via direct DOM manipulation');
+    } else {
+      console.warn('Spinner element not found');
+    }
+  }
+
+  /**
+   * Скрывает спиннер
+   */
+  private hideSpinner(): void {
+    const spinnerEl = document.getElementById('cart-spinner');
+    if (spinnerEl) {
+      // Прямое управление DOM вместо методов компонента
+      spinnerEl.style.display = 'none';
+      const overlay = spinnerEl.querySelector('.spinner-overlay') as HTMLElement;
+      if (overlay) {
+        overlay.style.display = 'none';
+      }
+      console.log('Spinner hidden via direct DOM manipulation');
+    } else {
+      console.warn('Spinner element not found');
     }
   }
 

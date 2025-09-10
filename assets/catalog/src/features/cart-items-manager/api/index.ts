@@ -106,23 +106,30 @@ export async function updateCartItemQuantity(
       // 200 OK с полным объектом корзины
       return normalizeFullCartToDelta(response, { changedItemId: Number(itemId), changedQty: qty });
     } else if (response === null || response === undefined || response === '') {
-      // 204 No Content - нужно добрать summary
-      const summary = await getCartSummary();
-      return {
-        version: summary.version,
-        changedItems: [{
-          id: Number(itemId),
-          qty
-        } as any], // workaround: pricing fields not available
-        removedItemIds: [],
-        totals: {
-          itemsCount: summary.itemsCount,
-          subtotal: summary.subtotal,
-          discountTotal: summary.discountTotal,
-          total: summary.total,
-          version: summary.version
-        } as any
-      };
+      // 204 No Content - получаем актуальные данные из полного API для корректного обновления
+      console.log('204 No Content received, fetching full cart data for accurate pricing...');
+      try {
+        const fullCartResponse = await get('/api/cart');
+        return normalizeFullCartToDelta(fullCartResponse, { changedItemId: Number(itemId), changedQty: qty });
+      } catch (fullCartError) {
+        console.error('Failed to fetch full cart after 204 response:', fullCartError);
+        // Fallback: возвращаем минимальные данные
+        return {
+          version: Date.now(),
+          changedItems: [{
+            id: Number(itemId),
+            qty
+          } as any],
+          removedItemIds: [],
+          totals: {
+            itemsCount: 0,
+            subtotal: 0,
+            discountTotal: 0,
+            total: 0,
+            version: Date.now()
+          } as any
+        };
+      }
     } else {
       // Предполагаем что это корректный delta-ответ
       if (!response.totals) {
@@ -190,12 +197,17 @@ export async function updateCartItemQuantityFull(
       // 200 OK с полным объектом корзины
       return response;
     } else if (response === null || response === undefined || response === '') {
-      // 204 No Content - получаем полную корзину
+      // 204 No Content - получаем полную корзину (fallback)
       return get<Cart>('/api/cart');
     } else {
-      // Неожиданный ответ - получаем полную корзину
-      console.warn('Unexpected response format in full mode, fetching full cart');
-      return get<Cart>('/api/cart');
+      // Предполагаем, что это уже полный объект корзины
+      if (isFullCartResponse(response)) {
+        return response;
+      } else {
+        // Неожиданный ответ - получаем полную корзину
+        console.warn('Unexpected response format in full mode, fetching full cart');
+        return get<Cart>('/api/cart');
+      }
     }
   } catch (error: any) {
     const status = parseHttpStatus(error);
@@ -244,20 +256,27 @@ export async function removeCartItem(
       // 200 OK с полным объектом корзины
       return normalizeFullCartToDelta(response, { removedItemId: Number(itemId) });
     } else if (response === null || response === undefined || response === '') {
-      // 204 No Content - нужно добрать summary
-      const summary = await getCartSummary();
-      return {
-        version: summary.version,
-        changedItems: [],
-        removedItemIds: [Number(itemId)],
-        totals: {
-          itemsCount: summary.itemsCount,
-          subtotal: summary.subtotal,
-          discountTotal: summary.discountTotal,
-          total: summary.total,
-          version: summary.version
-        } as any
-      };
+      // 204 No Content - получаем актуальные данные из полного API для корректного обновления
+      console.log('204 No Content received for removal, fetching full cart data for accurate pricing...');
+      try {
+        const fullCartResponse = await get('/api/cart');
+        return normalizeFullCartToDelta(fullCartResponse, { removedItemId: Number(itemId) });
+      } catch (fullCartError) {
+        console.error('Failed to fetch full cart after 204 response for removal:', fullCartError);
+        // Fallback: возвращаем минимальные данные
+        return {
+          version: Date.now(),
+          changedItems: [],
+          removedItemIds: [Number(itemId)],
+          totals: {
+            itemsCount: 0,
+            subtotal: 0,
+            discountTotal: 0,
+            total: 0,
+            version: Date.now()
+          } as any
+        };
+      }
     } else {
       // Предполагаем что это корректный delta-ответ
       if (!response.totals) {
@@ -324,12 +343,17 @@ export async function removeCartItemFull(
       // 200 OK с полным объектом корзины
       return response;
     } else if (response === null || response === undefined || response === '') {
-      // 204 No Content - получаем полную корзину
+      // 204 No Content - получаем полную корзину (fallback)
       return get<Cart>('/api/cart');
     } else {
-      // Неожиданный ответ - получаем полную корзину
-      console.warn('Unexpected response format in full removal mode, fetching full cart');
-      return get<Cart>('/api/cart');
+      // Предполагаем, что это уже полный объект корзины
+      if (isFullCartResponse(response)) {
+        return response;
+      } else {
+        // Неожиданный ответ - получаем полную корзину
+        console.warn('Unexpected response format in full removal mode, fetching full cart');
+        return get<Cart>('/api/cart');
+      }
     }
   } catch (error: any) {
     const status = parseHttpStatus(error);

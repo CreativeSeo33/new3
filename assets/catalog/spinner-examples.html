@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Примеры компонента Spinner</title>
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <div class="container mx-auto p-8">
+        <h1 class="text-3xl font-bold mb-8">Примеры компонента Spinner</h1>
+
+        <!-- Простые спиннеры -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-semibold mb-4">Простые спиннеры</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+                <!-- Маленький спиннер -->
+                <div class="bg-gray-100 p-6 rounded-lg">
+                    <h3 class="text-lg font-medium mb-4">Маленький (small)</h3>
+                    <div data-module="spinner" data-size="small"></div>
+                </div>
+
+                <!-- Средний спиннер -->
+                <div class="bg-gray-100 p-6 rounded-lg">
+                    <h3 class="text-lg font-medium mb-4">Средний (medium)</h3>
+                    <div data-module="spinner" data-size="medium"></div>
+                </div>
+
+                <!-- Большой спиннер -->
+                <div class="bg-gray-100 p-6 rounded-lg">
+                    <h3 class="text-lg font-medium mb-4">Большой (large)</h3>
+                    <div data-module="spinner" data-size="large"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Цветовые схемы -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-semibold mb-4">Цветовые схемы</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+                <!-- Primary -->
+                <div class="bg-gray-800 p-6 rounded-lg">
+                    <h3 class="text-lg font-medium mb-4 text-white">Primary</h3>
+                    <div data-module="spinner" data-color="primary"></div>
+                </div>
+
+                <!-- Secondary -->
+                <div class="bg-gray-100 p-6 rounded-lg">
+                    <h3 class="text-lg font-medium mb-4">Secondary</h3>
+                    <div data-module="spinner" data-color="secondary"></div>
+                </div>
+
+                <!-- White -->
+                <div class="bg-blue-600 p-6 rounded-lg">
+                    <h3 class="text-lg font-medium mb-4 text-white">White</h3>
+                    <div data-module="spinner" data-color="white"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Overlay спиннеры -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-semibold mb-4">Overlay спиннеры</h2>
+
+            <div class="relative bg-gray-100 p-8 rounded-lg mb-4">
+                <h3 class="text-lg font-medium mb-4">Спиннер с overlay</h3>
+                <p class="mb-4">Нажмите кнопку для демонстрации overlay спиннера:</p>
+                <button onclick="showOverlaySpinner()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    Показать overlay
+                </button>
+                <div id="overlay-spinner" data-module="spinner" data-overlay="true" data-visible="false" data-size="large"></div>
+            </div>
+        </section>
+
+        <!-- Интерактивные примеры -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-semibold mb-4">Интерактивные примеры</h2>
+
+            <div class="bg-gray-100 p-6 rounded-lg">
+                <h3 class="text-lg font-medium mb-4">Управление спиннером</h3>
+
+                <div class="mb-4">
+                    <div id="interactive-spinner" data-module="spinner" data-visible="false"></div>
+                </div>
+
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="toggleSpinner()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        Показать/Скрыть
+                    </button>
+
+                    <button onclick="changeSize('small')" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                        Маленький
+                    </button>
+
+                    <button onclick="changeSize('medium')" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                        Средний
+                    </button>
+
+                    <button onclick="changeSize('large')" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                        Большой
+                    </button>
+
+                    <button onclick="changeColor('primary')" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                        Primary
+                    </button>
+
+                    <button onclick="changeColor('secondary')" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                        Secondary
+                    </button>
+
+                    <button onclick="changeColor('white')" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                        White
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Примеры использования -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-semibold mb-4">Примеры использования</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Загрузка данных -->
+                <div class="bg-gray-100 p-6 rounded-lg">
+                    <h3 class="text-lg font-medium mb-4">Загрузка данных</h3>
+                    <div class="mb-4">
+                        <div id="data-spinner" data-module="spinner" data-visible="false" data-size="small"></div>
+                    </div>
+                    <button onclick="simulateDataLoading()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        Загрузить данные
+                    </button>
+                    <div id="data-result" class="mt-4 text-sm text-gray-600"></div>
+                </div>
+
+                <!-- Отправка формы -->
+                <div class="bg-gray-100 p-6 rounded-lg">
+                    <h3 class="text-lg font-medium mb-4">Отправка формы</h3>
+                    <form onsubmit="simulateFormSubmission(event)">
+                        <input type="text" placeholder="Введите текст" class="w-full px-3 py-2 border border-gray-300 rounded-lg mb-4" required>
+                        <div class="flex gap-2">
+                            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                Отправить
+                            </button>
+                            <div id="form-spinner" data-module="spinner" data-visible="false" data-size="small"></div>
+                        </div>
+                    </form>
+                    <div id="form-result" class="mt-4 text-sm text-gray-600"></div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Скрипт для демонстрации -->
+    <script type="module">
+        // Импорт модульной системы
+        import { bootstrap } from './src/app/bootstrap.js';
+
+        // Глобальные переменные для интерактивных примеров
+        let interactiveSpinner = null;
+        let overlaySpinner = null;
+        let dataSpinner = null;
+        let formSpinner = null;
+
+        // Инициализация после загрузки DOM
+        document.addEventListener('DOMContentLoaded', () => {
+            // Инициализация модульной системы
+            bootstrap();
+
+            // Получение ссылок на спиннеры после инициализации
+            setTimeout(() => {
+                interactiveSpinner = document.getElementById('interactive-spinner');
+                overlaySpinner = document.getElementById('overlay-spinner');
+                dataSpinner = document.getElementById('data-spinner');
+                formSpinner = document.getElementById('form-spinner');
+            }, 100);
+        });
+
+        // Функции для демонстрации
+        window.showOverlaySpinner = function() {
+            if (overlaySpinner) {
+                overlaySpinner.style.display = 'flex';
+                setTimeout(() => {
+                    overlaySpinner.style.display = 'none';
+                }, 3000);
+            }
+        };
+
+        window.toggleSpinner = function() {
+            if (interactiveSpinner) {
+                const isVisible = interactiveSpinner.style.display !== 'none';
+                interactiveSpinner.style.display = isVisible ? 'none' : 'flex';
+            }
+        };
+
+        window.changeSize = function(size) {
+            if (interactiveSpinner) {
+                interactiveSpinner.setAttribute('data-size', size);
+                // Переинициализация может потребоваться для применения новых стилей
+                interactiveSpinner.style.display = 'flex';
+            }
+        };
+
+        window.changeColor = function(color) {
+            if (interactiveSpinner) {
+                interactiveSpinner.setAttribute('data-color', color);
+                interactiveSpinner.style.display = 'flex';
+            }
+        };
+
+        window.simulateDataLoading = function() {
+            if (!dataSpinner) return;
+
+            const resultEl = document.getElementById('data-result');
+            dataSpinner.style.display = 'flex';
+            resultEl.textContent = 'Загрузка данных...';
+
+            setTimeout(() => {
+                dataSpinner.style.display = 'none';
+                resultEl.textContent = 'Данные успешно загружены!';
+                setTimeout(() => {
+                    resultEl.textContent = '';
+                }, 2000);
+            }, 2000);
+        };
+
+        window.simulateFormSubmission = function(event) {
+            event.preventDefault();
+
+            if (!formSpinner) return;
+
+            const resultEl = document.getElementById('form-result');
+            formSpinner.style.display = 'flex';
+            resultEl.textContent = 'Отправка формы...';
+
+            setTimeout(() => {
+                formSpinner.style.display = 'none';
+                resultEl.textContent = 'Форма успешно отправлена!';
+                setTimeout(() => {
+                    resultEl.textContent = '';
+                }, 2000);
+            }, 2500);
+        };
+    </script>
+</body>
+</html>

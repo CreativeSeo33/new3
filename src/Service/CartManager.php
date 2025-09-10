@@ -441,6 +441,16 @@ final class CartManager
 
 		$this->inventory->assertAvailable($item->getProduct(), $qty, $optionAssignmentIds);
 		$item->setQty($qty);
+
+		// В LIVE режиме пересчитываем effectiveUnitPrice при изменении количества
+		if ($cart->getPricingPolicy() === 'LIVE') {
+			$newEffectivePrice = $this->livePrice->effectiveUnitPriceLive($item);
+			$item->setEffectiveUnitPrice($newEffectivePrice);
+		}
+
+		// Пересчитываем rowTotal сразу после изменения количества
+		$rowTotal = $item->getEffectiveUnitPrice() * $qty;
+		$item->setRowTotal($rowTotal);
 	}
 
 	public function removeItem(Cart $cart, int $itemId): Cart

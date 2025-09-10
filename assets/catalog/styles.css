@@ -140,6 +140,94 @@
   }
 }
 
+/* Стили для компонента Spinner */
+.spinner-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.spinner-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.loader {
+  animation: rotate 1s infinite;
+  height: var(--spinner-size, 50px);
+  width: var(--spinner-size, 50px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.loader:before,
+.loader:after {
+  border-radius: 50%;
+  content: "";
+  display: block;
+  height: calc(var(--spinner-size, 50px) * 0.4);
+  width: calc(var(--spinner-size, 50px) * 0.4);
+}
+
+.loader:before {
+  animation: ball1 1s infinite;
+  background-color: var(--spinner-color-1, #fff);
+  box-shadow: calc(var(--spinner-size, 50px) * 0.6) 0 0 var(--spinner-color-2, #ff3d00);
+  margin-bottom: calc(var(--spinner-size, 50px) * 0.2);
+}
+
+.loader:after {
+  animation: ball2 1s infinite;
+  background-color: var(--spinner-color-2, #ff3d00);
+  box-shadow: calc(var(--spinner-size, 50px) * 0.6) 0 0 var(--spinner-color-1, #fff);
+}
+
+@keyframes rotate {
+  0% { transform: rotate(0deg) scale(0.8) }
+  50% { transform: rotate(360deg) scale(1.2) }
+  100% { transform: rotate(720deg) scale(0.8) }
+}
+
+@keyframes ball1 {
+  0% {
+    box-shadow: calc(var(--spinner-size, 50px) * 0.6) 0 0 var(--spinner-color-2, #ff3d00);
+  }
+  50% {
+    box-shadow: 0 0 0 var(--spinner-color-2, #ff3d00);
+    margin-bottom: 0;
+    transform: translate(calc(var(--spinner-size, 50px) * 0.3), calc(var(--spinner-size, 50px) * 0.3));
+  }
+  100% {
+    box-shadow: calc(var(--spinner-size, 50px) * 0.6) 0 0 var(--spinner-color-2, #ff3d00);
+    margin-bottom: calc(var(--spinner-size, 50px) * 0.2);
+  }
+}
+
+@keyframes ball2 {
+  0% {
+    box-shadow: calc(var(--spinner-size, 50px) * 0.6) 0 0 var(--spinner-color-1, #fff);
+  }
+  50% {
+    box-shadow: 0 0 0 var(--spinner-color-1, #fff);
+    margin-top: calc(var(--spinner-size, 50px) * -0.4);
+    transform: translate(calc(var(--spinner-size, 50px) * 0.3), calc(var(--spinner-size, 50px) * 0.3));
+  }
+  100% {
+    box-shadow: calc(var(--spinner-size, 50px) * 0.6) 0 0 var(--spinner-color-1, #fff);
+    margin-top: 0;
+  }
+}
 
 
 

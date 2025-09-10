@@ -36,9 +36,16 @@ final class CartCalculator
             // (предполагается, что live цены уже были рассчитаны ранее)
             foreach ($cart->getItems() as $item) {
                 $effectivePrice = $item->getEffectiveUnitPrice(); // Используем кэшированное значение
-                $rowTotal = $effectivePrice * $item->getQty();
-                $item->setRowTotal($rowTotal);
-                $subtotal += $rowTotal;
+                $expectedRowTotal = $effectivePrice * $item->getQty();
+                $currentRowTotal = $item->getRowTotal();
+
+                // Проверяем, соответствует ли текущий rowTotal ожидаемому значению
+                // Если нет, то пересчитываем (для товаров, добавленных давно или с устаревшими ценами)
+                if (abs($expectedRowTotal - $currentRowTotal) > 1) { // Допускаем погрешность в 1 копейку
+                    $item->setRowTotal($expectedRowTotal);
+                }
+
+                $subtotal += $item->getRowTotal(); // Используем актуальное значение rowTotal
             }
         }
 
