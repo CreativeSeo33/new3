@@ -23,6 +23,7 @@ use App\Http\CartWriteGuard;
 use App\Http\CartResponse;
 use App\Http\CartEtags;
 use App\Exception\CartItemNotFoundException;
+use App\Exception\InsufficientStockException;
 use Psr\Log\LoggerInterface;
 
 #[Route('/api/cart')]
@@ -175,6 +176,12 @@ final class CartApiController extends AbstractController
 
 		} catch (CartLockException $e) {
 			return $this->createBusyResponse($e);
+		} catch (InsufficientStockException $e) {
+			return $this->json([
+				'error' => 'insufficient_stock',
+				'message' => $e->getMessage(),
+				'availableQuantity' => $e->getAvailableQuantity()
+			], 409);
 		} catch (\DomainException $e) {
 			return $this->json(['error' => $e->getMessage()], 422);
 		} catch (\Doctrine\ORM\OptimisticLockException|\Doctrine\DBAL\Exception\DeadlockException $e) {
@@ -298,6 +305,12 @@ final class CartApiController extends AbstractController
 			return new JsonResponse(['error' => 'cart_item_not_found'], 404);
 		} catch (CartLockException $e) {
 			return $this->createBusyResponse($e);
+		} catch (InsufficientStockException $e) {
+			return $this->json([
+				'error' => 'insufficient_stock',
+				'message' => $e->getMessage(),
+				'availableQuantity' => $e->getAvailableQuantity()
+			], 409);
 		} catch (\DomainException $e) {
 			return $this->json(['error' => $e->getMessage()], 422);
 		} catch (\Doctrine\ORM\OptimisticLockException|\Doctrine\DBAL\Exception\DeadlockException $e) {
@@ -1096,6 +1109,12 @@ final class CartApiController extends AbstractController
 
 		} catch (CartLockException $e) {
 			return $this->createBusyResponse($e);
+		} catch (InsufficientStockException $e) {
+			return $this->json([
+				'error' => 'insufficient_stock',
+				'message' => $e->getMessage(),
+				'availableQuantity' => $e->getAvailableQuantity()
+			], 409);
 		} catch (\DomainException $e) {
 			return new JsonResponse(['error' => $e->getMessage()], 422);
 		} catch (\Doctrine\ORM\OptimisticLockException|\Doctrine\DBAL\Exception\DeadlockException $e) {
