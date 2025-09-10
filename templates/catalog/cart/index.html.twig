@@ -11,6 +11,7 @@
       <table class="min-w-full text-sm">
         <thead>
           <tr class="text-left border-b">
+            <th class="py-2 pr-4">Фото</th>
             <th class="py-2 pr-4">Товар</th>
             <th class="py-2 pr-4">Цена</th>
             <th class="py-2 pr-4">Кол-во</th>
@@ -22,9 +23,36 @@
           {% for item in cart.items %}
             <tr class="border-b" data-item-id="{{ item.id }}">
               <td class="py-2 pr-4">
-                <a href="{{ path('catalog_product_show', {'slug': item.product.slug}) }}" class="text-blue-600 hover:text-blue-800 hover:underline">
+                {% if item.product and item.product.image|length > 0 %}
+                  {% set firstImage = item.product.image|sort((a,b) => a.sortOrder <=> b.sortOrder)|first %}
+                  {% if firstImage %}
+                    {% set raw = firstImage.imageUrl %}
+                    {% if raw starts with '/media/cache/' %}
+                      {% set imgSrc = raw %}
+                    {% else %}
+                      {% set rel = raw|replace({'/img/':''})|trim('/') %}
+                      {% set imgSrc = asset('/img/' ~ rel) | imagine_filter('md2') %}
+                    {% endif %}
+                    <img src="{{ imgSrc }}" alt="{{ item.productName }}" class="w-16 h-16 object-cover rounded border">
+                  {% else %}
+                    <div class="w-16 h-16 bg-gray-200 rounded border flex items-center justify-center text-gray-500 text-xs">
+                      Нет фото
+                    </div>
+                  {% endif %}
+                {% else %}
+                  <div class="w-16 h-16 bg-gray-200 rounded border flex items-center justify-center text-gray-500 text-xs">
+                    Нет фото
+                  </div>
+                {% endif %}
+              </td>
+              <td class="py-2 pr-4">
+                {% if item.product and item.product.slug %}
+                  <a href="{{ path('catalog_product_show', {'slug': item.product.slug}) }}" class="text-blue-600 hover:text-blue-800 hover:underline">
+                    {{ item.productName }}
+                  </a>
+                {% else %}
                   {{ item.productName }}
-                </a>
+                {% endif %}
               </td>
               <td class="py-2 pr-4">
                 {# Используем effectiveUnitPrice, если он больше 0, иначе unitPrice #}

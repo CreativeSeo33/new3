@@ -149,6 +149,7 @@ final class CartDeltaBuilder
                     'optionsHash' => $i->getOptionsHash(),
                 ];
 
+
                 // Добавляем live-данные только в LIVE режиме
                 if ($policy === 'LIVE') {
                     $liveEffectiveUnitPrice = $this->livePrice->effectiveUnitPriceLive($i);

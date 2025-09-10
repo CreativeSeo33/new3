@@ -21,6 +21,9 @@ final class CartRepository extends ServiceEntityRepository
 	public function findActiveByToken(string $token): ?Cart
 	{
 		return $this->createQueryBuilder('c')
+			->leftJoin('c.items', 'ci')
+			->leftJoin('ci.product', 'p')
+			->leftJoin('p.image', 'pi')
 			->andWhere('c.token = :t')
 			->andWhere('c.expiresAt IS NULL OR c.expiresAt > CURRENT_TIMESTAMP()')
 			->setParameter('t', $token)
@@ -31,6 +34,9 @@ final class CartRepository extends ServiceEntityRepository
 	public function findActiveById(Ulid $id): ?Cart
 	{
 		return $this->createQueryBuilder('c')
+			->leftJoin('c.items', 'ci')
+			->leftJoin('ci.product', 'p')
+			->leftJoin('p.image', 'pi')
 			->andWhere('c.id = :id')
 			->andWhere('c.expiresAt IS NULL OR c.expiresAt > CURRENT_TIMESTAMP()')
 			->setParameter('id', $id, 'ulid')
@@ -41,6 +47,9 @@ final class CartRepository extends ServiceEntityRepository
 	public function findActiveByUserId(int $userId): ?Cart
 	{
 		return $this->createQueryBuilder('c')
+			->leftJoin('c.items', 'ci')
+			->leftJoin('ci.product', 'p')
+			->leftJoin('p.image', 'pi')
 			->andWhere('c.userId = :u')
 			->andWhere('c.expiresAt IS NULL OR c.expiresAt > CURRENT_TIMESTAMP()')
 			->setParameter('u', $userId)
