@@ -5,6 +5,7 @@ namespace App\Service;
 
 use App\Entity\Product;
 use App\Entity\ProductOptionValueAssignment;
+use App\Exception\InsufficientStockException;
 use App\Repository\ProductOptionValueAssignmentRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -46,7 +47,10 @@ final class InventoryService
 	{
 		$stock = $product->getQuantity() ?? 0;
 		if ($stock < $qty) {
-			throw new \DomainException("Not enough stock for product '{$product->getName()}'. Available: {$stock}, requested: {$qty}");
+			throw new InsufficientStockException(
+				"Not enough stock for product '{$product->getName()}'. Available: {$stock}, requested: {$qty}",
+				$stock
+			);
 		}
 	}
 
@@ -72,9 +76,10 @@ final class InventoryService
 		if ($availableStock < $qty) {
 			$optionName = $limitingAssignment->getOption()->getName();
 			$valueName = $limitingAssignment->getValue()->getValue();
-			throw new \DomainException(
+			throw new InsufficientStockException(
 				"Not enough stock for option '{$optionName}: {$valueName}' in product '{$product->getName()}'. " .
-				"Available: {$availableStock}, requested: {$qty}"
+				"Available: {$availableStock}, requested: {$qty}",
+				$availableStock
 			);
 		}
 	}
