@@ -97,7 +97,6 @@ export async function addToCart(
   optionAssignmentIds: number[] = [],
   options: CartRequestOptions = {}
 ): Promise<Cart | CartDelta> {
-  console.log('API addToCart called with:', { productId, qty, optionAssignmentIds });
 
   const requestBody: {
     productId: number;
@@ -109,7 +108,6 @@ export async function addToCart(
     requestBody.optionAssignmentIds = optionAssignmentIds;
   }
 
-  console.log('API request body:', requestBody);
   const headers = createCartHeaders(options);
 
   if (options.responseMode === 'delta') {

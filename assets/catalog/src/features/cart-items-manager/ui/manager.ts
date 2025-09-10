@@ -73,7 +73,6 @@ export class CartItemsManager extends Component {
 
       // Проверяем, нужно ли использовать полный режим
       if (this.options.useFullMode) {
-        console.log('Using full mode for cart update (debug mode)');
         const fullCartData = await getFullCart();
         resultData = {
           version: 0, // Не важно для отображения
@@ -115,7 +114,7 @@ export class CartItemsManager extends Component {
       this.dispatchCartUpdatedEventAsync(resultData);
 
     } catch (error: any) {
-      console.error('Error updating item quantity:', error);
+      // Error updating item quantity
 
       // Восстанавливаем оригинальное значение
       target.value = originalValue;
@@ -134,7 +133,7 @@ export class CartItemsManager extends Component {
         this.updateTotal(fullCartData.total);
         this.dispatchCartUpdatedEvent(fullCartData);
       } catch (fallbackError) {
-        console.error('Fallback update also failed:', fallbackError);
+        // Fallback update also failed
       }
     } finally {
       target.disabled = false;

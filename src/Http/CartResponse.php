@@ -30,13 +30,18 @@ final class CartResponse
         if (!$shouldReturnBody) {
             // Возвращаем 204 No Content для легких ответов
             $resp->setStatusCode(Response::HTTP_NO_CONTENT);
-            $resp->setData(null);
+            $resp->setContent(null);
         } else {
             $resp->setData($payload);
         }
 
         // Устанавливаем заголовки для всех ответов
         $this->setResponseHeaders($resp, $cart);
+
+        // Для 204 не устанавливаем тело вообще
+        if ($resp->getStatusCode() === Response::HTTP_NO_CONTENT) {
+            $resp->setContent(null);
+        }
 
         return $resp;
     }
@@ -62,7 +67,7 @@ final class CartResponse
     /**
      * Устанавливает стандартные заголовки для ответов корзины
      */
-    private function setResponseHeaders(JsonResponse $resp, Cart $cart): void
+    public function setResponseHeaders(JsonResponse $resp, Cart $cart): void
     {
         $resp->setEtag($this->etags->make($cart));
         $resp->headers->set('Cache-Control', 'no-store');
@@ -120,6 +125,7 @@ final class CartResponse
      */
     public function withBatchError(
         JsonResponse $resp,
+        Cart $cart,
         string $error,
         array $results = [],
         int $statusCode = Response::HTTP_BAD_REQUEST
@@ -132,6 +138,9 @@ final class CartResponse
             'totals' => null,
         ]);
         $resp->setStatusCode($statusCode);
+
+        // Включаем заголовки корзины
+        $this->setResponseHeaders($resp, $cart);
 
         return $resp;
     }

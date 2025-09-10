@@ -8,7 +8,7 @@ function initNode(el: HTMLElement): void {
   if (!name) return;
 
   initModule(el).catch((error: unknown) => {
-    console.error(`Failed to initialize module "${name}":`, error);
+    // Failed to initialize module
   });
 }
 
@@ -29,7 +29,7 @@ function destroyNode(el: HTMLElement): void {
     try {
       destroyFn();
     } catch (error) {
-      console.error('Error destroying module:', error);
+      // Error destroying module
     }
     (el as any).__destroy = null;
   }
@@ -80,7 +80,6 @@ export function bootstrap(): void {
     subtree: true
   });
 
-  console.log('Catalog bootstrap initialized');
 }
 
 /**
@@ -94,5 +93,4 @@ export function teardown(): void {
   const modules = document.querySelectorAll<HTMLElement>('[data-module]');
   modules.forEach(destroyNode);
 
-  console.log('Catalog bootstrap stopped');
 }

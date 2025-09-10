@@ -155,7 +155,7 @@ final class CartManager
 	/**
 	 * Выполняет операцию под блокировкой с суженной критической секцией
 	 */
-	private function executeWithLock(Cart $cart, callable $operation, array $lockOpts = []): Cart
+	private function executeWithLock(Cart $cart, callable $operation, array $lockOpts = []): mixed
 	{
 		// Настройки лока по умолчанию для обычных операций
 		$defaultOpts = [
@@ -192,12 +192,12 @@ final class CartManager
 					}
 
 					$this->em->lock($cart, LockMode::PESSIMISTIC_WRITE);
-					$operation();
+					$operationResult = $operation();
 					// Быстрый пересчет только итогов без внешних IO
 					$this->calculator->recalculateTotalsOnly($cart);
 					$cart->setUpdatedAt(new \DateTimeImmutable());
 					$this->em->flush();
-					return $cart;
+					return $operationResult ?? $cart;
 				});
 			}, $opts);
 		});
@@ -278,6 +278,7 @@ final class CartManager
 				$this->updateExistingItem($existingItem, $product, $qty);
 			} else {
 				$this->createNewCartItem($cart, $product, $qty, $optionAssignmentIds, $optionsHash);
+				$this->em->flush(); // Важный ранний flush для перехвата 1062
 			}
 		} catch (UniqueConstraintViolationException) {
 			// Гонка: параллельно вставили такую же строку — мёрджим
@@ -292,6 +293,15 @@ final class CartManager
 
 	private function findExistingCartItem(Cart $cart, $product, string $optionsHash): ?CartItem
 	{
+		// Сначала ищем в памяти (уже загруженные товары)
+		foreach ($cart->getItems() as $item) {
+			if ($item->getProduct()?->getId() === $product->getId()
+				&& $item->getOptionsHash() === $optionsHash) {
+				return $item;
+			}
+		}
+
+		// Если не нашли в памяти, ищем в БД с блокировкой
 		return $this->carts->findItemForUpdate($cart, $product, $optionsHash);
 	}
 
@@ -638,14 +648,14 @@ final class CartManager
 			// Атомарный режим: все или ничего
 			return $this->executeWithLock($cart, function() use ($cart, $operations, $beforeItems) {
 				return $this->doExecuteBatch($cart, $operations, $beforeItems, true);
-			});
+			}) ?: ['cart' => $cart, 'changes' => [], 'results' => [], 'success' => false];
 		} else {
 			// Неатомарный режим: best-effort
 			try {
 				$batchResult = $this->executeWithLock($cart, function() use ($cart, $operations, $beforeItems) {
 					return $this->doExecuteBatch($cart, $operations, $beforeItems, false);
 				});
-				return $batchResult;
+				return $batchResult ?: ['cart' => $cart, 'changes' => [], 'results' => [], 'success' => false];
 			} catch (\Exception $e) {
 				// В неатомарном режиме возвращаем частичный результат
 				$afterItems = $this->createItemsSnapshot($cart);

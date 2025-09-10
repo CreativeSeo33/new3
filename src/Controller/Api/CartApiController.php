@@ -8,6 +8,8 @@ use App\Service\CartContext;
 use App\Service\CartCalculator;
 use App\Service\LivePriceCalculator;
 use App\Service\CartDeltaBuilder;
+use App\Service\Idempotency\IdempotencyService;
+use App\Service\Idempotency\IdempotencyRequestHasher;
 use App\Repository\CartRepository;
 use App\Repository\ProductRepository;
 use App\Entity\User as AppUser;
@@ -21,6 +23,7 @@ use App\Http\CartWriteGuard;
 use App\Http\CartResponse;
 use App\Http\CartEtags;
 use App\Exception\CartItemNotFoundException;
+use Psr\Log\LoggerInterface;
 
 #[Route('/api/cart')]
 final class CartApiController extends AbstractController
@@ -36,7 +39,10 @@ final class CartApiController extends AbstractController
 		private CartWriteGuard $guard,
 		private CartResponse $cartResponse,
 		private CartEtags $etags,
-		private CartDeltaBuilder $deltaBuilder
+		private CartDeltaBuilder $deltaBuilder,
+		private IdempotencyService $idem,
+		private IdempotencyRequestHasher $hasher,
+		private LoggerInterface $idempotencyLogger
 	) {}
 
 	#[Route('', name: 'api_cart_get', methods: ['GET'])]
@@ -94,14 +100,71 @@ final class CartApiController extends AbstractController
 		// Проверка Idempotency-Key
 		$idempotencyKey = $request->headers->get('Idempotency-Key');
 		if ($idempotencyKey) {
-			$cacheKey = "cart_add_{$cart->getIdString()}_{$idempotencyKey}_{$productId}_{$qty}_" . md5(serialize($optionAssignmentIds));
-			$cachedResult = $this->getCachedCartResult($cacheKey);
+			// Валидация ключа
+			if (!preg_match('/^[A-Za-z0-9._:-]+$/', $idempotencyKey) || strlen($idempotencyKey) > 255) {
+				return new JsonResponse(['error' => 'Invalid Idempotency-Key format'], 400);
+			}
 
-			if ($cachedResult) {
-				$response->setData($cachedResult['payload']);
-				$this->setResponseHeaders($response, $cachedResult['cart']);
+			$cartId = $cart->getIdString();
+			$built = $this->hasher->build($request, []);
+			$endpoint = $built['endpoint'];
+			$requestHash = $built['requestHash'];
+
+			$nowUtc = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+			$begin = $this->idem->begin($idempotencyKey, $cartId, $endpoint, $requestHash, $nowUtc);
+
+			if ($begin->type === 'replay') {
+				$this->idempotencyLogger->info('Idempotency replay', [
+					'key' => $idempotencyKey,
+					'endpoint' => $endpoint,
+					'status' => $begin->httpStatus,
+				]);
+				$response->setStatusCode($begin->httpStatus);
+				if ($begin->httpStatus !== 204) {
+					$response->setData($begin->responseData);
+				} else {
+					$response->setContent(null); // Для 204 обнуляем тело
+				}
+				$this->cartResponse->setResponseHeaders($response, $cart); // ETag, версии, totals, cookie
+				$response->headers->set('Idempotency-Replay', 'true');
+				$response->headers->set('Idempotency-Key', $idempotencyKey);
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$response->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
 				return $response;
 			}
+			if ($begin->type === 'conflict') {
+				$this->idempotencyLogger->warning('Idempotency conflict', [
+					'key' => $idempotencyKey,
+					'stored_hash' => $begin->storedHash,
+					'provided_hash' => $begin->providedHash,
+				]);
+				$conflictResponse = new JsonResponse([
+					'error' => 'idempotency_key_conflict',
+					'message' => 'Idempotency key used with different request payload',
+					'details' => [
+						'provided_hash' => $begin->providedHash,
+						'stored_hash' => $begin->storedHash,
+						'key_reused_at' => $begin->keyReusedAt?->format(\DATE_ATOM),
+					]
+				], 409);
+				$conflictResponse->headers->set('Idempotency-Key', $idempotencyKey);
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$conflictResponse->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
+				return $conflictResponse;
+			}
+			if ($begin->type === 'in_flight') {
+				$inFlightResponse = new JsonResponse([
+					'error' => 'idempotency_key_in_flight',
+					'message' => 'Request with this idempotency key is already being processed',
+					'retry_after' => $begin->retryAfter
+				], 409, ['Retry-After' => (string)$begin->retryAfter]);
+				$inFlightResponse->headers->set('Idempotency-Key', $idempotencyKey);
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$inFlightResponse->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
+				return $inFlightResponse;
+			}
+
+			// started — выполняем бизнес-логику ниже
 		}
 
 		try {
@@ -124,9 +187,12 @@ final class CartApiController extends AbstractController
 		$response->setStatusCode(201);
 		$jsonResponse = $this->cartResponse->withCart($response, $cart, $request, $responseMode, $changes);
 
-		// Кэшируем результат для Idempotency-Key
-		if ($idempotencyKey && $responseMode === 'full') {
-			$this->cacheCartResult($cacheKey, $cart, $jsonResponse->getData());
+		// Завершение идемпотентности
+		if ($idempotencyKey) {
+			$finishPayload = $jsonResponse->getStatusCode() === 204 ? null : json_decode($jsonResponse->getContent(), true);
+			$this->idem->finish($idempotencyKey, $jsonResponse->getStatusCode(), $finishPayload);
+			$jsonResponse->headers->set('Idempotency-Key', $idempotencyKey);
+			$jsonResponse->headers->set('Idempotency-Expires', (new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC')))->format(\DATE_ATOM));
 		}
 
 		return $jsonResponse;
@@ -155,14 +221,71 @@ final class CartApiController extends AbstractController
 		// Проверка Idempotency-Key
 		$idempotencyKey = $request->headers->get('Idempotency-Key');
 		if ($idempotencyKey) {
-			$cacheKey = "cart_update_{$cart->getIdString()}_{$idempotencyKey}_{$itemId}_{$qty}";
-			$cachedResult = $this->getCachedCartResult($cacheKey);
+			// Валидация ключа
+			if (!preg_match('/^[A-Za-z0-9._:-]+$/', $idempotencyKey) || strlen($idempotencyKey) > 255) {
+				return new JsonResponse(['error' => 'Invalid Idempotency-Key format'], 400);
+			}
 
-			if ($cachedResult) {
-				$response->setData($cachedResult['payload']);
-				$this->setResponseHeaders($response, $cachedResult['cart']);
+			$cartId = $cart->getIdString();
+			$built = $this->hasher->build($request, ['itemId' => $itemId]);
+			$endpoint = $built['endpoint'];
+			$requestHash = $built['requestHash'];
+
+			$nowUtc = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+			$begin = $this->idem->begin($idempotencyKey, $cartId, $endpoint, $requestHash, $nowUtc);
+
+			if ($begin->type === 'replay') {
+				$this->idempotencyLogger->info('Idempotency replay', [
+					'key' => $idempotencyKey,
+					'endpoint' => $endpoint,
+					'status' => $begin->httpStatus,
+				]);
+				$response->setStatusCode($begin->httpStatus);
+				if ($begin->httpStatus !== 204) {
+					$response->setData($begin->responseData);
+				} else {
+					$response->setContent(null); // Для 204 обнуляем тело
+				}
+				$this->cartResponse->setResponseHeaders($response, $cart); // ETag, версии, totals, cookie
+				$response->headers->set('Idempotency-Replay', 'true');
+				$response->headers->set('Idempotency-Key', $idempotencyKey);
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$response->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
 				return $response;
 			}
+			if ($begin->type === 'conflict') {
+				$this->idempotencyLogger->warning('Idempotency conflict', [
+					'key' => $idempotencyKey,
+					'stored_hash' => $begin->storedHash,
+					'provided_hash' => $begin->providedHash,
+				]);
+				$conflictResponse = new JsonResponse([
+					'error' => 'idempotency_key_conflict',
+					'message' => 'Idempotency key used with different request payload',
+					'details' => [
+						'provided_hash' => $begin->providedHash,
+						'stored_hash' => $begin->storedHash,
+						'key_reused_at' => $begin->keyReusedAt?->format(\DATE_ATOM),
+					]
+				], 409);
+				$conflictResponse->headers->set('Idempotency-Key', $idempotencyKey);
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$conflictResponse->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
+				return $conflictResponse;
+			}
+			if ($begin->type === 'in_flight') {
+				$inFlightResponse = new JsonResponse([
+					'error' => 'idempotency_key_in_flight',
+					'message' => 'Request with this idempotency key is already being processed',
+					'retry_after' => $begin->retryAfter
+				], 409, ['Retry-After' => (string)$begin->retryAfter]);
+				$inFlightResponse->headers->set('Idempotency-Key', $idempotencyKey);
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$inFlightResponse->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
+				return $inFlightResponse;
+			}
+
+			// started — выполняем бизнес-логику ниже
 		}
 
 		try {
@@ -186,9 +309,12 @@ final class CartApiController extends AbstractController
 
 		$jsonResponse = $this->cartResponse->withCart($response, $cart, $request, $responseMode, $changes);
 
-		// Кэшируем результат для Idempotency-Key
-		if ($idempotencyKey && $responseMode === 'full') {
-			$this->cacheCartResult($cacheKey, $cart, $jsonResponse->getData());
+		// Завершение идемпотентности
+		if ($idempotencyKey) {
+			$finishPayload = $jsonResponse->getStatusCode() === 204 ? null : json_decode($jsonResponse->getContent(), true);
+			$this->idem->finish($idempotencyKey, $jsonResponse->getStatusCode(), $finishPayload);
+			$jsonResponse->headers->set('Idempotency-Key', $idempotencyKey);
+			$jsonResponse->headers->set('Idempotency-Expires', (new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC')))->format(\DATE_ATOM));
 		}
 
 		return $jsonResponse;
@@ -215,14 +341,71 @@ final class CartApiController extends AbstractController
 		// Проверка Idempotency-Key
 		$idempotencyKey = $request->headers->get('Idempotency-Key');
 		if ($idempotencyKey) {
-			$cacheKey = "cart_remove_{$cart->getIdString()}_{$idempotencyKey}_{$itemId}";
-			$cachedResult = $this->getCachedCartResult($cacheKey);
+			// Валидация ключа
+			if (!preg_match('/^[A-Za-z0-9._:-]+$/', $idempotencyKey) || strlen($idempotencyKey) > 255) {
+				return new JsonResponse(['error' => 'Invalid Idempotency-Key format'], 400);
+			}
 
-			if ($cachedResult) {
-				$response->setData($cachedResult['payload']);
-				$this->setResponseHeaders($response, $cachedResult['cart']);
+			$cartId = $cart->getIdString();
+			$built = $this->hasher->build($request, ['itemId' => $itemId]);
+			$endpoint = $built['endpoint'];
+			$requestHash = $built['requestHash'];
+
+			$nowUtc = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+			$begin = $this->idem->begin($idempotencyKey, $cartId, $endpoint, $requestHash, $nowUtc);
+
+			if ($begin->type === 'replay') {
+				$this->idempotencyLogger->info('Idempotency replay', [
+					'key' => $idempotencyKey,
+					'endpoint' => $endpoint,
+					'status' => $begin->httpStatus,
+				]);
+				$response->setStatusCode($begin->httpStatus);
+				if ($begin->httpStatus !== 204) {
+					$response->setData($begin->responseData);
+				} else {
+					$response->setContent(null); // Для 204 обнуляем тело
+				}
+				$this->cartResponse->setResponseHeaders($response, $cart); // ETag, версии, totals, cookie
+				$response->headers->set('Idempotency-Replay', 'true');
+				$response->headers->set('Idempotency-Key', $idempotencyKey);
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$response->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
 				return $response;
 			}
+			if ($begin->type === 'conflict') {
+				$this->idempotencyLogger->warning('Idempotency conflict', [
+					'key' => $idempotencyKey,
+					'stored_hash' => $begin->storedHash,
+					'provided_hash' => $begin->providedHash,
+				]);
+				$conflictResponse = new JsonResponse([
+					'error' => 'idempotency_key_conflict',
+					'message' => 'Idempotency key used with different request payload',
+					'details' => [
+						'provided_hash' => $begin->providedHash,
+						'stored_hash' => $begin->storedHash,
+						'key_reused_at' => $begin->keyReusedAt?->format(\DATE_ATOM),
+					]
+				], 409);
+				$conflictResponse->headers->set('Idempotency-Key', $idempotencyKey);
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$conflictResponse->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
+				return $conflictResponse;
+			}
+			if ($begin->type === 'in_flight') {
+				$inFlightResponse = new JsonResponse([
+					'error' => 'idempotency_key_in_flight',
+					'message' => 'Request with this idempotency key is already being processed',
+					'retry_after' => $begin->retryAfter
+				], 409, ['Retry-After' => (string)$begin->retryAfter]);
+				$inFlightResponse->headers->set('Idempotency-Key', $idempotencyKey);
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$inFlightResponse->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
+				return $inFlightResponse;
+			}
+
+			// started — выполняем бизнес-логику ниже
 		}
 
 		try {
@@ -244,9 +427,12 @@ final class CartApiController extends AbstractController
 
 		$jsonResponse = $this->cartResponse->withCart($response, $cart, $request, $responseMode, $changes);
 
-		// Кэшируем результат для Idempotency-Key
-		if ($idempotencyKey && $responseMode === 'full') {
-			$this->cacheCartResult($cacheKey, $cart, $jsonResponse->getData());
+		// Завершение идемпотентности
+		if ($idempotencyKey) {
+			$finishPayload = $jsonResponse->getStatusCode() === 204 ? null : json_decode($jsonResponse->getContent(), true);
+			$this->idem->finish($idempotencyKey, $jsonResponse->getStatusCode(), $finishPayload);
+			$jsonResponse->headers->set('Idempotency-Key', $idempotencyKey);
+			$jsonResponse->headers->set('Idempotency-Expires', (new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC')))->format(\DATE_ATOM));
 		}
 
 		return $jsonResponse;
@@ -270,6 +456,76 @@ final class CartApiController extends AbstractController
 			return new JsonResponse(['error' => 'precondition_required', 'message' => $e->getMessage()], 428);
 		}
 
+		// Проверка Idempotency-Key
+		$idempotencyKey = $request->headers->get('Idempotency-Key');
+		if ($idempotencyKey) {
+			// Валидация ключа
+			if (!preg_match('/^[A-Za-z0-9._:-]+$/', $idempotencyKey) || strlen($idempotencyKey) > 255) {
+				return new JsonResponse(['error' => 'Invalid Idempotency-Key format'], 400);
+			}
+
+			$cartId = $cart->getIdString();
+			$built = $this->hasher->build($request, []);
+			$endpoint = $built['endpoint'];
+			$requestHash = $built['requestHash'];
+
+			$nowUtc = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+			$begin = $this->idem->begin($idempotencyKey, $cartId, $endpoint, $requestHash, $nowUtc);
+
+			if ($begin->type === 'replay') {
+				$this->idempotencyLogger->info('Idempotency replay', [
+					'key' => $idempotencyKey,
+					'endpoint' => $endpoint,
+					'status' => $begin->httpStatus,
+				]);
+				$response->setStatusCode($begin->httpStatus);
+				if ($begin->httpStatus !== 204) {
+					$response->setData($begin->responseData);
+				} else {
+					$response->setContent(null); // Для 204 обнуляем тело
+				}
+				$this->cartResponse->setResponseHeaders($response, $cart); // ETag, версии, totals, cookie
+				$response->headers->set('Idempotency-Replay', 'true');
+				$response->headers->set('Idempotency-Key', $idempotencyKey);
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$response->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
+				return $response;
+			}
+			if ($begin->type === 'conflict') {
+				$this->idempotencyLogger->warning('Idempotency conflict', [
+					'key' => $idempotencyKey,
+					'stored_hash' => $begin->storedHash,
+					'provided_hash' => $begin->providedHash,
+				]);
+				$conflictResponse = new JsonResponse([
+					'error' => 'idempotency_key_conflict',
+					'message' => 'Idempotency key used with different request payload',
+					'details' => [
+						'provided_hash' => $begin->providedHash,
+						'stored_hash' => $begin->storedHash,
+						'key_reused_at' => $begin->keyReusedAt?->format(\DATE_ATOM),
+					]
+				], 409);
+				$conflictResponse->headers->set('Idempotency-Key', $idempotencyKey);
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$conflictResponse->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
+				return $conflictResponse;
+			}
+			if ($begin->type === 'in_flight') {
+				$inFlightResponse = new JsonResponse([
+					'error' => 'idempotency_key_in_flight',
+					'message' => 'Request with this idempotency key is already being processed',
+					'retry_after' => $begin->retryAfter
+				], 409, ['Retry-After' => (string)$begin->retryAfter]);
+				$inFlightResponse->headers->set('Idempotency-Key', $idempotencyKey);
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$inFlightResponse->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
+				return $inFlightResponse;
+			}
+
+			// started — выполняем бизнес-логику ниже
+		}
+
 		try {
 			// Используем новый метод с отслеживанием изменений
 			$result = $this->manager->clearCartWithChanges($cart);
@@ -287,7 +543,22 @@ final class CartApiController extends AbstractController
 
 		// Для clear всегда возвращаем 204, независимо от режима
 		$response->setStatusCode(204);
-		return $this->cartResponse->withCart($response, $cart, $request, $responseMode, $changes);
+		$jsonResponse = $this->cartResponse->withCart($response, $cart, $request, $responseMode, $changes);
+
+		// Для 204 не устанавливаем тело вообще
+		if ($jsonResponse->getStatusCode() === 204) {
+			$jsonResponse->setContent(null);
+		}
+
+		// Завершение идемпотентности
+		if ($idempotencyKey) {
+			$finishPayload = $jsonResponse->getStatusCode() === 204 ? null : json_decode($jsonResponse->getContent(), true);
+			$this->idem->finish($idempotencyKey, $jsonResponse->getStatusCode(), $finishPayload);
+			$jsonResponse->headers->set('Idempotency-Key', $idempotencyKey);
+			$jsonResponse->headers->set('Idempotency-Expires', (new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC')))->format(\DATE_ATOM));
+		}
+
+		return $jsonResponse;
 	}
 
 	#[Route('', name: 'api_cart_update_pricing_policy', methods: ['PATCH'])]
@@ -310,6 +581,76 @@ final class CartApiController extends AbstractController
 			return new JsonResponse(['error' => 'precondition_required', 'message' => $e->getMessage()], 428);
 		}
 
+		// Проверка Idempotency-Key
+		$idempotencyKey = $request->headers->get('Idempotency-Key');
+		if ($idempotencyKey) {
+			// Валидация ключа
+			if (!preg_match('/^[A-Za-z0-9._:-]+$/', $idempotencyKey) || strlen($idempotencyKey) > 255) {
+				return new JsonResponse(['error' => 'Invalid Idempotency-Key format'], 400);
+			}
+
+			$cartId = $cart->getIdString();
+			$built = $this->hasher->build($request, []);
+			$endpoint = $built['endpoint'];
+			$requestHash = $built['requestHash'];
+
+			$nowUtc = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+			$begin = $this->idem->begin($idempotencyKey, $cartId, $endpoint, $requestHash, $nowUtc);
+
+			if ($begin->type === 'replay') {
+				$this->idempotencyLogger->info('Idempotency replay', [
+					'key' => $idempotencyKey,
+					'endpoint' => $endpoint,
+					'status' => $begin->httpStatus,
+				]);
+				$response->setStatusCode($begin->httpStatus);
+				if ($begin->httpStatus !== 204) {
+					$response->setData($begin->responseData);
+				} else {
+					$response->setContent(null); // Для 204 обнуляем тело
+				}
+				$this->cartResponse->setResponseHeaders($response, $cart); // ETag, версии, totals, cookie
+				$response->headers->set('Idempotency-Replay', 'true');
+				$response->headers->set('Idempotency-Key', $idempotencyKey);
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$response->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
+				return $response;
+			}
+			if ($begin->type === 'conflict') {
+				$this->idempotencyLogger->warning('Idempotency conflict', [
+					'key' => $idempotencyKey,
+					'stored_hash' => $begin->storedHash,
+					'provided_hash' => $begin->providedHash,
+				]);
+				$conflictResponse = new JsonResponse([
+					'error' => 'idempotency_key_conflict',
+					'message' => 'Idempotency key used with different request payload',
+					'details' => [
+						'provided_hash' => $begin->providedHash,
+						'stored_hash' => $begin->storedHash,
+						'key_reused_at' => $begin->keyReusedAt?->format(\DATE_ATOM),
+					]
+				], 409);
+				$conflictResponse->headers->set('Idempotency-Key', $idempotencyKey);
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$conflictResponse->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
+				return $conflictResponse;
+			}
+			if ($begin->type === 'in_flight') {
+				$inFlightResponse = new JsonResponse([
+					'error' => 'idempotency_key_in_flight',
+					'message' => 'Request with this idempotency key is already being processed',
+					'retry_after' => $begin->retryAfter
+				], 409, ['Retry-After' => (string)$begin->retryAfter]);
+				$inFlightResponse->headers->set('Idempotency-Key', $idempotencyKey);
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$inFlightResponse->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
+				return $inFlightResponse;
+			}
+
+			// started — выполняем бизнес-логику ниже
+		}
+
 		$policy = $data['pricingPolicy'] ?? null;
 		if (!in_array($policy, ['SNAPSHOT', 'LIVE'], true)) {
 			return $this->json(['error' => 'Invalid pricing policy. Allowed: SNAPSHOT, LIVE'], 422);
@@ -323,7 +664,17 @@ final class CartApiController extends AbstractController
 		}
 
 		$payload = $this->serializeCart($cart);
-		return $this->cartResponse->withCart($response, $cart, $payload);
+		$jsonResponse = $this->cartResponse->withCart($response, $cart, $request, 'full', []);
+
+		// Завершение идемпотентности
+		if ($idempotencyKey) {
+			$finishPayload = $jsonResponse->getStatusCode() === 204 ? null : json_decode($jsonResponse->getContent(), true);
+			$this->idem->finish($idempotencyKey, $jsonResponse->getStatusCode(), $finishPayload);
+			$jsonResponse->headers->set('Idempotency-Key', $idempotencyKey);
+			$jsonResponse->headers->set('Idempotency-Expires', (new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC')))->format(\DATE_ATOM));
+		}
+
+		return $jsonResponse;
 	}
 
 	#[Route('/reprice', name: 'api_cart_reprice', methods: ['POST'])]
@@ -344,6 +695,76 @@ final class CartApiController extends AbstractController
 			return new JsonResponse(['error' => 'precondition_required', 'message' => $e->getMessage()], 428);
 		}
 
+		// Проверка Idempotency-Key
+		$idempotencyKey = $request->headers->get('Idempotency-Key');
+		if ($idempotencyKey) {
+			// Валидация ключа
+			if (!preg_match('/^[A-Za-z0-9._:-]+$/', $idempotencyKey) || strlen($idempotencyKey) > 255) {
+				return new JsonResponse(['error' => 'Invalid Idempotency-Key format'], 400);
+			}
+
+			$cartId = $cart->getIdString();
+			$built = $this->hasher->build($request, []);
+			$endpoint = $built['endpoint'];
+			$requestHash = $built['requestHash'];
+
+			$nowUtc = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+			$begin = $this->idem->begin($idempotencyKey, $cartId, $endpoint, $requestHash, $nowUtc);
+
+			if ($begin->type === 'replay') {
+				$this->idempotencyLogger->info('Idempotency replay', [
+					'key' => $idempotencyKey,
+					'endpoint' => $endpoint,
+					'status' => $begin->httpStatus,
+				]);
+				$response->setStatusCode($begin->httpStatus);
+				if ($begin->httpStatus !== 204) {
+					$response->setData($begin->responseData);
+				} else {
+					$response->setContent(null); // Для 204 обнуляем тело
+				}
+				$this->cartResponse->setResponseHeaders($response, $cart); // ETag, версии, totals, cookie
+				$response->headers->set('Idempotency-Replay', 'true');
+				$response->headers->set('Idempotency-Key', $idempotencyKey);
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$response->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
+				return $response;
+			}
+			if ($begin->type === 'conflict') {
+				$this->idempotencyLogger->warning('Idempotency conflict', [
+					'key' => $idempotencyKey,
+					'stored_hash' => $begin->storedHash,
+					'provided_hash' => $begin->providedHash,
+				]);
+				$conflictResponse = new JsonResponse([
+					'error' => 'idempotency_key_conflict',
+					'message' => 'Idempotency key used with different request payload',
+					'details' => [
+						'provided_hash' => $begin->providedHash,
+						'stored_hash' => $begin->storedHash,
+						'key_reused_at' => $begin->keyReusedAt?->format(\DATE_ATOM),
+					]
+				], 409);
+				$conflictResponse->headers->set('Idempotency-Key', $idempotencyKey);
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$conflictResponse->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
+				return $conflictResponse;
+			}
+			if ($begin->type === 'in_flight') {
+				$inFlightResponse = new JsonResponse([
+					'error' => 'idempotency_key_in_flight',
+					'message' => 'Request with this idempotency key is already being processed',
+					'retry_after' => $begin->retryAfter
+				], 409, ['Retry-After' => (string)$begin->retryAfter]);
+				$inFlightResponse->headers->set('Idempotency-Key', $idempotencyKey);
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$inFlightResponse->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
+				return $inFlightResponse;
+			}
+
+			// started — выполняем бизнес-логику ниже
+		}
+
 		// Обновляем снепшот всех позиций актуальными live-ценами
 		foreach ($cart->getItems() as $item) {
 			$livePrice = $this->livePrice->effectiveUnitPriceLive($item);
@@ -360,7 +781,17 @@ final class CartApiController extends AbstractController
 		$this->calculator->recalculate($cart);
 
 		$payload = $this->serializeCart($cart);
-		return $this->cartResponse->withCart($response, $cart, $payload);
+		$jsonResponse = $this->cartResponse->withCart($response, $cart, $request, 'full', []);
+
+		// Завершение идемпотентности
+		if ($idempotencyKey) {
+			$finishPayload = $jsonResponse->getStatusCode() === 204 ? null : json_decode($jsonResponse->getContent(), true);
+			$this->idem->finish($idempotencyKey, $jsonResponse->getStatusCode(), $finishPayload);
+			$jsonResponse->headers->set('Idempotency-Key', $idempotencyKey);
+			$jsonResponse->headers->set('Idempotency-Expires', (new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC')))->format(\DATE_ATOM));
+		}
+
+		return $jsonResponse;
 	}
 
 	#[Route('/products/{productId}/options', name: 'api_product_options', methods: ['GET'])]
@@ -526,41 +957,142 @@ final class CartApiController extends AbstractController
 
 		// Проверка Idempotency-Key
 		if ($idempotencyKey) {
-			$cacheKey = "cart_batch_{$cart->getIdString()}_{$idempotencyKey}";
-			$cachedResult = $this->getCachedBatchResult($cacheKey);
+			// Валидация ключа
+			if (!preg_match('/^[A-Za-z0-9._:-]+$/', $idempotencyKey) || strlen($idempotencyKey) > 255) {
+				return new JsonResponse(['error' => 'Invalid Idempotency-Key format'], 400);
+			}
 
-			if ($cachedResult) {
-				$response->setData($cachedResult);
-				$this->cartResponse->setResponseHeaders($response, $cart);
+			$cartId = $cart->getIdString();
+			$built = $this->hasher->build($request, []);
+			$endpoint = $built['endpoint'];
+			$requestHash = $built['requestHash'];
+
+			$nowUtc = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+			$begin = $this->idem->begin($idempotencyKey, $cartId, $endpoint, $requestHash, $nowUtc);
+
+			if ($begin->type === 'replay') {
+				$this->idempotencyLogger->info('Idempotency replay', [
+					'key' => $idempotencyKey,
+					'endpoint' => $endpoint,
+					'status' => $begin->httpStatus,
+				]);
+				$response->setStatusCode($begin->httpStatus);
+				if ($begin->httpStatus !== 204) {
+					$response->setData($begin->responseData);
+				} else {
+					$response->setContent(null); // Для 204 обнуляем тело
+				}
+				$this->cartResponse->setResponseHeaders($response, $cart); // ETag, версии, totals, cookie
+				$response->headers->set('Idempotency-Replay', 'true');
+				$response->headers->set('Idempotency-Key', $idempotencyKey);
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$response->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
 				return $response;
 			}
+			if ($begin->type === 'conflict') {
+				$this->idempotencyLogger->warning('Idempotency conflict', [
+					'key' => $idempotencyKey,
+					'stored_hash' => $begin->storedHash,
+					'provided_hash' => $begin->providedHash,
+				]);
+				$conflictResponse = new JsonResponse([
+					'error' => 'idempotency_key_conflict',
+					'message' => 'Idempotency key used with different request payload',
+					'details' => [
+						'provided_hash' => $begin->providedHash,
+						'stored_hash' => $begin->storedHash,
+						'key_reused_at' => $begin->keyReusedAt?->format(\DATE_ATOM),
+					]
+				], 409);
+				$conflictResponse->headers->set('Idempotency-Key', $idempotencyKey);
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$conflictResponse->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
+				return $conflictResponse;
+			}
+			if ($begin->type === 'in_flight') {
+				$inFlightResponse = new JsonResponse([
+					'error' => 'idempotency_key_in_flight',
+					'message' => 'Request with this idempotency key is already being processed',
+					'retry_after' => $begin->retryAfter
+				], 409, ['Retry-After' => (string)$begin->retryAfter]);
+				$inFlightResponse->headers->set('Idempotency-Key', $idempotencyKey);
+				$exp = $begin->expiresAt ?? new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC'));
+				$inFlightResponse->headers->set('Idempotency-Expires', $exp->format(\DATE_ATOM));
+				return $inFlightResponse;
+			}
+
+			// started — выполняем бизнес-логику ниже
 		}
 
 		try {
 			$batchResult = $this->manager->executeBatch($cart, $operations, $atomic);
 
-			// Кэшируем результат для Idempotency-Key
-			if ($idempotencyKey && $batchResult['success']) {
-				$this->cacheBatchResult($cacheKey, $batchResult);
-			}
-
 			if (!$batchResult['success']) {
 				// Частичный успех или полный провал в атомарном режиме
-				return $this->cartResponse->withBatchError(
+				$jsonResponse = $this->cartResponse->withBatchError(
 					$response,
+					$cart,
 					$atomic ? 'Batch operation failed' : 'Some operations failed',
 					$batchResult['results'],
 					$atomic ? 400 : 207 // 207 Multi-Status для частичного успеха
 				);
+
+				// Завершение идемпотентности
+				if ($idempotencyKey) {
+					$finishPayload = $jsonResponse->getStatusCode() === 204 ? null : json_decode($jsonResponse->getContent(), true);
+					$this->idem->finish($idempotencyKey, $jsonResponse->getStatusCode(), $finishPayload);
+					$jsonResponse->headers->set('Idempotency-Key', $idempotencyKey);
+					$jsonResponse->headers->set('Idempotency-Expires', (new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC')))->format(\DATE_ATOM));
+				}
+
+				return $jsonResponse;
 			}
 
 			// Успешное выполнение
-			return $this->cartResponse->withBatchResult(
+			$cart = $batchResult['cart'];
+			$batchPayload = [
+				'version' => $cart->getVersion(),
+				'results' => $batchResult['results'],
+				'changedItems' => array_map(function($change) {
+					if ($change['type'] === 'changed') {
+						$item = $change['item'];
+						return [
+							'id' => $item->getId(),
+							'qty' => $item->getQty(),
+							'rowTotal' => $item->getRowTotal(),
+							'effectiveUnitPrice' => $item->getEffectiveUnitPrice(),
+						];
+					}
+					return null;
+				}, array_filter($batchResult['changes'], fn($c) => $c['type'] === 'changed')),
+				'removedItemIds' => array_map(
+					fn($c) => $c['itemId'],
+					array_filter($batchResult['changes'], fn($c) => $c['type'] === 'removed')
+				),
+				'totals' => [
+					'itemsCount' => $cart->getItems()->count(),
+					'subtotal' => $cart->getSubtotal(),
+					'discountTotal' => $cart->getDiscountTotal(),
+					'total' => $cart->getTotal(),
+				],
+			];
+
+			$jsonResponse = $this->cartResponse->withBatchResult(
 				$response,
-				$batchResult['cart'],
+				$cart,
 				$batchResult['results'],
 				$batchResult['changes']
 			);
+
+			// Завершение идемпотентности
+			if ($idempotencyKey) {
+				$finishPayload = $jsonResponse->getStatusCode() === 204 ? null : json_decode($jsonResponse->getContent(), true);
+				$this->idem->finish($idempotencyKey, $jsonResponse->getStatusCode(), $finishPayload);
+				$jsonResponse->headers->set('Idempotency-Key', $idempotencyKey);
+				$jsonResponse->headers->set('Idempotency-Expires', (new \DateTimeImmutable('+48 hours', new \DateTimeZone('UTC')))->format(\DATE_ATOM));
+			}
+
+			return $jsonResponse;
 
 		} catch (CartLockException $e) {
 			return $this->createBusyResponse($e);
@@ -573,72 +1105,8 @@ final class CartApiController extends AbstractController
 		}
 	}
 
-	/**
-	 * Получает кэшированный результат батч-операции
-	 */
-	private function getCachedBatchResult(string $cacheKey): ?array
-	{
-		// Простая in-memory реализация, в продакшене использовать Redis/APCu
-		static $cache = [];
-		return $cache[$cacheKey] ?? null;
-	}
 
-	/**
-	 * Кэширует результат батч-операции
-	 */
-	private function cacheBatchResult(string $cacheKey, array $result, int $ttl = 3600): void
-	{
-		// Простая in-memory реализация, в продакшене использовать Redis/APCu
-		static $cache = [];
-		$cache[$cacheKey] = $result;
 
-		// Очистка старых записей (простая реализация)
-		if (count($cache) > 1000) {
-			$cache = array_slice($cache, -500, null, true);
-		}
-	}
-
-	/**
-	 * Получает кэшированный результат операции корзины
-	 */
-	private function getCachedCartResult(string $cacheKey): ?array
-	{
-		// Простая in-memory реализация, в продакшене использовать Redis/APCu
-		static $cache = [];
-		return $cache[$cacheKey] ?? null;
-	}
-
-	/**
-	 * Кэширует результат операции корзины
-	 */
-	private function cacheCartResult(string $cacheKey, $cart, $payload, int $ttl = 3600): void
-	{
-		// Простая in-memory реализация, в продакшене использовать Redis/APCu
-		static $cache = [];
-		$cache[$cacheKey] = [
-			'cart' => $cart,
-			'payload' => $payload,
-			'expires' => time() + $ttl,
-		];
-
-		// Очистка старых записей
-		if (count($cache) > 1000) {
-			$cache = array_filter($cache, fn($item) => $item['expires'] > time());
-			if (count($cache) > 500) {
-				// Сортируем по времени истечения и оставляем только самые свежие
-				uasort($cache, fn($a, $b) => $b['expires'] <=> $a['expires']);
-				$cache = array_slice($cache, 0, 500, true);
-			}
-		}
-	}
-
-	/**
-	 * Устанавливает заголовки ответа для кэшированного результата
-	 */
-	private function setResponseHeaders(JsonResponse $response, $cart): void
-	{
-		$this->cartResponse->setResponseHeaders($response, $cart);
-	}
 }
 
 

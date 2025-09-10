@@ -26,6 +26,7 @@ export class AddToCartButton extends Component {
   private isProcessing: boolean = false;
   private successModal: Modal | null = null;
   private clickHandlerBound: boolean = false;
+  private currentIdempotencyKey: string | null = null;
 
   constructor(el: HTMLElement, opts: AddToCartButtonOptions = {}) {
     super(el, opts);
@@ -37,21 +38,17 @@ export class AddToCartButton extends Component {
     this.originalContent = this.mainContent?.innerHTML ?? '';
 
     if (!this.productId) {
-      console.error('AddToCartButton: productId is required');
       return;
     }
 
     this.init();
   }
 
-  init() {
+  init(): void {
     // Регистрируем обработчик только один раз
     if (!this.clickHandlerBound) {
       this.on('click', this.handleClick.bind(this));
       this.clickHandlerBound = true;
-      console.log('Add to cart click handler bound for product:', this.productId);
-    } else {
-      console.log('Add to cart click handler already bound for product:', this.productId);
     }
   }
 
@@ -61,11 +58,9 @@ export class AddToCartButton extends Component {
   private async handleClick(e: Event): Promise<void> {
     // Проверяем, не уничтожен ли компонент
     if (this.isDestroyed()) {
-      console.log('Component is destroyed, ignoring click');
       return;
     }
 
-    console.log('Add to cart button clicked for product:', this.productId);
     e.preventDefault();
     e.stopImmediatePropagation(); // Предотвращаем множественные срабатывания
 
@@ -73,39 +68,34 @@ export class AddToCartButton extends Component {
 
     // Дополнительная проверка на disabled
     if (button.disabled) {
-      console.log('Button is disabled, ignoring click');
       return;
     }
 
     // Проверяем, не обрабатывается ли уже запрос
     if (this.isProcessing) {
-      console.log('Already processing, ignoring duplicate click');
       return;
     }
 
     // Устанавливаем флаг обработки
     this.isProcessing = true;
-    console.log('Starting add to cart process');
 
     // Проверяем и блокируем кнопку как можно раньше
     if (button.disabled) {
-      console.log('Button is already disabled, but continuing due to processing flag');
+      // Button is already disabled, but continuing due to processing flag
     }
 
     // Немедленно блокируем кнопку
     button.disabled = true;
-    console.log('Button disabled, processing add to cart');
 
     // Собираем выбранные опции из формы
     const optionAssignmentIds = this.getSelectedOptions();
-    console.log('Selected option assignment IDs:', optionAssignmentIds);
 
     // Показываем состояние загрузки
     this.showLoading();
 
     try {
-      // Генерируем Idempotency-Key для предотвращения дублирования
-      const idempotencyKey = this.generateIdempotencyKey(this.productId, this.qty, optionAssignmentIds);
+      // Получаем ключ попытки (сохраняется между ретраями)
+      const idempotencyKey = this.getAttemptKey();
 
       // Добавляем товар в корзину (всегда запрашиваем полный ответ для UI)
       const cartData = await addToCart(this.productId, this.qty, optionAssignmentIds, {
@@ -125,7 +115,7 @@ export class AddToCartButton extends Component {
       }, 2000);
 
     } catch (error) {
-      console.error('Error adding to cart:', error);
+      // Error adding to cart
 
       // Показываем состояние ошибки
       this.showError();
@@ -137,7 +127,8 @@ export class AddToCartButton extends Component {
     } finally {
       this.hideLoading();
       this.isProcessing = false;
-      console.log('Add to cart process completed');
+      // Завершаем попытку после каждого запроса
+      this.endAttempt();
     }
   }
 
@@ -150,12 +141,10 @@ export class AddToCartButton extends Component {
 
     if (form) {
       const selectedOptions = form.querySelectorAll<HTMLInputElement>('input[type="radio"][name^="option-"]:checked');
-      console.log('Found selected radio inputs:', selectedOptions.length);
 
       selectedOptions.forEach(option => {
         const assignmentId = parseInt(option.value, 10);
         const optionName = option.name;
-        console.log(`Selected option: ${optionName} = ${assignmentId}`);
         if (assignmentId) {
           optionAssignmentIds.push(assignmentId);
         }
@@ -163,9 +152,6 @@ export class AddToCartButton extends Component {
 
       // Сортируем для консистентности
       optionAssignmentIds.sort((a, b) => a - b);
-      console.log('Sorted option assignment IDs:', optionAssignmentIds);
-    } else {
-      console.log('No form found for option selection');
     }
 
     return optionAssignmentIds;
@@ -270,25 +256,35 @@ export class AddToCartButton extends Component {
 
     // Сбрасываем флаг обработки
     this.isProcessing = false;
-    console.log('Button state reset, isProcessing = false');
   }
 
   /**
-   * Генерирует Idempotency-Key для предотвращения дублирования запросов
+   * Создает новый UUID для попытки
    */
-  private generateIdempotencyKey(productId: number, qty: number, optionAssignmentIds: number[]): string {
-    const timestamp = Date.now();
-    const data = `${productId}-${qty}-${optionAssignmentIds.sort().join(',')}-${timestamp}`;
-
-    // Простой хэш для создания уникального ключа
-    let hash = 0;
-    for (let i = 0; i < data.length; i++) {
-      const char = data.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Конвертируем в 32-bit integer
+  private newAttemptKey(): string {
+    // Используем crypto.randomUUID() если доступен, иначе fallback
+    if (typeof crypto !== 'undefined' && (crypto as any).randomUUID) {
+      return `cart-add-${(crypto as any).randomUUID()}`;
     }
+    // Fallback для старых браузеров
+    return `cart-add-${Math.random().toString(36).slice(2)}-${Date.now()}`;
+  }
 
-    return `cart-add-${Math.abs(hash)}-${timestamp}`;
+  /**
+   * Возвращает ключ текущей попытки, создавая новый если необходимо
+   */
+  private getAttemptKey(): string {
+    if (!this.currentIdempotencyKey) {
+      this.currentIdempotencyKey = this.newAttemptKey();
+    }
+    return this.currentIdempotencyKey;
+  }
+
+  /**
+   * Завершает текущую попытку (очищает ключ)
+   */
+  private endAttempt(): void {
+    this.currentIdempotencyKey = null;
   }
 
   destroy(): void {
@@ -298,9 +294,10 @@ export class AddToCartButton extends Component {
       this.successModal = null;
     }
 
-    // Сбрасываем флаги
+    // Сбрасываем флаги и ключи
     this.clickHandlerBound = false;
     this.isProcessing = false;
+    this.currentIdempotencyKey = null;
 
     super.destroy();
   }
