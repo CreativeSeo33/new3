@@ -343,10 +343,9 @@ final class CartManager
 
 	private function applyProductOptions(CartItem $item, $product, array $optionAssignmentIds, int $basePriceRub, string $optionsHash): void
 	{
-		$setPrices = [];
-		$modifier = 0;
 		$selectedOptionsData = [];
 		$optionsSnapshot = [];
+		$optionPrices = [];
 
 		foreach ($optionAssignmentIds as $assignmentId) {
 			$assignment = $this->em->getRepository(ProductOptionValueAssignment::class)->find((int)$assignmentId);
@@ -356,29 +355,33 @@ final class CartManager
 
 			$item->addOptionAssignment($assignment);
 
+			// Получаем цену опции (salePrice имеет приоритет)
 			$price = $assignment->getSalePrice() ?? $assignment->getPrice() ?? 0;
 			$optionPriceRub = PriceNormalizer::toRubInt($price);
 
-			// Логика setPrice: если опция задаёт цену, она влияет на базовую цену, а не на модификатор
-			if ($assignment->getSetPrice() === true && $optionPriceRub > 0) {
-				$setPrices[] = $optionPriceRub;
-			} else {
-				$modifier += $optionPriceRub;
+			if ($optionPriceRub > 0) {
+				$optionPrices[] = $optionPriceRub;
 			}
 
 			$selectedOptionsData[] = $this->createOptionData($assignment, $optionPriceRub);
 			$optionsSnapshot[] = $this->createOptionSnapshot($assignment);
 		}
 
-		// Если есть опции с setPrice, берём максимум из них как базовую цену
-		$unitPrice = !empty($setPrices) ? max($setPrices) : $basePriceRub;
+		// Новая логика: если есть хоть одна опция с ценой, используем максимальную цену опции
+		// Если опций с ценой нет, используем базовую цену товара
+		if (!empty($optionPrices)) {
+			$finalPrice = max($optionPrices);
+			$item->setOptionsPriceModifier($finalPrice - $basePriceRub); // Для обратной совместимости
+		} else {
+			$finalPrice = $basePriceRub;
+			$item->setOptionsPriceModifier(0);
+		}
 
-		$item->setUnitPrice($unitPrice);
-		$item->setOptionsPriceModifier($modifier);
+		$item->setUnitPrice($basePriceRub); // Сохраняем базовую цену для истории
+		$item->setEffectiveUnitPrice($finalPrice);
 		$item->setSelectedOptionsData($selectedOptionsData);
 		$item->setOptionsSnapshot($optionsSnapshot);
 		$item->setOptionsHash($optionsHash);
-		$item->setEffectiveUnitPrice($unitPrice + $modifier);
 	}
 
 	private function createOptionData($assignment, int $optionPriceRub): array

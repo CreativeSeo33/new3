@@ -19,28 +19,25 @@ final class LivePriceCalculator
     public function effectiveUnitPriceLive(CartItem $item): int
     {
         $product = $item->getProduct();
+        $optionAssignments = $item->getOptionAssignments();
 
-        // Базовая цена из продукта (текущая)
-        $basePriceRub = $product->getEffectivePrice() ?? $product->getPrice() ?? 0;
+        // Новая логика: если есть опции, используем максимальную цену из опций
+        if (!$optionAssignments->isEmpty()) {
+            $optionPrices = [];
+            foreach ($optionAssignments as $assignment) {
+                $price = $assignment->getSalePrice() ?? $assignment->getPrice() ?? 0;
+                if ($price > 0) {
+                    $optionPrices[] = PriceNormalizer::toRubInt($price);
+                }
+            }
 
-        // Применяем логику опций
-        $setPrices = [];
-        $modifier = 0;
-
-        foreach ($item->getOptionAssignments() as $assignment) {
-            $price = $assignment->getSalePrice() ?? $assignment->getPrice() ?? 0;
-
-            if ($assignment->getSetPrice() === true && $price > 0) {
-                $setPrices[] = $price;
-            } else {
-                $modifier += $price;
+            if (!empty($optionPrices)) {
+                return max($optionPrices);
             }
         }
 
-        // Если есть опции с setPrice, берём максимум из них как базовую цену
-        $unitPrice = !empty($setPrices) ? max($setPrices) : $basePriceRub;
-
-        return $unitPrice + $modifier;
+        // Если опций нет или они без цены, используем базовую цену товара
+        return PriceNormalizer::toRubInt($product->getEffectivePrice() ?? $product->getPrice() ?? 0);
     }
 
     /**
