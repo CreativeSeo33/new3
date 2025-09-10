@@ -3,16 +3,20 @@ declare(strict_types=1);
 
 namespace App\Service\Idempotency;
 
+use App\Entity\CartIdempotency;
+use App\Repository\CartIdempotencyRepository;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
-use Doctrine\DBAL\Exception\DriverException;
-use Doctrine\DBAL\Connection;
+use Doctrine\ORM\EntityManagerInterface;
 
 final class IdempotencyService
 {
     public const TTL_HOURS = 48;
     public const STALE_PROCESSING_SECONDS = 120;
 
-    public function __construct(private Connection $db) {}
+    public function __construct(
+        private EntityManagerInterface $em,
+        private CartIdempotencyRepository $repository
+    ) {}
 
     public function begin(
         string $key,
@@ -25,29 +29,26 @@ final class IdempotencyService
     ): BeginResult {
         $expiresAt = $nowUtc->modify('+' . self::TTL_HOURS . ' hours');
 
-        try {
-            $this->db->insert('cart_idempotency', [
-                'idempotency_key' => $key,
-                'cart_id' => $cartId,
-                'endpoint' => $endpoint,
-                'request_hash' => $requestHash,
-                'status' => 'processing',
-                'http_status' => null,
-                'response_data' => null,
-                'instance_id' => $instanceId,
-                'expires_at' => $expiresAt->format('Y-m-d H:i:s.u'),
-            ]);
+        // Create new entity
+        $entity = new CartIdempotency();
+        $entity->setIdempotencyKey($key)
+               ->setCartId($cartId)
+               ->setEndpoint($endpoint)
+               ->setRequestHash($requestHash)
+               ->setStatus('processing')
+               ->setHttpStatus(null)
+               ->setResponseData(null)
+               ->setInstanceId($instanceId)
+               ->setCreatedAt($nowUtc)
+               ->setExpiresAt($expiresAt);
+
+        // Try to insert
+        $exception = $this->repository->tryInsert($entity, $maxRetries);
+        if ($exception === null) {
             return BeginResult::started();
-        } catch (UniqueConstraintViolationException) {
-            return $this->handleUniqueConstraintViolation($key, $cartId, $endpoint, $requestHash, $nowUtc, $instanceId, $expiresAt, $maxRetries);
-        } catch (DriverException $e) {
-            // Handle MySQL deadlock (1213) and lock wait timeout (1205)
-            if ($this->isRetryableException($e) && $maxRetries > 0) {
-                usleep(random_int(10000, 50000)); // 10-50ms backoff
-                return $this->begin($key, $cartId, $endpoint, $requestHash, $nowUtc, $instanceId, $maxRetries - 1);
-            }
-            throw $e;
         }
+
+        return $this->handleUniqueConstraintViolation($key, $cartId, $endpoint, $requestHash, $nowUtc, $instanceId, $expiresAt, $maxRetries);
     }
 
     private function handleUniqueConstraintViolation(
@@ -60,8 +61,9 @@ final class IdempotencyService
         \DateTimeImmutable $expiresAt,
         int $maxRetries = 3
     ): BeginResult {
-        // read existing
-        $row = $this->db->fetchAssociative(
+        // read existing using direct SQL to avoid EntityManager issues
+        $conn = $this->em->getConnection();
+        $row = $conn->fetchAssociative(
             'SELECT * FROM cart_idempotency WHERE idempotency_key = ? LIMIT 1',
             [$key]
         );
@@ -81,23 +83,8 @@ final class IdempotencyService
 
         if ($expiresAtDb < $nowUtc) {
             // try revive expired row
-            try {
-                $affected = $this->db->executeStatement(
-                    'UPDATE cart_idempotency
-                     SET status = \'processing\', request_hash = ?, cart_id = ?, endpoint = ?,
-                         http_status = NULL, response_data = NULL, expires_at = ?
-                     WHERE idempotency_key = ? AND expires_at < UTC_TIMESTAMP(3)',
-                    [$requestHash, $cartId, $endpoint, $expiresAt->format('Y-m-d H:i:s.u'), $key]
-                );
-                if ($affected === 1) {
-                    return BeginResult::started();
-                }
-            } catch (DriverException $e) {
-                if ($this->isRetryableException($e) && $maxRetries > 0) {
-                    usleep(random_int(10000, 50000));
-                    return $this->begin($key, $cartId, $endpoint, $requestHash, $nowUtc, $instanceId, $maxRetries - 1);
-                }
-                throw $e;
+            if ($this->repository->tryReviveExpired($key, $requestHash, $cartId, $endpoint, $expiresAt, $maxRetries)) {
+                return BeginResult::started();
             }
             // if not affected, fall-through to checks below
         }
@@ -107,30 +94,8 @@ final class IdempotencyService
             $staleThreshold = $nowUtc->modify('-' . self::STALE_PROCESSING_SECONDS . ' seconds');
             if ($createdAtDb < $staleThreshold) {
                 // Try to take over stale processing record
-                try {
-                    $affected = $this->db->executeStatement(
-                        'UPDATE cart_idempotency
-                         SET status = \'processing\', request_hash = ?, cart_id = ?, endpoint = ?,
-                             http_status = NULL, response_data = NULL, expires_at = ?, created_at = UTC_TIMESTAMP(3)
-                         WHERE idempotency_key = ? AND status = \'processing\' AND created_at < ?',
-                        [
-                            $requestHash,
-                            $cartId,
-                            $endpoint,
-                            $expiresAt->format('Y-m-d H:i:s.u'),
-                            $key,
-                            $staleThreshold->format('Y-m-d H:i:s.u')
-                        ]
-                    );
-                    if ($affected === 1) {
-                        return BeginResult::started();
-                    }
-                } catch (DriverException $e) {
-                    if ($this->isRetryableException($e) && $maxRetries > 0) {
-                        usleep(random_int(10000, 50000));
-                        return $this->begin($key, $cartId, $endpoint, $requestHash, $nowUtc, $instanceId, $maxRetries - 1);
-                    }
-                    throw $e;
+                if ($this->repository->tryTakeOverStale($key, $requestHash, $cartId, $endpoint, $expiresAt, $staleThreshold, $maxRetries)) {
+                    return BeginResult::started();
                 }
             }
 
@@ -138,37 +103,16 @@ final class IdempotencyService
         }
 
         // done
-        if (hash_equals((string)$row['request_hash'], $requestHash)) {
-            $data = $row['response_data'] ? json_decode((string)$row['response_data'], true) : null;
+        if (hash_equals($row['request_hash'], $requestHash)) {
+            $data = $row['response_data'] ? json_decode($row['response_data'], true) : null;
             return BeginResult::replay((int)$row['http_status'], $data, $expiresAtDb);
         }
 
-        return BeginResult::conflict((string)$row['request_hash'], $requestHash, $createdAtDb);
-    }
-
-    private function isRetryableException(DriverException $e): bool
-    {
-        $code = $e->getCode();
-        return in_array($code, [1213, 1205], true); // MySQL deadlock and lock wait timeout
+        return BeginResult::conflict($row['request_hash'], $requestHash, $createdAtDb);
     }
 
     public function finish(string $key, int $httpStatus, mixed $payload, int $maxRetries = 3): void
     {
-        $json = $payload === null ? null : json_encode($payload, JSON_UNESCAPED_UNICODE);
-
-        try {
-            $this->db->update('cart_idempotency', [
-                'status' => 'done',
-                'http_status' => $httpStatus,
-                'response_data' => $json,
-            ], ['idempotency_key' => $key]);
-        } catch (DriverException $e) {
-            if ($this->isRetryableException($e) && $maxRetries > 0) {
-                usleep(random_int(10000, 50000)); // 10-50ms backoff
-                $this->finish($key, $httpStatus, $payload, $maxRetries - 1); // Retry with reduced count
-                return;
-            }
-            throw $e;
-        }
+        $this->repository->finish($key, $httpStatus, $payload, $maxRetries);
     }
 }

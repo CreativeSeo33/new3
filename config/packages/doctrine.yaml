@@ -21,8 +21,6 @@ doctrine:
         identity_generation_preferences:
             Doctrine\DBAL\Platforms\PostgreSQLPlatform: identity
         auto_mapping: true
-        schema_ignore_classes:
-            - cart_idempotency
         mappings:
             App:
                 type: attribute

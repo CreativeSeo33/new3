@@ -53,6 +53,17 @@
                 {% else %}
                   {{ item.productName }}
                 {% endif %}
+
+                {# Отображаем выбранные опции товара #}
+                {% if item.optionAssignments is defined and item.optionAssignments|length > 0 %}
+                  <div class="mt-1 text-xs text-gray-600">
+                    {% for assignment in item.optionAssignments %}
+                      <span class="inline-block bg-gray-100 rounded px-2 py-1 mr-1 mb-1">
+                        {{ assignment.option.name }}: {{ assignment.value.value }}
+                      </span>
+                    {% endfor %}
+                  </div>
+                {% endif %}
               </td>
               <td class="py-2 pr-4">
                 {# Используем effectiveUnitPrice, если он больше 0, иначе unitPrice #}
