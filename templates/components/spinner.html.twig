@@ -1,0 +1,26 @@
+{#
+  Spinner component
+  Parameters:
+    - id: string - HTML id attribute (default: 'spinner')
+    - visible: boolean - Initial visibility state (default: false)
+    - overlay: boolean - Show as overlay (default: false)
+    - size: string - Size variant ('small', 'medium', 'large') (default: 'medium')
+    - extra_class: string - Additional CSS classes (default: '')
+#}
+{% set spinner_id = id ?? 'spinner' %}
+{% set spinner_visible = visible ?? false %}
+{% set spinner_overlay = overlay ?? false %}
+{% set spinner_size = size ?? 'medium' %}
+{% set spinner_class = extra_class ?? '' %}
+
+<div id="{{ spinner_id }}"
+     class="{% if spinner_overlay %}absolute inset-0 z-20{% else %}relative{% endif %} {{ spinner_class }}"
+     data-module="spinner"
+     data-visible="{{ spinner_visible ? 'true' : 'false' }}"
+     data-overlay="{{ spinner_overlay ? 'true' : 'false' }}"
+     data-size="{{ spinner_size }}">
+
+  <div class="flex items-center justify-center w-full h-full" style="position: relative;">
+    <!-- Spinner content will be inserted here by JavaScript -->
+  </div>
+</div>
