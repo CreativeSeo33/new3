@@ -67,7 +67,10 @@ final class CartCalculator
             $cart->setShippingCost($shippingCost);
         }
 
-        $total = max(0, $cart->getSubtotal() - $discountTotal + $shippingCost);
+        // Изменена логика: total = subtotal (доставка добавляется отдельно в шаблоне)
+        $total = max(0, $cart->getSubtotal() - $discountTotal);
+
+        dump($cart->getSubtotal() );
 
         $cart->setDiscountTotal($discountTotal);
         $cart->setTotal($total);

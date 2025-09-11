@@ -102,7 +102,22 @@
     </div>
 
     <div class="mt-4 text-right text-lg">
-      Итого: <span id="cart-total">{{ format_price(cart.total) }}</span> {{ cart.currency }}
+      {% if delivery.cost is defined and delivery.cost is not null %}
+        <div>Стоимость товаров: {{ format_price(cart.subtotal) }} {{ cart.currency }}</div>
+        <div>Доставка: {{ format_price(delivery.cost) }} {{ cart.currency }}</div>
+        {% if delivery.term %}
+          <div class="text-sm text-gray-600">{{ delivery.term }}</div>
+        {% endif %}
+        <div class="border-t pt-2 font-semibold">
+          Итого: <span id="cart-total">{{ format_price(cart.subtotal + delivery.cost) }}</span> {{ cart.currency }}
+        </div>
+      {% else %}
+        <div>Стоимость товаров: {{ format_price(cart.subtotal) }} {{ cart.currency }}</div>
+        <div>Доставка: Расчет менеджером</div>
+        <div class="border-t pt-2 font-semibold">
+          Итого: <span id="cart-total">{{ format_price(cart.subtotal) }}</span> {{ cart.currency }}
+        </div>
+      {% endif %}
     </div>
 
     <div class="mt-6 flex justify-end">

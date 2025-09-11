@@ -18,6 +18,7 @@ use App\Service\PriceNormalizer;
 use App\Service\CartLockException;
 use App\Http\CartCookieFactory;
 use App\Exception\CartItemNotFoundException;
+use App\Service\LivePriceCalculator;
 
 /**
  * CartManager - сервис для управления корзиной покупок
@@ -44,6 +45,7 @@ final class CartManager
         private DeliveryContext $deliveryContext,
         private CheckoutContext $checkoutContext,
         private CartCookieFactory $cookieFactory,
+        private LivePriceCalculator $livePrice,
     ) {}
 
     public function getOrCreateCurrent(?int $userId): Cart
