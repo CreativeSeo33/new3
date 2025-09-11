@@ -10,6 +10,8 @@ use App\Service\LivePriceCalculator;
 use App\Service\CartDeltaBuilder;
 use App\Service\Idempotency\IdempotencyService;
 use App\Service\Idempotency\IdempotencyRequestHasher;
+use App\Service\Delivery\DeliveryService;
+use App\Service\Delivery\Dto\DeliveryCalculationResult;
 use App\Repository\CartRepository;
 use App\Repository\ProductRepository;
 use App\Entity\User as AppUser;
@@ -43,7 +45,8 @@ final class CartApiController extends AbstractController
 		private CartDeltaBuilder $deltaBuilder,
 		private IdempotencyService $idem,
 		private IdempotencyRequestHasher $hasher,
-		private LoggerInterface $idempotencyLogger
+		private LoggerInterface $idempotencyLogger,
+		private DeliveryService $deliveryService
 	) {}
 
 	#[Route('', name: 'api_cart_get', methods: ['GET'])]
@@ -56,7 +59,10 @@ final class CartApiController extends AbstractController
 		$response = new JsonResponse();
 		$cart = $this->cartContext->getOrCreate($userId, $response);
 
-		$payload = $this->serializeCart($cart);
+		// Рассчитываем стоимость доставки
+		$deliveryResult = $this->deliveryService->calculateForCart($cart);
+
+		$payload = $this->serializeCart($cart, $deliveryResult);
 		$response->setData($payload);
 		$response->setEtag($this->etags->make($cart));
 		$response->headers->set('Cache-Control', 'private, no-cache, must-revalidate');
@@ -672,11 +678,14 @@ final class CartApiController extends AbstractController
 		try {
 			$cart->setPricingPolicy($policy);
 			$this->em->flush();
+
+			// Пересчитываем доставку после изменения политики ценообразования
+			$deliveryResult = $this->deliveryService->calculateForCart($cart);
 		} catch (\InvalidArgumentException $e) {
 			return $this->json(['error' => $e->getMessage()], 422);
 		}
 
-		$payload = $this->serializeCart($cart);
+		$payload = $this->serializeCart($cart, $deliveryResult);
 		$jsonResponse = $this->cartResponse->withCart($response, $cart, $request, 'full', []);
 
 		// Завершение идемпотентности
@@ -793,7 +802,10 @@ final class CartApiController extends AbstractController
 		// Пересчитываем корзину
 		$this->calculator->recalculate($cart);
 
-		$payload = $this->serializeCart($cart);
+		// Рассчитываем стоимость доставки
+		$deliveryResult = $this->deliveryService->calculateForCart($cart);
+
+		$payload = $this->serializeCart($cart, $deliveryResult);
 		$jsonResponse = $this->cartResponse->withCart($response, $cart, $request, 'full', []);
 
 		// Завершение идемпотентности
@@ -841,7 +853,7 @@ final class CartApiController extends AbstractController
 		return $this->json(array_values($options));
 	}
 
-	private function serializeCart($cart): array
+	private function serializeCart($cart, ?DeliveryCalculationResult $deliveryResult = null): array
 	{
 		$policy = $cart->getPricingPolicy();
 
@@ -854,9 +866,14 @@ final class CartApiController extends AbstractController
 			'total' => $cart->getTotal(),
 			'shipping' => [
 				'method' => $cart->getShippingMethod(),
-				'cost' => $cart->getShippingCost(),
+				'cost' => $deliveryResult?->cost ?? $cart->getShippingCost(),
 				'city' => $cart->getShipToCity(),
-				'data' => $cart->getShippingData(),
+				'data' => [
+					'term' => $deliveryResult?->term ?? null,
+					'message' => $deliveryResult?->message ?? null,
+					'isFree' => $deliveryResult?->isFree ?? false,
+					'requiresManagerCalculation' => $deliveryResult?->requiresManagerCalculation ?? false,
+				] + ($cart->getShippingData() ?? []),
 			],
 			'items' => array_map(function($i) use ($policy) {
 				$data = [
@@ -916,11 +933,17 @@ final class CartApiController extends AbstractController
 	 */
 	private function createPreconditionFailedResponse(Cart $cart): JsonResponse
 	{
+		try {
+			$deliveryResult = $this->deliveryService->calculateForCart($cart);
+		} catch (\Exception $e) {
+			$deliveryResult = null;
+		}
+
 		return new JsonResponse([
 			'error' => 'precondition_failed',
 			'message' => 'Cart version mismatch',
 			'currentVersion' => $cart->getVersion(),
-			'cart' => $this->serializeCart($cart),
+			'cart' => $this->serializeCart($cart, $deliveryResult),
 		], Response::HTTP_PRECONDITION_FAILED);
 	}
 

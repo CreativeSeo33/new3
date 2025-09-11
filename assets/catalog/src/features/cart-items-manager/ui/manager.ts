@@ -107,12 +107,8 @@ export class CartItemsManager extends Component {
         this.updateRowDataFromDelta(row, resultData, itemId);
       }
 
-      // Обновляем общую сумму из delta данных
-      this.updateTotalFromDelta(resultData);
-
-      // Отправляем событие обновления корзины с полными данными (для совместимости)
-      // Получаем полную корзину асинхронно, но не блокируем UI
-      this.dispatchCartUpdatedEventAsync(resultData);
+      // Получаем полную корзину и обновляем все данные (субтотал, доставку, итого)
+      this.updateAllFromFullCartAsync(resultData);
 
     } catch (error: any) {
       // Error updating item quantity
@@ -131,7 +127,7 @@ export class CartItemsManager extends Component {
         if (row) {
           this.updateRowData(row, fullCartData, itemId);
         }
-        this.updateTotal(fullCartData.total);
+        this.updateTotalsFromFullCart(fullCartData);
         this.dispatchCartUpdatedEvent(fullCartData);
       } catch (fallbackError) {
         // Fallback update also failed
@@ -413,11 +409,10 @@ export class CartItemsManager extends Component {
         row.remove();
       }
 
-      // Обновляем общую сумму из delta данных
-      this.updateTotalFromDelta(resultData);
+      // Полная корзина обновит все данные включая субтотал
 
-      // Отправляем событие обновления корзины асинхронно (для совместимости)
-      this.dispatchCartUpdatedEventAsync(resultData);
+      // Получаем полную корзину и обновляем все данные (асинхронно, не блокируем UI)
+      this.updateAllFromFullCartAsync(resultData);
 
       // Если корзина пуста (проверяем по delta данным), перезагружаем страницу
       if (resultData.totals.itemsCount === 0) {
@@ -488,6 +483,8 @@ export class CartItemsManager extends Component {
             console.log('Removing item row from UI after 404 error');
             row.remove();
           }
+
+          this.updateTotalsFromFullCart(fullCartData);
 
           // Показываем уведомление об успешном обновлении
           setTimeout(() => {
@@ -579,14 +576,61 @@ export class CartItemsManager extends Component {
   }
 
   /**
+   * Обновляет все суммы корзины на основе полных данных
+   */
+  private updateTotalsFromFullCart(cartData: Cart): void {
+    // Обновляем субтотал
+    const subtotalEl = document.getElementById('cart-subtotal');
+    if (subtotalEl && cartData.subtotal !== undefined && cartData.subtotal !== null && !isNaN(cartData.subtotal)) {
+      subtotalEl.textContent = this.options.formatPrice!(cartData.subtotal);
+    }
+
+    // Обновляем стоимость доставки
+    const shippingEl = document.getElementById('cart-shipping');
+    if (shippingEl && cartData.shipping?.cost !== undefined && cartData.shipping?.cost !== null && !isNaN(cartData.shipping.cost)) {
+      shippingEl.textContent = this.options.formatPrice!(cartData.shipping.cost);
+    }
+
+    // Обновляем срок доставки
+    const shippingTermEl = document.getElementById('cart-shipping-term');
+    if (shippingTermEl && cartData.shipping?.data?.term) {
+      shippingTermEl.textContent = cartData.shipping.data.term;
+    }
+
+    // Рассчитываем итого на клиенте: субтотал + стоимость доставки
+    const subtotal = cartData.subtotal || 0;
+    const shippingCost = cartData.shipping?.cost || 0;
+    const calculatedTotal = subtotal + shippingCost;
+
+    // Обновляем итоговую сумму
+    let totalEl = document.querySelector('[data-cart-total]');
+
+    if (!totalEl) {
+      // Fallback на ID если data-атрибут не найден
+      totalEl = document.getElementById('cart-total');
+    }
+
+
+    if (totalEl) {
+      totalEl.textContent = this.options.formatPrice!(calculatedTotal);
+    }
+  }
+
+  /**
    * Обновляет общую сумму корзины
    */
   private updateTotal(total: number): void {
-    const totalEl = document.getElementById('cart-total');
+    let totalEl = document.querySelector('[data-cart-total]');
+
+    if (!totalEl) {
+      // Fallback на ID если data-атрибут не найден
+      totalEl = document.getElementById('cart-total');
+    }
+
     if (totalEl && total !== undefined && total !== null && !isNaN(total)) {
       totalEl.textContent = this.options.formatPrice!(total);
     } else {
-      console.warn('Invalid total value:', total);
+      console.warn('Invalid total value:', total, 'or element not found:', !!totalEl);
     }
   }
 
@@ -652,6 +696,23 @@ export class CartItemsManager extends Component {
   }
 
   /**
+   * Обновляет субтотал на основе delta данных
+   */
+  private updateSubtotalFromDelta(deltaData: CartDelta): void {
+    // Проверяем, что deltaData и totals существуют
+    if (!deltaData || !deltaData.totals) {
+      console.warn('Invalid delta data for subtotal update:', deltaData);
+      return;
+    }
+
+    // Обновляем субтотал
+    const subtotalEl = document.getElementById('cart-subtotal');
+    if (subtotalEl && deltaData.totals.subtotal !== undefined && deltaData.totals.subtotal !== null && !isNaN(deltaData.totals.subtotal)) {
+      subtotalEl.textContent = this.options.formatPrice!(deltaData.totals.subtotal);
+    }
+  }
+
+  /**
    * Обновляет общую сумму на основе delta данных
    */
   private updateTotalFromDelta(deltaData: CartDelta): void {
@@ -661,25 +722,108 @@ export class CartItemsManager extends Component {
       return;
     }
 
-    const totalEl = document.getElementById('cart-total');
-    if (totalEl && deltaData.totals.total !== undefined && deltaData.totals.total !== null && !isNaN(deltaData.totals.total)) {
-      totalEl.textContent = this.options.formatPrice!(deltaData.totals.total);
-    } else {
-      console.warn('Invalid total value in delta data:', deltaData.totals?.total);
+    // Обновляем субтотал
+    this.updateSubtotalFromDelta(deltaData);
+
+    // Рассчитываем итого на клиенте: субтотал + стоимость доставки
+    // Сначала получаем стоимость доставки из DOM
+    const shippingEl = document.getElementById('cart-shipping');
+    let shippingCost = 0;
+
+    if (shippingEl && shippingEl.textContent) {
+      // Парсим стоимость доставки из текста (убираем форматирование)
+      const shippingText = shippingEl.textContent.replace(/[^\d.,]/g, '').replace(',', '.');
+      shippingCost = parseFloat(shippingText) || 0;
+    }
+
+    // Рассчитываем итого
+    const subtotal = deltaData.totals.subtotal || 0;
+    const calculatedTotal = subtotal + shippingCost;
+
+    // Обновляем итоговую сумму
+    let totalEl = document.querySelector('[data-cart-total]');
+
+    if (!totalEl) {
+      // Fallback на ID если data-атрибут не найден
+      totalEl = document.getElementById('cart-total');
+    }
+
+
+    if (totalEl) {
+      totalEl.textContent = this.options.formatPrice!(calculatedTotal);
     }
   }
 
   /**
-   * Асинхронно отправляет событие обновления корзины с полными данными
-   * для совместимости с существующими компонентами
+   * Асинхронно получает полную корзину и обновляет все данные + отправляет события
    */
-  private async dispatchCartUpdatedEventAsync(deltaData: CartDelta): Promise<void> {
+  private async updateAllFromFullCartAsync(deltaData: CartDelta): Promise<void> {
     try {
-      // Получаем полную корзину асинхронно
+      // Получаем полную корзину асинхронно (один запрос вместо двух)
       const fullCartData = await getFullCart();
+
+      // Обновляем субтотал из полной корзины
+      let subtotalEl = document.querySelector('[data-cart-subtotal]');
+
+      if (!subtotalEl) {
+        // Fallback на ID если data-атрибут не найден
+        subtotalEl = document.getElementById('cart-subtotal');
+      }
+
+
+      if (subtotalEl && fullCartData.subtotal !== undefined && fullCartData.subtotal !== null && !isNaN(fullCartData.subtotal)) {
+        const newText = this.options.formatPrice!(fullCartData.subtotal);
+        subtotalEl.textContent = newText;
+      } else {
+        console.warn('Subtotal not updated:', {
+          elementExists: !!subtotalEl,
+          subtotal: fullCartData.subtotal,
+          isValid: fullCartData.subtotal !== undefined && fullCartData.subtotal !== null && !isNaN(fullCartData.subtotal)
+        });
+      }
+
+      // Обновляем стоимость доставки
+      let shippingEl = document.querySelector('[data-cart-shipping]');
+
+      if (!shippingEl) {
+        // Fallback на ID если data-атрибут не найден
+        shippingEl = document.getElementById('cart-shipping');
+      }
+
+
+      if (shippingEl && fullCartData.shipping?.cost !== undefined && fullCartData.shipping?.cost !== null && !isNaN(fullCartData.shipping.cost)) {
+        shippingEl.textContent = this.options.formatPrice!(fullCartData.shipping.cost);
+      } else {
+        console.warn('Shipping element not found or invalid data:', {
+          elementExists: !!shippingEl,
+          shippingCost: fullCartData.shipping?.cost,
+          isValid: fullCartData.shipping?.cost !== undefined && fullCartData.shipping?.cost !== null && !isNaN(fullCartData.shipping.cost)
+        });
+      }
+
+      // Обновляем срок доставки
+      let shippingTermEl = document.querySelector('[data-cart-shipping-term]');
+
+      if (!shippingTermEl) {
+        // Fallback на ID если data-атрибут не найден
+        shippingTermEl = document.getElementById('cart-shipping-term');
+      }
+
+
+      if (shippingTermEl && fullCartData.shipping?.data?.term) {
+        shippingTermEl.textContent = fullCartData.shipping.data.term;
+      }
+
+      // Пересчитываем итого на основе данных из полной корзины
+      this.updateTotalFromFullCartData(fullCartData);
+
+      // Отправляем событие обновления корзины
       this.dispatchCartUpdatedEvent(fullCartData);
     } catch (error) {
-      console.warn('Failed to fetch full cart data for event, using delta data:', error);
+      console.warn('Failed to fetch full cart data for update:', error);
+      // Fallback: обновляем субтотал из delta данных
+      this.updateSubtotalFromDelta(deltaData);
+
       // Fallback: создаем минимальный объект для совместимости
       const minimalCartData = {
         id: 'cart',
@@ -692,6 +836,51 @@ export class CartItemsManager extends Component {
       };
       this.dispatchCartUpdatedEvent(minimalCartData);
     }
+  }
+
+  /**
+   * Обновляет итоговую сумму на основе данных из полной корзины
+   */
+  private updateTotalFromFullCartData(cartData: Cart): void {
+    const subtotal = cartData.subtotal || 0;
+    const shippingCost = cartData.shipping?.cost || 0;
+    const calculatedTotal = subtotal + shippingCost;
+
+
+    const totalEl = document.getElementById('cart-total');
+    if (totalEl) {
+      totalEl.textContent = this.options.formatPrice!(calculatedTotal);
+    }
+  }
+
+  /**
+   * Пересчитывает итоговую сумму на основе текущих данных в DOM
+   */
+  private recalculateTotalFromCurrentData(): void {
+    const subtotalEl = document.getElementById('cart-subtotal');
+    const shippingEl = document.getElementById('cart-shipping');
+    const totalEl = document.getElementById('cart-total');
+
+    if (!totalEl) return;
+
+    let subtotal = 0;
+    let shippingCost = 0;
+
+    // Парсим субтотал
+    if (subtotalEl && subtotalEl.textContent) {
+      const subtotalText = subtotalEl.textContent.replace(/[^\d.,]/g, '').replace(',', '.');
+      subtotal = parseFloat(subtotalText) || 0;
+    }
+
+    // Парсим стоимость доставки
+    if (shippingEl && shippingEl.textContent && shippingEl.textContent !== 'Расчет менеджером') {
+      const shippingText = shippingEl.textContent.replace(/[^\d.,]/g, '').replace(',', '.');
+      shippingCost = parseFloat(shippingText) || 0;
+    }
+
+    // Рассчитываем и обновляем итого
+    const calculatedTotal = subtotal + shippingCost;
+    totalEl.textContent = this.options.formatPrice!(calculatedTotal);
   }
 
   /**
