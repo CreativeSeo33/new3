@@ -131,7 +131,7 @@ export class Spinner extends Component {
       this.overlayElement.style.width = '100%';
       this.overlayElement.style.height = '100%';
       this.overlayElement.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
-      this.overlayElement.style.zIndex = '10';
+      this.overlayElement.style.zIndex = '-1';
       this.overlayElement.style.display = 'none'; // По умолчанию скрыт
     }
 
@@ -142,12 +142,12 @@ export class Spinner extends Component {
         this.spinnerElement.style.setProperty('--spinner-color-2', '#9ca3af');
         break;
       case 'white':
-        this.spinnerElement.style.setProperty('--spinner-color-1', '#ffffff');
+        this.spinnerElement.style.setProperty('--spinner-color-1', '#2563eb');
         this.spinnerElement.style.setProperty('--spinner-color-2', '#e5e7eb');
         break;
       case 'primary':
       default:
-        this.spinnerElement.style.setProperty('--spinner-color-1', '#ffffff');
+        this.spinnerElement.style.setProperty('--spinner-color-1', '#2563eb');
         this.spinnerElement.style.setProperty('--spinner-color-2', '#ff3d00');
         break;
     }

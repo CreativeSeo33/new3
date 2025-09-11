@@ -272,7 +272,12 @@
         </button>
       </div>
       <div class="p-2 max-h-96 overflow-y-auto" id="city-modal-list">
-        <div class="p-4 text-sm text-gray-500">Загрузка...</div>
+        {{ include('components/spinner.html.twig', {
+            id: 'city-modal',
+            visible: true,
+            overlay: false,
+            size: 'medium'
+        }) }}
       </div>
     </div>
   </div>
