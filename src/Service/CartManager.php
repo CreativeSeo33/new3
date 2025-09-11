@@ -469,6 +469,8 @@ final class CartManager
 			throw new CartItemNotFoundException('Cart item not found');
 		}
 		$this->em->remove($item);
+		// Удаляем товар из коллекции корзины сразу, чтобы totals пересчитались правильно
+		$cart->getItems()->removeElement($item);
 	}
 
 	public function assignToUser(Cart $cart, int $userId): void
@@ -490,6 +492,8 @@ final class CartManager
 		foreach ($cart->getItems() as $item) {
 			$this->em->remove($item);
 		}
+		// Очищаем коллекцию корзины сразу, чтобы totals пересчитались правильно
+		$cart->getItems()->clear();
 	}
 
 	public function merge(Cart $target, Cart $source): Cart
