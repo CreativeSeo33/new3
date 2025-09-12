@@ -1,6 +1,8 @@
 <div class="relative"
      data-controller="cart-counter"
      data-cart-counter-count-value="{{ count }}"
+     data-cart-counter-total-value="{{ total }}"
+     data-cart-counter-currency-value="{{ currency }}"
      data-cart-counter-url-value="{{ path('api_cart_get') }}"
      data-action="
        cart:updated@window->cart-counter#onExternalUpdate
@@ -17,5 +19,9 @@
         {{ count }}
       </span>
     </div>
+    <span class="ml-2 text-sm text-gray-700 group-hover:text-blue-700 transition-colors"
+          data-cart-counter-target="total">
+      {{ total|number_format(0, '.', ' ') }} руб.
+    </span>
   </a>
 </div>

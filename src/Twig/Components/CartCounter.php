@@ -13,6 +13,8 @@ use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
 final class CartCounter
 {
     public int $count = 0;
+    public int $total = 0;
+    public string $currency = '';
 
     public function __construct(
         private CartRepository $carts,
@@ -47,7 +49,16 @@ final class CartCounter
             }
         }
 
-        $this->count = $cart ? $cart->getTotalItemQuantity() : 0;
+        if ($cart) {
+            $this->count = $cart->getTotalItemQuantity();
+            // Для хедера выводим именно subtotal (без доставки)
+            $this->total = $cart->getSubtotal();
+            $this->currency = (string) $cart->getCurrency();
+        } else {
+            $this->count = 0;
+            $this->total = 0;
+            $this->currency = '';
+        }
     }
 }
 

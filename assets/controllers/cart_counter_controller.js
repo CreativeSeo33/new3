@@ -1,9 +1,11 @@
 import { Controller } from '@hotwired/stimulus';
 
 export default class extends Controller {
-  static targets = ['badge'];
+  static targets = ['badge','total'];
   static values = {
     count: Number,
+    total: Number,
+    currency: String,
     url: String,
     poll: Number // опционально, если решим включить периодическое обновление
   };
@@ -12,12 +14,19 @@ export default class extends Controller {
     if (this.countValue == null) {
       this.countValue = this.safeParseInt(this.badgeTarget?.textContent);
     }
+    if (this.totalValue == null) {
+      this.totalValue = this.safeParseInt(this.totalTarget?.textContent);
+    }
     this.render();
 
     // Multi-tab sync
     try {
       this.bc = new BroadcastChannel('cart');
-      this.bc.onmessage = (e) => this.applyExternalCount(e?.data?.count);
+      this.bc.onmessage = (e) => {
+        const data = e?.data || {};
+        if (typeof data.count === 'number') this.applyExternalCount(data.count);
+        if (typeof data.subtotal === 'number') this.applyExternalTotal(data.subtotal);
+      };
     } catch {}
 
     if (this.hasPollValue && this.pollValue > 0) {
@@ -34,9 +43,13 @@ export default class extends Controller {
   onExternalUpdate(event) {
     const detail = event?.detail || {};
     const next = this.guessCountFromDetail(detail);
+    const total = this.guessSubtotalFromDetail(detail);
     if (typeof next === 'number') {
       this.setCount(next);
-      this.persistAndBroadcast(next);
+      this.persistAndBroadcast(next, total);
+    }
+    if (typeof total === 'number') {
+      this.setTotal(total);
     } else {
       this.refresh().catch(() => {});
     }
@@ -56,9 +69,13 @@ export default class extends Controller {
     if (!res.ok) return;
     const data = await res.json();
     const next = this.extractCountFromResponse(data);
+    const total = this.extractSubtotalFromResponse(data);
     if (typeof next === 'number') {
       this.setCount(next);
-      this.persistAndBroadcast(next);
+      this.persistAndBroadcast(next, total);
+    }
+    if (typeof total === 'number') {
+      this.setTotal(total);
     }
   }
 
@@ -69,20 +86,34 @@ export default class extends Controller {
     this.render();
   }
 
+  setTotal(n) {
+    if (!Number.isFinite(n) || n < 0) return;
+    if (n === this.totalValue) return;
+    this.totalValue = n;
+    this.render();
+  }
+
   render() {
     if (this.badgeTarget) this.badgeTarget.textContent = String(this.countValue ?? 0);
     // небольшая подсветка изменения
     this.badgeTarget?.classList.add('ring-2','ring-red-300');
     setTimeout(() => this.badgeTarget?.classList.remove('ring-2','ring-red-300'), 150);
+    if (this.hasTotalTarget) {
+      this.totalTarget.textContent = this.formatRub(this.totalValue ?? 0);
+    }
   }
 
   applyExternalCount(n) {
     if (typeof n === 'number') this.setCount(n);
   }
 
-  persistAndBroadcast(n) {
+  applyExternalTotal(n) {
+    if (typeof n === 'number') this.setTotal(n);
+  }
+
+  persistAndBroadcast(n, total) {
     try { localStorage.setItem('cart:count', String(n)); } catch {}
-    try { this.bc?.postMessage({ count: n }); } catch {}
+    try { this.bc?.postMessage({ count: n, total }); } catch {}
   }
 
   guessCountFromDetail(detail) {
@@ -96,8 +127,30 @@ export default class extends Controller {
     return undefined;
   }
 
+  guessSubtotalFromDetail(detail) {
+    if (typeof detail.subtotal === 'number') return detail.subtotal;
+    if (typeof detail?.totals?.subtotal === 'number') return detail.totals.subtotal;
+    return undefined;
+  }
+
+  extractSubtotalFromResponse(data) {
+    if (typeof data?.subtotal === 'number') return data.subtotal;
+    if (typeof data?.totals?.subtotal === 'number') return data.totals.subtotal;
+    return undefined;
+  }
+
   safeParseInt(v) {
     const n = parseInt(String(v ?? '0'), 10);
     return Number.isFinite(n) ? n : 0;
+  }
+
+  formatRub(amount) {
+    try {
+      // amount уже в копейках? нет — теперь используем subtotal как рубли
+      const value = Number(amount || 0);
+      return new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value) + ' руб.';
+    } catch {
+      return String(amount || 0) + ' руб.';
+    }
   }
 }

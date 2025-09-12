@@ -24,24 +24,7 @@
 {% block javascripts %}
   {{ parent() }}
   {{ encore_entry_script_tags('catalog') }}
-
-  {# Мини-обновление счётчика корзины в хедере по событию cart:updated #}
-  <script>
-  // Легаси код для совместимости - может быть удален после полной миграции
-  window.addEventListener('cart:updated', (e) => {
-    try {
-      const data = e.detail;
-      const count = (data.items || []).length;
-      const total = (data.total || 0) / 100;
-      const counter = document.querySelector('[data-cart-counter]');
-      const totalEl = document.querySelector('[data-cart-total]');
-      const label = document.querySelector('[data-cart-label]');
-      if (counter) counter.textContent = String(count);
-      if (totalEl) totalEl.textContent = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: (data.currency || 'RUB') }).format(total);
-      if (label) label.textContent = `${count} товар(ов)`;
-    } catch {}
-  });
-  </script>
+  
 {% endblock %}
 
 
