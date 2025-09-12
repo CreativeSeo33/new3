@@ -4,6 +4,9 @@ import '@fancyapps/ui/dist/fancybox/fancybox.css';
 import { register } from 'swiper/element/bundle';
 import { bootstrap } from '@app/bootstrap';
 
+// Import Stimulus
+import '../bootstrap.js';
+
 // Регистрируем Swiper Element
 register();
 
