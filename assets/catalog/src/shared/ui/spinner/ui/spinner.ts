@@ -59,21 +59,10 @@ export class Spinner extends Component {
   }
 
   init(): void {
-    // Создаем структуру спиннера
-    this.el.innerHTML = '';
-
-    // Настраиваем основной контейнер
-    this.el.style.position = 'absolute'; // Изменено с relative на absolute
-    this.el.style.width = '100%';
-    this.el.style.height = '100%';
-    this.el.style.display = 'flex';
-    this.el.style.alignItems = 'center';
-    this.el.style.justifyContent = 'center';
-
+    // Не очищаем целиком контейнер, ищем внутренний центрирующий блок
     // Проверяем, есть ли вложенный контейнер для центрирования
-    let spinnerContainer = this.el.querySelector('.flex.items-center.justify-center.w-full.h-full');
+    let spinnerContainer = this.el.querySelector('.flex.items-center.justify-center.w-full.h-full') as HTMLElement | null;
     if (!spinnerContainer) {
-      // Если вложенного контейнера нет, создаем его
       spinnerContainer = document.createElement('div');
       spinnerContainer.className = 'flex items-center justify-center w-full h-full';
       this.el.appendChild(spinnerContainer);
@@ -128,12 +117,16 @@ export class Spinner extends Component {
       this.overlayElement.style.position = 'absolute';
       this.overlayElement.style.top = '0';
       this.overlayElement.style.left = '0';
-      this.overlayElement.style.width = '100%';
-      this.overlayElement.style.height = '100%';
-      this.overlayElement.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
-      this.overlayElement.style.zIndex = '-1';
-      this.overlayElement.style.display = 'none'; // По умолчанию скрыт
+      this.overlayElement.style.right = '0';
+      this.overlayElement.style.bottom = '0';
+      this.overlayElement.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
+      this.overlayElement.style.zIndex = '0';
+      this.overlayElement.style.display = 'none';
     }
+
+    // Иконка спиннера над подложкой
+    this.spinnerElement.style.position = 'relative';
+    this.spinnerElement.style.zIndex = '1';
 
     // Устанавливаем цвет
     switch (this.options.color) {
@@ -142,7 +135,7 @@ export class Spinner extends Component {
         this.spinnerElement.style.setProperty('--spinner-color-2', '#9ca3af');
         break;
       case 'white':
-        this.spinnerElement.style.setProperty('--spinner-color-1', '#2563eb');
+        this.spinnerElement.style.setProperty('--spinner-color-1', '#ffffff');
         this.spinnerElement.style.setProperty('--spinner-color-2', '#e5e7eb');
         break;
       case 'primary':
@@ -159,15 +152,18 @@ export class Spinner extends Component {
   setVisible(visible: boolean): void {
     if (visible) {
       this.el.style.display = 'flex';
+      this.el.style.pointerEvents = 'auto';
       if (this.overlayElement) {
         this.overlayElement.style.display = 'block';
       }
     } else {
       this.el.style.display = 'none';
+      this.el.style.pointerEvents = 'none';
       if (this.overlayElement) {
         this.overlayElement.style.display = 'none';
       }
     }
+    this.el.setAttribute('aria-busy', visible ? 'true' : 'false');
   }
 
   /**

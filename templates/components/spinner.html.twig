@@ -6,21 +6,24 @@
     - overlay: boolean - Show as overlay (default: false)
     - size: string - Size variant ('small', 'medium', 'large') (default: 'medium')
     - extra_class: string - Additional CSS classes (default: '')
+    - color: string - Color variant ('primary', 'secondary', 'white') (default: 'primary')
 #}
 {% set spinner_id = id ?? 'spinner' %}
 {% set spinner_visible = visible ?? false %}
 {% set spinner_overlay = overlay ?? false %}
 {% set spinner_size = size ?? 'medium' %}
 {% set spinner_class = extra_class ?? '' %}
+{% set spinner_color = color ?? 'primary' %}
 
 <div id="{{ spinner_id }}"
      class="{% if spinner_overlay %}absolute inset-0 z-20{% else %}relative{% endif %} {{ spinner_class }}"
      data-module="spinner"
      data-visible="{{ spinner_visible ? 'true' : 'false' }}"
      data-overlay="{{ spinner_overlay ? 'true' : 'false' }}"
-     data-size="{{ spinner_size }}">
+     data-size="{{ spinner_size }}"
+     data-color="{{ spinner_color }}">
 
-  <div class="flex items-center justify-center w-full h-full" style="position: relative;z-index: -1;">
+  <div class="flex items-center justify-center w-full h-full">
     <!-- Spinner content will be inserted here by JavaScript -->
   </div>
 </div>
