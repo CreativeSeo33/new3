@@ -86,7 +86,7 @@ final class DeliveryApiController extends AbstractController
 
 		$user = $this->getUser();
 		$userId = $user instanceof AppUser ? $user->getId() : null;
-		$cart = $this->carts->getOrCreateForWrite($userId);
+		$cart = $this->carts->getForWriteLight($userId);
 
 		// Проверяем предикаты записи
 		try {
@@ -100,15 +100,11 @@ final class DeliveryApiController extends AbstractController
 		$this->ctx->syncToCart($cart);
         $cost = $this->delivery->quote($cart);
         $cart->setShippingCost($cost);
-        $this->calculator->recalculate($cart);
+        $this->calculator->recalculateShippingAndDiscounts($cart);
         $this->em->flush();
 
-        $payload = [
-            'shippingCost' => $cart->getShippingCost(),
-            'total' => $cart->getTotal(),
-        ];
         $response = new JsonResponse();
-        return $this->cartResponse->withCart($response, $cart, $r, 'full', []);
+        return $this->cartResponse->withCart($response, $cart, $r, 'summary', []);
 	}
 
 	#[Route('/select-pvz', name: 'api_delivery_select_pvz', methods: ['POST'])]

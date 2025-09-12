@@ -70,8 +70,6 @@ final class CartCalculator
         // Изменена логика: total = subtotal (доставка добавляется отдельно в шаблоне)
         $total = max(0, $cart->getSubtotal() - $discountTotal);
 
-        dump($cart->getSubtotal() );
-
         $cart->setDiscountTotal($discountTotal);
         $cart->setTotal($total);
     }

@@ -117,6 +117,20 @@ final class CartManager
         return $cart;
     }
 
+    /**
+     * Получает корзину для операций записи без полного пересчета позиций
+     * Используется для легких операций, где не меняются товары
+     */
+    public function getForWriteLight(?int $userId): Cart
+    {
+        $cart = $this->getOrCreateCurrent($userId);
+        // Только синхронизация контекста доставки, без пересчёта позиций
+        $this->deliveryContext->syncToCart($cart);
+        $cart->setUpdatedAt(new \DateTimeImmutable());
+        $this->em->flush();
+        return $cart;
+    }
+
 	/**
 	 * Генерирует уникальный хеш для набора опций
 	 * Возвращает пустую строку для товаров без опций

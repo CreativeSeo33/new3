@@ -1,4 +1,5 @@
 import type { HttpOptions, HttpGetOptions, HttpPostOptions, HttpPutOptions, HttpPatchOptions, HttpDeleteOptions } from '../types/api';
+import { Spinner } from '@shared/ui/spinner';
 import { getCsrfToken, requiresCsrfToken } from './csrf';
 
 const base = '';
@@ -52,6 +53,19 @@ export async function http<T = any>(
     }
   }
 
+  // Найдём глобальный спиннер корзины, если есть
+  let cartSpinner: Spinner | null = null;
+  try {
+    const spinnerRoot = document.getElementById('cart-spinner');
+    if (spinnerRoot) {
+      // Инициализируем Spinner поверх существующей разметки (overlay: true)
+      cartSpinner = new Spinner(spinnerRoot as HTMLElement, { overlay: true, visible: true });
+      cartSpinner.show();
+    }
+  } catch (_) {
+    // игнорируем ошибки инициализации спиннера
+  }
+
   try {
     const response = await fetch(url, config);
 
@@ -62,7 +76,8 @@ export async function http<T = any>(
 
     const contentType = response.headers.get('content-type') || '';
 
-    if (contentType.includes('application/json')) {
+    // Поддерживаем application/json и application/ld+json от API Platform
+    if (contentType.includes('json')) {
       return await response.json();
     }
 
@@ -72,6 +87,9 @@ export async function http<T = any>(
       throw error;
     }
     throw new Error('Network error');
+  } finally {
+    // Скрываем спиннер после завершения запроса
+    try { cartSpinner?.hide(); } catch (_) {}
   }
 }
 

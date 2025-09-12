@@ -101,24 +101,47 @@
       </table>
     </div>
 
+    <div class="mt-4" data-module="delivery-methods">
+      <div id="delivery-methods" class="p-4 border rounded">
+        <div class="font-medium mb-2">Способ доставки</div>
+        <div id="delivery-methods-list" class="space-y-2">
+          {% if types is defined and types is not empty %}
+            {% set selectedCode = (deliveryContext.methodCode|default(null)) %}
+            {% for t in types %}
+              {% set isSelected = (t.code == selectedCode) or (selectedCode is empty and t.default) %}
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="delivery-method" value="{{ t.code }}" {% if isSelected %}checked{% endif %}>
+                <span>{{ t.name ?? t.code }}</span>
+              </label>
+            {% endfor %}
+          {% endif %}
+        </div>
+        <div id="delivery-methods-error" class="text-sm text-red-600 mt-2 hidden"></div>
+      </div>
+    </div>
+
     <div class="mt-4 text-right text-lg">
       {% if delivery.cost is defined and delivery.cost is not null %}
-        <div>Стоимость товаров: <span id="cart-subtotal" data-cart-subtotal>{{ format_price(cart.subtotal) }}</span> {{ cart.currency }}</div>
-        <div>Доставка: <span id="cart-shipping" data-cart-shipping>{{ format_price(delivery.cost) }}</span> {{ cart.currency }}</div>
+        <div>Стоимость товаров: <span id="cart-subtotal" data-cart-subtotal>{{ cart.subtotal|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
+        <div>Доставка: <span id="cart-shipping" data-cart-shipping>{{ delivery.cost|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
         {% if delivery.term %}
           <div class="text-sm text-gray-600" id="cart-shipping-term" data-cart-shipping-term>{{ delivery.term }}</div>
         {% endif %}
         <div class="border-t pt-2 font-semibold">
-          Итого: <span id="cart-total" data-cart-total>{{ format_price(cart.subtotal + delivery.cost) }}</span> {{ cart.currency }}
+          Итого: <span id="cart-total" data-cart-total>{{ (cart.subtotal + delivery.cost)|number_format(0, '.', ' ') ~ ' руб.' }}</span>
         </div>
       {% else %}
-        <div>Стоимость товаров: <span id="cart-subtotal" data-cart-subtotal>{{ format_price(cart.subtotal) }}</span> {{ cart.currency }}</div>
+        <div>Стоимость товаров: <span id="cart-subtotal" data-cart-subtotal>{{ cart.subtotal|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
         <div>Доставка: <span id="cart-shipping" data-cart-shipping>Расчет менеджером</span></div>
         <div class="border-t pt-2 font-semibold">
-          Итого: <span id="cart-total" data-cart-total>{{ format_price(cart.subtotal) }}</span> {{ cart.currency }}
+          Итого: <span id="cart-total" data-cart-total>{{ cart.subtotal|number_format(0, '.', ' ') ~ ' руб.' }}</span>
         </div>
       {% endif %}
     </div>
+
+    <script type="module">
+      // модуль инициализируется через data-module="delivery-methods"
+    </script>
 
     <div class="mt-6 flex justify-end">
       <a href="{{ path('checkout_page') }}" class="inline-flex items-center px-4 py-2 rounded bg-black text-white hover:bg-gray-900">

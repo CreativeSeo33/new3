@@ -76,6 +76,12 @@ final class CartDeltaBuilder
             'subtotal' => $cart->getSubtotal(),
             'discountTotal' => $cart->getDiscountTotal(),
             'total' => $cart->getTotal(),
+            'shipping' => [
+                'method' => $cart->getShippingMethod(),
+                'cost' => $cart->getShippingCost(),
+                'city' => $cart->getShipToCity(),
+                'data' => $cart->getShippingData(),
+            ],
         ];
     }
 

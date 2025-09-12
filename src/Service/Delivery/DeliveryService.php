@@ -9,6 +9,7 @@ use App\Service\Delivery\Dto\DeliveryCalculationResult;
 use App\Service\Delivery\Method\DeliveryMethodInterface;
 use App\Service\DeliveryContext;
 use Symfony\Component\DependencyInjection\Attribute\TaggedIterator;
+use Psr\Cache\CacheItemPoolInterface;
 
 /**
  * Основной сервис для управления расчетами доставки.
@@ -24,7 +25,8 @@ final class DeliveryService
     public function __construct(
         #[TaggedIterator('app.delivery_method')] iterable $deliveryMethods,
         private readonly DeliveryContext $deliveryContext,
-        private readonly PvzPriceRepository $pvzPriceRepository
+        private readonly PvzPriceRepository $pvzPriceRepository,
+        private readonly CacheItemPoolInterface $cache
     ) {
         // Преобразуем итератор в индексированный по коду массив для быстрого доступа
         foreach ($deliveryMethods as $method) {
@@ -70,9 +72,25 @@ final class DeliveryService
      */
     public function quote(Cart $cart): int
     {
-        $result = $this->calculateForCart($cart);
+        $context = $this->deliveryContext->get();
+        $city = $context['cityName'] ?? '';
+        $method = $context['methodCode'] ?? 'pvz';
+        $qty = $cart->getTotalItemQuantity();
 
-        return $result->cost ?? 0;
+        $key = 'ship_quote_' . md5($city . '|' . $method . '|' . $qty);
+        $item = $this->cache->getItem($key);
+
+        if ($item->isHit()) {
+            return (int)$item->get();
+        }
+
+        $result = $this->calculateForCart($cart);
+        $cost = (int)($result->cost ?? 0);
+
+        $item->set($cost)->expiresAfter(60); // 60 сек
+        $this->cache->save($item);
+
+        return $cost;
     }
 
     /**
