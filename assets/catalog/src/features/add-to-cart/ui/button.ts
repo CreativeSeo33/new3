@@ -134,8 +134,12 @@ export class AddToCartButton extends Component {
         idempotencyKey
       }) as Cart;
 
-      // Отправляем событие обновления корзины
-      window.dispatchEvent(new CustomEvent('cart:updated', { detail: cartData }));
+      // Отправляем событие обновления корзины с count для совместимости
+      const eventDetail = {
+        ...cartData,
+        count: cartData.totalItemQuantity || (cartData.items || []).reduce((sum, item) => sum + (item.qty || 0), 0)
+      };
+      window.dispatchEvent(new CustomEvent('cart:updated', { detail: eventDetail }));
 
       // Показываем успешное состояние
       this.showSuccess();

@@ -41,6 +41,7 @@ export interface Cart {
   subtotal: number;
   discountTotal: number;
   total: number;
+  totalItemQuantity?: number;
   shipping: {
     method?: string;
     cost: number;
@@ -48,6 +49,15 @@ export interface Cart {
     data?: any;
   };
   items: CartItem[];
+}
+
+export interface CartSummary {
+  version: number;
+  itemsCount: number;
+  totalItemQuantity?: number;
+  subtotal: number;
+  discountTotal: number;
+  total: number;
 }
 
 // Типы для товаров
@@ -126,6 +136,7 @@ export interface CartDelta {
     effectiveUnitPrice: number;
   }>;
   removedItemIds: number[];
+  totalItemQuantity?: number;
   totals: {
     itemsCount: number;
     subtotal: number;

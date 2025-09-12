@@ -118,60 +118,7 @@
           </div>
 
           <!-- Shopping Cart -->
-          <div class="relative" data-module="cart-counter">
-            <a href="/cart" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-50 transition-colors group">
-              <div class="relative">
-                <svg class="w-6 h-6 text-gray-600 group-hover:text-blue-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/>
-                </svg>
-                <!-- Cart Counter -->
-                <span data-cart-counter class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">0</span>
-              </div>
-              <div class="hidden lg:flex flex-col text-xs">
-                <span data-cart-label class="text-gray-500">0 товаров</span>
-                <span data-cart-total class="text-gray-800 font-medium">₽0</span>
-              </div>
-            </a>
-
-            <!-- Cart Dropdown (показывается при hover) -->
-            <div class="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-              <div class="p-4">
-                <h3 class="text-sm font-semibold text-gray-800 mb-3">Корзина</h3>
-                
-                <!-- Cart Items -->
-                <div class="space-y-3 mb-4">
-                  <div class="flex items-center space-x-3">
-                    <img src="/img/placeholder-product.jpg" alt="Product" class="w-12 h-12 object-cover rounded">
-                    <div class="flex-1">
-                      <h4 class="text-sm font-medium text-gray-800">Apple Watch Series 6</h4>
-                      <p class="text-xs text-gray-500">1x - ₽99.00</p>
-                    </div>
-                  </div>
-                  <div class="flex items-center space-x-3">
-                    <img src="/img/placeholder-product.jpg" alt="Product" class="w-12 h-12 object-cover rounded">
-                    <div class="flex-1">
-                      <h4 class="text-sm font-medium text-gray-800">Wi-Fi Smart Camera</h4>
-                      <p class="text-xs text-gray-500">1x - ₽35.00</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <!-- Total -->
-                <div class="border-t border-gray-200 pt-3 mb-4">
-                  <div class="flex justify-between text-sm font-semibold">
-                    <span>Итого:</span>
-                    <span data-cart-total>₽0</span>
-                  </div>
-                </div>
-                
-                <!-- Checkout Button -->
-                <a href="" 
-                   class="block w-full bg-blue-600 text-white text-center py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
-                  Оформить заказ
-                </a>
-              </div>
-            </div>
-          </div>
+          {{ component('CartCounter') }}
 
         </div>
       </div>

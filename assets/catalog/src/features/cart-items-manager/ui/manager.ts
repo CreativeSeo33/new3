@@ -403,7 +403,12 @@ export class CartItemsManager extends Component {
    * Отправляет событие обновления корзины
    */
   private dispatchCartUpdatedEvent(data: Cart): void {
-    window.dispatchEvent(new CustomEvent('cart:updated', { detail: data }));
+    // Добавляем count для совместимости со Stimulus контроллером
+    const eventDetail = {
+      ...data,
+      count: data.totalItemQuantity || (data.items || []).reduce((sum, item) => sum + (item.qty || 0), 0)
+    };
+    window.dispatchEvent(new CustomEvent('cart:updated', { detail: eventDetail }));
   }
 
   /**

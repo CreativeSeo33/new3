@@ -72,6 +72,7 @@ final class CartDeltaBuilder
         return [
             'version' => $cart->getVersion(),
             'itemsCount' => $cart->getItems()->count(),
+            'totalItemQuantity' => $cart->getTotalItemQuantity(),
             'subtotal' => $cart->getSubtotal(),
             'discountTotal' => $cart->getDiscountTotal(),
             'total' => $cart->getTotal(),
@@ -104,6 +105,7 @@ final class CartDeltaBuilder
             'version' => $cart->getVersion(),
             'changedItems' => $changedItems,
             'removedItemIds' => $removedItemIds,
+            'totalItemQuantity' => $cart->getTotalItemQuantity(),
             'totals' => [
                 'itemsCount' => $cart->getItems()->count(),
                 'subtotal' => $cart->getSubtotal(),

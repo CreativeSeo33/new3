@@ -864,6 +864,7 @@ final class CartApiController extends AbstractController
 			'subtotal' => $cart->getSubtotal(),
 			'discountTotal' => $cart->getDiscountTotal(),
 			'total' => $cart->getTotal(),
+			'totalItemQuantity' => $cart->getTotalItemQuantity(),
 			'shipping' => [
 				'method' => $cart->getShippingMethod(),
 				'cost' => $deliveryResult?->cost ?? $cart->getShippingCost(),

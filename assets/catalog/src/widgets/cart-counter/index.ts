@@ -46,8 +46,7 @@ export class CartCounter extends Component {
     // Слушаем событие обновления корзины
     window.addEventListener('cart:updated' as any, this.handleCartUpdate.bind(this));
 
-    // Инициализируем с текущими данными
-    this.updateDisplay();
+    // Не инициализируем с пустыми данными - оставляем SSR значение
   }
 
   /**
@@ -68,17 +67,21 @@ export class CartCounter extends Component {
       let currency = this.counterOptions.currency || 'RUB';
 
       if (data) {
-        // Определяем тип данных и извлекаем нужную информацию
-        if ('items' in data) {
-          // Полные данные корзины
-          count = (data.items || []).length;
+        // Приоритет у totalItemQuantity - сумма всех qty
+        if ('totalItemQuantity' in data && typeof (data as any).totalItemQuantity === 'number') {
+          count = (data as any).totalItemQuantity;
+        } else if ('count' in data && typeof (data as any).count === 'number') {
+          // Из события с detail.count
+          count = (data as any).count;
+        } else {
+          // Если нет правильного поля - не обновляем count, оставляем как было
+          return;
+        }
+
+        // Обновляем total если есть
+        if ('total' in data) {
           total = (data.total || 0) / 100; // Предполагаем, что total в копейках
-          currency = data.currency || 'RUB';
-        } else if ('itemsCount' in data) {
-          // Summary данные
-          count = data.itemsCount;
-          total = (data.total || 0) / 100; // Предполагаем, что total в копейках
-          currency = 'RUB'; // Для summary данных используем RUB по умолчанию
+          currency = (data as any).currency || 'RUB';
         }
       }
 
