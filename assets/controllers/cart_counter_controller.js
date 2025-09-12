@@ -53,6 +53,12 @@ export default class extends Controller {
   // data-action: cart:updated@window->cart-counter#onExternalUpdate
   onExternalUpdate(event) {
     const detail = event?.detail || {};
+    // Если город изменился — принудительно обновляем корзину (доставка/итого)
+    if (detail.cityChanged) {
+      this.itemsLoaded = false;
+      this.refresh().catch(() => {});
+      return;
+    }
     const next = this.guessCountFromDetail(detail);
     const total = this.guessSubtotalFromDetail(detail);
     if (typeof next === 'number') {

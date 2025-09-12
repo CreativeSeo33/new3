@@ -35,6 +35,12 @@ export async function http<T = any>(
     headers: finalHeaders
   };
 
+  // ВАЖНО: для GET отключаем кэш браузера, чтобы не получать 304 с ETag
+  // Это критично для /api/cart, иначе при 304 JSON отсутствует и обновление доставки срывается
+  if (method === 'GET') {
+    (config as any).cache = 'no-store';
+  }
+
   // Обработка тела запроса
   if (body !== undefined) {
     if (body instanceof FormData) {

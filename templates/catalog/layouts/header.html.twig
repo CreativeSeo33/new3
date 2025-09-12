@@ -222,7 +222,7 @@
         {{ include('components/spinner.html.twig', {
             id: 'city-modal',
             visible: true,
-            overlay: false,
+            overlay: true,
             size: 'medium'
         }) }}
       </div>
@@ -261,11 +261,16 @@
     const modal = document.getElementById('city-modal');
     const modalList = document.getElementById('city-modal-list');
     const closeBtn = modal.querySelector('[data-city-modal-close]');
+    let modalListSpinnerHtml = '';
 
     if (!trigger || !modal || !modalList) return;
 
     function openModal() {
       modal.classList.remove('hidden');
+      if (!modalList.dataset.spinnerSaved) {
+        modalListSpinnerHtml = modalList.innerHTML;
+        modalList.dataset.spinnerSaved = '1';
+      }
       if (!modalList.dataset.loaded) {
         fetch(API_URL, { headers: { 'Accept': 'application/ld+json' }})
           .then(r => r.json())
@@ -284,6 +289,13 @@
               li.textContent = item.name || '';
               li.addEventListener('click', async () => {
                 try {
+                  let spinnerEl = null;
+                  if (modalListSpinnerHtml) {
+                    const wrap = document.createElement('div');
+                    wrap.innerHTML = modalListSpinnerHtml;
+                    spinnerEl = wrap.firstElementChild;
+                    if (spinnerEl) modalList.appendChild(spinnerEl);
+                  }
                   li.classList.add('opacity-60');
                   const res = await fetch('/api/delivery/select-city', {
                     method: 'POST',
@@ -297,6 +309,12 @@
                   const labelEl = document.querySelector('[data-city-modal-trigger] span');
                   if (labelEl) labelEl.textContent = item.name || 'Ваш город';
                   modal.classList.add('hidden');
+                  // уведомляем мини-корзину о смене города, чтобы обновить доставку/итого
+                  try {
+                    window.dispatchEvent(new CustomEvent('cart:updated', { detail: { cityChanged: true } }));
+                  } catch {}
+                  // полная перезагрузка страницы после успешной смены города
+                  window.location.reload();
                 } catch (e) {
                   // простое отображение ошибки внутри модалки
                   const err = document.createElement('div');
@@ -305,6 +323,10 @@
                   modalList.prepend(err);
                 } finally {
                   li.classList.remove('opacity-60');
+                  const existingSpinner = modalList.querySelector('#city-modal');
+                  if (existingSpinner && existingSpinner.parentElement === modalList) {
+                    existingSpinner.remove();
+                  }
                 }
               });
               ul.appendChild(li);
