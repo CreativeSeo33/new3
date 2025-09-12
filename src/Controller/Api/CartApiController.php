@@ -20,6 +20,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\{Request, JsonResponse, Response};
 use Symfony\Component\Routing\Attribute\Route;
 use App\Service\CartLockException;
+use App\Entity\Option;
 use App\Entity\Cart;
 use App\Http\CartWriteGuard;
 use App\Http\CartResponse;
@@ -857,8 +858,38 @@ final class CartApiController extends AbstractController
 	{
 		$policy = $cart->getPricingPolicy();
 
+		// Построение карты порядка опций: option.code => sortOrder
+		$optionCodeToSortOrder = [];
+		try {
+			$allCodes = [];
+			foreach ($cart->getItems() as $it) {
+				$opts = $it->getOptionsSnapshot() ?? $it->getSelectedOptionsData() ?? [];
+				foreach ($opts as $o) {
+					$code = $o['option_code'] ?? ($o['option']['code'] ?? null);
+					if (is_string($code) && $code !== '') $allCodes[$code] = true;
+				}
+			}
+			if (!empty($allCodes)) {
+				$codes = array_keys($allCodes);
+				$qb = $this->em->createQueryBuilder()
+					->select('o.code, o.sortOrder')
+					->from(Option::class, 'o')
+					->where('o.code IN (:codes)')
+					->setParameter('codes', $codes);
+				$rows = $qb->getQuery()->getArrayResult();
+				foreach ($rows as $row) {
+					$c = (string)($row['code'] ?? '');
+					$s = (int)($row['sortOrder'] ?? 0);
+					if ($c !== '') $optionCodeToSortOrder[$c] = $s;
+				}
+			}
+		} catch (\Throwable) {
+			$optionCodeToSortOrder = [];
+		}
+
 		return [
 			'id' => $cart->getIdString(),
+			'version' => $cart->getVersion(),
 			'currency' => $cart->getCurrency(),
 			'pricingPolicy' => $policy,
 			'subtotal' => $cart->getSubtotal(),
@@ -876,20 +907,57 @@ final class CartApiController extends AbstractController
 					'requiresManagerCalculation' => $deliveryResult?->requiresManagerCalculation ?? false,
 				] + ($cart->getShippingData() ?? []),
 			],
-			'items' => array_map(function($i) use ($policy) {
+			'items' => array_map(function($i) use ($policy, $optionCodeToSortOrder) {
 				$data = [
 					'id' => $i->getId(),
 					'productId' => $i->getProduct()->getId(),
 					'name' => $i->getProductName(),
+					'slug' => $i->getProduct()->getSlug(),
+					'url' => ($i->getProduct()->getSlug() !== null)
+						? $this->generateUrl('catalog_product_show', ['slug' => $i->getProduct()->getSlug()])
+						: null,
 					'unitPrice' => $i->getUnitPrice(),
 					'optionsPriceModifier' => $i->getOptionsPriceModifier(),
 					'effectiveUnitPrice' => $i->getEffectiveUnitPrice(),
 					'qty' => $i->getQty(),
 					'rowTotal' => $i->getRowTotal(),
 					'pricedAt' => $i->getPricedAt()->format(DATE_ATOM),
-					'selectedOptions' => $i->getOptionsSnapshot() ?? $i->getSelectedOptionsData() ?? [],
+					'selectedOptions' => (function() use ($i, $optionCodeToSortOrder) {
+						$opts = $i->getOptionsSnapshot() ?? $i->getSelectedOptionsData() ?? [];
+						if (!is_array($opts) || count($opts) < 2) return $opts;
+						usort($opts, function($a, $b) use ($optionCodeToSortOrder) {
+							$codeA = $a['option_code'] ?? ($a['option']['code'] ?? null);
+							$codeB = $b['option_code'] ?? ($b['option']['code'] ?? null);
+							$sa = (is_string($codeA) && isset($optionCodeToSortOrder[$codeA])) ? (int)$optionCodeToSortOrder[$codeA] : PHP_INT_MAX;
+							$sb = (is_string($codeB) && isset($optionCodeToSortOrder[$codeB])) ? (int)$optionCodeToSortOrder[$codeB] : PHP_INT_MAX;
+							return $sa <=> $sb;
+						});
+						return $opts;
+					})(),
 					'optionsHash' => $i->getOptionsHash(),
 				];
+
+				// Lightweight картинка для мини-корзины
+				try {
+					$firstImage = $i->getProduct()->getImage()->first();
+					$raw = $firstImage ? $firstImage->getImageUrl() : null;
+					$data['firstImageUrl'] = $raw;
+					if ($raw) {
+						if (str_starts_with($raw, '/media/cache/')) {
+							$parts = explode('/', ltrim($raw, '/'));
+							$data['firstImageSmUrl'] = count($parts) >= 4
+								? '/media/cache/resolve/sm/' . implode('/', array_slice($parts, 3))
+								: $raw;
+						} else {
+							$data['firstImageSmUrl'] = '/media/cache/resolve/sm/' . ltrim($raw, '/');
+						}
+					} else {
+						$data['firstImageSmUrl'] = null;
+					}
+				} catch (\Throwable) {
+					$data['firstImageUrl'] = null;
+					$data['firstImageSmUrl'] = null;
+				}
 
 				// Добавляем live-данные только в LIVE режиме
 				if ($policy === 'LIVE') {

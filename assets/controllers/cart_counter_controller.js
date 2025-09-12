@@ -1,7 +1,7 @@
 import { Controller } from '@hotwired/stimulus';
 
 export default class extends Controller {
-  static targets = ['badge','total'];
+  static targets = ['badge','total','dropdown','list','dropdownTotal'];
   static values = {
     count: Number,
     total: Number,
@@ -19,6 +19,14 @@ export default class extends Controller {
     }
     this.render();
 
+    // Lazy load items on first hover
+    this.hoverHandler = () => {
+      if (!this.itemsLoaded) this.loadItems().catch(() => {});
+    };
+    try {
+      this.element.addEventListener('mouseenter', this.hoverHandler, { passive: true });
+    } catch {}
+
     // Multi-tab sync
     try {
       this.bc = new BroadcastChannel('cart');
@@ -26,6 +34,8 @@ export default class extends Controller {
         const data = e?.data || {};
         if (typeof data.count === 'number') this.applyExternalCount(data.count);
         if (typeof data.subtotal === 'number') this.applyExternalTotal(data.subtotal);
+        // любые внешние изменения делают список неактуальным
+        this.itemsLoaded = false;
       };
     } catch {}
 
@@ -37,6 +47,7 @@ export default class extends Controller {
   disconnect() {
     if (this.intervalId) window.clearInterval(this.intervalId);
     if (this.bc) this.bc.close();
+    if (this.hoverHandler) this.element.removeEventListener('mouseenter', this.hoverHandler);
   }
 
   // data-action: cart:updated@window->cart-counter#onExternalUpdate
@@ -50,8 +61,17 @@ export default class extends Controller {
     }
     if (typeof total === 'number') {
       this.setTotal(total);
+    }
+    // если пришёл полный список товаров — обновляем немедленно
+    if (Array.isArray(detail.items)) {
+      this.renderItems(detail.items, detail.currency || 'RUB');
+      this.itemsLoaded = true;
+      if (typeof total === 'number' && this.hasDropdownTotalTarget) {
+        this.dropdownTotalTarget.textContent = this.formatRub(total);
+      }
     } else {
-      this.refresh().catch(() => {});
+      // помечаем данные как устаревшие, чтобы при следующем наведении перезагрузить
+      this.itemsLoaded = false;
     }
   }
 
@@ -68,6 +88,8 @@ export default class extends Controller {
     const res = await fetch(this.urlValue, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
     if (!res.ok) return;
     const data = await res.json();
+    try { this.cartEtag = res.headers.get('ETag') || null; } catch { this.cartEtag = null; }
+    if (typeof data?.version === 'number') this.cartVersion = data.version;
     const next = this.extractCountFromResponse(data);
     const total = this.extractSubtotalFromResponse(data);
     if (typeof next === 'number') {
@@ -76,7 +98,92 @@ export default class extends Controller {
     }
     if (typeof total === 'number') {
       this.setTotal(total);
+      if (this.hasDropdownTotalTarget) this.dropdownTotalTarget.textContent = this.formatRub(total);
     }
+    if (Array.isArray(data?.items)) {
+      this.renderItems(data.items, data?.currency || 'RUB');
+      this.itemsLoaded = true;
+    } else {
+      this.itemsLoaded = false;
+    }
+  }
+
+  async loadItems() {
+    if (!this.hasUrlValue) return;
+    const res = await fetch(this.urlValue, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
+    if (!res.ok) return;
+    const data = await res.json();
+    try { this.cartEtag = res.headers.get('ETag') || null; } catch { this.cartEtag = null; }
+    if (typeof data?.version === 'number') this.cartVersion = data.version;
+    const items = Array.isArray(data?.items) ? data.items : [];
+    this.renderItems(items, data?.currency || 'RUB');
+    this.itemsLoaded = true;
+    const subtotal = this.extractSubtotalFromResponse(data);
+    if (typeof subtotal === 'number') {
+      this.setTotal(subtotal);
+      if (this.hasDropdownTotalTarget) this.dropdownTotalTarget.textContent = this.formatRub(subtotal);
+    }
+  }
+
+  renderItems(items, currency) {
+    if (!this.hasListTarget) return;
+    if (!items.length) {
+      this.listTarget.innerHTML = '<div class="text-sm text-gray-500">Корзина пуста</div>';
+      return;
+    }
+    const html = items.map((i) => {
+      const qty = Number(i.qty || 0);
+      const price = Number((i.effectiveUnitPrice ?? i.unitPrice) || 0);
+      const rowTotal = Number(i.rowTotal || (qty * price));
+      const raw = i.firstImageSmUrl || i.firstImageUrl;
+      const img = raw ? this.normalizeImageUrl(raw) : '';
+      const href = this.productHref(i);
+      const optionsHtml = this.renderOptionsHtml(i);
+      return `
+        <div class="flex items-center gap-3 py-2">
+          <a href="${href}" class="w-12 h-12 bg-gray-100 rounded overflow-hidden border flex items-center justify-center shrink-0">
+            ${img ? `<img src="${img}" alt="" class="w-full h-full object-cover"/>` : '<span class="text-gray-400 text-xs">нет фото</span>'}
+          </a>
+          <div class="flex-1 min-w-0">
+            <a href="${href}" class="text-sm text-gray-900 truncate hover:text-blue-700">${this.escapeHtml(i.name || '')}</a>
+            ${optionsHtml}
+            <div class="text-xs text-gray-500">${qty} × ${this.formatRub(price)}</div>
+          </div>
+          <div class="text-sm text-gray-900 whitespace-nowrap">${this.formatRub(rowTotal)}</div>
+        </div>
+      `;
+    }).join('');
+    this.listTarget.innerHTML = html;
+  }
+
+  productHref(item) {
+    try {
+      if (item && typeof item.url === 'string' && item.url) return item.url;
+      const slug = (item && (item.slug || (item.product && item.product.slug))) ? (item.slug || item.product.slug) : null;
+      if (slug) return `/product/${encodeURIComponent(String(slug))}`;
+      return '#';
+    } catch { return '#'; }
+  }
+
+  renderOptionsHtml(item) {
+    const lines = this.getOptionsList(item);
+    if (!lines.length) return '';
+    return `<div class="mt-0.5">${lines.map(l => `<div class=\"text-xs text-gray-500 truncate\">${l}</div>`).join('')}</div>`;
+  }
+
+  getOptionsList(item) {
+    try {
+      const list = Array.isArray(item?.selectedOptions) ? item.selectedOptions : [];
+      if (!list.length) return [];
+      return list.map((o) => {
+        const optName = o.option_name || o.optionName || o.option_code || (o.option && (o.option.name || o.option.code));
+        const valName = o.value_name || o.valueName || o.value_code || (o.value && (o.value.value || o.value.code));
+        const left = optName ? this.escapeHtml(String(optName)) : '';
+        const right = valName ? this.escapeHtml(String(valName)) : '';
+        const pair = [left, right].filter(Boolean).join(': ');
+        return pair;
+      }).filter(Boolean);
+    } catch { return []; }
   }
 
   setCount(n) {
@@ -152,5 +259,23 @@ export default class extends Controller {
     } catch {
       return String(amount || 0) + ' руб.';
     }
+  }
+
+  normalizeImageUrl(url) {
+    try {
+      if (!url) return '';
+      if (url.startsWith('http')) return url;
+      // В проекте изображения лежат в /img/ или уже /media/cache/.., оставляем как есть
+      return url;
+    } catch { return ''; }
+  }
+
+  escapeHtml(s) {
+    return String(s || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
   }
 }
