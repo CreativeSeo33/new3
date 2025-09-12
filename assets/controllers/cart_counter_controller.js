@@ -1,7 +1,7 @@
 import { Controller } from '@hotwired/stimulus';
 
 export default class extends Controller {
-  static targets = ['badge','total','dropdown','list','dropdownTotal'];
+  static targets = ['badge','total','dropdown','list','dropdownTotal','shipping'];
   static values = {
     count: Number,
     total: Number,
@@ -62,6 +62,12 @@ export default class extends Controller {
     if (typeof total === 'number') {
       this.setTotal(total);
     }
+    // обновляем доставку/итого, если данные есть в detail; иначе подтянем через refresh
+    if (detail && (detail.shipping || typeof detail.subtotal === 'number')) {
+      this.updateShippingAndGrandTotal(detail);
+    } else {
+      this.refresh().catch(() => {});
+    }
     // если пришёл полный список товаров — обновляем немедленно
     if (Array.isArray(detail.items)) {
       this.renderItems(detail.items, detail.currency || 'RUB');
@@ -85,9 +91,16 @@ export default class extends Controller {
 
   async refresh() {
     if (!this.hasUrlValue) return;
-    const res = await fetch(this.urlValue, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
-    if (!res.ok) return;
-    const data = await res.json();
+    this.showSpinner();
+    let data;
+    try {
+      const res = await fetch(this.urlValue, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
+      if (!res.ok) { this.hideSpinner(); return; }
+      data = await res.json();
+    } catch (e) {
+      this.hideSpinner();
+      return;
+    }
     try { this.cartEtag = res.headers.get('ETag') || null; } catch { this.cartEtag = null; }
     if (typeof data?.version === 'number') this.cartVersion = data.version;
     const next = this.extractCountFromResponse(data);
@@ -106,13 +119,24 @@ export default class extends Controller {
     } else {
       this.itemsLoaded = false;
     }
+    // update shipping and grand total
+    this.updateShippingAndGrandTotal(data);
+    // ensure spinner hidden after refresh completes
+    this.hideSpinner();
   }
 
   async loadItems() {
     if (!this.hasUrlValue) return;
-    const res = await fetch(this.urlValue, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
-    if (!res.ok) return;
-    const data = await res.json();
+    this.showSpinner();
+    let data;
+    try {
+      const res = await fetch(this.urlValue, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
+      if (!res.ok) { this.hideSpinner(); return; }
+      data = await res.json();
+    } catch (e) {
+      this.hideSpinner();
+      return;
+    }
     try { this.cartEtag = res.headers.get('ETag') || null; } catch { this.cartEtag = null; }
     if (typeof data?.version === 'number') this.cartVersion = data.version;
     const items = Array.isArray(data?.items) ? data.items : [];
@@ -123,12 +147,16 @@ export default class extends Controller {
       this.setTotal(subtotal);
       if (this.hasDropdownTotalTarget) this.dropdownTotalTarget.textContent = this.formatRub(subtotal);
     }
+    // update shipping and grand total
+    this.updateShippingAndGrandTotal(data);
+    this.hideSpinner();
   }
 
   renderItems(items, currency) {
     if (!this.hasListTarget) return;
     if (!items.length) {
       this.listTarget.innerHTML = '<div class="text-sm text-gray-500">Корзина пуста</div>';
+      this.hideSpinner();
       return;
     }
     const html = items.map((i) => {
@@ -154,6 +182,50 @@ export default class extends Controller {
       `;
     }).join('');
     this.listTarget.innerHTML = html;
+    this.hideSpinner();
+  }
+
+  spinnerElement() {
+    try { return this.element.querySelector('#cart-counter-spinner'); } catch { return null; }
+  }
+
+  showSpinner() {
+    const el = this.spinnerElement();
+    if (!el) return;
+    // Инициируем spinner.ts, если он есть
+    try {
+      if (typeof window !== 'undefined' && 'Spinner' in window) {
+        // no-op, если не зарегистрирован глобально
+      }
+    } catch {}
+    // Встроенный механизм: data-visible
+    el.setAttribute('data-visible', 'true');
+    el.style.display = 'flex';
+    el.style.pointerEvents = 'auto';
+  }
+
+  hideSpinner() {
+    const el = this.spinnerElement();
+    if (!el) return;
+    el.setAttribute('data-visible', 'false');
+    el.style.display = 'none';
+    el.style.pointerEvents = 'none';
+  }
+
+  updateShippingAndGrandTotal(data) {
+    try {
+      const subtotal = Number(data?.subtotal || 0);
+      const shippingCost = (data?.shipping && typeof data.shipping.cost === 'number') ? data.shipping.cost : null;
+      if (this.hasShippingTarget) {
+        this.shippingTarget.textContent = (shippingCost === null)
+          ? 'Расчет менеджером'
+          : this.formatRub(shippingCost);
+      }
+      const grandTotal = subtotal + (shippingCost || 0);
+      if (this.hasDropdownTotalTarget) {
+        this.dropdownTotalTarget.textContent = this.formatRub(grandTotal);
+      }
+    } catch {}
   }
 
   productHref(item) {

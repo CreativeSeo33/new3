@@ -33,18 +33,33 @@
 
   <div id="cart-dropdown-panel" class="absolute right-0 top-full mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-[60] opacity-0 invisible pointer-events-none transition-opacity"
        data-cart-dropdown-target="dropdown" role="dialog" aria-hidden="true">
-    <div class="p-3 max-h-96 overflow-auto" data-cart-counter-target="list">
-      {{ include('components/spinner.html.twig', {
-        id: 'cart-counter-spinner',
-        visible: true,
-        overlay: false,
-        size: 'small',
-        extra_class: 'h-16'
-      }) }}
+    {{ include('components/spinner.html.twig', {
+      id: 'cart-counter-spinner',
+      visible: false,
+      overlay: true,
+      size: 'medium'
+    }) }}
+    <div class="p-3 max-h-96 min-h-24 overflow-auto" data-cart-counter-target="list"></div>
+    <div class="border-t p-3 text-sm text-gray-700 space-y-1">
+      <div class="flex justify-between">
+        <span>Доставка</span>
+        <span data-cart-counter-target="shipping"></span>
+      </div>
+      <div class="flex justify-between">
+        <span>Итого</span>
+        <span data-cart-counter-target="dropdownTotal">{{ total|number_format(0, '.', ' ') }} руб.</span>
+      </div>
     </div>
-    <div class="border-t p-3 text-sm text-gray-700 flex justify-between">
-      <span>Всего</span>
-      <span data-cart-counter-target="dropdownTotal">{{ total|number_format(0, '.', ' ') }} руб.</span>
+
+    <div class="border-t p-3 flex items-center justify-between gap-2">
+      <a href="{{ path('cart_page') }}"
+         class="px-3 py-2 text-sm rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50">
+        Перейти в корзину
+      </a>
+      <a href="{{ path('checkout_page') }}"
+         class="px-3 py-2 text-sm rounded-md bg-black text-white hover:bg-gray-900">
+        Оформить заказ
+      </a>
     </div>
   </div>
 </div>

@@ -324,4 +324,57 @@ composer dump-autoload
 
 ---
 
+## 🧩 Интеграция с мини‑корзиной (dropdown) — вывод доставки и итого
+
+Мини‑корзина (dropdown) должна отображать:
+- цену доставки `shipping.cost` (или текст "Расчет менеджером", если `cost = null`),
+- итоговую сумму: `subtotal + shipping.cost`.
+
+API `/api/cart` возвращает нужные поля:
+- `subtotal` — сумма товаров (в рублях),
+- `shipping.cost` — стоимость доставки (в рублях, может быть `null`),
+- `currency` — валюта (например, `RUB`).
+
+### HTML (Twig) — блоки для значений
+
+```html
+<div class="border-t p-3 text-sm text-gray-700 space-y-1">
+  <div class="flex justify-between">
+    <span>Доставка</span>
+    <span data-cart-counter-target="shipping">Расчет менеджером</span>
+  </div>
+  <div class="flex justify-between">
+    <span>Итого</span>
+    <span data-cart-counter-target="dropdownTotal">0 руб.</span>
+  </div>
+</div>
+```
+
+### JS (Stimulus) — установка значений после загрузки
+
+```js
+// после получения data из GET /api/cart
+const subtotal = Number(data?.subtotal || 0);
+const shippingCost = (data?.shipping && typeof data.shipping.cost === 'number') ? data.shipping.cost : null;
+
+// Обновляем доставку
+if (this.hasShippingTarget) {
+  this.shippingTarget.textContent = (shippingCost === null)
+    ? 'Расчет менеджером'
+    : this.formatRub(shippingCost);
+}
+
+// Обновляем итог (товары + доставка, если известна)
+const grandTotal = subtotal + (shippingCost || 0);
+if (this.hasDropdownTotalTarget) {
+  this.dropdownTotalTarget.textContent = this.formatRub(grandTotal);
+}
+```
+
+Где `formatRub(amount)` — форматирование "16 600 руб.".
+
+> Примечание: если `shipping.cost = null`, показываем "Расчет менеджером" и считаем итог без доставки.
+
+---
+
 *Документация создана для junior разработчиков. Обновляйте её при внесении изменений в систему доставки.*
