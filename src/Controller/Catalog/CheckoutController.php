@@ -7,6 +7,7 @@ use App\Entity\User as AppUser;
 use App\Entity\Order;
 use App\Entity\OrderCustomer;
 use App\Entity\OrderProducts;
+use App\Entity\OrderProductOptions;
 use App\Entity\OrderDelivery;
 use App\Repository\OrderRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -184,6 +185,23 @@ final class CheckoutController extends AbstractController
 					$op->setQuantity($it->getQty());
 					$order->addProduct($op);
 					$em->persist($op);
+
+					// Перенос опций товара в OrderProductOptions
+					$selectedOptions = $it->getSelectedOptionsData() ?: [];
+					foreach ($selectedOptions as $opt) {
+						$opo = new OrderProductOptions();
+						$opo->setProduct($op);
+						$opo->setProductId($it->getProduct()->getId());
+						$opo->setOptionName(isset($opt['optionName']) ? (string)$opt['optionName'] : null);
+						$opo->setValue([
+							'optionCode' => $opt['optionCode'] ?? null,
+							'valueCode' => $opt['valueCode'] ?? null,
+							'valueName' => $opt['valueName'] ?? null,
+							'sku' => $opt['sku'] ?? null,
+						]);
+						$opo->setPrice(isset($opt['price']) ? (int)$opt['price'] : null);
+						$em->persist($opo);
+					}
 				}
 
 				$em->persist($customer);

@@ -35,6 +35,7 @@ class OrderProductOptions
     private $price;
 
     #[ORM\ManyToOne(targetEntity: OrderProducts::class, inversedBy: 'options')]
+    #[ORM\JoinColumn(name: 'order_product_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     private $product;
 
     public function getId(): ?int
