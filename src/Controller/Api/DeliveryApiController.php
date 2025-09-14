@@ -6,6 +6,7 @@ namespace App\Controller\Api;
 use App\Entity\User as AppUser;
 use App\Service\{CartManager, DeliveryContext, CartCalculator};
 use App\Service\Delivery\DeliveryService;
+use App\Entity\PvzPoints;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\{JsonResponse, Request};
@@ -159,6 +160,53 @@ final class DeliveryApiController extends AbstractController
 		];
 		$response = new JsonResponse();
 		return $this->cartResponse->withCart($response, $cart, $r, 'full', []);
+	}
+
+	/**
+	 * GET /api/delivery/pvz-points?city=...&page=1&itemsPerPage=20
+	 * Упрощенный список ПВЗ для фронта checkout: возвращает массив точек.
+	 */
+	#[Route('/pvz-points', name: 'api_delivery_pvz_points', methods: ['GET'])]
+	public function pvzPoints(Request $request): JsonResponse
+	{
+		$city = trim((string)$request->query->get('city', ''));
+		$cityId = (int)$request->query->get('cityId', 0);
+		if ($cityId <= 0 && $city === '') {
+			return $this->json(['error' => 'city or cityId is required'], 422);
+		}
+
+		$defaultLimit = (int) $this->getParameter('delivery.points.default_limit');
+		$maxLimit = (int) $this->getParameter('delivery.points.max_limit');
+		$page = max(1, (int)$request->query->get('page', 1));
+		$limitReq = (int)$request->query->get('itemsPerPage', $defaultLimit);
+		$limit = $limitReq > 0 ? min($limitReq, $maxLimit) : $defaultLimit;
+		$offset = ($page - 1) * $limit;
+
+		$repo = $this->em->getRepository(PvzPoints::class);
+		$qb = $repo->createQueryBuilder('p')
+			->select('p.code AS code, p.name AS name, p.address AS address, p.city AS city')
+			->orderBy('p.name', 'ASC')
+			->setFirstResult($offset)
+			->setMaxResults($limit);
+		if ($cityId > 0) {
+			$qb->andWhere('IDENTITY(p.cityFias) = :cityId')->setParameter('cityId', $cityId);
+		} else {
+			$qb->andWhere('LOWER(TRIM(p.city)) = :city')
+			   ->setParameter('city', mb_strtolower(trim($city)));
+		}
+
+		$data = $qb->getQuery()->getArrayResult();
+
+		$points = array_map(static function (array $row): array {
+			return [
+				'code' => $row['code'] ?? null,
+				'name' => $row['name'] ?? null,
+				'address' => $row['address'] ?? null,
+				'city' => $row['city'] ?? null,
+			];
+		}, $data);
+
+		return $this->json($points);
 	}
 }
 

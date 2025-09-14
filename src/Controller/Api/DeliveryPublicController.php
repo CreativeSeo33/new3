@@ -103,6 +103,16 @@ final class DeliveryPublicController extends AbstractController
     }
 
     /**
+     * Совместимость с планом: GET /api/delivery/pvz-points?city=...
+     * Проксируем к тому же обработчику, меняем только URI.
+     */
+    #[Route('/pvz-points', name: 'public_delivery_pvz_points', methods: ['GET'])]
+    public function pvzPoints(Request $request): JsonResponse
+    {
+        return $this->points($request);
+    }
+
+    /**
      * GET /delivery/price?city=...
      * Возвращает расчетную стоимость и срок доставки по городу.
      */
