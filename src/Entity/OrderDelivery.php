@@ -56,13 +56,21 @@ class OrderDelivery
     #[Groups(['order:get'])]
     private $pvz;
 
-    #[ORM\Column(type: 'boolean', nullable: true)]
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
     #[Groups(['order:get'])]
-    private $isFree;
+    private $isFree = false;
 
-    #[ORM\Column(type: 'boolean', nullable: true)]
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
     #[Groups(['order:get'])]
-    private $isCustomCalculate;
+    private $isCustomCalculate = false;
+
+    #[ORM\Column(type: 'string', length: 32, nullable: true)]
+    #[Groups(['order:get'])]
+    private ?string $pricingSource = null;
+
+    #[ORM\Column(type: 'json', nullable: true)]
+    #[Groups(['order:get'])]
+    private ?array $pricingTrace = null;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private $pvzCode;
@@ -93,6 +101,15 @@ class OrderDelivery
             if ($full !== null && $full !== '') {
                 $this->city = $full;
             }
+        }
+    }
+
+    #[ORM\PrePersist]
+    #[ORM\PreUpdate]
+    public function ensureFreeCostConsistency(): void
+    {
+        if ($this->isFree === true) {
+            $this->cost = 0;
         }
     }
 
@@ -186,7 +203,7 @@ class OrderDelivery
 
     public function setIsFree(?bool $isFree): self
     {
-        $this->isFree = $isFree;
+        $this->isFree = (bool)$isFree;
 
         return $this;
     }
@@ -198,8 +215,30 @@ class OrderDelivery
 
     public function setIsCustomCalculate(?bool $isCustomCalculate): self
     {
-        $this->isCustomCalculate = $isCustomCalculate;
+        $this->isCustomCalculate = (bool)$isCustomCalculate;
 
+        return $this;
+    }
+
+    public function getPricingSource(): ?string
+    {
+        return $this->pricingSource;
+    }
+
+    public function setPricingSource(?string $pricingSource): self
+    {
+        $this->pricingSource = $pricingSource !== null ? substr($pricingSource, 0, 32) : null;
+        return $this;
+    }
+
+    public function getPricingTrace(): ?array
+    {
+        return $this->pricingTrace;
+    }
+
+    public function setPricingTrace(?array $pricingTrace): self
+    {
+        $this->pricingTrace = $pricingTrace;
         return $this;
     }
 

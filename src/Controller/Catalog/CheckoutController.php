@@ -113,10 +113,17 @@ final class CheckoutController extends AbstractController
 		}
 		if ($calc->isFree) {
 			$orderDelivery->setIsFree(true);
-			$orderDelivery->setCost(0);
 		}
 		if ($calc->requiresManagerCalculation) {
 			$orderDelivery->setIsCustomCalculate(true);
+		}
+		// Аудит источника и трассировки
+		if (!empty($calc->traceData)) {
+			$source = is_array($calc->traceData) && isset($calc->traceData['source']) ? (string)$calc->traceData['source'] : null;
+			if ($source !== null) {
+				$orderDelivery->setPricingSource($source);
+			}
+			$orderDelivery->setPricingTrace($calc->traceData);
 		}
 
 		// PVZ: валидация кода и соответствия городу

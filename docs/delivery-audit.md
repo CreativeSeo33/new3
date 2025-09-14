@@ -71,7 +71,7 @@
 
 ### Рекомендации по улучшению (c примерами)
 
-1) Единый сервис расчёта и сборки доставки
+1) Единый сервис расчёта и сборки доставки — СТАТУС: ВЫПОЛНЕНО (DeliveryService + CheckoutController::submit, audit-поля)
 
 Создать `DeliveryCalculator` (или расширить имеющийся контекст), который на вход получает: `Cart`, выбранный `DeliveryType.code`, город (`city`/`cityCode`), опционально `pvzCode`, и возвращает заполненный `OrderDelivery` + «след расчёта».
 
@@ -120,7 +120,7 @@ final class DeliveryCalculator
 
 В `CheckoutController::submit`: перед сохранением заказа вызвать калькулятор и присвоить `Order->setDelivery($delivery)`.
 
-2) Нормализация города и ПВЗ
+2) Нормализация города и ПВЗ — СТАТУС: ЧАСТИЧНО (FIAS связи + нормализованный поиск; нет UNIQUE по PvzPoints.code / индекса по cityCode)
 
 - Ввести единый `cityCode` (КЛАДР/ФИАС/ISO + локальное сопоставление), хранить в `pvz_points`, `pvz_price`, `order_delivery`.
 - Добавить индексы/уникальные ограничения:
@@ -128,19 +128,19 @@ final class DeliveryCalculator
   - Композитный индекс `PvzPrice(city)` уже есть; добавить `cityCode` при его введении.
 - Нормализовать поиск: `LOWER(TRIM(city))` на запись/поиск; лучше — опираться на `cityCode`.
 
-3) Консистентность полей и флагов
+3) Консистентность полей и флагов — СТАТУС: ВЫПОЛНЕНО (NOT NULL + DEFAULT 0; pricingSource/pricingTrace; cost=0 при isFree)
 
 - Сделать `isFree`/`isCustomCalculate` not null, с default=false.
 - `isFree` должен следовать из логики расчёта (например, порог `free`), а `cost` должен быть 0 при `isFree=true`.
 - Добавить поле `pricingSource` (`pvz_price` | `custom` | `external`) и `pricingTrace` (JSON) для аудита.
 
-4) Проверки и безопасность
+4) Проверки и безопасность — СТАТУС: ВЫПОЛНЕНО (валидация pvzCode/город, валидации провайдеров, нормализация адреса)
 
 - Валидировать `pvzCode` → должен существовать и соответствовать городу.
 - Адрес курьерской доставки пропускать через нормализацию (трим, длины, запрещённые символы), хранить «как введено» + нормализованную версию.
 - Никогда не доверять клиентским `cost`, `is_free`. Всегда пересчитывать на сервере.
 
-5) API и производительность
+5) API и производительность — СТАТУС: ЧАСТИЧНО (есть DeliveryApiController и кеш quote=60s; нет публичных GET /delivery/points и /delivery/price)
 
 - Публичные эндпойнты для фронта:
   - `GET /delivery/points?city=...` (с пагинацией и кешированием) — из `PvzPoints`.
@@ -148,19 +148,19 @@ final class DeliveryCalculator
   - Реализация может быть через контроллеры, а не напрямую через ApiResource публично, чтобы контролировать выдачу.
 - Кешировать ответы (per-city) 5–15 минут.
 
-6) Модель данных `OrderDelivery`
+6) Модель данных `OrderDelivery` — СТАТУС: ЧАСТИЧНО (city_id(FIAS), pvzCode, pricingSource/pricingTrace; нет pvzMetadata и FK на DeliveryType/PvzPoints)
 
 - Добавить (при необходимости):
   - `cityCode:string|null`, `pvzMetadata:json|null` (snapshot названия/адреса/координат), `pricingSource:string|null`, `pricingTrace:json|null`.
 - Привести имена к camelCase в PHP и маппить на snake_case в БД.
 - Рассмотреть FK на `DeliveryType` (по `code`) и на `PvzPoints` (по `code`), если нужно жёстко обеспечивать целостность.
 
-7) Интеграция с корзиной и транзакции
+7) Интеграция с корзиной и транзакции — СТАТУС: ЧАСТИЧНО (синк DeliveryContext↔Cart и перерасчёты есть; явной транзакции в submit нет)
 
 - Перед оформлением использовать `CartManager::getOrCreateForWrite()` для синхронизации доставки и пересчёта.
 - Оборачивать оформление заказа (включая заполнение `OrderDelivery`) в транзакцию. На успешном завершении — очищать `CheckoutContext` и помечать корзину как «закрытую».
 
-8) Конфиги и фичи
+8) Конфиги и фичи — СТАТУС: ВЫПОЛНЕНО (добавлены app.delivery.free_threshold_default и app.delivery.types)
 
 - Порог бесплатной доставки, провайдеры, таймауты и пр. хранить в `config/services.yaml`/env.
 
@@ -174,10 +174,10 @@ parameters:
 
 ### Минимальные шаги внедрения (практично)
 
-1) Реализовать `DeliveryCalculator` и вызов в `CheckoutController::submit` с присвоением `Order->setDelivery(...)`.
-2) Валидация `pvzCode` и нормализация города.
-3) Сделать `isFree`/`isCustomCalculate` not null с default=false; хранить `pricingSource`/`pricingTrace`.
-4) Добавить `UNIQUE` индекс по `PvzPoints.code` (или `(city, code)`), индексы по `cityCode` (после внедрения).
-5) Переключить фронт на публичные эндпойнты получения `points`/`price` и включить кеш.
+1) Реализовать `DeliveryCalculator` и вызов в `CheckoutController::submit` с присвоением `Order->setDelivery(...)`. — СТАТУС: ВЫПОЛНЕНО (эквивалент через DeliveryService)
+2) Валидация `pvzCode` и нормализация города. — СТАТУС: ВЫПОЛНЕНО
+3) Сделать `isFree`/`isCustomCalculate` not null с default=false; хранить `pricingSource`/`pricingTrace`. — СТАТУС: ВЫПОЛНЕНО
+4) Добавить `UNIQUE` индекс по `PvzPoints.code` (или `(city, code)`), индексы по `cityCode` (после внедрения). — СТАТУС: НЕ ВЫПОЛНЕНО
+5) Переключить фронт на публичные эндпойнты получения `points`/`price` и включить кеш. — СТАТУС: ЧАСТИЧНО (кеш есть, публичные GET эндпойнты отсутствуют)
 
 

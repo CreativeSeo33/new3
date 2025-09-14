@@ -16,7 +16,8 @@ final class CourierDeliveryMethod implements DeliveryMethodInterface, DeliveryPr
 
     public function __construct(
         private readonly string $calculationType, // Внедряется из services.yaml
-        private readonly int $surcharge // Наценка за курьерскую доставку из конфигурации
+        private readonly int $surcharge, // Наценка за курьерскую доставку из конфигурации
+        private readonly int $defaultFreeThreshold
     ) {}
 
     public function supports(string $methodCode): bool
@@ -43,24 +44,53 @@ final class CourierDeliveryMethod implements DeliveryMethodInterface, DeliveryPr
     {
         $term = $city->getSrok() ?? 'Срок не указан';
         $freeDeliveryThreshold = $city->getFree();
+        $effectiveFreeThreshold = ($freeDeliveryThreshold !== null && $freeDeliveryThreshold > 0)
+            ? $freeDeliveryThreshold
+            : $this->defaultFreeThreshold;
+        $baseCost = $city->getCost();
 
         // 1. Проверка на бесплатную доставку (правило общее)
-        if ($freeDeliveryThreshold !== null && $freeDeliveryThreshold > 0 && $cart->getSubtotal() >= $freeDeliveryThreshold) {
+        if ($effectiveFreeThreshold > 0 && $cart->getSubtotal() >= $effectiveFreeThreshold) {
             return new DeliveryCalculationResult(
                 cost: 0,
                 term: $term,
                 message: 'Бесплатно',
-                isFree: true
+                isFree: true,
+                requiresManagerCalculation: false,
+                estimatedDate: null,
+                traceData: [
+                    'source' => 'pvz_price',
+                    'method' => self::METHOD_CODE,
+                    'calculationType' => $this->getCalculationType(),
+                    'baseCost' => $baseCost,
+                    'freeThreshold' => $freeDeliveryThreshold,
+                    'effectiveFreeThreshold' => $effectiveFreeThreshold,
+                    'defaultFreeThreshold' => $this->defaultFreeThreshold,
+                    'cartSubtotal' => $cart->getSubtotal(),
+                    'itemsQty' => $cart->getTotalItemQuantity(),
+                    'reason' => 'free_threshold',
+                    'effectiveCost' => 0,
+                ]
             );
         }
-
-        $baseCost = $city->getCost();
         if ($baseCost === null) {
             return new DeliveryCalculationResult(
                 cost: null,
                 term: '',
                 message: 'Расчет менеджером',
-                requiresManagerCalculation: true
+                requiresManagerCalculation: true,
+                estimatedDate: null,
+                traceData: [
+                    'source' => 'custom',
+                    'method' => self::METHOD_CODE,
+                    'calculationType' => $this->getCalculationType(),
+                    'baseCost' => null,
+                    'freeThreshold' => $freeDeliveryThreshold,
+                    'cartSubtotal' => $cart->getSubtotal(),
+                    'itemsQty' => $cart->getTotalItemQuantity(),
+                    'reason' => 'no_base_cost',
+                    'effectiveCost' => null,
+                ]
             );
         }
 
@@ -78,7 +108,24 @@ final class CourierDeliveryMethod implements DeliveryMethodInterface, DeliveryPr
 
         return new DeliveryCalculationResult(
             cost: $totalCost,
-            term: $term
+            term: $term,
+            message: null,
+            isFree: false,
+            requiresManagerCalculation: false,
+            estimatedDate: null,
+            traceData: [
+                'source' => 'pvz_price',
+                'method' => self::METHOD_CODE,
+                'calculationType' => $this->getCalculationType(),
+                'baseCost' => $baseCost,
+                'freeThreshold' => $freeDeliveryThreshold,
+                'effectiveFreeThreshold' => $effectiveFreeThreshold,
+                'defaultFreeThreshold' => $this->defaultFreeThreshold,
+                'cartSubtotal' => $cart->getSubtotal(),
+                'itemsQty' => $cart->getTotalItemQuantity(),
+                'surcharge' => $this->surcharge,
+                'effectiveCost' => $totalCost,
+            ]
         );
     }
 

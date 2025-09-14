@@ -14,6 +14,20 @@ parameters:
     env(DELIVERY_COURIER_SURCHARGE): '300'
     app.delivery.courier_surcharge: '%env(int:DELIVERY_COURIER_SURCHARGE)%'
 
+    # Public delivery endpoints configuration (env-driven)
+    env(DELIVERY_PUBLIC_TTL): '600'
+    env(DELIVERY_POINTS_DEFAULT_LIMIT): '20'
+    env(DELIVERY_POINTS_MAX_LIMIT): '100'
+    delivery.public.ttl_seconds: '%env(int:DELIVERY_PUBLIC_TTL)%'
+    delivery.points.default_limit: '%env(int:DELIVERY_POINTS_DEFAULT_LIMIT)%'
+    delivery.points.max_limit: '%env(int:DELIVERY_POINTS_MAX_LIMIT)%'
+
+    # Delivery configuration (defaults via env)
+    env(DELIVERY_FREE_THRESHOLD_DEFAULT): '3000'
+    env(DELIVERY_TYPES): 'pvz,courier'
+    app.delivery.free_threshold_default: '%env(int:DELIVERY_FREE_THRESHOLD_DEFAULT)%'
+    app.delivery.types: '%env(csv:DELIVERY_TYPES)%'
+
     # Cart cookie configuration
     cart.cookie.force_secure_in_prod: true
     cart.cookie.use_host_prefix: true
@@ -77,6 +91,13 @@ services:
     App\Controller\ConfigController:
         tags: [ 'controller.service_arguments' ]
 
+    App\Controller\Api\DeliveryPublicController:
+        tags: ['controller.service_arguments']
+        arguments:
+            $pointsDefaultLimit: '%delivery.points.default_limit%'
+            $pointsMaxLimit: '%delivery.points.max_limit%'
+            $publicTtlSeconds: '%delivery.public.ttl_seconds%'
+
     App\Service\ImageCacheService:
         arguments:
             $projectDir: '%kernel.project_dir%'
@@ -118,6 +139,8 @@ services:
             # нужно передать строку 'cost_per_item'.
             # Чтобы отключить расчет по количеству, просто измените на 'flat_rate'.
             $calculationType: 'cost_per_item'
+        arguments:
+            $defaultFreeThreshold: '%app.delivery.free_threshold_default%'
 
     App\Service\Delivery\Method\CourierDeliveryMethod:
         tags: ['app.delivery_method', 'app.delivery_provider']
@@ -126,6 +149,7 @@ services:
             $calculationType: 'cost_per_item'
         arguments:
             $surcharge: '%app.delivery.courier_surcharge%'
+            $defaultFreeThreshold: '%app.delivery.free_threshold_default%'
 
     # Cart ETag and write guard services
     App\Http\CartEtags: ~

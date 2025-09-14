@@ -15,7 +15,8 @@ final class PvzDeliveryMethod implements DeliveryMethodInterface, DeliveryProvid
     private const METHOD_CODE = 'pvz';
 
     public function __construct(
-        private readonly string $calculationType // Внедряется из services.yaml
+        private readonly string $calculationType, // Внедряется из services.yaml
+        private readonly int $defaultFreeThreshold
     ) {}
 
     public function supports(string $methodCode): bool
@@ -41,26 +42,55 @@ final class PvzDeliveryMethod implements DeliveryMethodInterface, DeliveryProvid
     public function calculate(Cart $cart, PvzPrice $city): DeliveryCalculationResult
     {
         $term = $city->getSrok() ?? 'Срок не указан';
-        $freeDeliveryThreshold = $city->getFree(); // Порог бесплатной доставки
+        $freeDeliveryThreshold = $city->getFree(); // Порог бесплатной доставки из БД (может быть null)
+        $effectiveFreeThreshold = ($freeDeliveryThreshold !== null && $freeDeliveryThreshold > 0)
+            ? $freeDeliveryThreshold
+            : $this->defaultFreeThreshold;
+        $baseCost = $city->getCost();
 
         // 1. Проверка на бесплатную доставку по сумме заказа
-        if ($freeDeliveryThreshold !== null && $freeDeliveryThreshold > 0 && $cart->getSubtotal() >= $freeDeliveryThreshold) {
+        if ($effectiveFreeThreshold > 0 && $cart->getSubtotal() >= $effectiveFreeThreshold) {
             return new DeliveryCalculationResult(
                 cost: 0,
                 term: $term,
                 message: 'Бесплатно',
-                isFree: true
+                isFree: true,
+                requiresManagerCalculation: false,
+                estimatedDate: null,
+                traceData: [
+                    'source' => 'pvz_price',
+                    'method' => self::METHOD_CODE,
+                    'calculationType' => $this->getCalculationType(),
+                    'baseCost' => $baseCost,
+                    'freeThreshold' => $freeDeliveryThreshold,
+                    'effectiveFreeThreshold' => $effectiveFreeThreshold,
+                    'defaultFreeThreshold' => $this->defaultFreeThreshold,
+                    'cartSubtotal' => $cart->getSubtotal(),
+                    'itemsQty' => $cart->getTotalItemQuantity(),
+                    'reason' => 'free_threshold',
+                    'effectiveCost' => 0,
+                ]
             );
         }
-
-        $baseCost = $city->getCost();
         if ($baseCost === null) {
             // Если для города не указана стоимость
             return new DeliveryCalculationResult(
                 cost: null,
                 term: '',
                 message: 'Расчет менеджером',
-                requiresManagerCalculation: true
+                requiresManagerCalculation: true,
+                estimatedDate: null,
+                traceData: [
+                    'source' => 'custom',
+                    'method' => self::METHOD_CODE,
+                    'calculationType' => $this->getCalculationType(),
+                    'baseCost' => null,
+                    'freeThreshold' => $freeDeliveryThreshold,
+                    'cartSubtotal' => $cart->getSubtotal(),
+                    'itemsQty' => $cart->getTotalItemQuantity(),
+                    'reason' => 'no_base_cost',
+                    'effectiveCost' => null,
+                ]
             );
         }
 
@@ -76,7 +106,21 @@ final class PvzDeliveryMethod implements DeliveryMethodInterface, DeliveryProvid
 
         return new DeliveryCalculationResult(
             cost: $totalCost,
-            term: $term
+            term: $term,
+            message: null,
+            isFree: false,
+            requiresManagerCalculation: false,
+            estimatedDate: null,
+            traceData: [
+                'source' => 'pvz_price',
+                'method' => self::METHOD_CODE,
+                'calculationType' => $this->getCalculationType(),
+                'baseCost' => $baseCost,
+                'freeThreshold' => $freeDeliveryThreshold,
+                'cartSubtotal' => $cart->getSubtotal(),
+                'itemsQty' => $cart->getTotalItemQuantity(),
+                'effectiveCost' => $totalCost,
+            ]
         );
     }
 
