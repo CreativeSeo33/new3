@@ -130,4 +130,39 @@ public function submit(
 - PVZ проверяется на соответствие городу — меньше инцидентов.
 - Изменения обратносовместимы: фронт не меняется, шаблоны не трогаем.
 
+## Нормализация города через FIAS
+
+- Добавлена сущность `Fias` (`fias_id`, `parent_id`, `postalcode`, `offname`, `shortname`, `level`).
+- В таблицы `pvz_points`, `pvz_price`, `order_delivery` добавлен `city_id` (FK -> `fias.fias_id`). Строковые `city` поля сохранены для обратной совместимости и отображения.
+- API:
+  - GET `/api/fias?offname=mos` — поиск городов/адресных объектов (ApiPlatform; фильтры: `offname` partial, `shortname` partial, `postalcode` partial, `level` exact, `parentId` exact). Возвращает id (`fias_id`) и названия.
+  - Админ-эндпойнты: `/api/admin/fias`.
+  - `PvzPoints` и `PvzPrice` поддерживают фильтр `cityFias.id` и включают `cityId` в выдаче.
+  - `OrderDelivery` включает `cityId` в выдаче, принимает `cityId` в submit заказа.
+
+### Пример фронт-запросов
+
+Поиск города:
+```http
+GET /api/fias?offname=моск&page=1&itemsPerPage=10
+```
+
+Создание/сабмит заказа (фрагмент payload):
+```json
+{
+  "firstName": "Иван",
+  "phone": "+79990000000",
+  "email": "ivan@example.com",
+  "paymentMethod": "card",
+  "cityId": 123456,
+  "comment": "Позвонить заранее"
+}
+```
+
+### База данных
+- Индексы: `pvz_points(city_id)`, `pvz_price(city_id)`, `order_delivery(city_id)`; FK ON DELETE SET NULL.
+
+### Миграции
+- См. `Version20250914095900.php` (создание `fias` и добавление FK в существующие таблицы).
+
 

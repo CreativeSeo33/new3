@@ -6,9 +6,11 @@ use ApiPlatform\Metadata\ApiResource;
 use App\Repository\OrderDeliveryRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Annotation\SerializedName;
 
 #[ApiResource]
 #[ORM\Entity(repositoryClass: OrderDeliveryRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 class OrderDelivery
 {
     #[ORM\Id]
@@ -27,6 +29,21 @@ class OrderDelivery
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     #[Groups(['order:get'])]
     private $city;
+
+    /**
+     * FK на FIAS. Необязательный, оставляем строковый city для БК совместимости.
+     */
+    #[ORM\ManyToOne(targetEntity: Fias::class)]
+    #[ORM\JoinColumn(name: 'city_id', referencedColumnName: 'fias_id', nullable: true, onDelete: 'SET NULL')]
+    #[Groups(['order:get'])]
+    private ?Fias $cityFias = null;
+
+    #[SerializedName('cityId')]
+    #[Groups(['order:get'])]
+    public function getCityId(): ?int
+    {
+        return $this->cityFias?->getId();
+    }
 
     #[ORM\Column(type: 'integer', nullable: true)]
     #[Groups(['order:get'])]
@@ -55,6 +72,29 @@ class OrderDelivery
 
     #[ORM\Column(type: 'time', nullable: true)]
     private $delivery_time;
+
+    public function getCityFias(): ?Fias
+    {
+        return $this->cityFias;
+    }
+
+    public function setCityFias(?Fias $cityFias): self
+    {
+        $this->cityFias = $cityFias;
+        return $this;
+    }
+
+    #[ORM\PrePersist]
+    #[ORM\PreUpdate]
+    public function syncCityFromFias(): void
+    {
+        if ($this->cityFias instanceof Fias) {
+            $full = $this->cityFias->getFullAddress();
+            if ($full !== null && $full !== '') {
+                $this->city = $full;
+            }
+        }
+    }
 
     public function getId(): ?int
     {

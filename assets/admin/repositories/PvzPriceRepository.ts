@@ -7,6 +7,7 @@ export interface PvzPrice extends ApiResource {
   srok?: string | null
   cost?: number | null
   free?: number | null
+  cityId?: number | null
 }
 
 export class PvzPriceRepository extends BaseRepository<PvzPrice> {

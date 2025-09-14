@@ -7,6 +7,7 @@ export interface PvzPoint extends ApiResource {
   region?: string | null
   address?: string | null
   cityCode?: string | null
+  cityId?: number | null
 }
 
 export class PvzPointsRepository extends BaseRepository<PvzPoint> {

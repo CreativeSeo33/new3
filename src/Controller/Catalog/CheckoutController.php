@@ -19,6 +19,7 @@ use App\Exception\InvalidDeliveryDataException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use App\Entity\Fias;
 
 final class CheckoutController extends AbstractController
 {
@@ -107,6 +108,13 @@ final class CheckoutController extends AbstractController
 			$orderDelivery->setAddress($deliveryContext['address'] ?? null);
 			$orderDelivery->setPvzCode($deliveryContext['pickupPointId'] ?? null);
 			$orderDelivery->setCost($cart->getShippingCost());
+
+			// Если фронт прислал cityId, установим связь с FIAS
+			$cityId = isset($payload['cityId']) ? (int)$payload['cityId'] : null;
+			if ($cityId && $cityId > 0) {
+				$cityRef = $em->getReference(Fias::class, $cityId);
+				$orderDelivery->setCityFias($cityRef);
+			}
 
 			try {
 				$deliveryProvider->validate($orderDelivery);

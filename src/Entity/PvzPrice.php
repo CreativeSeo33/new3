@@ -14,6 +14,7 @@ use ApiPlatform\Metadata\Delete;
 use App\Repository\PvzPriceRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Annotation\SerializedName;
 
 #[ApiResource(
     operations: [
@@ -53,12 +54,17 @@ use Symfony\Component\Serializer\Annotation\Groups;
     order: ['city' => 'ASC']
 )]
 #[ApiFilter(SearchFilter::class,
-    properties: ['city' => 'partial']
+    properties: [
+        'city' => 'partial',
+        'cityFias.id' => 'exact',
+        'region' => 'partial'
+    ]
 )]
 
 #[ORM\Table(name: 'pvz_price')]
 #[ORM\Index(name: 'city', columns: ['city'])]
 #[ORM\Entity(repositoryClass: PvzPriceRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 class PvzPrice
 {
     /**
@@ -259,6 +265,44 @@ class PvzPrice
         $this->calculateDeliveryPeriod = $calculateDeliveryPeriod;
 
         return $this;
+    }
+
+    /**
+     * Связь с FIAS (город). Оставляем строковый city для обратной совместимости.
+     */
+    #[ORM\ManyToOne(targetEntity: Fias::class)]
+    #[ORM\JoinColumn(name: 'city_id', referencedColumnName: 'fias_id', nullable: true, onDelete: 'SET NULL')]
+    #[Groups(['pvzPrice:admin:get'])]
+    private ?Fias $cityFias = null;
+
+    #[SerializedName('cityId')]
+    #[Groups(['pvzPrice:admin:get'])]
+    public function getCityId(): ?int
+    {
+        return $this->cityFias?->getId();
+    }
+
+    public function getCityFias(): ?Fias
+    {
+        return $this->cityFias;
+    }
+
+    public function setCityFias(?Fias $cityFias): self
+    {
+        $this->cityFias = $cityFias;
+        return $this;
+    }
+
+    #[ORM\PrePersist]
+    #[ORM\PreUpdate]
+    public function syncCityFromFias(): void
+    {
+        if ($this->cityFias instanceof Fias) {
+            $full = $this->cityFias->getFullAddress();
+            if ($full !== null && $full !== '') {
+                $this->city = $full;
+            }
+        }
     }
 }
 

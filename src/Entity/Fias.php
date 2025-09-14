@@ -4,12 +4,50 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\DBAL\Types\Types;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 /**
  * FIAS (Федеральная Информационная Адресная Система)
  */
+#[ApiResource(
+    operations: [
+        // Публичный поиск для фронта
+        new GetCollection(
+            uriTemplate: '/fias',
+            normalizationContext: ['groups' => ['fias:get']],
+            paginationClientEnabled: true,
+            paginationClientItemsPerPage: true
+        ),
+        // Админ для справочника
+        new GetCollection(
+            uriTemplate: '/admin/fias',
+            normalizationContext: ['groups' => ['fias:admin:get']],
+            paginationClientEnabled: true,
+            paginationClientItemsPerPage: true
+        ),
+        new Get(
+            uriTemplate: '/admin/fias/{id}',
+            normalizationContext: ['groups' => ['fias:admin:get']]
+        ),
+    ],
+    order: ['offname' => 'ASC']
+)]
+#[ApiFilter(SearchFilter::class,
+    properties: [
+        'offname' => 'partial',
+        'shortname' => 'partial',
+        'postalcode' => 'partial',
+        'level' => 'exact',
+        'parentId' => 'exact'
+    ]
+)]
 #[ORM\Entity]
 #[ORM\Table(name: 'fias')]
 #[ORM\Index(columns: ['postalcode'], name: 'postalcode_idx')]
@@ -22,21 +60,27 @@ class Fias
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(name: 'fias_id', type: Types::INTEGER)]
+    #[Groups(['fias:get', 'fias:admin:get', 'pvzPoint:admin:get', 'pvzPrice:admin:get', 'order:get'])]
     private ?int $id = null;
 
     #[ORM\Column(name: 'parent_id', type: Types::INTEGER, nullable: false)]
+    #[Groups(['fias:admin:get'])]
     private int $parentId;
 
     #[ORM\Column(name: 'postalcode', type: Types::STRING, length: 6, nullable: true)]
+    #[Groups(['fias:get', 'fias:admin:get'])]
     private ?string $postalcode = null;
 
     #[ORM\Column(name: 'offname', type: Types::STRING, length: 120, nullable: true)]
+    #[Groups(['fias:get', 'fias:admin:get', 'pvzPoint:admin:get', 'pvzPrice:admin:get', 'order:get'])]
     private ?string $offname = null;
 
     #[ORM\Column(name: 'shortname', type: Types::STRING, length: 10, nullable: true)]
+    #[Groups(['fias:get', 'fias:admin:get', 'pvzPoint:admin:get', 'pvzPrice:admin:get', 'order:get'])]
     private ?string $shortname = null;
 
     #[ORM\Column(name: 'level', type: Types::SMALLINT, nullable: false)]
+    #[Groups(['fias:admin:get'])]
     private int $level;
 
     public function getId(): ?int
