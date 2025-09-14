@@ -54,7 +54,7 @@ final class CheckoutController extends AbstractController
 	): Response {
 		$user = $this->getUser();
 		$userId = $user instanceof AppUser ? $user->getId() : null;
-		$cart = $cartManager->getOrCreateCurrent($userId);
+		$cart = $cartManager->getOrCreateForWrite($userId);
 		if ($cart->getItems()->count() === 0) {
 			return $this->redirectToRoute('cart_page');
 		}
@@ -82,105 +82,126 @@ final class CheckoutController extends AbstractController
 		$checkout->setComment($comment ?: null);
 		$checkout->setPaymentMethod($paymentMethod ?: null);
 
-		$order = new Order();
-		$order->setOrderId($orders->getNextOrderId());
-		$order->setComment($comment ?: null);
-		$order->setTotal($cart->getTotal());
+		// Оформление заказа в транзакции: создание Order/связанных сущностей, закрытие корзины, очистка CheckoutContext
+		$createdOrder = null;
+		try {
+			$em->wrapInTransaction(function() use (
+				$em,
+				$orders,
+				$deliveryService,
+				$deliveryContext,
+				$cart,
+				$name,
+				$phone,
+				$email,
+				$comment,
+				$request,
+				$payload,
+				&$createdOrder
+			) {
+				$order = new Order();
+				$order->setOrderId($orders->getNextOrderId());
+				$order->setComment($comment ?: null);
+				$order->setTotal($cart->getTotal());
 
-		$customer = new OrderCustomer();
-		$customer->setName($name);
-		$customer->setPhone($phone);
-		$customer->setEmail($email ?: null);
-		$customer->setIp($request->getClientIp());
-		$customer->setUserAgent($request->headers->get('User-Agent'));
-		$order->setCustomer($customer);
-		$customer->setOrders($order); // обратная связь
+				$customer = new OrderCustomer();
+				$customer->setName($name);
+				$customer->setPhone($phone);
+				$customer->setEmail($email ?: null);
+				$customer->setIp($request->getClientIp());
+				$customer->setUserAgent($request->headers->get('User-Agent'));
+				$order->setCustomer($customer);
+				$customer->setOrders($order);
 
-		// Создание и валидация доставки (через DeliveryService/DeliveryContext)
-		$ctx = $deliveryContext->get();
-		$method = $ctx['methodCode'] ?? 'pvz';
-		$cityName = $ctx['cityName'] ?? null;
+				$ctx = $deliveryContext->get();
+				$method = $ctx['methodCode'] ?? 'pvz';
+				$cityName = $ctx['cityName'] ?? null;
 
-		$calc = $deliveryService->calculateForCart($cart);
+				$calc = $deliveryService->calculateForCart($cart);
 
-		$orderDelivery = new OrderDelivery();
-		$orderDelivery->setType($method);
-		if ($cityName) {
-			$orderDelivery->setCity($cityName);
+				$orderDelivery = new OrderDelivery();
+				$orderDelivery->setType($method);
+				if ($cityName) {
+					$orderDelivery->setCity($cityName);
+				}
+				if ($calc->cost !== null) {
+					$orderDelivery->setCost($calc->cost);
+				}
+				if ($calc->isFree) {
+					$orderDelivery->setIsFree(true);
+				}
+				if ($calc->requiresManagerCalculation) {
+					$orderDelivery->setIsCustomCalculate(true);
+				}
+				if (!empty($calc->traceData)) {
+					$source = is_array($calc->traceData) && isset($calc->traceData['source']) ? (string)$calc->traceData['source'] : null;
+					if ($source !== null) {
+						$orderDelivery->setPricingSource($source);
+					}
+					$orderDelivery->setPricingTrace($calc->traceData);
+				}
+
+				if ($method === 'pvz' && !empty($ctx['pickupPointId'])) {
+					$pvzCode = (string)$ctx['pickupPointId'];
+					$point = $em->getRepository(PvzPoints::class)->findOneBy(['code' => $pvzCode]);
+					if ($point && strcasecmp((string)$point->getCity(), (string)$cityName) === 0) {
+						$orderDelivery->setPvz($pvzCode);
+						$orderDelivery->setPvzCode($pvzCode);
+					} else {
+						$orderDelivery->setIsCustomCalculate(true);
+					}
+				}
+
+				if ($method === 'courier' && !empty($ctx['address'])) {
+					$orderDelivery->setAddress(substr(trim((string)$ctx['address']), 0, 255));
+				}
+
+				$cityId = isset($payload['cityId']) ? (int)$payload['cityId'] : null;
+				if ($cityId && $cityId > 0) {
+					$cityRef = $em->getReference(Fias::class, $cityId);
+					$orderDelivery->setCityFias($cityRef);
+				}
+
+				$deliveryProvider = $this->deliveryProviderRegistry->get($method);
+				if ($deliveryProvider) {
+					$deliveryProvider->validate($orderDelivery);
+				}
+
+				$order->setDelivery($orderDelivery);
+				$em->persist($orderDelivery);
+
+				foreach ($cart->getItems() as $it) {
+					$op = new OrderProducts();
+					$op->setProductId($it->getProduct()->getId());
+					$op->setProductName($it->getProductName());
+					$op->setPrice($it->getUnitPrice());
+					$op->setQuantity($it->getQty());
+					$order->addProduct($op);
+					$em->persist($op);
+				}
+
+				$em->persist($customer);
+				$em->persist($order);
+
+				// Закрываем корзину: помечаем истекшей
+				$cart->setExpiresAt(new \DateTimeImmutable('-1 second'));
+
+				// Фиксируем изменения
+				$em->flush();
+
+				$createdOrder = $order;
+			});
+		} catch (InvalidDeliveryDataException $e) {
+			return $this->json(['error' => $e->getMessage()], 400);
 		}
-		if ($calc->cost !== null) {
-			$orderDelivery->setCost($calc->cost);
-		}
-		if ($calc->isFree) {
-			$orderDelivery->setIsFree(true);
-		}
-		if ($calc->requiresManagerCalculation) {
-			$orderDelivery->setIsCustomCalculate(true);
-		}
-		// Аудит источника и трассировки
-		if (!empty($calc->traceData)) {
-			$source = is_array($calc->traceData) && isset($calc->traceData['source']) ? (string)$calc->traceData['source'] : null;
-			if ($source !== null) {
-				$orderDelivery->setPricingSource($source);
-			}
-			$orderDelivery->setPricingTrace($calc->traceData);
-		}
 
-		// PVZ: валидация кода и соответствия городу
-		if ($method === 'pvz' && !empty($ctx['pickupPointId'])) {
-			$pvzCode = (string)$ctx['pickupPointId'];
-			$point = $em->getRepository(PvzPoints::class)->findOneBy(['code' => $pvzCode]);
-			if ($point && strcasecmp((string)$point->getCity(), (string)$cityName) === 0) {
-				$orderDelivery->setPvz($pvzCode);
-				$orderDelivery->setPvzCode($pvzCode);
-			} else {
-				$orderDelivery->setIsCustomCalculate(true);
-			}
-		}
-
-		// Курьер: перенос адреса (ограничение 255)
-		if ($method === 'courier' && !empty($ctx['address'])) {
-			$orderDelivery->setAddress(substr(trim((string)$ctx['address']), 0, 255));
-		}
-
-		// Если фронт прислал cityId, установим связь с FIAS
-		$cityId = isset($payload['cityId']) ? (int)$payload['cityId'] : null;
-		if ($cityId && $cityId > 0) {
-			$cityRef = $em->getReference(Fias::class, $cityId);
-			$orderDelivery->setCityFias($cityRef);
-		}
-
-		// Дополнительная валидация текущим провайдером (если настроен)
-		$deliveryProvider = $this->deliveryProviderRegistry->get($method);
-		if ($deliveryProvider) {
-			try {
-				$deliveryProvider->validate($orderDelivery);
-			} catch (InvalidDeliveryDataException $e) {
-				return $this->json(['error' => $e->getMessage()], 400);
-			}
-		}
-
-		$order->setDelivery($orderDelivery);
-		$em->persist($orderDelivery);
-
-		foreach ($cart->getItems() as $it) {
-			$op = new OrderProducts();
-			$op->setProductId($it->getProduct()->getId());
-			$op->setProductName($it->getProductName());
-			$op->setPrice($it->getUnitPrice());
-			$op->setQuantity($it->getQty());
-			$order->addProduct($op);
-			$em->persist($op);
-		}
-
-		$em->persist($customer);
-		$em->persist($order);
-		$em->flush();
+		// Очистка checkout-контекста после успешной транзакции
+		$checkout->clear();
 
 		return $this->json([
-			'id' => $order->getId(),
-			'orderId' => $order->getOrderId(),
-			'redirectUrl' => $this->generateUrl('checkout_success', ['orderId' => $order->getOrderId()]),
+			'id' => $createdOrder?->getId(),
+			'orderId' => $createdOrder?->getOrderId(),
+			'redirectUrl' => $createdOrder ? $this->generateUrl('checkout_success', ['orderId' => $createdOrder->getOrderId()]) : null,
 		]);
 	}
 
