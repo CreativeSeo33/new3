@@ -7,17 +7,26 @@ use App\Entity\User as AppUser;
 use App\Entity\Order;
 use App\Entity\OrderCustomer;
 use App\Entity\OrderProducts;
+use App\Entity\OrderDelivery;
 use App\Repository\OrderRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use App\Service\CartManager;
 use App\Service\CheckoutContext;
+use App\Service\DeliveryContext;
+use App\Service\Delivery\Provider\DeliveryProviderRegistry;
+use App\Exception\InvalidDeliveryDataException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
 final class CheckoutController extends AbstractController
 {
+	public function __construct(
+		private readonly DeliveryProviderRegistry $deliveryProviderRegistry,
+		private readonly DeliveryContext $deliveryContext
+	) {}
+
 	#[Route('/checkout', name: 'checkout_page', methods: ['GET'])]
 	public function index(CartManager $cartManager): Response
 	{
@@ -81,6 +90,33 @@ final class CheckoutController extends AbstractController
 		$customer->setUserAgent($request->headers->get('User-Agent'));
 		$order->setCustomer($customer);
 		$customer->setOrders($order); // обратная связь
+
+		// Создание и валидация доставки
+		$deliveryContext = $this->deliveryContext->get();
+		$methodCode = $deliveryContext['methodCode'] ?? null;
+
+		if ($methodCode) {
+			$deliveryProvider = $this->deliveryProviderRegistry->get($methodCode);
+			if (!$deliveryProvider) {
+				return $this->json(['error' => 'Неверный метод доставки'], 400);
+			}
+
+			$orderDelivery = new OrderDelivery();
+			$orderDelivery->setType($methodCode);
+			$orderDelivery->setCity($deliveryContext['cityName'] ?? null);
+			$orderDelivery->setAddress($deliveryContext['address'] ?? null);
+			$orderDelivery->setPvzCode($deliveryContext['pickupPointId'] ?? null);
+			$orderDelivery->setCost($cart->getShippingCost());
+
+			try {
+				$deliveryProvider->validate($orderDelivery);
+			} catch (InvalidDeliveryDataException $e) {
+				return $this->json(['error' => $e->getMessage()], 400);
+			}
+
+			$order->setDelivery($orderDelivery);
+			$em->persist($orderDelivery);
+		}
 
 		foreach ($cart->getItems() as $it) {
 			$op = new OrderProducts();

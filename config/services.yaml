@@ -10,6 +10,9 @@ parameters:
         - 'md2'
         - 'xl'
     cart.require_precondition: false
+    # default for env var if not provided in real environment
+    env(DELIVERY_COURIER_SURCHARGE): '300'
+    app.delivery.courier_surcharge: '%env(int:DELIVERY_COURIER_SURCHARGE)%'
 
     # Cart cookie configuration
     cart.cookie.force_secure_in_prod: true
@@ -102,9 +105,14 @@ services:
         arguments:
             $lifecycleService: '@App\Service\ProductLifecycleService'
 
+    # Delivery provider registry
+    App\Service\Delivery\Provider\DeliveryProviderRegistry:
+        arguments:
+            $providers: !tagged_iterator 'app.delivery_provider'
+
     # Delivery methods auto-registration
     App\Service\Delivery\Method\PvzDeliveryMethod:
-        tags: ['app.delivery_method']
+        tags: ['app.delivery_method', 'app.delivery_provider']
         bind:
             # Указываем, что в конструктор этого класса в аргумент с именем $calculationType
             # нужно передать строку 'cost_per_item'.
@@ -112,10 +120,12 @@ services:
             $calculationType: 'cost_per_item'
 
     App\Service\Delivery\Method\CourierDeliveryMethod:
-        tags: ['app.delivery_method']
+        tags: ['app.delivery_method', 'app.delivery_provider']
         bind:
             # Для курьера тоже можно задать свой тип расчета.
             $calculationType: 'cost_per_item'
+        arguments:
+            $surcharge: '%app.delivery.courier_surcharge%'
 
     # Cart ETag and write guard services
     App\Http\CartEtags: ~

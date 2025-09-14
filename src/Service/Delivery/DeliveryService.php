@@ -63,7 +63,15 @@ final class DeliveryService
             return new DeliveryCalculationResult(null, '', "Метод '{$methodCode}' не найден", false, true);
         }
 
-        // 5. Делегируем расчет выбранной стратегии
+        // 5. Если метод поддерживает контекстный расчет — используем его
+        if ($method instanceof \App\Service\Delivery\Provider\DeliveryProviderInterface) {
+            $ctxArr = $this->deliveryContext->get();
+            $options = array_intersect_key($ctxArr, array_flip(['pickupPointId','address','zip','etaDays']));
+            $calcCtx = new \App\Service\Delivery\Dto\CalculationContext($cart, $city, $options);
+            return $method->calculateWithContext($calcCtx);
+        }
+
+        // Fallback: старый путь
         return $method->calculate($cart, $city);
     }
 

@@ -6,8 +6,11 @@ namespace App\Service\Delivery\Method;
 use App\Entity\Cart;
 use App\Entity\PvzPrice;
 use App\Service\Delivery\Dto\DeliveryCalculationResult;
+use App\Service\Delivery\Provider\DeliveryProviderInterface;
+use App\Service\Delivery\Dto\CalculationContext;
+use App\Exception\InvalidDeliveryDataException;
 
-final class PvzDeliveryMethod implements DeliveryMethodInterface
+final class PvzDeliveryMethod implements DeliveryMethodInterface, DeliveryProviderInterface
 {
     private const METHOD_CODE = 'pvz';
 
@@ -75,5 +78,22 @@ final class PvzDeliveryMethod implements DeliveryMethodInterface
             cost: $totalCost,
             term: $term
         );
+    }
+
+    public function calculateWithContext(CalculationContext $context): DeliveryCalculationResult
+    {
+        if ($context->city === null) {
+            return new DeliveryCalculationResult(null, '', 'Город не определен', false, true);
+        }
+        return $this->calculate($context->cart, $context->city);
+    }
+
+    public function validate(\App\Entity\OrderDelivery $deliveryData): void
+    {
+        $pvzCode = trim((string)($deliveryData->getPvzCode() ?? ''));
+        if ($pvzCode === '') {
+            throw new InvalidDeliveryDataException('Требуется выбрать пункт выдачи');
+        }
+        // при необходимости: проверить соответствие города/ПВЗ через репозиторий в CheckoutController до сохранения
     }
 }

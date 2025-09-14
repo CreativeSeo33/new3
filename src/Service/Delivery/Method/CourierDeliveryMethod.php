@@ -6,14 +6,17 @@ namespace App\Service\Delivery\Method;
 use App\Entity\Cart;
 use App\Entity\PvzPrice;
 use App\Service\Delivery\Dto\DeliveryCalculationResult;
+use App\Service\Delivery\Provider\DeliveryProviderInterface;
+use App\Service\Delivery\Dto\CalculationContext;
+use App\Exception\InvalidDeliveryDataException;
 
-final class CourierDeliveryMethod implements DeliveryMethodInterface
+final class CourierDeliveryMethod implements DeliveryMethodInterface, DeliveryProviderInterface
 {
     private const METHOD_CODE = 'courier';
-    private const SURCHARGE = 300; // Наценка за курьерскую доставку
 
     public function __construct(
-        private readonly string $calculationType // Внедряется из services.yaml
+        private readonly string $calculationType, // Внедряется из services.yaml
+        private readonly int $surcharge // Наценка за курьерскую доставку из конфигурации
     ) {}
 
     public function supports(string $methodCode): bool
@@ -71,11 +74,27 @@ final class CourierDeliveryMethod implements DeliveryMethodInterface
             $baseTotalCost = $baseCost;
         }
 
-        $totalCost = $baseTotalCost + self::SURCHARGE;
+        $totalCost = $baseTotalCost + $this->surcharge;
 
         return new DeliveryCalculationResult(
             cost: $totalCost,
             term: $term
         );
+    }
+
+    public function calculateWithContext(CalculationContext $context): DeliveryCalculationResult
+    {
+        if ($context->city === null) {
+            return new DeliveryCalculationResult(null, '', 'Город не определен', false, true);
+        }
+        return $this->calculate($context->cart, $context->city);
+    }
+
+    public function validate(\App\Entity\OrderDelivery $deliveryData): void
+    {
+        $address = trim((string)($deliveryData->getAddress() ?? ''));
+        if ($address === '' || mb_strlen($address) > 255) {
+            throw new InvalidDeliveryDataException('Неверный адрес доставки');
+        }
     }
 }

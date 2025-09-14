@@ -19,6 +19,10 @@ final class DeliveryCalculationResult
         // Флаг бесплатной доставки
         public readonly bool $isFree = false,
         // Флаг, указывающий на необходимость ручного расчета
-        public readonly bool $requiresManagerCalculation = false
+        public readonly bool $requiresManagerCalculation = false,
+        // Предполагаемая дата доставки
+        public readonly ?\DateTimeImmutable $estimatedDate = null,
+        // Отладочные данные для трассировки расчета
+        public readonly array $traceData = []
     ) {}
 }
