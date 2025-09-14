@@ -31,14 +31,20 @@ final class CheckoutController extends AbstractController
 	) {}
 
 	#[Route('/checkout', name: 'checkout_page', methods: ['GET'])]
-	public function index(CartManager $cartManager): Response
+	public function index(CartManager $cartManager, DeliveryService $deliveryService): Response
 	{
 		$user = $this->getUser();
 		$userId = $user instanceof AppUser ? $user->getId() : null;
 		$cart = $cartManager->getOrCreateCurrent($userId);
 
+		// Расчёт доставки и контекста, как на странице корзины
+		$deliveryResult = $deliveryService->calculateForCart($cart);
+		$ctx = $this->deliveryContext->get();
+
 		return $this->render('catalog/checkout/index.html.twig', [
 			'cart' => $cart,
+			'delivery' => $deliveryResult,
+			'deliveryContext' => $ctx,
 		]);
 	}
 

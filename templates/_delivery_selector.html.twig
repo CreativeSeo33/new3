@@ -27,7 +27,7 @@
     </div>
   </section>
 
-  <div class="text-sm mt-3">Стоимость доставки: <span id="ship-cost">{{ (cart.shippingCost ?? 0) / 100 }}</span> ₽</div>
+  <div class="text-sm mt-3">Стоимость доставки: <span id="ship-cost">{{ (delivery.cost is defined and delivery.cost is not null) ? (delivery.cost / 100) : 0 }}</span> ₽</div>
 </div>
 
 <script type="module">

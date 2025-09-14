@@ -40,20 +40,73 @@
 
       <aside class="md:col-span-1 p-4 border rounded h-fit">
         <h2 class="text-lg font-medium mb-4">Ваш заказ</h2>
-        <div class="space-y-3">
-          {% for i in cart.items %}
-            <div class="flex justify-between text-sm">
-              <div class="truncate pr-2">{{ i.productName }} × {{ i.qty }}</div>
-              <div>{{ (i.rowTotal/100)|number_format(2, '.', ' ') }} ₽</div>
-            </div>
-          {% else %}
-            <div class="text-gray-500 text-sm">Корзина пуста</div>
-          {% endfor %}
-        </div>
-        <div class="border-t mt-3 pt-3 flex justify-between font-medium">
-          <span>Итого</span>
-          <span id="checkout-total">{{ (cart.total/100)|number_format(2, '.', ' ') }} {{ cart.currency }}</span>
-        </div>
+        {% if cart.items|length > 0 %}
+          <div id="checkout-cart-items" class="space-y-3">
+            {% for item in cart.items %}
+              <div class="flex gap-3 items-start border-b pb-3" data-item-id="{{ item.id }}">
+                <div class="w-16 h-16 shrink-0">
+                  {% if item.product and item.product.image|length > 0 %}
+                    {% set firstImage = item.product.image|sort((a,b) => a.sortOrder <=> b.sortOrder)|first %}
+                    {% if firstImage %}
+                      {% set raw = firstImage.imageUrl %}
+                      {% if raw starts with '/media/cache/' %}
+                        {% set imgSrc = raw %}
+                      {% else %}
+                        {% set rel = raw|replace({'/img/':''})|trim('/') %}
+                        {% set imgSrc = asset('/img/' ~ rel) | imagine_filter('md2') %}
+                      {% endif %}
+                      <img src="{{ imgSrc }}" alt="{{ item.productName }}" class="w-16 h-16 object-cover rounded border">
+                    {% else %}
+                      <div class="w-16 h-16 bg-gray-200 rounded border flex items-center justify-center text-gray-500 text-xs">Нет фото</div>
+                    {% endif %}
+                  {% else %}
+                    <div class="w-16 h-16 bg-gray-200 rounded border flex items-center justify-center text-gray-500 text-xs">Нет фото</div>
+                  {% endif %}
+                </div>
+                <div class="flex-1 min-w-0">
+                  {% if item.product and item.product.slug %}
+                    <a href="{{ path('catalog_product_show', {'slug': item.product.slug}) }}" class="text-sm text-blue-600 hover:text-blue-800 hover:underline truncate block">{{ item.productName }}</a>
+                  {% else %}
+                    <div class="text-sm truncate">{{ item.productName }}</div>
+                  {% endif %}
+                  {% if item.optionAssignments is defined and item.optionAssignments|length > 0 %}
+                    <div class="mt-1 text-xs text-gray-600">
+                      {% for assignment in item.optionAssignments %}
+                        <span class="inline-block bg-gray-100 rounded px-2 py-0.5 mr-1 mb-1">{{ assignment.option.name }}: {{ assignment.value.value }}</span>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                  <div class="text-sm text-gray-700 mt-1">
+                    {% set displayPrice = item.effectiveUnitPrice > 0 ? item.effectiveUnitPrice : item.unitPrice %}
+                    {{ format_price(displayPrice) }} × {{ item.qty }} = <span class="font-medium">{{ format_price(item.rowTotal) }}</span>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+
+          <div class="border-t mt-3 pt-3 text-sm">
+            {% if delivery.cost is defined and delivery.cost is not null %}
+              <div>Стоимость товаров: <span id="cart-subtotal" data-cart-subtotal>{{ cart.subtotal|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
+              <div>Доставка: <span id="cart-shipping" data-cart-shipping>{{ delivery.cost|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
+              {% if delivery.term %}
+                <div class="text-sm text-gray-600" id="cart-shipping-term" data-cart-shipping-term>{{ delivery.term }}</div>
+              {% endif %}
+              <div class="border-t pt-2 font-semibold">
+                Итого: <span id="cart-total" data-cart-total>{{ (cart.subtotal + delivery.cost)|number_format(0, '.', ' ') ~ ' руб.' }}</span>
+              </div>
+            {% else %}
+              <div>Стоимость товаров: <span id="cart-subtotal" data-cart-subtotal>{{ cart.subtotal|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
+              <div>Доставка: <span id="cart-shipping" data-cart-shipping>Расчет менеджером</span></div>
+              <div class="border-t pt-2 font-semibold">
+                Итого: <span id="cart-total" data-cart-total>{{ cart.subtotal|number_format(0, '.', ' ') ~ ' руб.' }}</span>
+              </div>
+            {% endif %}
+          </div>
+        {% else %}
+          <div class="text-gray-500 text-sm">Корзина пуста</div>
+        {% endif %}
+
         <button id="place-order" class="mt-4 w-full bg-black text-white rounded py-2 disabled:opacity-50" {% if cart.items|length == 0 %}disabled{% endif %}>
           Подтвердить заказ
         </button>
