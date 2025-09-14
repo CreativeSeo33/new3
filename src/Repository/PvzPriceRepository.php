@@ -16,6 +16,16 @@ final class PvzPriceRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, PvzPrice::class);
     }
+
+    public function findOneByCityNormalized(string $cityName): ?PvzPrice
+    {
+        $qb = $this->createQueryBuilder('p')
+            ->andWhere('LOWER(TRIM(p.city)) = :city')
+            ->setParameter('city', mb_strtolower(trim($cityName)))
+            ->setMaxResults(1);
+
+        return $qb->getQuery()->getOneOrNullResult();
+    }
 }
 
 

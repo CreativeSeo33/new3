@@ -50,8 +50,8 @@ final class DeliveryService
             return new DeliveryCalculationResult(null, '', 'Город не определен', false, true);
         }
 
-        // 3. Ищем данные по городу в БД
-        $city = $this->pvzPriceRepository->findOneBy(['city' => $cityName]);
+        // 3. Ищем данные по городу в БД (нормализованный поиск)
+        $city = $this->pvzPriceRepository->findOneByCityNormalized($cityName);
         if (!$city) {
             return new DeliveryCalculationResult(null, '', self::MANAGER_CALCULATION_MESSAGE, false, true);
         }

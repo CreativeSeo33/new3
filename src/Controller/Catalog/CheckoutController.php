@@ -14,12 +14,14 @@ use Symfony\Component\HttpFoundation\Request;
 use App\Service\CartManager;
 use App\Service\CheckoutContext;
 use App\Service\DeliveryContext;
+use App\Service\Delivery\DeliveryService;
 use App\Service\Delivery\Provider\DeliveryProviderRegistry;
 use App\Exception\InvalidDeliveryDataException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use App\Entity\Fias;
+use App\Entity\PvzPoints;
 
 final class CheckoutController extends AbstractController
 {
@@ -46,7 +48,9 @@ final class CheckoutController extends AbstractController
 		CartManager $cartManager,
 		CheckoutContext $checkout,
 		OrderRepository $orders,
-		EntityManagerInterface $em
+		EntityManagerInterface $em,
+		DeliveryService $deliveryService,
+		DeliveryContext $deliveryContext
 	): Response {
 		$user = $this->getUser();
 		$userId = $user instanceof AppUser ? $user->getId() : null;
@@ -92,39 +96,65 @@ final class CheckoutController extends AbstractController
 		$order->setCustomer($customer);
 		$customer->setOrders($order); // обратная связь
 
-		// Создание и валидация доставки
-		$deliveryContext = $this->deliveryContext->get();
-		$methodCode = $deliveryContext['methodCode'] ?? null;
+		// Создание и валидация доставки (через DeliveryService/DeliveryContext)
+		$ctx = $deliveryContext->get();
+		$method = $ctx['methodCode'] ?? 'pvz';
+		$cityName = $ctx['cityName'] ?? null;
 
-		if ($methodCode) {
-			$deliveryProvider = $this->deliveryProviderRegistry->get($methodCode);
-			if (!$deliveryProvider) {
-				return $this->json(['error' => 'Неверный метод доставки'], 400);
+		$calc = $deliveryService->calculateForCart($cart);
+
+		$orderDelivery = new OrderDelivery();
+		$orderDelivery->setType($method);
+		if ($cityName) {
+			$orderDelivery->setCity($cityName);
+		}
+		if ($calc->cost !== null) {
+			$orderDelivery->setCost($calc->cost);
+		}
+		if ($calc->isFree) {
+			$orderDelivery->setIsFree(true);
+			$orderDelivery->setCost(0);
+		}
+		if ($calc->requiresManagerCalculation) {
+			$orderDelivery->setIsCustomCalculate(true);
+		}
+
+		// PVZ: валидация кода и соответствия городу
+		if ($method === 'pvz' && !empty($ctx['pickupPointId'])) {
+			$pvzCode = (string)$ctx['pickupPointId'];
+			$point = $em->getRepository(PvzPoints::class)->findOneBy(['code' => $pvzCode]);
+			if ($point && strcasecmp((string)$point->getCity(), (string)$cityName) === 0) {
+				$orderDelivery->setPvz($pvzCode);
+				$orderDelivery->setPvzCode($pvzCode);
+			} else {
+				$orderDelivery->setIsCustomCalculate(true);
 			}
+		}
 
-			$orderDelivery = new OrderDelivery();
-			$orderDelivery->setType($methodCode);
-			$orderDelivery->setCity($deliveryContext['cityName'] ?? null);
-			$orderDelivery->setAddress($deliveryContext['address'] ?? null);
-			$orderDelivery->setPvzCode($deliveryContext['pickupPointId'] ?? null);
-			$orderDelivery->setCost($cart->getShippingCost());
+		// Курьер: перенос адреса (ограничение 255)
+		if ($method === 'courier' && !empty($ctx['address'])) {
+			$orderDelivery->setAddress(substr(trim((string)$ctx['address']), 0, 255));
+		}
 
-			// Если фронт прислал cityId, установим связь с FIAS
-			$cityId = isset($payload['cityId']) ? (int)$payload['cityId'] : null;
-			if ($cityId && $cityId > 0) {
-				$cityRef = $em->getReference(Fias::class, $cityId);
-				$orderDelivery->setCityFias($cityRef);
-			}
+		// Если фронт прислал cityId, установим связь с FIAS
+		$cityId = isset($payload['cityId']) ? (int)$payload['cityId'] : null;
+		if ($cityId && $cityId > 0) {
+			$cityRef = $em->getReference(Fias::class, $cityId);
+			$orderDelivery->setCityFias($cityRef);
+		}
 
+		// Дополнительная валидация текущим провайдером (если настроен)
+		$deliveryProvider = $this->deliveryProviderRegistry->get($method);
+		if ($deliveryProvider) {
 			try {
 				$deliveryProvider->validate($orderDelivery);
 			} catch (InvalidDeliveryDataException $e) {
 				return $this->json(['error' => $e->getMessage()], 400);
 			}
-
-			$order->setDelivery($orderDelivery);
-			$em->persist($orderDelivery);
 		}
+
+		$order->setDelivery($orderDelivery);
+		$em->persist($orderDelivery);
 
 		foreach ($cart->getItems() as $it) {
 			$op = new OrderProducts();
