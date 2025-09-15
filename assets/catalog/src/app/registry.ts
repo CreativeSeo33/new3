@@ -1,3 +1,4 @@
+// ai:registry area=catalog key=data-module export=init root=@features
 /**
  * Тип для функции инициализации модуля
  */

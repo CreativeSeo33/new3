@@ -5,7 +5,7 @@ alwaysApply: false
 # Stimulus‑first (UX)
 
 Применимость
-- Для каталога (`templates/catalog/**`, `assets/catalog/src/**`) — приоритет у @catalog_js_architecture.mdc (FSD, data‑module, TypeScript). Stimulus допустим как исключение для малых UI‑паттернов или миграций; inline `<script>` запрещены.
+- Для каталога (`templates/catalog/**`, `assets/catalog/src/**`) — приоритет у @catalog_js_architecture.mdc (FSD, `data-module`, TypeScript). Stimulus допустим как исключение для малых UI‑паттернов или миграций; inline `<script>` запрещены. Для ускорения поиска и редактирования см. @agent_performance_policy.mdc.
 - Для остальных Twig/UX блоков и legacy‑участков — данная политика применяется полностью.
 
 ## Где писать код

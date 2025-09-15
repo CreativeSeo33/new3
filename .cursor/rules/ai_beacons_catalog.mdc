@@ -1,0 +1,33 @@
+---
+alwaysApply: false
+---
+
+# AI‑маяки для каталога (FSD)
+
+Назначение: точные якоря в коде, чтобы агент не делал глобальные сканы.
+
+## Форматы маяков
+- Реестр модулей (в первой строке файла `assets/catalog/src/app/registry.ts`):
+  - `// ai:registry area=catalog key=data-module export=init root=@features`
+- Точка входа каталога (в первой строке `assets/catalog/catalog.ts`):
+  - `// ai:bootstrap area=catalog uses=registry`
+- HTTP‑клиент (в первой строке `assets/catalog/src/shared/api/http.ts`):
+  - `// ai:http-client exports=get,post,patch,del[,delWithStatus,http]`
+  - Перечисляйте фактические экспорты через запятую.
+- Базовый компонент (в первой строке `assets/catalog/src/shared/ui/Component.ts`):
+  - `// ai:base-component name=Component purpose=DOM/events`
+- Twig‑шаблон с интерактивом (опционально, в корне блока):
+  - `{# ai:module=<feature-name> root=<css-selector> #}`
+
+## Где вставлять
+- Только в файлы каталога из FSD‑структуры.
+- Комментарий должен быть первой строкой файла, без отступов.
+
+## Поведение агента
+- Если маяк найден — ограничить область действий текущим файлом/папкой.
+- Не выполнять повторные широкие поиска после нахождения маяка.
+
+## Связанные документы
+- `@catalog_js_architecture.mdc`
+- `@agent_performance_policy.mdc`
+

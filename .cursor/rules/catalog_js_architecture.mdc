@@ -16,7 +16,7 @@ alwaysApply: true
   - Только для малых UI‑паттернов или миграций. Для бизнес‑фич каталога — предпочитать FSD.
 
 Запреты (строго)
-- Никаких inline <script> в Twig/HTML. Любой найденный — выносить в внешний модуль.
+- Никаких inline `<script>` в Twig/HTML. Любой найденный — выносить в внешний модуль.
 - Нельзя писать новый код на JS. Только TypeScript (.ts).
 - Нельзя вызывать fetch/XHR напрямую в UI‑слое. Все HTTP — через @shared/api/http (get/post/patch/del).
 - Нельзя хардкодить API‑пути строками в UI. Пути и функции — только в API‑слое модуля.
@@ -38,7 +38,7 @@ alwaysApply: true
   - Обернуть HTML в корневой контейнер с data-module="<feature-name>".
   - Параметры — через data-* атрибуты (kebab-case), читаются как dataset.
   - Добавить стабильные якоря для тестов/ИИ через data-testid (kebab-case) там, где нет targets.
-- Удалить inline <script>; никакого кода в шаблонах.
+- Удалить inline `<script>`; никакого кода в шаблонах.
 - Если на странице уже есть FSD‑модули (например, cart-items-manager) — новые блоки тоже через FSD, а не Stimulus.
 
 Слой API (обязательно)
@@ -58,13 +58,13 @@ alwaysApply: true
 - Не тянуть импорты между фичами без необходимости; использовать события или shared‑слой.
 
 Именование и алиасы
-- Алиасы: @ → assets/catalog/src; @shared, @features, @entities, @widgets, @pages.
+- Алиасы (из tsconfig `paths`): `@/*` → `assets/catalog/src/*`, `@shared/*`, `@features/*`, `@entities/*`, `@widgets/*`, `@pages/*`, а также `@admin/*` → `assets/admin/*`.
 - Имена модулей и data-module — kebab-case: delivery-selector, cart-items-manager.
 - Файлы TypeScript: .ts (не .js).
 
 Проверки для агента (acceptance)
-- Если в редактируемом шаблоне найден <script> — вынести логику в features/<name> и удалить <script>.
-- Если требуется интерактив — создать FSD‑модуль, зарегистрировать в реестре, добавить data-module на корневой элемент.
+- Если в редактируемом шаблоне найден `<script>` — вынести логику в `features/<name>` и удалить `<script>`.
+- Если требуется интерактив — создать FSD‑модуль, зарегистрировать в реестре, добавить `data-module` на корневой элемент.
 - В новом/изменённом коде отсутствуют:
   - необработанные fetch/XHR
   - прямые строковые URL API в UI
@@ -73,14 +73,14 @@ alwaysApply: true
 - В коде присутствуют:
   - строгие типы API
   - destroy() с отпиской
-  - data-testid якоря на ключевых узлах (если нет targets)
+  - `data-testid` якоря на ключевых узлах (если нет targets)
 - Если страница целиком на Stimulus и фича минимальная — допустимо реализовать как Stimulus, но без inline <script> и с targets/values. Для каталога предпочтение за FSD.
 
 Миграция существующих inline‑скриптов (обязательный алгоритм)
-1) Выделить корневой контейнер в шаблоне и проставить data-module="<feature-name>" + data-testid для якорей.
+1) Выделить корневой контейнер в шаблоне и проставить `data-module="<feature-name>"` + `data-testid` для якорей.
 2) Создать features/<feature-name>/{api,index.ts,ui/component.ts}, перенести HTTP в API‑слой, DOM‑логику в компонент.
 3) Использовать @shared/api/http, formatPrice, DOM‑утилиты.
-4) Зарегистрировать модуль в реестре; удалить <script> из Twig.
+4) Зарегистрировать модуль в реестре; удалить `<script>` из Twig.
 5) Обеспечить destroy() (отписки/abort).
 6) Добавить минимальные автотест‑селекторы (data-testid) и обработку ошибок.
 

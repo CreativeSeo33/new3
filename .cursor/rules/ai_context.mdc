@@ -31,9 +31,10 @@ alwaysApply: true
 4) Пагинация (API Platform) → @paginationapiplatformmapping.mdc
 5) Справочники → @services.mdc, @doctrine_entities.mdc
 6) Диагностика → @logs.mdc
-7) Stimulus‑policy → @stimulus_policy.mdc
-8) Catalog JS Architecture (каталог/FSD) → @catalog_js_architecture.mdc
-и в разделе “Twig/UX для каталога” оставить явную оговорку о приоритете FSD.
+7) Catalog JS Architecture (каталог/FSD) → @catalog_js_architecture.mdc
+8) Stimulus‑policy → @stimulus_policy.mdc
+9) Политика производительности агента → @agent_performance_policy.mdc
+И в разделе “Twig/UX для каталога” закрепить приоритет FSD над Stimulus для каталога.
 
 ## Сборка и артефакты
 
@@ -43,7 +44,7 @@ alwaysApply: true
 
 ## Twig/UX для каталога
 
-- Каталог (Twig/UX): FSD через data-module и реестр. Stimulus — исключение для малых UI‑паттернов. Inline `<script>` запрещены. См. @catalog_js_architecture.mdc
+- Каталог (Twig/UX): FSD через `data-module` и реестр; код — только TypeScript, разделение API/UI соблюдается. Stimulus — исключение для малых UI‑паттернов. Inline `<script>` запрещены. См. @catalog_js_architecture.mdc.
 
 ## Архитектура фронтенда
 
@@ -124,6 +125,7 @@ alwaysApply: true
 - Сценарий оформления заказа: `@order_checkout_flow.mdc`
 - Пагинация API Platform: `@paginationapiplatformmapping.mdc`
 - Политика каталога (FSD, TS, без inline): `@catalog_js_architecture.mdc`
+- Политика производительности агента: `@agent_performance_policy.mdc`
 
 ### Инструкция для агента
 
@@ -139,7 +141,7 @@ alwaysApply: true
 - Корзинные значения читаются из API; нет клиентских пересчётов
 - Код собирается из корня командами npm; артефакты не коммитятся
 - Отсутствуют логи/секреты в VCS; логи — в `var/log/*`
-- Каталог: интерактив реализован как FSD‑модули (TypeScript, data‑module, раздельные API/UI, `destroy()`); нет inline `<script>`.
+- Каталог: интерактив реализован как FSD‑модули (TypeScript, `data-module`, раздельные API/UI, `destroy()`, `data-testid` на ключевых узлах); нет inline `<script>`.
 - Stimulus допускается как исключение для небольших UI‑паттернов; без inline‑скриптов и с targets/values.
 - Допустимо расширение pinned‑набора для глобальных политик: `@catalog_js_architecture.mdc`.
 - Связанные .mdc обновлены при правках: @doctrine_entities.mdc, @services.mdc, @order_checkout_flow.mdc

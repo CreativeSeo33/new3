@@ -12,7 +12,7 @@ alwaysApply: false
 
 Пример api/index.ts
 ```ts
-import { get, post, patch, del } from '@shared/api/http';
+import { get, post } from '@shared/api/http';
 
 export interface DeliveryContext { cityName?: string; methodCode?: string }
 export interface SelectCityRequest { cityName: string }

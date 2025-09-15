@@ -1,3 +1,4 @@
+// ai:http-client exports=get,post,patch,del,delWithStatus,http
 import type { HttpOptions, HttpGetOptions, HttpPostOptions, HttpPutOptions, HttpPatchOptions, HttpDeleteOptions } from '../types/api';
 import { Spinner } from '@shared/ui/spinner';
 import { getCsrfToken, requiresCsrfToken } from './csrf';

@@ -1,3 +1,4 @@
+// ai:base-component name=Component purpose=DOM/events
 /**
  * Базовый класс для компонентов с типизацией
  */

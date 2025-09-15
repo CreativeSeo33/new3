@@ -1,3 +1,4 @@
+// ai:bootstrap area=catalog uses=registry
 import './styles.css';
 import { Fancybox } from '@fancyapps/ui';
 import '@fancyapps/ui/dist/fancybox/fancybox.css';
