@@ -34,7 +34,7 @@ alwaysApply: true
 7) Catalog JS Architecture (каталог/FSD) → @catalog_js_architecture.mdc
 8) Stimulus‑policy → @stimulus_policy.mdc
 9) Политика производительности агента → @agent_performance_policy.mdc
-И в разделе “Twig/UX для каталога” закрепить приоритет FSD над Stimulus для каталога.
+
 
 ## Сборка и артефакты
 
