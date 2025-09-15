@@ -1,0 +1,249 @@
+
+
+# Рантайм‑артефакты
+
+Назначение: быстрые машиночитаемые снимки проекта для ИИ и диагностики.
+
+Содержимое:
+- container.json — карта DI‑контейнера
+- routes.json — маршруты
+- composer-deps.json — прямые зависимости Composer
+- openapi.json | openapi.yaml — контракт API Platform
+
+Артефакты БД:
+- ../db/schema.sql — SQL‑дифф схемы БД (dump only, без применения)
+- ../db/entities.txt — список сущностей Doctrine
+
+Запуск (Windows PowerShell):
+```powershell
+powershell -ExecutionPolicy Bypass -File docs/refresh.ps1
+```
+
+WSL/Git Bash:
+```bash
+bash docs/refresh.sh
+```
+
+Примечание: Messenger не используется — снимок по шинам не генерируется.
+
+#!/usr/bin/env bash
+set -u
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+RUNTIME_DIR="$ROOT_DIR/docs/runtime"
+DB_DIR="$ROOT_DIR/docs/db"
+
+mkdir -p "$RUNTIME_DIR" "$DB_DIR"
+
+run() {
+  local name="$1"; shift
+  local outfile="$1"; shift
+  echo ">> $name"
+  if "$@" > "$outfile" 2>&1; then
+    echo "OK: $outfile"
+  else
+    echo "FAIL: $name -> $outfile"
+  fi
+}
+
+run "DI Container"      "$RUNTIME_DIR/container.json" php "$ROOT_DIR/bin/console" debug:container --format=json
+run "Routes"             "$RUNTIME_DIR/routes.json"    php "$ROOT_DIR/bin/console" debug:router   --format=json
+run "Composer deps"      "$RUNTIME_DIR/composer-deps.json" composer show -D --format=json
+run "DB Schema (diff)"   "$DB_DIR/schema.sql"         php "$ROOT_DIR/bin/console" doctrine:schema:update --dump-sql
+run "Doctrine entities"  "$DB_DIR/entities.txt"       php "$ROOT_DIR/bin/console" doctrine:mapping:info
+run "OpenAPI JSON"       "$RUNTIME_DIR/openapi.json"  php "$ROOT_DIR/bin/console" api:openapi:export --json
+run "OpenAPI YAML"       "$RUNTIME_DIR/openapi.yaml"  php "$ROOT_DIR/bin/console" api:openapi:export --yaml
+
+echo "Done."
+
+#[CmdletBinding()]
+param()
+
+$ErrorActionPreference = 'Continue'
+Set-StrictMode -Version Latest
+
+# Перейти в корень репозитория (скрипт находится в docs/)
+$repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+Push-Location $repoRoot
+
+try {
+    # Гарантированно создать каталоги
+    $runtimeDir = Join-Path $PSScriptRoot 'runtime'
+    $dbDir = Join-Path $PSScriptRoot 'db'
+    New-Item -ItemType Directory -Force -Path $runtimeDir, $dbDir | Out-Null
+
+    $script:results = New-Object System.Collections.Generic.List[object]
+
+    function Invoke-Step {
+        param(
+            [string]$Name,
+            [string]$Exe,
+            [string[]]$Args,
+            [string]$OutFile
+        )
+        Write-Host "`n>> $Name"
+        $sw = [System.Diagnostics.Stopwatch]::StartNew()
+        try {
+            $output = & $Exe @Args 2>&1
+            $exit = $LASTEXITCODE
+            $output | Out-File -FilePath $OutFile -Encoding utf8
+            $status = if ($exit -ne $null -and $exit -ne 0) { 'FAIL' } else { 'OK' }
+            $size = (Test-Path $OutFile) ? (Get-Item $OutFile).Length : 0
+            $script:results.Add([pscustomobject]@{
+                Name=$Name; Path=$OutFile; Status=$status; ExitCode=$exit; Size=$size; Ms=$sw.ElapsedMilliseconds
+            }) | Out-Null
+        } catch {
+            $script:results.Add([pscustomobject]@{
+                Name=$Name; Path=$OutFile; Status='ERROR'; ExitCode=-1; Size=0; Ms=$sw.ElapsedMilliseconds; Error=$_.Exception.Message
+            }) | Out-Null
+        }
+    }
+
+    Invoke-Step -Name 'DI Container'       -Exe 'php'      -Args @('bin/console','debug:container','--format=json') -OutFile (Join-Path $runtimeDir 'container.json')
+    Invoke-Step -Name 'Routes'              -Exe 'php'      -Args @('bin/console','debug:router','--format=json')    -OutFile (Join-Path $runtimeDir 'routes.json')
+    Invoke-Step -Name 'Composer deps'       -Exe 'composer' -Args @('show','-D','--format=json')                     -OutFile (Join-Path $runtimeDir 'composer-deps.json')
+    Invoke-Step -Name 'DB Schema (diff)'    -Exe 'php'      -Args @('bin/console','doctrine:schema:update','--dump-sql') -OutFile (Join-Path $dbDir 'schema.sql')
+    Invoke-Step -Name 'Doctrine entities'   -Exe 'php'      -Args @('bin/console','doctrine:mapping:info')           -OutFile (Join-Path $dbDir 'entities.txt')
+    Invoke-Step -Name 'OpenAPI JSON'        -Exe 'php'      -Args @('bin/console','api:openapi:export','--json')     -OutFile (Join-Path $runtimeDir 'openapi.json')
+    Invoke-Step -Name 'OpenAPI YAML'        -Exe 'php'      -Args @('bin/console','api:openapi:export','--yaml')     -OutFile (Join-Path $runtimeDir 'openapi.yaml')
+
+    Write-Host ''
+    Write-Host 'Summary:'
+    foreach ($r in $script:results) {
+        $sizeStr = if ($r.Size -gt 0) { ('{0:N0} B' -f $r.Size) } else { '-' }
+        Write-Host ("{0,-22} {1,-7} {2,6}ms {3,10} {4}" -f $r.Name, $r.Status, $r.Ms, $sizeStr, $r.Path)
+    }
+}
+finally {
+    Pop-Location
+}
+
+exit 0
+
+docs/runtime/* linguist-generated
+docs/db/schema.sql linguist-generated
+docs/db/entities.txt linguist-generated
+
+
+
+# Рантайм‑артефакты
+
+Назначение: быстрые машиночитаемые снимки проекта для ИИ и диагностики.
+
+Содержимое:
+- container.json — карта DI‑контейнера
+- routes.json — маршруты
+- composer-deps.json — прямые зависимости Composer
+- openapi.json | openapi.yaml — контракт API Platform
+
+Артефакты БД:
+- ../db/schema.sql — SQL‑дифф схемы БД (dump only, без применения)
+- ../db/entities.txt — список сущностей Doctrine
+
+Запуск (Windows PowerShell):
+```powershell
+powershell -ExecutionPolicy Bypass -File docs/refresh.ps1
+```
+
+WSL/Git Bash:
+```bash
+bash docs/refresh.sh
+```
+
+Примечание: Messenger не используется — снимок по шинам не генерируется.
+
+#!/usr/bin/env bash
+set -u
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+RUNTIME_DIR="$ROOT_DIR/docs/runtime"
+DB_DIR="$ROOT_DIR/docs/db"
+
+mkdir -p "$RUNTIME_DIR" "$DB_DIR"
+
+run() {
+  local name="$1"; shift
+  local outfile="$1"; shift
+  echo ">> $name"
+  if "$@" > "$outfile" 2>&1; then
+    echo "OK: $outfile"
+  else
+    echo "FAIL: $name -> $outfile"
+  fi
+}
+
+run "DI Container"      "$RUNTIME_DIR/container.json" php "$ROOT_DIR/bin/console" debug:container --format=json
+run "Routes"             "$RUNTIME_DIR/routes.json"    php "$ROOT_DIR/bin/console" debug:router   --format=json
+run "Composer deps"      "$RUNTIME_DIR/composer-deps.json" composer show -D --format=json
+run "DB Schema (diff)"   "$DB_DIR/schema.sql"         php "$ROOT_DIR/bin/console" doctrine:schema:update --dump-sql
+run "Doctrine entities"  "$DB_DIR/entities.txt"       php "$ROOT_DIR/bin/console" doctrine:mapping:info
+run "OpenAPI JSON"       "$RUNTIME_DIR/openapi.json"  php "$ROOT_DIR/bin/console" api:openapi:export --json
+run "OpenAPI YAML"       "$RUNTIME_DIR/openapi.yaml"  php "$ROOT_DIR/bin/console" api:openapi:export --yaml
+
+echo "Done."
+
+#[CmdletBinding()]
+param()
+
+$ErrorActionPreference = 'Continue'
+Set-StrictMode -Version Latest
+
+# Перейти в корень репозитория (скрипт находится в docs/)
+$repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+Push-Location $repoRoot
+
+try {
+    # Гарантированно создать каталоги
+    $runtimeDir = Join-Path $PSScriptRoot 'runtime'
+    $dbDir = Join-Path $PSScriptRoot 'db'
+    New-Item -ItemType Directory -Force -Path $runtimeDir, $dbDir | Out-Null
+
+    $script:results = New-Object System.Collections.Generic.List[object]
+
+    function Invoke-Step {
+        param(
+            [string]$Name,
+            [string]$Exe,
+            [string[]]$Args,
+            [string]$OutFile
+        )
+        Write-Host "`n>> $Name"
+        $sw = [System.Diagnostics.Stopwatch]::StartNew()
+        try {
+            $output = & $Exe @Args 2>&1
+            $exit = $LASTEXITCODE
+            $output | Out-File -FilePath $OutFile -Encoding utf8
+            $status = if ($exit -ne $null -and $exit -ne 0) { 'FAIL' } else { 'OK' }
+            $size = (Test-Path $OutFile) ? (Get-Item $OutFile).Length : 0
+            $script:results.Add([pscustomobject]@{
+                Name=$Name; Path=$OutFile; Status=$status; ExitCode=$exit; Size=$size; Ms=$sw.ElapsedMilliseconds
+            }) | Out-Null
+        } catch {
+            $script:results.Add([pscustomobject]@{
+                Name=$Name; Path=$OutFile; Status='ERROR'; ExitCode=-1; Size=0; Ms=$sw.ElapsedMilliseconds; Error=$_.Exception.Message
+            }) | Out-Null
+        }
+    }
+
+    Invoke-Step -Name 'DI Container'       -Exe 'php'      -Args @('bin/console','debug:container','--format=json') -OutFile (Join-Path $runtimeDir 'container.json')
+    Invoke-Step -Name 'Routes'              -Exe 'php'      -Args @('bin/console','debug:router','--format=json')    -OutFile (Join-Path $runtimeDir 'routes.json')
+    Invoke-Step -Name 'Composer deps'       -Exe 'composer' -Args @('show','-D','--format=json')                     -OutFile (Join-Path $runtimeDir 'composer-deps.json')
+    Invoke-Step -Name 'DB Schema (diff)'    -Exe 'php'      -Args @('bin/console','doctrine:schema:update','--dump-sql') -OutFile (Join-Path $dbDir 'schema.sql')
+    Invoke-Step -Name 'Doctrine entities'   -Exe 'php'      -Args @('bin/console','doctrine:mapping:info')           -OutFile (Join-Path $dbDir 'entities.txt')
+    Invoke-Step -Name 'OpenAPI JSON'        -Exe 'php'      -Args @('bin/console','api:openapi:export','--json')     -OutFile (Join-Path $runtimeDir 'openapi.json')
+    Invoke-Step -Name 'OpenAPI YAML'        -Exe 'php'      -Args @('bin/console','api:openapi:export','--yaml')     -OutFile (Join-Path $runtimeDir 'openapi.yaml')
+
+    Write-Host ''
+    Write-Host 'Summary:'
+    foreach ($r in $script:results) {
+        $sizeStr = if ($r.Size -gt 0) { ('{0:N0} B' -f $r.Size) } else { '-' }
+        Write-Host ("{0,-22} {1,-7} {2,6}ms {3,10} {4}" -f $r.Name, $r.Status, $r.Ms, $sizeStr, $r.Path)
+    }
+}
+finally {
+    Pop-Location
+}
+
+exit 0
+
+

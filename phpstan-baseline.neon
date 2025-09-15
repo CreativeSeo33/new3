@@ -1,0 +1,3231 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Class App\\\\Api\\\\Processor\\\\DeleteAttributeGroupRestrictProcessor implements generic interface ApiPlatform\\\\State\\\\ProcessorInterface but does not specify its types\\: T1, T2$#"
+			count: 1
+			path: src/Api/Processor/DeleteAttributeGroupRestrictProcessor.php
+
+		-
+			message: "#^Class App\\\\Api\\\\Processor\\\\DeleteAttributeRestrictProcessor implements generic interface ApiPlatform\\\\State\\\\ProcessorInterface but does not specify its types\\: T1, T2$#"
+			count: 1
+			path: src/Api/Processor/DeleteAttributeRestrictProcessor.php
+
+		-
+			message: "#^Class App\\\\Api\\\\Processor\\\\DeleteOptionRestrictProcessor implements generic interface ApiPlatform\\\\State\\\\ProcessorInterface but does not specify its types\\: T1, T2$#"
+			count: 1
+			path: src/Api/Processor/DeleteOptionRestrictProcessor.php
+
+		-
+			message: "#^Class App\\\\Api\\\\Processor\\\\DeleteOptionValueRestrictProcessor implements generic interface ApiPlatform\\\\State\\\\ProcessorInterface but does not specify its types\\: T1, T2$#"
+			count: 1
+			path: src/Api/Processor/DeleteOptionValueRestrictProcessor.php
+
+		-
+			message: "#^Class App\\\\Api\\\\Processor\\\\DeliveryTypeProcessor implements generic interface ApiPlatform\\\\State\\\\ProcessorInterface but does not specify its types\\: T1, T2$#"
+			count: 1
+			path: src/Api/Processor/DeliveryTypeProcessor.php
+
+		-
+			message: "#^Property App\\\\ApiResource\\\\ProductResource\\:\\:\\$categoryNames type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/ApiResource/ProductResource.php
+
+		-
+			message: "#^Property App\\\\ApiResource\\\\ProductResource\\:\\:\\$image type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/ApiResource/ProductResource.php
+
+		-
+			message: "#^Property App\\\\ApiResource\\\\ProductResource\\:\\:\\$optionAssignments type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/ApiResource/ProductResource.php
+
+		-
+			message: "#^Property App\\\\ApiResource\\\\ProductResource\\:\\:\\$optionsJson type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/ApiResource/ProductResource.php
+
+		-
+			message: "#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\\.$#"
+			count: 1
+			path: src/Command/CartPurgeExpiredCommand.php
+
+		-
+			message: "#^Parameter \\#1 \\$object of method Doctrine\\\\Persistence\\\\ObjectManager\\:\\:remove\\(\\) expects object, mixed given\\.$#"
+			count: 1
+			path: src/Command/CartPurgeExpiredCommand.php
+
+		-
+			message: "#^Parameter \\#1 \\$value of function count expects array\\|Countable, mixed given\\.$#"
+			count: 1
+			path: src/Command/CartPurgeExpiredCommand.php
+
+		-
+			message: "#^Cannot cast mixed to int\\.$#"
+			count: 1
+			path: src/Command/CleanupIdempotencyKeysCommand.php
+
+		-
+			message: "#^Part \\$count \\(mixed\\) of encapsed string cannot be cast to string\\.$#"
+			count: 1
+			path: src/Command/CleanupIdempotencyKeysCommand.php
+
+		-
+			message: "#^Binary operation \"\\+\" between int\\|string and 1 results in an error\\.$#"
+			count: 1
+			path: src/Command/ImagesCacheWarmupCommand.php
+
+		-
+			message: "#^Binary operation \"\\.\" between array\\|bool\\|float\\|int\\|string\\|null and '/' results in an error\\.$#"
+			count: 2
+			path: src/Command/ImagesCacheWarmupCommand.php
+
+		-
+			message: "#^Binary operation \"\\.\" between array\\|bool\\|float\\|int\\|string\\|null and '/public/' results in an error\\.$#"
+			count: 2
+			path: src/Command/ImagesCacheWarmupCommand.php
+
+		-
+			message: "#^Binary operation \"\\.\" between array\\|bool\\|float\\|int\\|string\\|null and '/public/img' results in an error\\.$#"
+			count: 1
+			path: src/Command/ImagesCacheWarmupCommand.php
+
+		-
+			message: "#^Binary operation \"\\.\" between array\\|bool\\|float\\|int\\|string\\|null and '/var/cache/image…' results in an error\\.$#"
+			count: 2
+			path: src/Command/ImagesCacheWarmupCommand.php
+
+		-
+			message: "#^Cannot access offset 'last_processed_image' on mixed\\.$#"
+			count: 1
+			path: src/Command/ImagesCacheWarmupCommand.php
+
+		-
+			message: "#^Cannot cast mixed to int\\.$#"
+			count: 2
+			path: src/Command/ImagesCacheWarmupCommand.php
+
+		-
+			message: "#^Method App\\\\Command\\\\ImagesCacheWarmupCommand\\:\\:checkRunningProcesses\\(\\) has parameter \\$runningProcesses with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Command/ImagesCacheWarmupCommand.php
+
+		-
+			message: "#^Method App\\\\Command\\\\ImagesCacheWarmupCommand\\:\\:displayDryRunInfo\\(\\) has parameter \\$filters with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Command/ImagesCacheWarmupCommand.php
+
+		-
+			message: "#^Method App\\\\Command\\\\ImagesCacheWarmupCommand\\:\\:displayDryRunInfo\\(\\) has parameter \\$sampleImages with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Command/ImagesCacheWarmupCommand.php
+
+		-
+			message: "#^Method App\\\\Command\\\\ImagesCacheWarmupCommand\\:\\:displayStartInfo\\(\\) has parameter \\$filters with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Command/ImagesCacheWarmupCommand.php
+
+		-
+			message: "#^Method App\\\\Command\\\\ImagesCacheWarmupCommand\\:\\:filterProcessedImages\\(\\) has parameter \\$images with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Command/ImagesCacheWarmupCommand.php
+
+		-
+			message: "#^Method App\\\\Command\\\\ImagesCacheWarmupCommand\\:\\:filterProcessedImages\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Command/ImagesCacheWarmupCommand.php
+
+		-
+			message: "#^Method App\\\\Command\\\\ImagesCacheWarmupCommand\\:\\:processBatch\\(\\) has parameter \\$batch with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Command/ImagesCacheWarmupCommand.php
+
+		-
+			message: "#^Method App\\\\Command\\\\ImagesCacheWarmupCommand\\:\\:processBatch\\(\\) has parameter \\$filters with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Command/ImagesCacheWarmupCommand.php
+
+		-
+			message: "#^Method App\\\\Command\\\\ImagesCacheWarmupCommand\\:\\:saveProgress\\(\\) has parameter \\$batch with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Command/ImagesCacheWarmupCommand.php
+
+		-
+			message: "#^Parameter \\#1 \\$customPath of method App\\\\Command\\\\ImagesCacheWarmupCommand\\:\\:findImages\\(\\) expects string\\|null, mixed given\\.$#"
+			count: 1
+			path: src/Command/ImagesCacheWarmupCommand.php
+
+		-
+			message: "#^Parameter \\#1 \\$cwd of method Symfony\\\\Component\\\\Process\\\\Process\\:\\:setWorkingDirectory\\(\\) expects string, array\\|bool\\|float\\|int\\|string\\|null given\\.$#"
+			count: 1
+			path: src/Command/ImagesCacheWarmupCommand.php
+
+		-
+			message: "#^Parameter \\#1 \\$json of function json_decode expects string, string\\|false given\\.$#"
+			count: 1
+			path: src/Command/ImagesCacheWarmupCommand.php
+
+		-
+			message: "#^Parameter \\#1 \\$value of function count expects array\\|Countable, mixed given\\.$#"
+			count: 1
+			path: src/Command/ImagesCacheWarmupCommand.php
+
+		-
+			message: "#^Parameter \\#2 \\$filters of method App\\\\Command\\\\ImagesCacheWarmupCommand\\:\\:processBatch\\(\\) expects array, mixed given\\.$#"
+			count: 1
+			path: src/Command/ImagesCacheWarmupCommand.php
+
+		-
+			message: "#^Parameter \\#2 \\$length of function array_chunk expects int\\<1, max\\>, int given\\.$#"
+			count: 1
+			path: src/Command/ImagesCacheWarmupCommand.php
+
+		-
+			message: "#^Parameter \\#3 \\$filters of method App\\\\Command\\\\ImagesCacheWarmupCommand\\:\\:displayDryRunInfo\\(\\) expects array, mixed given\\.$#"
+			count: 1
+			path: src/Command/ImagesCacheWarmupCommand.php
+
+		-
+			message: "#^Parameter \\#6 \\$isDetailed of method App\\\\Command\\\\ImagesCacheWarmupCommand\\:\\:processBatch\\(\\) expects bool, mixed given\\.$#"
+			count: 1
+			path: src/Command/ImagesCacheWarmupCommand.php
+
+		-
+			message: "#^Parameter \\#7 \\$filters of method App\\\\Command\\\\ImagesCacheWarmupCommand\\:\\:displayStartInfo\\(\\) expects array, mixed given\\.$#"
+			count: 1
+			path: src/Command/ImagesCacheWarmupCommand.php
+
+		-
+			message: "#^Parameter \\#8 \\$isDryRun of method App\\\\Command\\\\ImagesCacheWarmupCommand\\:\\:displayStartInfo\\(\\) expects bool, mixed given\\.$#"
+			count: 1
+			path: src/Command/ImagesCacheWarmupCommand.php
+
+		-
+			message: "#^Property App\\\\Command\\\\ImagesCacheWarmupCommand\\:\\:\\$cacheManager is never read, only written\\.$#"
+			count: 1
+			path: src/Command/ImagesCacheWarmupCommand.php
+
+		-
+			message: "#^Property App\\\\Command\\\\ImagesCacheWarmupCommand\\:\\:\\$stats type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Command/ImagesCacheWarmupCommand.php
+
+		-
+			message: "#^Parameter \\#2 \\$force of method App\\\\Command\\\\SessionClearCommand\\:\\:clearSessionFiles\\(\\) expects bool, mixed given\\.$#"
+			count: 1
+			path: src/Command/SessionClearCommand.php
+
+		-
+			message: "#^Parameter \\#2 \\$specificKey of method App\\\\Command\\\\SessionClearCommand\\:\\:clearActiveSession\\(\\) expects string\\|null, mixed given\\.$#"
+			count: 1
+			path: src/Command/SessionClearCommand.php
+
+		-
+			message: "#^Parameter \\#3 \\$force of method App\\\\Command\\\\SessionClearCommand\\:\\:clearActiveSession\\(\\) expects bool, mixed given\\.$#"
+			count: 1
+			path: src/Command/SessionClearCommand.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:getCart\\(\\)\\.$#"
+			count: 1
+			path: src/Command/TestRemoveDirectCommand.php
+
+		-
+			message: "#^Cannot cast mixed to int\\.$#"
+			count: 1
+			path: src/Command/TestRemoveDirectCommand.php
+
+		-
+			message: "#^Part \\$count \\(mixed\\) of encapsed string cannot be cast to string\\.$#"
+			count: 1
+			path: src/Command/TestRemoveDirectCommand.php
+
+		-
+			message: "#^Cannot cast mixed to int\\.$#"
+			count: 1
+			path: src/Command/TestRemoveItemCommand.php
+
+		-
+			message: "#^If condition is always true\\.$#"
+			count: 1
+			path: src/Command/TestRemoveItemCommand.php
+
+		-
+			message: "#^Cannot cast mixed to string\\.$#"
+			count: 2
+			path: src/Command/UserCreateCommand.php
+
+		-
+			message: "#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\\.$#"
+			count: 1
+			path: src/Controller/Admin/Api/ProductBootstrapController.php
+
+		-
+			message: "#^Method App\\\\Controller\\\\Admin\\\\Api\\\\ProductCopyController\\:\\:validateAndPrepareOptions\\(\\) has parameter \\$data with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Controller/Admin/Api/ProductCopyController.php
+
+		-
+			message: "#^Method App\\\\Controller\\\\Admin\\\\Api\\\\ProductCopyController\\:\\:validateAndPrepareOptions\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Controller/Admin/Api/ProductCopyController.php
+
+		-
+			message: "#^Parameter \\#1 \\$data of method App\\\\Controller\\\\Admin\\\\Api\\\\ProductCopyController\\:\\:validateAndPrepareOptions\\(\\) expects array, mixed given\\.$#"
+			count: 1
+			path: src/Controller/Admin/Api/ProductCopyController.php
+
+		-
+			message: "#^Cannot access offset 'items' on mixed\\.$#"
+			count: 1
+			path: src/Controller/Admin/MediaAdminController.php
+
+		-
+			message: "#^Cannot access offset 'order' on mixed\\.$#"
+			count: 1
+			path: src/Controller/Admin/MediaAdminController.php
+
+		-
+			message: "#^Method App\\\\Controller\\\\Admin\\\\MediaAdminController\\:\\:__construct\\(\\) has parameter \\$imagineFilters with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Controller/Admin/MediaAdminController.php
+
+		-
+			message: "#^Method App\\\\Controller\\\\Admin\\\\MediaAdminController\\:\\:normalizeProductImagesOrder\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Controller/Admin/MediaAdminController.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:getOptionAssignments\\(\\)\\.$#"
+			count: 1
+			path: src/Controller/Api/CartApiController.php
+
+		-
+			message: "#^Cannot access offset 'atomic' on mixed\\.$#"
+			count: 1
+			path: src/Controller/Api/CartApiController.php
+
+		-
+			message: "#^Cannot access offset 'code' on mixed\\.$#"
+			count: 1
+			path: src/Controller/Api/CartApiController.php
+
+		-
+			message: "#^Cannot access offset 'operations' on mixed\\.$#"
+			count: 1
+			path: src/Controller/Api/CartApiController.php
+
+		-
+			message: "#^Cannot access offset 'optionAssignmentIds' on mixed\\.$#"
+			count: 1
+			path: src/Controller/Api/CartApiController.php
+
+		-
+			message: "#^Cannot access offset 'pricingPolicy' on mixed\\.$#"
+			count: 1
+			path: src/Controller/Api/CartApiController.php
+
+		-
+			message: "#^Cannot access offset 'productId' on mixed\\.$#"
+			count: 1
+			path: src/Controller/Api/CartApiController.php
+
+		-
+			message: "#^Cannot access offset 'qty' on mixed\\.$#"
+			count: 2
+			path: src/Controller/Api/CartApiController.php
+
+		-
+			message: "#^Cannot access offset 'sortOrder' on mixed\\.$#"
+			count: 1
+			path: src/Controller/Api/CartApiController.php
+
+		-
+			message: "#^Cannot cast mixed to int\\.$#"
+			count: 4
+			path: src/Controller/Api/CartApiController.php
+
+		-
+			message: "#^Cannot cast mixed to string\\.$#"
+			count: 1
+			path: src/Controller/Api/CartApiController.php
+
+		-
+			message: "#^Method App\\\\Controller\\\\Api\\\\CartApiController\\:\\:serializeCart\\(\\) has parameter \\$cart with no type specified\\.$#"
+			count: 1
+			path: src/Controller/Api/CartApiController.php
+
+		-
+			message: "#^Method App\\\\Controller\\\\Api\\\\CartApiController\\:\\:serializeCart\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Controller/Api/CartApiController.php
+
+		-
+			message: "#^Parameter \\#1 \\$code of method Symfony\\\\Component\\\\HttpFoundation\\\\Response\\:\\:setStatusCode\\(\\) expects int, int\\|null given\\.$#"
+			count: 7
+			path: src/Controller/Api/CartApiController.php
+
+		-
+			message: "#^Parameter \\#1 \\$json of function json_decode expects string, string\\|false given\\.$#"
+			count: 8
+			path: src/Controller/Api/CartApiController.php
+
+		-
+			message: "#^Parameter \\#3 \\$atomic of method App\\\\Service\\\\CartManager\\:\\:executeBatch\\(\\) expects bool, mixed given\\.$#"
+			count: 1
+			path: src/Controller/Api/CartApiController.php
+
+		-
+			message: "#^Property App\\\\Controller\\\\Api\\\\CartApiController\\:\\:\\$carts is never read, only written\\.$#"
+			count: 1
+			path: src/Controller/Api/CartApiController.php
+
+		-
+			message: "#^Using nullsafe method call on non\\-nullable type Symfony\\\\Component\\\\HttpFoundation\\\\Session\\\\SessionInterface\\. Use \\-\\> instead\\.$#"
+			count: 1
+			path: src/Controller/Api/CsrfController.php
+
+		-
+			message: "#^Cannot access offset 'address' on mixed\\.$#"
+			count: 1
+			path: src/Controller/Api/DeliveryApiController.php
+
+		-
+			message: "#^Cannot access offset 'cityId' on mixed\\.$#"
+			count: 1
+			path: src/Controller/Api/DeliveryApiController.php
+
+		-
+			message: "#^Cannot access offset 'cityName' on mixed\\.$#"
+			count: 1
+			path: src/Controller/Api/DeliveryApiController.php
+
+		-
+			message: "#^Cannot access offset 'methodCode' on mixed\\.$#"
+			count: 1
+			path: src/Controller/Api/DeliveryApiController.php
+
+		-
+			message: "#^Cannot access offset 'pvzCode' on mixed\\.$#"
+			count: 1
+			path: src/Controller/Api/DeliveryApiController.php
+
+		-
+			message: "#^Cannot cast mixed to int\\.$#"
+			count: 1
+			path: src/Controller/Api/DeliveryApiController.php
+
+		-
+			message: "#^Cannot cast mixed to string\\.$#"
+			count: 4
+			path: src/Controller/Api/DeliveryApiController.php
+
+		-
+			message: "#^Parameter \\#1 \\$array of function array_intersect_key expects array, mixed given\\.$#"
+			count: 1
+			path: src/Controller/Api/DeliveryApiController.php
+
+		-
+			message: "#^Parameter \\#1 \\$callback of function array_map expects \\(callable\\(mixed\\)\\: mixed\\)\\|null, Closure\\(array\\)\\: array\\{code\\: mixed, name\\: mixed, address\\: mixed, city\\: mixed\\} given\\.$#"
+			count: 1
+			path: src/Controller/Api/DeliveryApiController.php
+
+		-
+			message: "#^Parameter \\#2 \\$default of method Symfony\\\\Component\\\\HttpFoundation\\\\InputBag\\<string\\>\\:\\:get\\(\\) expects string\\|null, int given\\.$#"
+			count: 3
+			path: src/Controller/Api/DeliveryApiController.php
+
+		-
+			message: "#^Parameter \\#1 \\$callback of function array_map expects \\(callable\\(mixed\\)\\: mixed\\)\\|null, Closure\\(array\\)\\: array\\{id\\: mixed, code\\: mixed, name\\: mixed, address\\: mixed, city\\: mixed, lat\\: mixed, lng\\: mixed, company\\: mixed\\} given\\.$#"
+			count: 1
+			path: src/Controller/Api/DeliveryPublicController.php
+
+		-
+			message: "#^Parameter \\#2 \\$default of method Symfony\\\\Component\\\\HttpFoundation\\\\InputBag\\<string\\>\\:\\:get\\(\\) expects string\\|null, int given\\.$#"
+			count: 3
+			path: src/Controller/Api/DeliveryPublicController.php
+
+		-
+			message: "#^Cannot access offset 'cityId' on mixed\\.$#"
+			count: 1
+			path: src/Controller/Catalog/CheckoutController.php
+
+		-
+			message: "#^Cannot access offset 'comment' on mixed\\.$#"
+			count: 1
+			path: src/Controller/Catalog/CheckoutController.php
+
+		-
+			message: "#^Cannot access offset 'email' on mixed\\.$#"
+			count: 1
+			path: src/Controller/Catalog/CheckoutController.php
+
+		-
+			message: "#^Cannot access offset 'firstName' on mixed\\.$#"
+			count: 1
+			path: src/Controller/Catalog/CheckoutController.php
+
+		-
+			message: "#^Cannot access offset 'paymentMethod' on mixed\\.$#"
+			count: 1
+			path: src/Controller/Catalog/CheckoutController.php
+
+		-
+			message: "#^Cannot access offset 'phone' on mixed\\.$#"
+			count: 1
+			path: src/Controller/Catalog/CheckoutController.php
+
+		-
+			message: "#^Cannot call method getId\\(\\) on App\\\\Entity\\\\Product\\|null\\.$#"
+			count: 2
+			path: src/Controller/Catalog/CheckoutController.php
+
+		-
+			message: "#^Cannot cast mixed to int\\.$#"
+			count: 1
+			path: src/Controller/Catalog/CheckoutController.php
+
+		-
+			message: "#^Cannot cast mixed to string\\.$#"
+			count: 5
+			path: src/Controller/Catalog/CheckoutController.php
+
+		-
+			message: "#^Left side of && is always true\\.$#"
+			count: 1
+			path: src/Controller/Catalog/CheckoutController.php
+
+		-
+			message: "#^Parameter \\#1 \\$data of method App\\\\Service\\\\CheckoutContext\\:\\:setCustomer\\(\\) expects array\\{name\\?\\: string, phone\\?\\: string, phoneNormal\\?\\: string, email\\?\\: string, ip\\?\\: string, userAgent\\?\\: string, comment\\?\\: string\\}, array\\{name\\: non\\-empty\\-string, phone\\: non\\-empty\\-string, email\\: non\\-falsy\\-string\\|null, ip\\: string\\|null, userAgent\\: string\\|null, comment\\: non\\-falsy\\-string\\|null\\} given\\.$#"
+			count: 1
+			path: src/Controller/Catalog/CheckoutController.php
+
+		-
+			message: "#^Parameter \\#1 \\$product_id of method App\\\\Entity\\\\OrderProducts\\:\\:setProductId\\(\\) expects int, int\\|null given\\.$#"
+			count: 1
+			path: src/Controller/Catalog/CheckoutController.php
+
+		-
+			message: "#^Parameter \\#1 \\$string of function sha1 expects string, string\\|false given\\.$#"
+			count: 3
+			path: src/Controller/ConfigController.php
+
+		-
+			message: "#^Cannot access offset '_password' on mixed\\.$#"
+			count: 1
+			path: src/Controller/SecurityController.php
+
+		-
+			message: "#^Cannot access offset '_username' on mixed\\.$#"
+			count: 1
+			path: src/Controller/SecurityController.php
+
+		-
+			message: "#^Cannot access offset 'name' on mixed\\.$#"
+			count: 1
+			path: src/Controller/SecurityController.php
+
+		-
+			message: "#^Cannot access offset 'password' on mixed\\.$#"
+			count: 1
+			path: src/Controller/SecurityController.php
+
+		-
+			message: "#^Cannot access offset 'username' on mixed\\.$#"
+			count: 1
+			path: src/Controller/SecurityController.php
+
+		-
+			message: "#^Cannot cast mixed to string\\.$#"
+			count: 2
+			path: src/Controller/SecurityController.php
+
+		-
+			message: "#^Parameter \\#1 \\$user of method Lexik\\\\Bundle\\\\JWTAuthenticationBundle\\\\Services\\\\JWTTokenManagerInterface\\:\\:create\\(\\) expects Symfony\\\\Component\\\\Security\\\\Core\\\\User\\\\UserInterface, object given\\.$#"
+			count: 1
+			path: src/Controller/SecurityController.php
+
+		-
+			message: "#^Parameter \\#1 \\$user of method Symfony\\\\Component\\\\PasswordHasher\\\\Hasher\\\\UserPasswordHasherInterface\\:\\:isPasswordValid\\(\\) expects Symfony\\\\Component\\\\Security\\\\Core\\\\User\\\\PasswordAuthenticatedUserInterface, object given\\.$#"
+			count: 1
+			path: src/Controller/SecurityController.php
+
+		-
+			message: "#^Service \"lexik_jwt_authentication\\.jwt_manager\" is not registered in the container\\.$#"
+			count: 1
+			path: src/Controller/SecurityController.php
+
+		-
+			message: "#^Argument of an invalid type array\\<int, string\\>\\|false supplied for foreach, only iterables are supported\\.$#"
+			count: 1
+			path: src/Controller/SessionController.php
+
+		-
+			message: "#^Binary operation \"\\.\" between array\\|bool\\|float\\|int\\|string\\|null and '/var/sessions' results in an error\\.$#"
+			count: 1
+			path: src/Controller/SessionController.php
+
+		-
+			message: "#^Method App\\\\Doctrine\\\\Listener\\\\ProductImageListener\\:\\:populateRelations\\(\\) has parameter \\$entityManager with no type specified\\.$#"
+			count: 1
+			path: src/Doctrine/Listener/ProductImageListener.php
+
+		-
+			message: "#^Method App\\\\Doctrine\\\\Listener\\\\ProductToCategoryListener\\:\\:populateRelations\\(\\) has parameter \\$entityManager with no type specified\\.$#"
+			count: 1
+			path: src/Doctrine/Listener/ProductToCategoryListener.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\AttributeGroup\\:\\:getAttributes\\(\\) return type with generic interface Doctrine\\\\Common\\\\Collections\\\\Collection does not specify its types\\: TKey, T$#"
+			count: 1
+			path: src/Entity/AttributeGroup.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\AttributeGroup\\:\\:\\$attributes with generic interface Doctrine\\\\Common\\\\Collections\\\\Collection does not specify its types\\: TKey, T$#"
+			count: 1
+			path: src/Entity/AttributeGroup.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\Carousel\\:\\:getProductsId\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Entity/Carousel.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\Carousel\\:\\:setProductsId\\(\\) has parameter \\$productsId with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Entity/Carousel.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\Carousel\\:\\:\\$productsId type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Entity/Carousel.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\Cart\\:\\:getShippingData\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Entity/Cart.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\Cart\\:\\:setShippingData\\(\\) has parameter \\$shippingData with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Entity/Cart.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\Cart\\:\\:\\$shippingData type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Entity/Cart.php
+
+		-
+			message: "#^Class App\\\\Entity\\\\CartIdempotency has an uninitialized property \\$cartId\\. Give it default value or assign it in the constructor\\.$#"
+			count: 1
+			path: src/Entity/CartIdempotency.php
+
+		-
+			message: "#^Class App\\\\Entity\\\\CartIdempotency has an uninitialized property \\$endpoint\\. Give it default value or assign it in the constructor\\.$#"
+			count: 1
+			path: src/Entity/CartIdempotency.php
+
+		-
+			message: "#^Class App\\\\Entity\\\\CartIdempotency has an uninitialized property \\$expiresAt\\. Give it default value or assign it in the constructor\\.$#"
+			count: 1
+			path: src/Entity/CartIdempotency.php
+
+		-
+			message: "#^Class App\\\\Entity\\\\CartIdempotency has an uninitialized property \\$idempotencyKey\\. Give it default value or assign it in the constructor\\.$#"
+			count: 1
+			path: src/Entity/CartIdempotency.php
+
+		-
+			message: "#^Class App\\\\Entity\\\\CartIdempotency has an uninitialized property \\$requestHash\\. Give it default value or assign it in the constructor\\.$#"
+			count: 1
+			path: src/Entity/CartIdempotency.php
+
+		-
+			message: "#^Class App\\\\Entity\\\\CartIdempotency has an uninitialized property \\$status\\. Give it default value or assign it in the constructor\\.$#"
+			count: 1
+			path: src/Entity/CartIdempotency.php
+
+		-
+			message: "#^Class App\\\\Entity\\\\CartItem has an uninitialized property \\$pricedAt\\. Give it default value or assign it in the constructor\\.$#"
+			count: 1
+			path: src/Entity/CartItem.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\CartItem\\:\\:getOptionsSnapshot\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Entity/CartItem.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\CartItem\\:\\:getSelectedOptionsData\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Entity/CartItem.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\CartItem\\:\\:setOptionsSnapshot\\(\\) has parameter \\$snapshot with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Entity/CartItem.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\CartItem\\:\\:setSelectedOptionsData\\(\\) has parameter \\$data with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Entity/CartItem.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\CartItem\\:\\:\\$optionsSnapshot type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Entity/CartItem.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\CartItem\\:\\:\\$selectedOptionsData type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Entity/CartItem.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\Category\\:\\:getProduct\\(\\) return type with generic interface Doctrine\\\\Common\\\\Collections\\\\Collection does not specify its types\\: TKey, T$#"
+			count: 1
+			path: src/Entity/Category.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\Category\\:\\:\\$product with generic interface Doctrine\\\\Common\\\\Collections\\\\Collection does not specify its types\\: TKey, T$#"
+			count: 1
+			path: src/Entity/Category.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\City\\:\\:getPopulation\\(\\) should return string\\|null but returns int\\|null\\.$#"
+			count: 1
+			path: src/Entity/City.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\City\\:\\:\\$population \\(int\\|null\\) does not accept string\\|null\\.$#"
+			count: 1
+			path: src/Entity/City.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\CityModal\\:\\:\\$fiasId has no type specified\\.$#"
+			count: 1
+			path: src/Entity/CityModal.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\CityModal\\:\\:\\$id has no type specified\\.$#"
+			count: 1
+			path: src/Entity/CityModal.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\CityModal\\:\\:\\$name has no type specified\\.$#"
+			count: 1
+			path: src/Entity/CityModal.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\CityModal\\:\\:\\$sort has no type specified\\.$#"
+			count: 1
+			path: src/Entity/CityModal.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\DeliveryType\\:\\:\\$active has no type specified\\.$#"
+			count: 1
+			path: src/Entity/DeliveryType.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\DeliveryType\\:\\:\\$code has no type specified\\.$#"
+			count: 1
+			path: src/Entity/DeliveryType.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\DeliveryType\\:\\:\\$default has no type specified\\.$#"
+			count: 1
+			path: src/Entity/DeliveryType.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\DeliveryType\\:\\:\\$id has no type specified\\.$#"
+			count: 1
+			path: src/Entity/DeliveryType.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\DeliveryType\\:\\:\\$name has no type specified\\.$#"
+			count: 1
+			path: src/Entity/DeliveryType.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\DeliveryType\\:\\:\\$sortOrder has no type specified\\.$#"
+			count: 1
+			path: src/Entity/DeliveryType.php
+
+		-
+			message: "#^Class App\\\\Entity\\\\Fias has an uninitialized property \\$level\\. Give it default value or assign it in the constructor\\.$#"
+			count: 1
+			path: src/Entity/Fias.php
+
+		-
+			message: "#^Class App\\\\Entity\\\\Fias has an uninitialized property \\$parentId\\. Give it default value or assign it in the constructor\\.$#"
+			count: 1
+			path: src/Entity/Fias.php
+
+		-
+			message: "#^Class App\\\\Entity\\\\Option has an uninitialized property \\$name\\. Give it default value or assign it in the constructor\\.$#"
+			count: 1
+			path: src/Entity/Option.php
+
+		-
+			message: "#^Class App\\\\Entity\\\\Option has an uninitialized property \\$sortOrder\\. Give it default value or assign it in the constructor\\.$#"
+			count: 1
+			path: src/Entity/Option.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\Option\\:\\:getOptionValues\\(\\) return type with generic interface Doctrine\\\\Common\\\\Collections\\\\Collection does not specify its types\\: TKey, T$#"
+			count: 1
+			path: src/Entity/Option.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\Option\\:\\:\\$optionValues with generic interface Doctrine\\\\Common\\\\Collections\\\\Collection does not specify its types\\: TKey, T$#"
+			count: 1
+			path: src/Entity/Option.php
+
+		-
+			message: "#^Class App\\\\Entity\\\\OptionValue has an uninitialized property \\$optionType\\. Give it default value or assign it in the constructor\\.$#"
+			count: 1
+			path: src/Entity/OptionValue.php
+
+		-
+			message: "#^Class App\\\\Entity\\\\OptionValue has an uninitialized property \\$sortOrder\\. Give it default value or assign it in the constructor\\.$#"
+			count: 1
+			path: src/Entity/OptionValue.php
+
+		-
+			message: "#^Class App\\\\Entity\\\\OptionValue has an uninitialized property \\$value\\. Give it default value or assign it in the constructor\\.$#"
+			count: 1
+			path: src/Entity/OptionValue.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\OptionValue\\:\\:getCode\\(\\) should return string but returns string\\|null\\.$#"
+			count: 1
+			path: src/Entity/OptionValue.php
+
+		-
+			message: "#^Class App\\\\Entity\\\\Order has an uninitialized property \\$customer\\. Give it default value or assign it in the constructor\\.$#"
+			count: 1
+			path: src/Entity/Order.php
+
+		-
+			message: "#^Class App\\\\Entity\\\\Order has an uninitialized property \\$delivery\\. Give it default value or assign it in the constructor\\.$#"
+			count: 1
+			path: src/Entity/Order.php
+
+		-
+			message: "#^Doctrine\\\\Common\\\\Collections\\\\ArrayCollection\\<\\*NEVER\\*, \\*NEVER\\*\\> does not accept App\\\\Entity\\\\OrderProducts\\.$#"
+			count: 1
+			path: src/Entity/Order.php
+
+		-
+			message: "#^If condition is always false\\.$#"
+			count: 1
+			path: src/Entity/Order.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\Order\\:\\:getProducts\\(\\) return type with generic interface Doctrine\\\\Common\\\\Collections\\\\Collection does not specify its types\\: TKey, T$#"
+			count: 1
+			path: src/Entity/Order.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\Order\\:\\:setDateAdded\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Entity/Order.php
+
+		-
+			message: "#^Negated boolean expression is always true\\.$#"
+			count: 1
+			path: src/Entity/Order.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\Order\\:\\:\\$customer \\(App\\\\Entity\\\\OrderCustomer\\) does not accept App\\\\Entity\\\\OrderCustomer\\|null\\.$#"
+			count: 1
+			path: src/Entity/Order.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\Order\\:\\:\\$delivery \\(App\\\\Entity\\\\OrderDelivery\\) does not accept App\\\\Entity\\\\OrderDelivery\\|null\\.$#"
+			count: 1
+			path: src/Entity/Order.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderCustomer\\:\\:\\$comment has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderCustomer.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderCustomer\\:\\:\\$email has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderCustomer.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderCustomer\\:\\:\\$id has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderCustomer.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderCustomer\\:\\:\\$ip has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderCustomer.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderCustomer\\:\\:\\$name has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderCustomer.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderCustomer\\:\\:\\$orders has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderCustomer.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderCustomer\\:\\:\\$phone has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderCustomer.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderCustomer\\:\\:\\$phoneNormal has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderCustomer.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderCustomer\\:\\:\\$userAgent has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderCustomer.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\OrderDelivery\\:\\:getPricingTrace\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Entity/OrderDelivery.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\OrderDelivery\\:\\:setPricingTrace\\(\\) has parameter \\$pricingTrace with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Entity/OrderDelivery.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderDelivery\\:\\:\\$address has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderDelivery.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderDelivery\\:\\:\\$city has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderDelivery.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderDelivery\\:\\:\\$cost has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderDelivery.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderDelivery\\:\\:\\$delivery_date has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderDelivery.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderDelivery\\:\\:\\$delivery_time has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderDelivery.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderDelivery\\:\\:\\$id has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderDelivery.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderDelivery\\:\\:\\$isCustomCalculate has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderDelivery.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderDelivery\\:\\:\\$isFree has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderDelivery.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderDelivery\\:\\:\\$orders has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderDelivery.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderDelivery\\:\\:\\$pricingTrace type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Entity/OrderDelivery.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderDelivery\\:\\:\\$pvz has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderDelivery.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderDelivery\\:\\:\\$pvzCode has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderDelivery.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderDelivery\\:\\:\\$type has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderDelivery.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\OrderProductOptions\\:\\:getValue\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Entity/OrderProductOptions.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\OrderProductOptions\\:\\:setValue\\(\\) has parameter \\$value with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Entity/OrderProductOptions.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderProductOptions\\:\\:\\$id has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderProductOptions.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderProductOptions\\:\\:\\$optionName has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderProductOptions.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderProductOptions\\:\\:\\$price has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderProductOptions.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderProductOptions\\:\\:\\$product has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderProductOptions.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderProductOptions\\:\\:\\$product_id has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderProductOptions.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderProductOptions\\:\\:\\$value has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderProductOptions.php
+
+		-
+			message: "#^Doctrine\\\\Common\\\\Collections\\\\ArrayCollection\\<\\*NEVER\\*, \\*NEVER\\*\\> does not accept App\\\\Entity\\\\OrderProductOptions\\.$#"
+			count: 1
+			path: src/Entity/OrderProducts.php
+
+		-
+			message: "#^If condition is always false\\.$#"
+			count: 1
+			path: src/Entity/OrderProducts.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\OrderProducts\\:\\:getOptions\\(\\) return type with generic interface Doctrine\\\\Common\\\\Collections\\\\Collection does not specify its types\\: TKey, T$#"
+			count: 1
+			path: src/Entity/OrderProducts.php
+
+		-
+			message: "#^Negated boolean expression is always true\\.$#"
+			count: 1
+			path: src/Entity/OrderProducts.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderProducts\\:\\:\\$id has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderProducts.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderProducts\\:\\:\\$orders has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderProducts.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderProducts\\:\\:\\$price has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderProducts.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderProducts\\:\\:\\$product_id has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderProducts.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderProducts\\:\\:\\$product_name has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderProducts.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderProducts\\:\\:\\$quantity has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderProducts.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderProducts\\:\\:\\$salePrice has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderProducts.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderStatus\\:\\:\\$id has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderStatus.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderStatus\\:\\:\\$name has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderStatus.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\OrderStatus\\:\\:\\$sort has no type specified\\.$#"
+			count: 1
+			path: src/Entity/OrderStatus.php
+
+		-
+			message: "#^Cannot call method getAttribute\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Cannot call method getAttributeGroup\\(\\) on mixed\\.$#"
+			count: 2
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Cannot call method getAttributes\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Cannot call method getBoolValue\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Cannot call method getBulbsCount\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Cannot call method getDataType\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Cannot call method getDateValue\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Cannot call method getDecimalValue\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Cannot call method getHeight\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Cannot call method getIntValue\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Cannot call method getJsonValue\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Cannot call method getLightingArea\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Cannot call method getOption\\(\\) on mixed\\.$#"
+			count: 2
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Cannot call method getPosition\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Cannot call method getPrice\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Cannot call method getSku\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Cannot call method getStringValue\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Cannot call method getTextValue\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Cannot call method getUnit\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Cannot call method getValue\\(\\) on mixed\\.$#"
+			count: 2
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\Product\\:\\:getAttributeAssignments\\(\\) return type with generic interface Doctrine\\\\Common\\\\Collections\\\\Collection does not specify its types\\: TKey, T$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\Product\\:\\:getAttributeJson\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\Product\\:\\:getAttributesStructured\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\Product\\:\\:getCarousels\\(\\) return type with generic interface Doctrine\\\\Common\\\\Collections\\\\Collection does not specify its types\\: TKey, T$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\Product\\:\\:getCategory\\(\\) return type with generic interface Doctrine\\\\Common\\\\Collections\\\\Collection does not specify its types\\: TKey, T$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\Product\\:\\:getImage\\(\\) return type with generic interface Doctrine\\\\Common\\\\Collections\\\\Collection does not specify its types\\: TKey, T$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\Product\\:\\:getOptionAssignments\\(\\) return type with generic interface Doctrine\\\\Common\\\\Collections\\\\Collection does not specify its types\\: TKey, T$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\Product\\:\\:getOptionsJson\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\Product\\:\\:getOptionsStructured\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\Product\\:\\:setAttributeJson\\(\\) has parameter \\$attributeJson with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\Product\\:\\:setOptionsJson\\(\\) has parameter \\$optionsJson with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\Product\\:\\:\\$attributeAssignments with generic interface Doctrine\\\\Common\\\\Collections\\\\Collection does not specify its types\\: TKey, T$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\Product\\:\\:\\$attributeJson type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\Product\\:\\:\\$carousels with generic interface Doctrine\\\\Common\\\\Collections\\\\Collection does not specify its types\\: TKey, T$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\Product\\:\\:\\$category with generic interface Doctrine\\\\Common\\\\Collections\\\\Collection does not specify its types\\: TKey, T$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\Product\\:\\:\\$image with generic interface Doctrine\\\\Common\\\\Collections\\\\Collection does not specify its types\\: TKey, T$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\Product\\:\\:\\$optionAssignments with generic interface Doctrine\\\\Common\\\\Collections\\\\Collection does not specify its types\\: TKey, T$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\Product\\:\\:\\$optionsJson type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\ProductAttributeAssignment\\:\\:getJsonValue\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Entity/ProductAttributeAssignment.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\ProductAttributeAssignment\\:\\:setJsonValue\\(\\) has parameter \\$jsonValue with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Entity/ProductAttributeAssignment.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\ProductAttributeAssignment\\:\\:\\$jsonValue type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Entity/ProductAttributeAssignment.php
+
+		-
+			message: "#^Class App\\\\Entity\\\\ProductOptionValueAssignment has an uninitialized property \\$option\\. Give it default value or assign it in the constructor\\.$#"
+			count: 1
+			path: src/Entity/ProductOptionValueAssignment.php
+
+		-
+			message: "#^Class App\\\\Entity\\\\ProductOptionValueAssignment has an uninitialized property \\$product\\. Give it default value or assign it in the constructor\\.$#"
+			count: 1
+			path: src/Entity/ProductOptionValueAssignment.php
+
+		-
+			message: "#^Class App\\\\Entity\\\\ProductOptionValueAssignment has an uninitialized property \\$value\\. Give it default value or assign it in the constructor\\.$#"
+			count: 1
+			path: src/Entity/ProductOptionValueAssignment.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\ProductOptionValueAssignment\\:\\:getAttributes\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Entity/ProductOptionValueAssignment.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\ProductOptionValueAssignment\\:\\:setAttributes\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Entity/ProductOptionValueAssignment.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\ProductOptionValueAssignment\\:\\:\\$attributes type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Entity/ProductOptionValueAssignment.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\Settings\\:\\:\\$id has no type specified\\.$#"
+			count: 1
+			path: src/Entity/Settings.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\Settings\\:\\:\\$name has no type specified\\.$#"
+			count: 1
+			path: src/Entity/Settings.php
+
+		-
+			message: "#^Property App\\\\Entity\\\\Settings\\:\\:\\$value has no type specified\\.$#"
+			count: 1
+			path: src/Entity/Settings.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\User\\:\\:getUserIdentifier\\(\\) should return non\\-empty\\-string but returns string\\.$#"
+			count: 1
+			path: src/Entity/User.php
+
+		-
+			message: "#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\\.$#"
+			count: 1
+			path: src/EventListener/CartCookieListener.php
+
+		-
+			message: "#^Cannot access offset 'value' on mixed\\.$#"
+			count: 2
+			path: src/EventListener/CartCookieListener.php
+
+		-
+			message: "#^Only iterables can be unpacked, mixed given in argument \\#3\\.$#"
+			count: 1
+			path: src/EventListener/CartCookieListener.php
+
+		-
+			message: "#^Parameter \\#1 \\$name of class Symfony\\\\Component\\\\HttpFoundation\\\\Cookie constructor expects string, mixed given\\.$#"
+			count: 1
+			path: src/EventListener/CartCookieListener.php
+
+		-
+			message: "#^Parameter \\#2 \\$value of class Symfony\\\\Component\\\\HttpFoundation\\\\Cookie constructor expects string\\|null, mixed given\\.$#"
+			count: 1
+			path: src/EventListener/CartCookieListener.php
+
+		-
+			message: "#^Parameter \\#3 \\$expire of class Symfony\\\\Component\\\\HttpFoundation\\\\Cookie constructor expects DateTimeInterface\\|int\\|string, mixed given\\.$#"
+			count: 1
+			path: src/EventListener/CartCookieListener.php
+
+		-
+			message: "#^Left side of && is always true\\.$#"
+			count: 1
+			path: src/EventListener/CartSessionCleanupListener.php
+
+		-
+			message: "#^Property App\\\\EventListener\\\\CartSessionCleanupListener\\:\\:\\$sessionStorage is never read, only written\\.$#"
+			count: 1
+			path: src/EventListener/CartSessionCleanupListener.php
+
+		-
+			message: "#^Method App\\\\EventListener\\\\CategoryCacheListener\\:\\:postRemove\\(\\) has parameter \\$event with generic class Doctrine\\\\Persistence\\\\Event\\\\LifecycleEventArgs but does not specify its types\\: TObjectManager$#"
+			count: 1
+			path: src/EventListener/CategoryCacheListener.php
+
+		-
+			message: "#^Method App\\\\EventListener\\\\CategoryCacheListener\\:\\:postUpdate\\(\\) has parameter \\$event with generic class Doctrine\\\\Persistence\\\\Event\\\\LifecycleEventArgs but does not specify its types\\: TObjectManager$#"
+			count: 1
+			path: src/EventListener/CategoryCacheListener.php
+
+		-
+			message: "#^Method App\\\\EventListener\\\\ProductImageCacheListener\\:\\:postPersist\\(\\) has parameter \\$event with generic class Doctrine\\\\Persistence\\\\Event\\\\LifecycleEventArgs but does not specify its types\\: TObjectManager$#"
+			count: 1
+			path: src/EventListener/ProductImageCacheListener.php
+
+		-
+			message: "#^Parameter \\#1 \\$cwd of method Symfony\\\\Component\\\\Process\\\\Process\\:\\:setWorkingDirectory\\(\\) expects string, string\\|false given\\.$#"
+			count: 1
+			path: src/EventListener/ProductImageCacheListener.php
+
+		-
+			message: "#^Property App\\\\EventListener\\\\ProductImageCacheListener\\:\\:\\$cacheManager is never read, only written\\.$#"
+			count: 1
+			path: src/EventListener/ProductImageCacheListener.php
+
+		-
+			message: "#^Parameter \\#1 \\$value of method Symfony\\\\Component\\\\HttpFoundation\\\\Cookie\\:\\:withValue\\(\\) expects string\\|null, mixed given\\.$#"
+			count: 1
+			path: src/EventSubscriber/CartCookieSubscriber.php
+
+		-
+			message: "#^Constant App\\\\EventSubscriber\\\\CartLoginSubscriber\\:\\:CART_TTL_DAYS is unused\\.$#"
+			count: 1
+			path: src/EventSubscriber/CartLoginSubscriber.php
+
+		-
+			message: "#^If condition is always true\\.$#"
+			count: 1
+			path: src/EventSubscriber/CartLoginSubscriber.php
+
+		-
+			message: "#^Parameter \\#1 \\$userId of method App\\\\Repository\\\\CartRepository\\:\\:findActiveByUserId\\(\\) expects int, int\\|null given\\.$#"
+			count: 1
+			path: src/EventSubscriber/CartLoginSubscriber.php
+
+		-
+			message: "#^Right side of && is always true\\.$#"
+			count: 1
+			path: src/EventSubscriber/CartLoginSubscriber.php
+
+		-
+			message: "#^Cannot cast mixed to string\\.$#"
+			count: 1
+			path: src/EventSubscriber/DeliveryContextSubscriber.php
+
+		-
+			message: "#^Cannot access offset 'methodCode' on mixed\\.$#"
+			count: 1
+			path: src/EventSubscriber/DeliveryDefaultSubscriber.php
+
+		-
+			message: "#^Cannot access offset 'type' on mixed\\.$#"
+			count: 1
+			path: src/EventSubscriber/DeliveryDefaultSubscriber.php
+
+		-
+			message: "#^Property App\\\\EventSubscriber\\\\DeliveryDefaultSubscriber\\:\\:\\$requestStack is never read, only written\\.$#"
+			count: 1
+			path: src/EventSubscriber/DeliveryDefaultSubscriber.php
+
+		-
+			message: "#^Right side of && is always true\\.$#"
+			count: 1
+			path: src/EventSubscriber/DeliveryDefaultSubscriber.php
+
+		-
+			message: "#^Strict comparison using \\=\\=\\= between Symfony\\\\Component\\\\HttpFoundation\\\\Session\\\\SessionInterface and null will always evaluate to false\\.$#"
+			count: 1
+			path: src/EventSubscriber/DeliveryDefaultSubscriber.php
+
+		-
+			message: "#^Parameter \\#9 \\$sameSite of static method Symfony\\\\Component\\\\HttpFoundation\\\\Cookie\\:\\:create\\(\\) expects ''\\|'lax'\\|'none'\\|'strict'\\|null, string given\\.$#"
+			count: 2
+			path: src/Http/CartCookieFactory.php
+
+		-
+			message: "#^Expression on left side of \\?\\? is not nullable\\.$#"
+			count: 1
+			path: src/Http/CartEtags.php
+
+		-
+			message: "#^Using nullsafe method call on non\\-nullable type DateTimeImmutable\\. Use \\-\\> instead\\.$#"
+			count: 1
+			path: src/Http/CartEtags.php
+
+		-
+			message: "#^Method App\\\\Http\\\\CartResponse\\:\\:buildPayload\\(\\) has parameter \\$changes with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Http/CartResponse.php
+
+		-
+			message: "#^Method App\\\\Http\\\\CartResponse\\:\\:buildPayload\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Http/CartResponse.php
+
+		-
+			message: "#^Method App\\\\Http\\\\CartResponse\\:\\:withBatchError\\(\\) has parameter \\$results with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Http/CartResponse.php
+
+		-
+			message: "#^Method App\\\\Http\\\\CartResponse\\:\\:withBatchResult\\(\\) has parameter \\$changes with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Http/CartResponse.php
+
+		-
+			message: "#^Method App\\\\Http\\\\CartResponse\\:\\:withBatchResult\\(\\) has parameter \\$results with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Http/CartResponse.php
+
+		-
+			message: "#^Method App\\\\Http\\\\CartResponse\\:\\:withCart\\(\\) has parameter \\$changes with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Http/CartResponse.php
+
+		-
+			message: "#^Class App\\\\Repository\\\\AttributeGroupRepository extends generic class Doctrine\\\\Bundle\\\\DoctrineBundle\\\\Repository\\\\ServiceEntityRepository but does not specify its types\\: TEntityClass$#"
+			count: 1
+			path: src/Repository/AttributeGroupRepository.php
+
+		-
+			message: "#^Class App\\\\Repository\\\\AttributeRepository extends generic class Doctrine\\\\Bundle\\\\DoctrineBundle\\\\Repository\\\\ServiceEntityRepository but does not specify its types\\: TEntityClass$#"
+			count: 1
+			path: src/Repository/AttributeRepository.php
+
+		-
+			message: "#^Class App\\\\Repository\\\\CarouselRepository extends generic class Doctrine\\\\Bundle\\\\DoctrineBundle\\\\Repository\\\\ServiceEntityRepository but does not specify its types\\: TEntityClass$#"
+			count: 1
+			path: src/Repository/CarouselRepository.php
+
+		-
+			message: "#^Class App\\\\Repository\\\\CartItemRepository extends generic class Doctrine\\\\Bundle\\\\DoctrineBundle\\\\Repository\\\\ServiceEntityRepository but does not specify its types\\: TEntityClass$#"
+			count: 1
+			path: src/Repository/CartItemRepository.php
+
+		-
+			message: "#^Method App\\\\Repository\\\\CartItemRepository\\:\\:removeCartItemsForProduct\\(\\) should return int but returns mixed\\.$#"
+			count: 1
+			path: src/Repository/CartItemRepository.php
+
+		-
+			message: "#^Cannot call method equals\\(\\) on Symfony\\\\Component\\\\Uid\\\\Ulid\\|null\\.$#"
+			count: 1
+			path: src/Repository/CartRepository.php
+
+		-
+			message: "#^Cannot call method getId\\(\\) on App\\\\Entity\\\\Cart\\|null\\.$#"
+			count: 1
+			path: src/Repository/CartRepository.php
+
+		-
+			message: "#^Class App\\\\Repository\\\\CartRepository extends generic class Doctrine\\\\Bundle\\\\DoctrineBundle\\\\Repository\\\\ServiceEntityRepository but does not specify its types\\: TEntityClass$#"
+			count: 1
+			path: src/Repository/CartRepository.php
+
+		-
+			message: "#^Method App\\\\Repository\\\\CartRepository\\:\\:findActiveById\\(\\) should return App\\\\Entity\\\\Cart\\|null but returns mixed\\.$#"
+			count: 1
+			path: src/Repository/CartRepository.php
+
+		-
+			message: "#^Method App\\\\Repository\\\\CartRepository\\:\\:findActiveByToken\\(\\) should return App\\\\Entity\\\\Cart\\|null but returns mixed\\.$#"
+			count: 1
+			path: src/Repository/CartRepository.php
+
+		-
+			message: "#^Method App\\\\Repository\\\\CartRepository\\:\\:findActiveByUserId\\(\\) should return App\\\\Entity\\\\Cart\\|null but returns mixed\\.$#"
+			count: 1
+			path: src/Repository/CartRepository.php
+
+		-
+			message: "#^Method App\\\\Repository\\\\CartRepository\\:\\:findItemForUpdate\\(\\) should return App\\\\Entity\\\\CartItem\\|null but returns mixed\\.$#"
+			count: 1
+			path: src/Repository/CartRepository.php
+
+		-
+			message: "#^Method App\\\\Repository\\\\CategoryRepository\\:\\:findByFooterVisibility\\(\\) should return array\\<App\\\\Entity\\\\Category\\> but returns mixed\\.$#"
+			count: 1
+			path: src/Repository/CategoryRepository.php
+
+		-
+			message: "#^Method App\\\\Repository\\\\CategoryRepository\\:\\:findByNavbarVisibility\\(\\) should return array\\<App\\\\Entity\\\\Category\\> but returns mixed\\.$#"
+			count: 1
+			path: src/Repository/CategoryRepository.php
+
+		-
+			message: "#^Method App\\\\Repository\\\\CategoryRepository\\:\\:findOneVisibleBySlug\\(\\) should return App\\\\Entity\\\\Category\\|null but returns mixed\\.$#"
+			count: 1
+			path: src/Repository/CategoryRepository.php
+
+		-
+			message: "#^Method App\\\\Repository\\\\FiasRepository\\:\\:findByLevel\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Repository/FiasRepository.php
+
+		-
+			message: "#^Method App\\\\Repository\\\\FiasRepository\\:\\:findByLevel\\(\\) should return array but returns mixed\\.$#"
+			count: 1
+			path: src/Repository/FiasRepository.php
+
+		-
+			message: "#^Method App\\\\Repository\\\\FiasRepository\\:\\:findByName\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Repository/FiasRepository.php
+
+		-
+			message: "#^Method App\\\\Repository\\\\FiasRepository\\:\\:findByName\\(\\) should return array but returns mixed\\.$#"
+			count: 1
+			path: src/Repository/FiasRepository.php
+
+		-
+			message: "#^Method App\\\\Repository\\\\FiasRepository\\:\\:findByPostalcode\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Repository/FiasRepository.php
+
+		-
+			message: "#^Method App\\\\Repository\\\\FiasRepository\\:\\:findByPostalcode\\(\\) should return array but returns mixed\\.$#"
+			count: 1
+			path: src/Repository/FiasRepository.php
+
+		-
+			message: "#^Method App\\\\Repository\\\\FiasRepository\\:\\:findChildren\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Repository/FiasRepository.php
+
+		-
+			message: "#^Method App\\\\Repository\\\\FiasRepository\\:\\:findChildren\\(\\) should return array but returns mixed\\.$#"
+			count: 1
+			path: src/Repository/FiasRepository.php
+
+		-
+			message: "#^Method App\\\\Repository\\\\FiasRepository\\:\\:findCities\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Repository/FiasRepository.php
+
+		-
+			message: "#^Method App\\\\Repository\\\\FiasRepository\\:\\:findCities\\(\\) should return array but returns mixed\\.$#"
+			count: 1
+			path: src/Repository/FiasRepository.php
+
+		-
+			message: "#^Method App\\\\Repository\\\\FiasRepository\\:\\:findRegions\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Repository/FiasRepository.php
+
+		-
+			message: "#^Method App\\\\Repository\\\\FiasRepository\\:\\:findSettlements\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Repository/FiasRepository.php
+
+		-
+			message: "#^Method App\\\\Repository\\\\FiasRepository\\:\\:findSettlements\\(\\) should return array but returns mixed\\.$#"
+			count: 1
+			path: src/Repository/FiasRepository.php
+
+		-
+			message: "#^Method App\\\\Repository\\\\FiasRepository\\:\\:findStreets\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Repository/FiasRepository.php
+
+		-
+			message: "#^Method App\\\\Repository\\\\FiasRepository\\:\\:findStreets\\(\\) should return array but returns mixed\\.$#"
+			count: 1
+			path: src/Repository/FiasRepository.php
+
+		-
+			message: "#^Method App\\\\Repository\\\\FiasRepository\\:\\:getFullPath\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Repository/FiasRepository.php
+
+		-
+			message: "#^Class App\\\\Repository\\\\ManufacturerRepository extends generic class Doctrine\\\\Bundle\\\\DoctrineBundle\\\\Repository\\\\ServiceEntityRepository but does not specify its types\\: TEntityClass$#"
+			count: 1
+			path: src/Repository/ManufacturerRepository.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Repository\\\\OptionRepository\\:\\:\\$_em\\.$#"
+			count: 4
+			path: src/Repository/OptionRepository.php
+
+		-
+			message: "#^Class App\\\\Repository\\\\OptionRepository extends generic class Doctrine\\\\Bundle\\\\DoctrineBundle\\\\Repository\\\\ServiceEntityRepository but does not specify its types\\: TEntityClass$#"
+			count: 1
+			path: src/Repository/OptionRepository.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Repository\\\\OptionValueRepository\\:\\:\\$_em\\.$#"
+			count: 4
+			path: src/Repository/OptionValueRepository.php
+
+		-
+			message: "#^Class App\\\\Repository\\\\OptionValueRepository extends generic class Doctrine\\\\Bundle\\\\DoctrineBundle\\\\Repository\\\\ServiceEntityRepository but does not specify its types\\: TEntityClass$#"
+			count: 1
+			path: src/Repository/OptionValueRepository.php
+
+		-
+			message: "#^Class App\\\\Repository\\\\OrderCustomerRepository extends generic class Doctrine\\\\Bundle\\\\DoctrineBundle\\\\Repository\\\\ServiceEntityRepository but does not specify its types\\: TEntityClass$#"
+			count: 1
+			path: src/Repository/OrderCustomerRepository.php
+
+		-
+			message: "#^Class App\\\\Repository\\\\OrderDeliveryRepository extends generic class Doctrine\\\\Bundle\\\\DoctrineBundle\\\\Repository\\\\ServiceEntityRepository but does not specify its types\\: TEntityClass$#"
+			count: 1
+			path: src/Repository/OrderDeliveryRepository.php
+
+		-
+			message: "#^Class App\\\\Repository\\\\OrderProductOptionsRepository extends generic class Doctrine\\\\Bundle\\\\DoctrineBundle\\\\Repository\\\\ServiceEntityRepository but does not specify its types\\: TEntityClass$#"
+			count: 1
+			path: src/Repository/OrderProductOptionsRepository.php
+
+		-
+			message: "#^Class App\\\\Repository\\\\OrderProductsRepository extends generic class Doctrine\\\\Bundle\\\\DoctrineBundle\\\\Repository\\\\ServiceEntityRepository but does not specify its types\\: TEntityClass$#"
+			count: 1
+			path: src/Repository/OrderProductsRepository.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Repository\\\\OrderRepository\\:\\:\\$_em\\.$#"
+			count: 4
+			path: src/Repository/OrderRepository.php
+
+		-
+			message: "#^Class App\\\\Repository\\\\OrderRepository extends generic class Doctrine\\\\Bundle\\\\DoctrineBundle\\\\Repository\\\\ServiceEntityRepository but does not specify its types\\: TEntityClass$#"
+			count: 1
+			path: src/Repository/OrderRepository.php
+
+		-
+			message: "#^Class App\\\\Repository\\\\OrderStatusRepository extends generic class Doctrine\\\\Bundle\\\\DoctrineBundle\\\\Repository\\\\ServiceEntityRepository but does not specify its types\\: TEntityClass$#"
+			count: 1
+			path: src/Repository/OrderStatusRepository.php
+
+		-
+			message: "#^Class App\\\\Repository\\\\ProductAttributeAssignmentRepository extends generic class Doctrine\\\\Bundle\\\\DoctrineBundle\\\\Repository\\\\ServiceEntityRepository but does not specify its types\\: TEntityClass$#"
+			count: 1
+			path: src/Repository/ProductAttributeAssignmentRepository.php
+
+		-
+			message: "#^Class App\\\\Repository\\\\ProductImageRepository extends generic class Doctrine\\\\Bundle\\\\DoctrineBundle\\\\Repository\\\\ServiceEntityRepository but does not specify its types\\: TEntityClass$#"
+			count: 1
+			path: src/Repository/ProductImageRepository.php
+
+		-
+			message: "#^Class App\\\\Repository\\\\ProductOptionValueAssignmentRepository extends generic class Doctrine\\\\Bundle\\\\DoctrineBundle\\\\Repository\\\\ServiceEntityRepository but does not specify its types\\: TEntityClass$#"
+			count: 1
+			path: src/Repository/ProductOptionValueAssignmentRepository.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Repository\\\\ProductRepository\\:\\:\\$_em\\.$#"
+			count: 4
+			path: src/Repository/ProductRepository.php
+
+		-
+			message: "#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\\.$#"
+			count: 1
+			path: src/Repository/ProductRepository.php
+
+		-
+			message: "#^Cannot call method addAttributeAssignment\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Repository/ProductRepository.php
+
+		-
+			message: "#^Cannot call method getAttributeAssignments\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Repository/ProductRepository.php
+
+		-
+			message: "#^Class App\\\\Repository\\\\ProductRepository extends generic class Doctrine\\\\Bundle\\\\DoctrineBundle\\\\Repository\\\\ServiceEntityRepository but does not specify its types\\: TEntityClass$#"
+			count: 1
+			path: src/Repository/ProductRepository.php
+
+		-
+			message: "#^Method App\\\\Repository\\\\ProductRepository\\:\\:findActiveByCategory\\(\\) should return array\\<App\\\\Entity\\\\Product\\> but returns mixed\\.$#"
+			count: 1
+			path: src/Repository/ProductRepository.php
+
+		-
+			message: "#^Method App\\\\Repository\\\\ProductRepository\\:\\:findOneActiveWithAttributesBySlug\\(\\) should return App\\\\Entity\\\\Product\\|null but returns mixed\\.$#"
+			count: 1
+			path: src/Repository/ProductRepository.php
+
+		-
+			message: "#^Class App\\\\Repository\\\\ProductSeoRepository extends generic class Doctrine\\\\Bundle\\\\DoctrineBundle\\\\Repository\\\\ServiceEntityRepository but does not specify its types\\: TEntityClass$#"
+			count: 1
+			path: src/Repository/ProductSeoRepository.php
+
+		-
+			message: "#^Class App\\\\Repository\\\\ProductToCategoryRepository extends generic class Doctrine\\\\Bundle\\\\DoctrineBundle\\\\Repository\\\\ServiceEntityRepository but does not specify its types\\: TEntityClass$#"
+			count: 1
+			path: src/Repository/ProductToCategoryRepository.php
+
+		-
+			message: "#^Method App\\\\Repository\\\\PvzPriceRepository\\:\\:findOneByCityNormalized\\(\\) should return App\\\\Entity\\\\PvzPrice\\|null but returns mixed\\.$#"
+			count: 1
+			path: src/Repository/PvzPriceRepository.php
+
+		-
+			message: "#^Class App\\\\Repository\\\\UserRepository extends generic class Doctrine\\\\Bundle\\\\DoctrineBundle\\\\Repository\\\\ServiceEntityRepository but does not specify its types\\: TEntityClass$#"
+			count: 1
+			path: src/Repository/UserRepository.php
+
+		-
+			message: "#^Property App\\\\Service\\\\CartCalculator\\:\\:\\$livePrice is never read, only written\\.$#"
+			count: 1
+			path: src/Service/CartCalculator.php
+
+		-
+			message: "#^Negated boolean expression is always true\\.$#"
+			count: 2
+			path: src/Service/CartContext.php
+
+		-
+			message: "#^Cannot call method getId\\(\\) on App\\\\Entity\\\\Product\\|null\\.$#"
+			count: 1
+			path: src/Service/CartDeltaBuilder.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartDeltaBuilder\\:\\:analyzeChanges\\(\\) has parameter \\$afterItems with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartDeltaBuilder.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartDeltaBuilder\\:\\:analyzeChanges\\(\\) has parameter \\$beforeItems with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartDeltaBuilder.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartDeltaBuilder\\:\\:analyzeChanges\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartDeltaBuilder.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartDeltaBuilder\\:\\:buildDelta\\(\\) has parameter \\$changes with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartDeltaBuilder.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartDeltaBuilder\\:\\:buildDelta\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartDeltaBuilder.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartDeltaBuilder\\:\\:buildFull\\(\\) has parameter \\$policyConfig with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartDeltaBuilder.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartDeltaBuilder\\:\\:buildFull\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartDeltaBuilder.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartDeltaBuilder\\:\\:buildSummary\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartDeltaBuilder.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartDeltaBuilder\\:\\:createItemsSnapshot\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartDeltaBuilder.php
+
+		-
+			message: "#^Property App\\\\Service\\\\CartDeltaBuilder\\:\\:\\$calculator is never read, only written\\.$#"
+			count: 1
+			path: src/Service/CartDeltaBuilder.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartLockService\\:\\:withCartLock\\(\\) has parameter \\$opts with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartLockService.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:getPrice\\(\\)\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:getProduct\\(\\)\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:getSalePrice\\(\\)\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:addItem\\(\\) has parameter \\$optionAssignmentIds with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:addItem\\(\\) should return App\\\\Entity\\\\Cart but returns mixed\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:addItemWithChanges\\(\\) has parameter \\$optionAssignmentIds with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:addItemWithChanges\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:analyzeChanges\\(\\) has parameter \\$afterItems with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:analyzeChanges\\(\\) has parameter \\$beforeItems with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:analyzeChanges\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:applyProductOptions\\(\\) has parameter \\$optionAssignmentIds with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:applyProductOptions\\(\\) has parameter \\$product with no type specified\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:clearCart\\(\\) should return App\\\\Entity\\\\Cart but returns mixed\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:clearCartWithChanges\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:createItemsSnapshot\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:createNewCartItem\\(\\) has parameter \\$optionAssignmentIds with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:createNewCartItem\\(\\) has parameter \\$product with no type specified\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:createOptionData\\(\\) has parameter \\$assignment with no type specified\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:createOptionData\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:createOptionSnapshot\\(\\) has parameter \\$assignment with no type specified\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:createOptionSnapshot\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:doAddItem\\(\\) has parameter \\$optionAssignmentIds with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:doAddItemForBatch\\(\\) has parameter \\$operation with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:doAddItemForBatch\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:doExecuteBatch\\(\\) has parameter \\$beforeItems with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:doExecuteBatch\\(\\) has parameter \\$operations with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:doExecuteBatch\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:doRemoveItemForBatch\\(\\) has parameter \\$operation with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:doRemoveItemForBatch\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:doUpdateQtyForBatch\\(\\) has parameter \\$operation with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:doUpdateQtyForBatch\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:executeBatch\\(\\) has parameter \\$operations with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:executeBatch\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:executeBatch\\(\\) should return array but returns mixed\\.$#"
+			count: 2
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:executeSingleOperation\\(\\) has parameter \\$operation with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:executeSingleOperation\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:executeWithLock\\(\\) has parameter \\$lockOpts with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:findExistingCartItem\\(\\) has parameter \\$product with no type specified\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:generateOptionsHash\\(\\) has parameter \\$optionAssignmentIds with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:getMergeLockOptions\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:getOptionAssignmentIdsFromItem\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:getSimpleLockOptions\\(\\) is unused\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:getSimpleLockOptions\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:merge\\(\\) should return App\\\\Entity\\\\Cart but returns mixed\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:removeItem\\(\\) should return App\\\\Entity\\\\Cart but returns mixed\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:removeItemWithChanges\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:updateExistingItem\\(\\) has parameter \\$product with no type specified\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:updateQty\\(\\) should return App\\\\Entity\\\\Cart but returns mixed\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartManager\\:\\:updateQtyWithChanges\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Parameter \\#1 \\$assignment of method App\\\\Entity\\\\CartItem\\:\\:addOptionAssignment\\(\\) expects App\\\\Entity\\\\ProductOptionValueAssignment, object given\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Parameter \\#1 \\$product of method App\\\\Entity\\\\CartItem\\:\\:setProduct\\(\\) expects App\\\\Entity\\\\Product, App\\\\Entity\\\\Product\\|null given\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Parameter \\#1 \\$product of method App\\\\Service\\\\InventoryService\\:\\:assertAvailable\\(\\) expects App\\\\Entity\\\\Product, App\\\\Entity\\\\Product\\|null given\\.$#"
+			count: 2
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Parameter \\#1 \\$product of method App\\\\Service\\\\InventoryService\\:\\:assertAvailable\\(\\) expects App\\\\Entity\\\\Product, object given\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Parameter \\#2 \\$product of method App\\\\Repository\\\\CartRepository\\:\\:findItemForUpdate\\(\\) expects App\\\\Entity\\\\Product, App\\\\Entity\\\\Product\\|null given\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Result of method App\\\\Service\\\\CartManager\\:\\:doAddItem\\(\\) \\(void\\) is used\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Unreachable statement \\- code above always terminates\\.$#"
+			count: 1
+			path: src/Service/CartManager.php
+
+		-
+			message: "#^Cannot access offset 'cart' on mixed\\.$#"
+			count: 3
+			path: src/Service/CartSessionStorage.php
+
+		-
+			message: "#^Cannot access offset 'id' on mixed\\.$#"
+			count: 1
+			path: src/Service/CartSessionStorage.php
+
+		-
+			message: "#^Cannot access offset 'token' on mixed\\.$#"
+			count: 1
+			path: src/Service/CartSessionStorage.php
+
+		-
+			message: "#^Cannot cast mixed to int\\.$#"
+			count: 2
+			path: src/Service/CartSessionStorage.php
+
+		-
+			message: "#^Constant App\\\\Service\\\\CartSessionStorage\\:\\:SESSION_KEY is unused\\.$#"
+			count: 1
+			path: src/Service/CartSessionStorage.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartSessionStorage\\:\\:getCartSnapshot\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartSessionStorage.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartSessionStorage\\:\\:getCartSnapshot\\(\\) should return array but returns mixed\\.$#"
+			count: 1
+			path: src/Service/CartSessionStorage.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartSessionStorage\\:\\:getCartToken\\(\\) should return string\\|null but returns mixed\\.$#"
+			count: 2
+			path: src/Service/CartSessionStorage.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CartSessionStorage\\:\\:saveCartSnapshot\\(\\) has parameter \\$items with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CartSessionStorage.php
+
+		-
+			message: "#^Parameter \\#1 \\.\\.\\.\\$arrays of function array_merge expects array, mixed given\\.$#"
+			count: 1
+			path: src/Service/CartSessionStorage.php
+
+		-
+			message: "#^Method App\\\\Service\\\\CheckoutContext\\:\\:get\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/CheckoutContext.php
+
+		-
+			message: "#^Strict comparison using \\=\\=\\= between Symfony\\\\Component\\\\HttpFoundation\\\\Session\\\\SessionInterface and null will always evaluate to false\\.$#"
+			count: 6
+			path: src/Service/CheckoutContext.php
+
+		-
+			message: "#^Cannot cast mixed to int\\.$#"
+			count: 1
+			path: src/Service/Delivery/DeliveryService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\Delivery\\\\DeliveryService\\:\\:__construct\\(\\) has parameter \\$deliveryMethods with no value type specified in iterable type iterable\\.$#"
+			count: 1
+			path: src/Service/Delivery/DeliveryService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\Delivery\\\\Dto\\\\CalculationContext\\:\\:__construct\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/Delivery/Dto/CalculationContext.php
+
+		-
+			message: "#^Method App\\\\Service\\\\Delivery\\\\Dto\\\\DeliveryCalculationResult\\:\\:__construct\\(\\) has parameter \\$traceData with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/Delivery/Dto/DeliveryCalculationResult.php
+
+		-
+			message: "#^Method App\\\\Service\\\\Delivery\\\\Provider\\\\DeliveryProviderRegistry\\:\\:__construct\\(\\) has parameter \\$providers with no value type specified in iterable type iterable\\.$#"
+			count: 1
+			path: src/Service/Delivery/Provider/DeliveryProviderRegistry.php
+
+		-
+			message: "#^Cannot access offset 'delivery' on mixed\\.$#"
+			count: 3
+			path: src/Service/DeliveryContext.php
+
+		-
+			message: "#^Method App\\\\Service\\\\DeliveryContext\\:\\:setMethod\\(\\) has parameter \\$extra with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/DeliveryContext.php
+
+		-
+			message: "#^Strict comparison using \\=\\=\\= between Symfony\\\\Component\\\\HttpFoundation\\\\Session\\\\SessionInterface and null will always evaluate to false\\.$#"
+			count: 4
+			path: src/Service/DeliveryContext.php
+
+		-
+			message: "#^Method App\\\\Service\\\\FiasService\\:\\:findByName\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/FiasService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\FiasService\\:\\:findByPostalcode\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/FiasService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\FiasService\\:\\:getChildren\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/FiasService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\FiasService\\:\\:getCities\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/FiasService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\FiasService\\:\\:getRegions\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/FiasService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\FiasService\\:\\:getSettlements\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/FiasService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\FiasService\\:\\:getStreets\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/FiasService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\FiasService\\:\\:searchAddresses\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/FiasService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\FiasService\\:\\:searchAddresses\\(\\) should return array but returns mixed\\.$#"
+			count: 1
+			path: src/Service/FiasService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\GeoIpService\\:\\:guessCity\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/GeoIpService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\Idempotency\\\\IdempotencyRequestHasher\\:\\:build\\(\\) has parameter \\$routeParams with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/Idempotency/IdempotencyRequestHasher.php
+
+		-
+			message: "#^Method App\\\\Service\\\\Idempotency\\\\IdempotencyRequestHasher\\:\\:build\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/Idempotency/IdempotencyRequestHasher.php
+
+		-
+			message: "#^Method App\\\\Service\\\\Idempotency\\\\IdempotencyRequestHasher\\:\\:canonicalize\\(\\) has parameter \\$body with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/Idempotency/IdempotencyRequestHasher.php
+
+		-
+			message: "#^Method App\\\\Service\\\\Idempotency\\\\IdempotencyRequestHasher\\:\\:canonicalize\\(\\) has parameter \\$route with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/Idempotency/IdempotencyRequestHasher.php
+
+		-
+			message: "#^Method App\\\\Service\\\\Idempotency\\\\IdempotencyRequestHasher\\:\\:canonicalize\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/Idempotency/IdempotencyRequestHasher.php
+
+		-
+			message: "#^Parameter \\#2 \\$data of function hash expects string, string\\|false given\\.$#"
+			count: 1
+			path: src/Service/Idempotency/IdempotencyRequestHasher.php
+
+		-
+			message: "#^Parameter \\#3 \\$body of method App\\\\Service\\\\Idempotency\\\\IdempotencyRequestHasher\\:\\:canonicalize\\(\\) expects array\\|null, mixed given\\.$#"
+			count: 1
+			path: src/Service/Idempotency/IdempotencyRequestHasher.php
+
+		-
+			message: "#^Cannot cast mixed to int\\.$#"
+			count: 1
+			path: src/Service/Idempotency/IdempotencyService.php
+
+		-
+			message: "#^Parameter \\#1 \\$datetime of class DateTimeImmutable constructor expects string, mixed given\\.$#"
+			count: 2
+			path: src/Service/Idempotency/IdempotencyService.php
+
+		-
+			message: "#^Parameter \\#1 \\$json of function json_decode expects string, mixed given\\.$#"
+			count: 1
+			path: src/Service/Idempotency/IdempotencyService.php
+
+		-
+			message: "#^Parameter \\#1 \\$known_string of function hash_equals expects string, mixed given\\.$#"
+			count: 1
+			path: src/Service/Idempotency/IdempotencyService.php
+
+		-
+			message: "#^Parameter \\#1 \\$stored of static method App\\\\Service\\\\Idempotency\\\\BeginResult\\:\\:conflict\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: src/Service/Idempotency/IdempotencyService.php
+
+		-
+			message: "#^Parameter \\#2 \\$datetime of static method DateTimeImmutable\\:\\:createFromFormat\\(\\) expects string, mixed given\\.$#"
+			count: 2
+			path: src/Service/Idempotency/IdempotencyService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\ImageWarmupService\\:\\:clear\\(\\) has parameter \\$filters with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/ImageWarmupService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\ImageWarmupService\\:\\:warm\\(\\) has parameter \\$filters with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/ImageWarmupService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\InventoryService\\:\\:assertAvailable\\(\\) has parameter \\$optionAssignmentIds with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/InventoryService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\InventoryService\\:\\:assertOptionsAvailable\\(\\) has parameter \\$optionAssignmentIds with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/InventoryService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\InventoryService\\:\\:findLimitingAssignment\\(\\) has parameter \\$assignments with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/InventoryService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\InventoryService\\:\\:getOptionAssignments\\(\\) has parameter \\$optionAssignmentIds with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/InventoryService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\InventoryService\\:\\:getOptionAssignments\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/InventoryService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\InventoryService\\:\\:getVariantStock\\(\\) has parameter \\$optionAssignmentIds with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/InventoryService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\InventoryService\\:\\:invalidateCache\\(\\) has parameter \\$optionAssignmentIds with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/InventoryService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\InventoryService\\:\\:validateAssignments\\(\\) has parameter \\$assignments with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/InventoryService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\InventoryService\\:\\:validateAssignments\\(\\) has parameter \\$optionAssignmentIds with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/InventoryService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\InventoryService\\:\\:validateVariantSku\\(\\) has parameter \\$optionAssignmentIds with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/InventoryService.php
+
+		-
+			message: "#^Cannot call method getEffectivePrice\\(\\) on App\\\\Entity\\\\Product\\|null\\.$#"
+			count: 1
+			path: src/Service/LivePriceCalculator.php
+
+		-
+			message: "#^Cannot call method getPrice\\(\\) on App\\\\Entity\\\\Product\\|null\\.$#"
+			count: 1
+			path: src/Service/LivePriceCalculator.php
+
+		-
+			message: "#^Access to an undefined property Throwable\\:\\:\\$message\\.$#"
+			count: 1
+			path: src/Service/LoggerService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\LoggerService\\:\\:critical\\(\\) has parameter \\$context with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/LoggerService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\LoggerService\\:\\:debug\\(\\) has parameter \\$context with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/LoggerService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\LoggerService\\:\\:error\\(\\) has parameter \\$context with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/LoggerService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\LoggerService\\:\\:info\\(\\) has parameter \\$context with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/LoggerService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\LoggerService\\:\\:logDatabaseQuery\\(\\) has parameter \\$params with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/LoggerService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\LoggerService\\:\\:logUserAction\\(\\) has parameter \\$extra with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/LoggerService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\LoggerService\\:\\:warning\\(\\) has parameter \\$context with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/LoggerService.php
+
+		-
+			message: "#^Cannot call method getAttribute\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Service/ProductCopyService.php
+
+		-
+			message: "#^Cannot call method getAttributeGroup\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Service/ProductCopyService.php
+
+		-
+			message: "#^Cannot call method getBoolValue\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Service/ProductCopyService.php
+
+		-
+			message: "#^Cannot call method getDataType\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Service/ProductCopyService.php
+
+		-
+			message: "#^Cannot call method getDateValue\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Service/ProductCopyService.php
+
+		-
+			message: "#^Cannot call method getDecimalValue\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Service/ProductCopyService.php
+
+		-
+			message: "#^Cannot call method getIntValue\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Service/ProductCopyService.php
+
+		-
+			message: "#^Cannot call method getJsonValue\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Service/ProductCopyService.php
+
+		-
+			message: "#^Cannot call method getPosition\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Service/ProductCopyService.php
+
+		-
+			message: "#^Cannot call method getStringValue\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Service/ProductCopyService.php
+
+		-
+			message: "#^Cannot call method getTextValue\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Service/ProductCopyService.php
+
+		-
+			message: "#^Cannot call method getUnit\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Service/ProductCopyService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\ProductCopyService\\:\\:copyProduct\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/ProductCopyService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\ProductCopyService\\:\\:copyProductWithTypeChange\\(\\) has parameter \\$additionalOptions with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/ProductCopyService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\ProductCopyService\\:\\:createProductCopy\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/ProductCopyService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\ProductCopyService\\:\\:shouldCopyOptions\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/ProductCopyService.php
+
+		-
+			message: "#^Parameter \\#1 \\$imageUrl of method App\\\\Entity\\\\ProductImage\\:\\:setImageUrl\\(\\) expects string, string\\|null given\\.$#"
+			count: 1
+			path: src/Service/ProductCopyService.php
+
+		-
+			message: "#^Parameter \\#1 \\$isParent of method App\\\\Entity\\\\ProductToCategory\\:\\:setIsParent\\(\\) expects bool, bool\\|null given\\.$#"
+			count: 1
+			path: src/Service/ProductCopyService.php
+
+		-
+			message: "#^Parameter \\#1 \\$status of method App\\\\Entity\\\\Product\\:\\:setStatus\\(\\) expects bool, bool\\|null given\\.$#"
+			count: 1
+			path: src/Service/ProductCopyService.php
+
+		-
+			message: "#^Property App\\\\Service\\\\ProductCopyService\\:\\:\\$slugger is never read, only written\\.$#"
+			count: 1
+			path: src/Service/ProductCopyService.php
+
+		-
+			message: "#^Property App\\\\Service\\\\ProductLifecycleService\\:\\:\\$entityManager is never read, only written\\.$#"
+			count: 1
+			path: src/Service/ProductLifecycleService.php
+
+		-
+			message: "#^Property App\\\\Service\\\\ProductLifecycleService\\:\\:\\$slugger is never read, only written\\.$#"
+			count: 1
+			path: src/Service/ProductLifecycleService.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:getId\\(\\)\\.$#"
+			count: 1
+			path: src/Service/ProductVariantService.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:getProduct\\(\\)\\.$#"
+			count: 1
+			path: src/Service/ProductVariantService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\ProductVariantService\\:\\:calculateCombinationStock\\(\\) has parameter \\$combination with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/ProductVariantService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\ProductVariantService\\:\\:calculateVariantStock\\(\\) has parameter \\$optionAssignmentIds with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/ProductVariantService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\ProductVariantService\\:\\:generateCombinations\\(\\) has parameter \\$optionsByType with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/ProductVariantService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\ProductVariantService\\:\\:generateCombinations\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/ProductVariantService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\ProductVariantService\\:\\:generateVariantSku\\(\\) has parameter \\$assignments with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/ProductVariantService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\ProductVariantService\\:\\:getAssignments\\(\\) has parameter \\$optionAssignmentIds with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/ProductVariantService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\ProductVariantService\\:\\:getAssignments\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/ProductVariantService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\ProductVariantService\\:\\:getAvailableCombinations\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/ProductVariantService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\ProductVariantService\\:\\:getVariantByOptions\\(\\) has parameter \\$optionAssignmentIds with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/ProductVariantService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\ProductVariantService\\:\\:getVariantByOptions\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/ProductVariantService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\ProductVariantService\\:\\:getVariantBySku\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/ProductVariantService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\ProductVariantService\\:\\:invalidateCombinationCache\\(\\) has parameter \\$optionAssignmentIds with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/ProductVariantService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\ProductVariantService\\:\\:validateAssignmentsForProduct\\(\\) has parameter \\$assignments with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/ProductVariantService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\ProductVariantService\\:\\:validateSkus\\(\\) has parameter \\$assignments with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/ProductVariantService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\ProductVariantService\\:\\:validateUniqueOptions\\(\\) has parameter \\$assignments with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/ProductVariantService.php
+
+		-
+			message: "#^Method App\\\\Service\\\\ProductVariantService\\:\\:validateVariantCombination\\(\\) has parameter \\$optionAssignmentIds with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Service/ProductVariantService.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:addOptionAssignment\\(\\)\\.$#"
+			count: 1
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:getId\\(\\)\\.$#"
+			count: 1
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:getOptionAssignments\\(\\)\\.$#"
+			count: 2
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:getPrice\\(\\)\\.$#"
+			count: 1
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:getSalePrice\\(\\)\\.$#"
+			count: 1
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:removeOptionAssignment\\(\\)\\.$#"
+			count: 1
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:setDescription\\(\\)\\.$#"
+			count: 1
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:setManufacturerRef\\(\\)\\.$#"
+			count: 1
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:setMetaDescription\\(\\)\\.$#"
+			count: 1
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:setMetaH1\\(\\)\\.$#"
+			count: 1
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:setMetaKeywords\\(\\)\\.$#"
+			count: 1
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:setMetaTitle\\(\\)\\.$#"
+			count: 1
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:setName\\(\\)\\.$#"
+			count: 1
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:setOptionsJson\\(\\)\\.$#"
+			count: 1
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:setPrice\\(\\)\\.$#"
+			count: 1
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:setPricingValues\\(\\)\\.$#"
+			count: 1
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:setQuantity\\(\\)\\.$#"
+			count: 1
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:setSalePrice\\(\\)\\.$#"
+			count: 1
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:setSlug\\(\\)\\.$#"
+			count: 1
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:setSortOrder\\(\\)\\.$#"
+			count: 1
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:setStatus\\(\\)\\.$#"
+			count: 1
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:setType\\(\\)\\.$#"
+			count: 1
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Cannot access property \\$description on App\\\\ApiResource\\\\ProductResource\\|null\\.$#"
+			count: 1
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Cannot access property \\$h1 on App\\\\ApiResource\\\\ProductResource\\|null\\.$#"
+			count: 1
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Cannot access property \\$manufacturerId on App\\\\ApiResource\\\\ProductResource\\|null\\.$#"
+			count: 2
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Cannot access property \\$metaDescription on App\\\\ApiResource\\\\ProductResource\\|null\\.$#"
+			count: 1
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Cannot access property \\$metaKeywords on App\\\\ApiResource\\\\ProductResource\\|null\\.$#"
+			count: 1
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Cannot access property \\$metaTitle on App\\\\ApiResource\\\\ProductResource\\|null\\.$#"
+			count: 1
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Cannot access property \\$name on App\\\\ApiResource\\\\ProductResource\\|null\\.$#"
+			count: 3
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Cannot access property \\$optionAssignments on App\\\\ApiResource\\\\ProductResource\\|null\\.$#"
+			count: 3
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Cannot access property \\$optionsJson on App\\\\ApiResource\\\\ProductResource\\|null\\.$#"
+			count: 3
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Cannot access property \\$price on App\\\\ApiResource\\\\ProductResource\\|null\\.$#"
+			count: 3
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Cannot access property \\$quantity on App\\\\ApiResource\\\\ProductResource\\|null\\.$#"
+			count: 2
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Cannot access property \\$salePrice on App\\\\ApiResource\\\\ProductResource\\|null\\.$#"
+			count: 3
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Cannot access property \\$slug on App\\\\ApiResource\\\\ProductResource\\|null\\.$#"
+			count: 1
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Cannot access property \\$sortOrder on App\\\\ApiResource\\\\ProductResource\\|null\\.$#"
+			count: 1
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Cannot access property \\$status on App\\\\ApiResource\\\\ProductResource\\|null\\.$#"
+			count: 3
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Cannot access property \\$type on App\\\\ApiResource\\\\ProductResource\\|null\\.$#"
+			count: 2
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Cannot cast mixed to int\\.$#"
+			count: 2
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Class App\\\\State\\\\ProductStateProcessor implements generic interface ApiPlatform\\\\State\\\\ProcessorInterface but does not specify its types\\: T1, T2$#"
+			count: 1
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Parameter \\#1 \\$option of method App\\\\Entity\\\\ProductOptionValueAssignment\\:\\:setOption\\(\\) expects App\\\\Entity\\\\Option, object given\\.$#"
+			count: 1
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Parameter \\#1 \\$product of method App\\\\Entity\\\\ProductOptionValueAssignment\\:\\:setProduct\\(\\) expects App\\\\Entity\\\\Product, object given\\.$#"
+			count: 1
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Parameter \\#1 \\$value of method App\\\\Entity\\\\ProductOptionValueAssignment\\:\\:setValue\\(\\) expects App\\\\Entity\\\\OptionValue, object given\\.$#"
+			count: 1
+			path: src/State/ProductStateProcessor.php
+
+		-
+			message: "#^Cannot access offset 'category' on mixed\\.$#"
+			count: 1
+			path: src/State/ProductStateProvider.php
+
+		-
+			message: "#^Cannot access offset 'dateAdded' on mixed\\.$#"
+			count: 2
+			path: src/State/ProductStateProvider.php
+
+		-
+			message: "#^Cannot access offset 'itemsPerPage' on mixed\\.$#"
+			count: 1
+			path: src/State/ProductStateProvider.php
+
+		-
+			message: "#^Cannot access offset 'name' on mixed\\.$#"
+			count: 1
+			path: src/State/ProductStateProvider.php
+
+		-
+			message: "#^Cannot access offset 'order' on mixed\\.$#"
+			count: 1
+			path: src/State/ProductStateProvider.php
+
+		-
+			message: "#^Cannot access offset 'page' on mixed\\.$#"
+			count: 1
+			path: src/State/ProductStateProvider.php
+
+		-
+			message: "#^Cannot access offset 'status' on mixed\\.$#"
+			count: 2
+			path: src/State/ProductStateProvider.php
+
+		-
+			message: "#^Cannot call method getImageUrl\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/State/ProductStateProvider.php
+
+		-
+			message: "#^Cannot cast mixed to int\\.$#"
+			count: 5
+			path: src/State/ProductStateProvider.php
+
+		-
+			message: "#^Cannot cast mixed to string\\.$#"
+			count: 5
+			path: src/State/ProductStateProvider.php
+
+		-
+			message: "#^Class App\\\\State\\\\ProductStateProvider implements generic interface ApiPlatform\\\\State\\\\ProviderInterface but does not specify its types\\: T$#"
+			count: 1
+			path: src/State/ProductStateProvider.php
+
+		-
+			message: "#^Method App\\\\State\\\\ProductStateProvider\\:\\:provide\\(\\) return type has no value type specified in iterable type ApiPlatform\\\\State\\\\Pagination\\\\PaginatorInterface\\.$#"
+			count: 1
+			path: src/State/ProductStateProvider.php
+
+		-
+			message: "#^Method App\\\\State\\\\ProductStateProvider\\:\\:provide\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/State/ProductStateProvider.php
+
+		-
+			message: "#^Method App\\\\State\\\\ProductStateProvider\\:\\:provide\\(\\) return type with generic interface ApiPlatform\\\\State\\\\Pagination\\\\PaginatorInterface does not specify its types\\: T$#"
+			count: 1
+			path: src/State/ProductStateProvider.php
+
+		-
+			message: "#^Parameter \\#1 \\$entity of method App\\\\State\\\\ProductStateProvider\\:\\:transform\\(\\) expects App\\\\Entity\\\\Product, object given\\.$#"
+			count: 1
+			path: src/State/ProductStateProvider.php
+
+		-
+			message: "#^Parameter \\#2 \\$array of function array_map expects array, mixed given\\.$#"
+			count: 1
+			path: src/State/ProductStateProvider.php
+
+		-
+			message: "#^Class App\\\\State\\\\UserPasswordProcessor implements generic interface ApiPlatform\\\\State\\\\ProcessorInterface but does not specify its types\\: T1, T2$#"
+			count: 1
+			path: src/State/UserPasswordProcessor.php
+
+		-
+			message: "#^Method App\\\\Twig\\\\ContactsExtension\\:\\:contacts\\(\\) should return string but returns string\\|null\\.$#"
+			count: 1
+			path: src/Twig/ContactsExtension.php
+
+		-
+			message: "#^Method App\\\\Validator\\\\ConsistentAttributeAssignmentValidator\\:\\:validate\\(\\) has parameter \\$value with no type specified\\.$#"
+			count: 1
+			path: src/Validator/ConsistentAttributeAssignmentValidator.php
+
+		-
+			message: "#^Call to an undefined method App\\\\Entity\\\\Cart\\:\\:setVersion\\(\\)\\.$#"
+			count: 1
+			path: tests/Controller/Api/CartApiOptimizationTest.php
+
+		-
+			message: "#^Call to an undefined method Symfony\\\\Bundle\\\\FrameworkBundle\\\\KernelBrowser\\:\\:getResponse\\(\\)\\.$#"
+			count: 14
+			path: tests/Controller/Api/CartApiOptimizationTest.php
+
+		-
+			message: "#^Call to an undefined method Symfony\\\\Bundle\\\\FrameworkBundle\\\\KernelBrowser\\:\\:request\\(\\)\\.$#"
+			count: 7
+			path: tests/Controller/Api/CartApiOptimizationTest.php
+
+		-
+			message: "#^Parameter \\#2 \\$array of method PHPUnit\\\\Framework\\\\Assert\\:\\:assertArrayHasKey\\(\\) expects array\\|ArrayAccess\\<\\(int\\|string\\), mixed\\>, array\\|ArrayAccess given\\.$#"
+			count: 8
+			path: tests/Controller/Api/CartApiOptimizationTest.php
+
+		-
+			message: "#^Parameter \\#2 \\$array of method PHPUnit\\\\Framework\\\\Assert\\:\\:assertArrayHasKey\\(\\) expects array\\|ArrayAccess\\<\\(int\\|string\\), mixed\\>, mixed given\\.$#"
+			count: 3
+			path: tests/Controller/Api/CartApiOptimizationTest.php
+
+		-
+			message: "#^Parameter \\#2 \\$array of method PHPUnit\\\\Framework\\\\Assert\\:\\:assertArrayNotHasKey\\(\\) expects array\\|ArrayAccess\\<\\(int\\|string\\), mixed\\>, array\\|ArrayAccess given\\.$#"
+			count: 2
+			path: tests/Controller/Api/CartApiOptimizationTest.php
+
+		-
+			message: "#^Property App\\\\Tests\\\\Controller\\\\Api\\\\CartApiOptimizationTest\\:\\:\\$carts \\(App\\\\Repository\\\\CartRepository\\) does not accept object\\|null\\.$#"
+			count: 1
+			path: tests/Controller/Api/CartApiOptimizationTest.php
+
+		-
+			message: "#^Property App\\\\Tests\\\\Controller\\\\Api\\\\CartApiOptimizationTest\\:\\:\\$carts is never read, only written\\.$#"
+			count: 1
+			path: tests/Controller/Api/CartApiOptimizationTest.php
+
+		-
+			message: "#^Property App\\\\Tests\\\\Controller\\\\Api\\\\CartApiOptimizationTest\\:\\:\\$em \\(Doctrine\\\\ORM\\\\EntityManagerInterface\\) does not accept object\\|null\\.$#"
+			count: 1
+			path: tests/Controller/Api/CartApiOptimizationTest.php
+
+		-
+			message: "#^Property App\\\\Tests\\\\Controller\\\\Api\\\\CartApiOptimizationTest\\:\\:\\$products \\(App\\\\Repository\\\\ProductRepository\\) does not accept object\\|null\\.$#"
+			count: 1
+			path: tests/Controller/Api/CartApiOptimizationTest.php
+
+		-
+			message: "#^Property App\\\\Tests\\\\Controller\\\\Api\\\\CartApiOptimizationTest\\:\\:\\$products is never read, only written\\.$#"
+			count: 1
+			path: tests/Controller/Api/CartApiOptimizationTest.php
+
+		-
+			message: "#^Service \"App\\\\Repository\\\\CartRepository\" is not registered in the container\\.$#"
+			count: 1
+			path: tests/Controller/Api/CartApiOptimizationTest.php
+
+		-
+			message: "#^Service \"App\\\\Repository\\\\ProductRepository\" is not registered in the container\\.$#"
+			count: 1
+			path: tests/Controller/Api/CartApiOptimizationTest.php
+
+		-
+			message: "#^Service \"Doctrine\\\\ORM\\\\EntityManagerInterface\" is not registered in the container\\.$#"
+			count: 1
+			path: tests/Controller/Api/CartApiOptimizationTest.php
+
+		-
+			message: "#^File ends with a trailing whitespace\\. This may cause problems when running the code in the web browser\\. Remove the closing \\?\\> mark or remove the whitespace\\.$#"
+			count: 1
+			path: tests/Controller/ProductCloneControllerTest.php
+
+		-
+			message: "#^Expression on left side of \\?\\? is not nullable\\.$#"
+			count: 1
+			path: tests/Service/CartCookieFactoryTest.php
+
+		-
+			message: "#^Property App\\\\Tests\\\\Service\\\\CartEtagsTest\\:\\:\\$etags \\(App\\\\Http\\\\CartEtags\\) does not accept object\\|null\\.$#"
+			count: 1
+			path: tests/Service/CartEtagsTest.php
+
+		-
+			message: "#^Service \"App\\\\Http\\\\CartEtags\" is not registered in the container\\.$#"
+			count: 1
+			path: tests/Service/CartEtagsTest.php
+
+		-
+			message: "#^Call to method PHPUnit\\\\Framework\\\\Assert\\:\\:assertNull\\(\\) with string will always evaluate to false\\.$#"
+			count: 1
+			path: tests/Service/CartManagerIntegrationTest.php
+
+		-
+			message: "#^Cannot call method getId\\(\\) on App\\\\Entity\\\\CartItem\\|false\\.$#"
+			count: 1
+			path: tests/Service/CartManagerIntegrationTest.php
+
+		-
+			message: "#^Cannot call method getId\\(\\) on App\\\\Entity\\\\Product\\|null\\.$#"
+			count: 1
+			path: tests/Service/CartManagerIntegrationTest.php
+
+		-
+			message: "#^Cannot call method getOptionAssignments\\(\\) on App\\\\Entity\\\\CartItem\\|false\\.$#"
+			count: 3
+			path: tests/Service/CartManagerIntegrationTest.php
+
+		-
+			message: "#^Cannot call method getOptionsHash\\(\\) on App\\\\Entity\\\\CartItem\\|false\\.$#"
+			count: 1
+			path: tests/Service/CartManagerIntegrationTest.php
+
+		-
+			message: "#^Cannot call method getProduct\\(\\) on App\\\\Entity\\\\CartItem\\|false\\.$#"
+			count: 1
+			path: tests/Service/CartManagerIntegrationTest.php
+
+		-
+			message: "#^Cannot call method getQty\\(\\) on App\\\\Entity\\\\CartItem\\|false\\.$#"
+			count: 4
+			path: tests/Service/CartManagerIntegrationTest.php
+
+		-
+			message: "#^Parameter \\#2 \\$itemId of method App\\\\Service\\\\CartManager\\:\\:updateQty\\(\\) expects int, int\\|null given\\.$#"
+			count: 1
+			path: tests/Service/CartManagerIntegrationTest.php
+
+		-
+			message: "#^Parameter \\#2 \\$productId of method App\\\\Service\\\\CartManager\\:\\:addItem\\(\\) expects int, int\\|null given\\.$#"
+			count: 7
+			path: tests/Service/CartManagerIntegrationTest.php
+
+		-
+			message: "#^Property App\\\\Tests\\\\Service\\\\CartManagerIntegrationTest\\:\\:\\$cartManager \\(App\\\\Service\\\\CartManager\\) does not accept object\\|null\\.$#"
+			count: 1
+			path: tests/Service/CartManagerIntegrationTest.php
+
+		-
+			message: "#^Property App\\\\Tests\\\\Service\\\\CartManagerIntegrationTest\\:\\:\\$em \\(Doctrine\\\\ORM\\\\EntityManagerInterface\\) does not accept object\\|null\\.$#"
+			count: 1
+			path: tests/Service/CartManagerIntegrationTest.php
+
+		-
+			message: "#^Property App\\\\Tests\\\\Service\\\\CartManagerIntegrationTest\\:\\:\\$inventoryService \\(App\\\\Service\\\\InventoryService\\) does not accept object\\|null\\.$#"
+			count: 1
+			path: tests/Service/CartManagerIntegrationTest.php
+
+		-
+			message: "#^Property App\\\\Tests\\\\Service\\\\CartManagerIntegrationTest\\:\\:\\$inventoryService is never read, only written\\.$#"
+			count: 1
+			path: tests/Service/CartManagerIntegrationTest.php
+
+		-
+			message: "#^Service \"App\\\\Service\\\\CartManager\" is not registered in the container\\.$#"
+			count: 1
+			path: tests/Service/CartManagerIntegrationTest.php
+
+		-
+			message: "#^Service \"App\\\\Service\\\\InventoryService\" is not registered in the container\\.$#"
+			count: 1
+			path: tests/Service/CartManagerIntegrationTest.php
+
+		-
+			message: "#^Service \"Doctrine\\\\ORM\\\\EntityManagerInterface\" is not registered in the container\\.$#"
+			count: 1
+			path: tests/Service/CartManagerIntegrationTest.php
+
+		-
+			message: "#^Call to an undefined method App\\\\Entity\\\\Cart\\:\\:setVersion\\(\\)\\.$#"
+			count: 1
+			path: tests/Service/CartWriteGuardTest.php
+
+		-
+			message: "#^Parameter \\#7 \\$content of static method Symfony\\\\Component\\\\HttpFoundation\\\\Request\\:\\:create\\(\\) expects resource\\|string\\|null, string\\|false given\\.$#"
+			count: 2
+			path: tests/Service/CartWriteGuardTest.php
+
+		-
+			message: "#^Property App\\\\Tests\\\\Service\\\\CartWriteGuardTest\\:\\:\\$etags \\(App\\\\Http\\\\CartEtags\\) does not accept object\\|null\\.$#"
+			count: 1
+			path: tests/Service/CartWriteGuardTest.php
+
+		-
+			message: "#^Property App\\\\Tests\\\\Service\\\\CartWriteGuardTest\\:\\:\\$guard \\(App\\\\Http\\\\CartWriteGuard\\) does not accept object\\|null\\.$#"
+			count: 1
+			path: tests/Service/CartWriteGuardTest.php
+
+		-
+			message: "#^Service \"App\\\\Http\\\\CartEtags\" is not registered in the container\\.$#"
+			count: 1
+			path: tests/Service/CartWriteGuardTest.php
+
+		-
+			message: "#^Service \"App\\\\Http\\\\CartWriteGuard\" is not registered in the container\\.$#"
+			count: 1
+			path: tests/Service/CartWriteGuardTest.php
+
+		-
+			message: "#^Call to an undefined method Doctrine\\\\ORM\\\\EntityManagerInterface\\|PHPUnit\\\\Framework\\\\MockObject\\\\MockObject\\:\\:expects\\(\\)\\.$#"
+			count: 1
+			path: tests/Service/InventoryServiceTest.php
+
+		-
+			message: "#^Call to an undefined method PHPUnit\\\\Framework\\\\MockObject\\\\MockObject\\|Symfony\\\\Contracts\\\\Cache\\\\CacheInterface\\:\\:expects\\(\\)\\.$#"
+			count: 3
+			path: tests/Service/InventoryServiceTest.php
+
+		-
+			message: "#^Call to method method\\(\\) on an unknown class PHPUnit\\\\Framework\\\\MockObject\\\\Builder\\\\InvocationMocker\\.$#"
+			count: 7
+			path: tests/Service/InventoryServiceTest.php
+
+		-
+			message: "#^Method App\\\\Tests\\\\Service\\\\InventoryServiceTest\\:\\:setupCacheForAssignments\\(\\) has parameter \\$assignmentIds with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: tests/Service/InventoryServiceTest.php
+
+		-
+			message: "#^Method App\\\\Tests\\\\Service\\\\InventoryServiceTest\\:\\:setupCacheForAssignments\\(\\) has parameter \\$assignments with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: tests/Service/InventoryServiceTest.php
+
+		-
+			message: "#^Method App\\\\Tests\\\\Service\\\\InventoryServiceTest\\:\\:setupRepositoryMock\\(\\) has parameter \\$assignments with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: tests/Service/InventoryServiceTest.php
+
+		-
+			message: "#^File ends with a trailing whitespace\\. This may cause problems when running the code in the web browser\\. Remove the closing \\?\\> mark or remove the whitespace\\.$#"
+			count: 1
+			path: tests/Service/ProductClonerTest.php
+
+		-
+			message: "#^Anonymous function has an unused use \\$assignment\\.$#"
+			count: 1
+			path: tests/Service/ProductVariantServiceTest.php
+
+		-
+			message: "#^Call to an undefined method PHPUnit\\\\Framework\\\\MockObject\\\\MockObject\\|Symfony\\\\Contracts\\\\Cache\\\\CacheInterface\\:\\:expects\\(\\)\\.$#"
+			count: 2
+			path: tests/Service/ProductVariantServiceTest.php
+
+		-
+			message: "#^Call to method method\\(\\) on an unknown class PHPUnit\\\\Framework\\\\MockObject\\\\Builder\\\\InvocationMocker\\.$#"
+			count: 4
+			path: tests/Service/ProductVariantServiceTest.php
+
+		-
+			message: "#^Method App\\\\Entity\\\\Product\\:\\:setCode\\(\\) invoked with 1 parameter, 0 required\\.$#"
+			count: 1
+			path: tests/Service/ProductVariantServiceTest.php
+
+		-
+			message: "#^Method App\\\\Tests\\\\Service\\\\ProductVariantServiceTest\\:\\:setupCacheForAssignments\\(\\) has parameter \\$assignmentIds with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: tests/Service/ProductVariantServiceTest.php
+
+		-
+			message: "#^Method App\\\\Tests\\\\Service\\\\ProductVariantServiceTest\\:\\:setupCacheForAssignments\\(\\) has parameter \\$assignments with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: tests/Service/ProductVariantServiceTest.php

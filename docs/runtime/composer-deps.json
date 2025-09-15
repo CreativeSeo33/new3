@@ -1,0 +1,391 @@
+{
+    "installed": [
+        {
+            "name": "api-platform/doctrine-orm",
+            "direct-dependency": true,
+            "homepage": "https://api-platform.com",
+            "source": "https://github.com/api-platform/doctrine-orm/tree/v4.1.23",
+            "version": "v4.1.23",
+            "description": "Doctrine ORM bridge",
+            "abandoned": false
+        },
+        {
+            "name": "api-platform/symfony",
+            "direct-dependency": true,
+            "homepage": "https://api-platform.com",
+            "source": "https://github.com/api-platform/symfony/tree/v4.1.23",
+            "version": "v4.1.23",
+            "description": "Symfony API Platform integration",
+            "abandoned": false
+        },
+        {
+            "name": "doctrine/dbal",
+            "direct-dependency": true,
+            "homepage": "https://www.doctrine-project.org/projects/dbal.html",
+            "source": "https://github.com/doctrine/dbal/tree/3.10.2",
+            "version": "3.10.2",
+            "description": "Powerful PHP database abstraction layer (DBAL) with many features for database schema introspection and management.",
+            "abandoned": false
+        },
+        {
+            "name": "doctrine/doctrine-bundle",
+            "direct-dependency": true,
+            "homepage": "https://www.doctrine-project.org",
+            "source": "https://github.com/doctrine/DoctrineBundle/tree/2.16.2",
+            "version": "2.16.2",
+            "description": "Symfony DoctrineBundle",
+            "abandoned": false
+        },
+        {
+            "name": "doctrine/doctrine-migrations-bundle",
+            "direct-dependency": true,
+            "homepage": "https://www.doctrine-project.org",
+            "source": "https://github.com/doctrine/DoctrineMigrationsBundle/tree/3.4.2",
+            "version": "3.4.2",
+            "description": "Symfony DoctrineMigrationsBundle",
+            "abandoned": false
+        },
+        {
+            "name": "doctrine/orm",
+            "direct-dependency": true,
+            "homepage": "https://www.doctrine-project.org/projects/orm.html",
+            "source": "https://github.com/doctrine/orm/tree/3.5.2",
+            "version": "3.5.2",
+            "description": "Object-Relational-Mapper for PHP",
+            "abandoned": false
+        },
+        {
+            "name": "lexik/jwt-authentication-bundle",
+            "direct-dependency": true,
+            "homepage": "https://github.com/lexik/LexikJWTAuthenticationBundle",
+            "source": "https://github.com/lexik/LexikJWTAuthenticationBundle/tree/v3.1.1",
+            "version": "v3.1.1",
+            "description": "This bundle provides JWT authentication for your Symfony REST API",
+            "abandoned": false
+        },
+        {
+            "name": "liip/imagine-bundle",
+            "direct-dependency": true,
+            "homepage": "https://www.liip.ch",
+            "source": "https://github.com/liip/LiipImagineBundle/tree/2.12.3",
+            "version": "2.12.3",
+            "description": "This bundle provides an image manipulation abstraction toolkit for Symfony-based projects.",
+            "abandoned": false
+        },
+        {
+            "name": "nelmio/cors-bundle",
+            "direct-dependency": true,
+            "homepage": null,
+            "source": "https://github.com/nelmio/NelmioCorsBundle/tree/2.5.0",
+            "version": "2.5.0",
+            "description": "Adds CORS (Cross-Origin Resource Sharing) headers support in your Symfony application",
+            "abandoned": false
+        },
+        {
+            "name": "phpdocumentor/reflection-docblock",
+            "direct-dependency": true,
+            "homepage": null,
+            "source": "https://github.com/phpDocumentor/ReflectionDocBlock/tree/5.6.3",
+            "version": "5.6.3",
+            "description": "With this component, a library can provide support for annotations via DocBlocks or otherwise retrieve information that is embedded in a DocBlock.",
+            "abandoned": false
+        },
+        {
+            "name": "phpstan/phpdoc-parser",
+            "direct-dependency": true,
+            "homepage": null,
+            "source": "https://github.com/phpstan/phpdoc-parser/tree/2.3.0",
+            "version": "2.3.0",
+            "description": "PHPDoc parser with support for nullable, intersection and generic types",
+            "abandoned": false
+        },
+        {
+            "name": "phpstan/phpstan",
+            "direct-dependency": true,
+            "homepage": null,
+            "source": "https://github.com/phpstan/phpstan-src",
+            "version": "1.12.28",
+            "description": "PHPStan - PHP Static Analysis Tool",
+            "abandoned": false
+        },
+        {
+            "name": "phpstan/phpstan-doctrine",
+            "direct-dependency": true,
+            "homepage": null,
+            "source": "https://github.com/phpstan/phpstan-doctrine/tree/1.5.7",
+            "version": "1.5.7",
+            "description": "Doctrine extensions for PHPStan",
+            "abandoned": false
+        },
+        {
+            "name": "phpstan/phpstan-phpunit",
+            "direct-dependency": true,
+            "homepage": null,
+            "source": "https://github.com/phpstan/phpstan-phpunit/tree/1.4.2",
+            "version": "1.4.2",
+            "description": "PHPUnit extensions and rules for PHPStan",
+            "abandoned": false
+        },
+        {
+            "name": "phpstan/phpstan-symfony",
+            "direct-dependency": true,
+            "homepage": null,
+            "source": "https://github.com/phpstan/phpstan-symfony/tree/1.4.16",
+            "version": "1.4.16",
+            "description": "Symfony Framework extensions and rules for PHPStan",
+            "abandoned": false
+        },
+        {
+            "name": "phpunit/phpunit",
+            "direct-dependency": true,
+            "homepage": "https://phpunit.de/",
+            "source": "https://github.com/sebastianbergmann/phpunit/tree/12.3.11",
+            "version": "12.3.11",
+            "description": "The PHP Unit Testing framework.",
+            "abandoned": false
+        },
+        {
+            "name": "symfony/asset",
+            "direct-dependency": true,
+            "homepage": "https://symfony.com",
+            "source": "https://github.com/symfony/asset/tree/v7.3.0",
+            "version": "v7.3.0",
+            "description": "Manages URL generation and versioning of web assets such as CSS stylesheets, JavaScript files and image files",
+            "abandoned": false
+        },
+        {
+            "name": "symfony/console",
+            "direct-dependency": true,
+            "homepage": "https://symfony.com",
+            "source": "https://github.com/symfony/console/tree/v7.3.3",
+            "version": "v7.3.3",
+            "description": "Eases the creation of beautiful and testable command line interfaces",
+            "abandoned": false
+        },
+        {
+            "name": "symfony/debug-bundle",
+            "direct-dependency": true,
+            "homepage": "https://symfony.com",
+            "source": "https://github.com/symfony/debug-bundle/tree/v7.3.0",
+            "version": "v7.3.0",
+            "description": "Provides a tight integration of the Symfony VarDumper component and the ServerLogCommand from MonologBridge into the Symfony full-stack framework",
+            "abandoned": false
+        },
+        {
+            "name": "symfony/dotenv",
+            "direct-dependency": true,
+            "homepage": "https://symfony.com",
+            "source": "https://github.com/symfony/dotenv/tree/v7.3.2",
+            "version": "v7.3.2",
+            "description": "Registers environment variables from a .env file",
+            "abandoned": false
+        },
+        {
+            "name": "symfony/expression-language",
+            "direct-dependency": true,
+            "homepage": "https://symfony.com",
+            "source": "https://github.com/symfony/expression-language/tree/v7.3.2",
+            "version": "v7.3.2",
+            "description": "Provides an engine that can compile and evaluate expressions",
+            "abandoned": false
+        },
+        {
+            "name": "symfony/flex",
+            "direct-dependency": true,
+            "homepage": null,
+            "source": "https://github.com/symfony/flex/tree/v2.8.2",
+            "version": "v2.8.2",
+            "description": "Composer plugin for Symfony",
+            "abandoned": false
+        },
+        {
+            "name": "symfony/framework-bundle",
+            "direct-dependency": true,
+            "homepage": "https://symfony.com",
+            "source": "https://github.com/symfony/framework-bundle/tree/v7.3.3",
+            "version": "v7.3.3",
+            "description": "Provides a tight integration between Symfony components and the Symfony full-stack framework",
+            "abandoned": false
+        },
+        {
+            "name": "symfony/lock",
+            "direct-dependency": true,
+            "homepage": "https://symfony.com",
+            "source": "https://github.com/symfony/lock/tree/v7.3.2",
+            "version": "v7.3.2",
+            "description": "Creates and manages locks, a mechanism to provide exclusive access to a shared resource",
+            "abandoned": false
+        },
+        {
+            "name": "symfony/maker-bundle",
+            "direct-dependency": true,
+            "homepage": "https://symfony.com/doc/current/bundles/SymfonyMakerBundle/index.html",
+            "source": "https://github.com/symfony/maker-bundle/tree/v1.64.0",
+            "version": "v1.64.0",
+            "description": "Symfony Maker helps you create empty commands, controllers, form classes, tests and more so you can forget about writing boilerplate code.",
+            "abandoned": false
+        },
+        {
+            "name": "symfony/monolog-bundle",
+            "direct-dependency": true,
+            "homepage": "https://symfony.com",
+            "source": "https://github.com/symfony/monolog-bundle/tree/v3.10.0",
+            "version": "v3.10.0",
+            "description": "Symfony MonologBundle",
+            "abandoned": false
+        },
+        {
+            "name": "symfony/property-access",
+            "direct-dependency": true,
+            "homepage": "https://symfony.com",
+            "source": "https://github.com/symfony/property-access/tree/v7.3.3",
+            "version": "v7.3.3",
+            "description": "Provides functions to read and write from/to an object or array using a simple string notation",
+            "abandoned": false
+        },
+        {
+            "name": "symfony/property-info",
+            "direct-dependency": true,
+            "homepage": "https://symfony.com",
+            "source": "https://github.com/symfony/property-info/tree/v7.3.1",
+            "version": "v7.3.1",
+            "description": "Extracts information about PHP class' properties using metadata of popular sources",
+            "abandoned": false
+        },
+        {
+            "name": "symfony/runtime",
+            "direct-dependency": true,
+            "homepage": "https://symfony.com",
+            "source": "https://github.com/symfony/runtime/tree/v7.3.1",
+            "version": "v7.3.1",
+            "description": "Enables decoupling PHP applications from global state",
+            "abandoned": false
+        },
+        {
+            "name": "symfony/security-bundle",
+            "direct-dependency": true,
+            "homepage": "https://symfony.com",
+            "source": "https://github.com/symfony/security-bundle/tree/v7.3.3",
+            "version": "v7.3.3",
+            "description": "Provides a tight integration of the Security component into the Symfony full-stack framework",
+            "abandoned": false
+        },
+        {
+            "name": "symfony/security-csrf",
+            "direct-dependency": true,
+            "homepage": "https://symfony.com",
+            "source": "https://github.com/symfony/security-csrf/tree/v7.3.0",
+            "version": "v7.3.0",
+            "description": "Symfony Security Component - CSRF Library",
+            "abandoned": false
+        },
+        {
+            "name": "symfony/serializer",
+            "direct-dependency": true,
+            "homepage": "https://symfony.com",
+            "source": "https://github.com/symfony/serializer/tree/v7.3.3",
+            "version": "v7.3.3",
+            "description": "Handles serializing and deserializing data structures, including object graphs, into array structures or other formats like XML and JSON.",
+            "abandoned": false
+        },
+        {
+            "name": "symfony/stimulus-bundle",
+            "direct-dependency": true,
+            "homepage": null,
+            "source": "https://github.com/symfony/stimulus-bundle/tree/v2.30.0",
+            "version": "v2.30.0",
+            "description": "Integration with your Symfony app & Stimulus!",
+            "abandoned": false
+        },
+        {
+            "name": "symfony/string",
+            "direct-dependency": true,
+            "homepage": "https://symfony.com",
+            "source": "https://github.com/symfony/string/tree/v7.3.0",
+            "version": "v7.3.0",
+            "description": "Provides an object-oriented API to strings and deals with bytes, UTF-8 code points and grapheme clusters in a unified way",
+            "abandoned": false
+        },
+        {
+            "name": "symfony/twig-bundle",
+            "direct-dependency": true,
+            "homepage": "https://symfony.com",
+            "source": "https://github.com/symfony/twig-bundle/tree/v7.3.2",
+            "version": "v7.3.2",
+            "description": "Provides a tight integration of Twig into the Symfony full-stack framework",
+            "abandoned": false
+        },
+        {
+            "name": "symfony/ux-live-component",
+            "direct-dependency": true,
+            "homepage": "https://symfony.com",
+            "source": "https://github.com/symfony/ux-live-component/tree/v2.30.0",
+            "version": "v2.30.0",
+            "description": "Live components for Symfony",
+            "abandoned": false
+        },
+        {
+            "name": "symfony/ux-turbo",
+            "direct-dependency": true,
+            "homepage": "https://symfony.com",
+            "source": "https://github.com/symfony/ux-turbo/tree/v2.30.0",
+            "version": "v2.30.0",
+            "description": "Hotwire Turbo integration for Symfony",
+            "abandoned": false
+        },
+        {
+            "name": "symfony/ux-twig-component",
+            "direct-dependency": true,
+            "homepage": "https://symfony.com",
+            "source": "https://github.com/symfony/ux-twig-component/tree/v2.30.0",
+            "version": "v2.30.0",
+            "description": "Twig components for Symfony",
+            "abandoned": false
+        },
+        {
+            "name": "symfony/validator",
+            "direct-dependency": true,
+            "homepage": "https://symfony.com",
+            "source": "https://github.com/symfony/validator/tree/v7.3.3",
+            "version": "v7.3.3",
+            "description": "Provides tools to validate values",
+            "abandoned": false
+        },
+        {
+            "name": "symfony/var-dumper",
+            "direct-dependency": true,
+            "homepage": "https://symfony.com",
+            "source": "https://github.com/symfony/var-dumper/tree/v7.3.3",
+            "version": "v7.3.3",
+            "description": "Provides mechanisms for walking through any arbitrary PHP variable",
+            "abandoned": false
+        },
+        {
+            "name": "symfony/web-profiler-bundle",
+            "direct-dependency": true,
+            "homepage": "https://symfony.com",
+            "source": "https://github.com/symfony/web-profiler-bundle/tree/v7.3.3",
+            "version": "v7.3.3",
+            "description": "Provides a development tool that gives detailed information about the execution of any request",
+            "abandoned": false
+        },
+        {
+            "name": "symfony/webpack-encore-bundle",
+            "direct-dependency": true,
+            "homepage": null,
+            "source": "https://github.com/symfony/webpack-encore-bundle/tree/v2.3.0",
+            "version": "v2.3.0",
+            "description": "Integration of your Symfony app with Webpack Encore",
+            "abandoned": false
+        },
+        {
+            "name": "symfony/yaml",
+            "direct-dependency": true,
+            "homepage": "https://symfony.com",
+            "source": "https://github.com/symfony/yaml/tree/v7.3.3",
+            "version": "v7.3.3",
+            "description": "Loads and dumps YAML files",
+            "abandoned": false
+        }
+    ]
+}

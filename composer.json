@@ -9,22 +9,22 @@
         "php": ">=8.2",
         "ext-ctype": "*",
         "ext-iconv": "*",
-        "api-platform/doctrine-orm": "^4.1",
-        "api-platform/symfony": "^4.1",
-        "doctrine/dbal": "^3",
-        "doctrine/doctrine-bundle": "^2.15",
-        "doctrine/doctrine-migrations-bundle": "^3.4",
-        "doctrine/orm": "^3.5",
-        "lexik/jwt-authentication-bundle": "^3.1",
+        "api-platform/doctrine-orm": "^4.1.23",
+        "api-platform/symfony": "^4.1.23",
+        "doctrine/dbal": "^3.10.2",
+        "doctrine/doctrine-bundle": "^2.16.2",
+        "doctrine/doctrine-migrations-bundle": "^3.4.2",
+        "doctrine/orm": "^3.5.2",
+        "lexik/jwt-authentication-bundle": "^3.1.1",
         "liip/imagine-bundle": "2.12.3",
         "nelmio/cors-bundle": "^2.5",
-        "phpdocumentor/reflection-docblock": "^5.6",
-        "phpstan/phpdoc-parser": "^2.2",
+        "phpdocumentor/reflection-docblock": "^5.6.3",
+        "phpstan/phpdoc-parser": "^2.3",
         "symfony/asset": "7.3.*",
         "symfony/console": "7.3.*",
         "symfony/dotenv": "7.3.*",
         "symfony/expression-language": "7.3.*",
-        "symfony/flex": "^2",
+        "symfony/flex": "^2.8.2",
         "symfony/framework-bundle": "7.3.*",
         "symfony/lock": "7.3.*",
         "symfony/monolog-bundle": "^3.10",
@@ -83,7 +83,10 @@
         ],
         "post-update-cmd": [
             "@auto-scripts"
-        ]
+        ],
+        "stan": "php -d memory_limit=1G vendor/bin/phpstan analyse -c phpstan.neon.dist",
+        "stan:quick": "php -d memory_limit=512M vendor/bin/phpstan analyse src --level=9 --no-progress",
+        "stan:baseline": "php -d memory_limit=1G vendor/bin/phpstan analyse -c phpstan.neon.dist --generate-baseline=phpstan-baseline.neon --no-progress"
     },
     "conflict": {
         "symfony/symfony": "*"
@@ -95,10 +98,14 @@
         }
     },
     "require-dev": {
-        "phpunit/phpunit": "^12.3",
+        "phpunit/phpunit": "^12.3.11",
         "symfony/debug-bundle": "7.3.*",
         "symfony/maker-bundle": "^1.64",
         "symfony/var-dumper": "7.3.*",
-        "symfony/web-profiler-bundle": "7.3.*"
+        "symfony/web-profiler-bundle": "7.3.*",
+        "phpstan/phpstan": "^1.12.28",
+        "phpstan/phpstan-symfony": "^1.4.16",
+        "phpstan/phpstan-doctrine": "^1.5.7",
+        "phpstan/phpstan-phpunit": "^1.4.2"
     }
 }

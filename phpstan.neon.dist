@@ -1,0 +1,42 @@
+includes:
+  - vendor/phpstan/phpstan-symfony/extension.neon
+  - vendor/phpstan/phpstan-symfony/rules.neon
+  - vendor/phpstan/phpstan-doctrine/extension.neon
+  - vendor/phpstan/phpstan-phpunit/extension.neon
+  - vendor/phpstan/phpstan-phpunit/rules.neon
+  # Optional strict rule sets (install and uncomment to enable)
+  # - vendor/phpstan/phpstan-strict-rules/rules.neon
+  # - vendor/symplify/phpstan-rules/rules.neon
+  - phpstan-baseline.neon
+
+parameters:
+  level: 9
+
+  paths:
+    - src
+    - tests
+
+  tmpDir: var/phpstan
+
+  bootstrapFiles:
+    - vendor/autoload.php
+
+  treatPhpDocTypesAsCertain: true
+  checkMissingIterableValueType: true
+  checkUninitializedProperties: true
+  reportUnmatchedIgnoredErrors: true
+  inferPrivatePropertyTypeFromConstructor: true
+
+  excludePaths:
+    - var/*
+    - vendor/*
+    - public/build/*
+    - assets/*
+
+  parallel:
+    maximumNumberOfProcesses: 8
+
+  symfony:
+    container_xml_path: var/cache/dev/phpstan-container.xml
+
+

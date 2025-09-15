@@ -114,4 +114,20 @@
 - Код собирается из корня командами npm; артефакты не коммитятся
 - Отсутствуют логи/секреты в VCS; логи — в `var/log/*`
 
+## Рантайм-артефакты
+
+Снимки для ускорения навигации и анализа ИИ (генерируются локально, не для prod):
+- `docs/runtime/container.json` — карта DI-контейнера
+- `docs/runtime/routes.json` — маршруты
+- `docs/runtime/composer-deps.json` — прямые зависимости Composer
+- `docs/runtime/openapi.json` и `docs/runtime/openapi.yaml` — контракт API Platform (OpenAPI)
+- `docs/db/schema.sql`, `docs/db/entities.txt` — SQL-дифф схемы БД и список сущностей Doctrine
+
+Генерация (Windows PowerShell):
+```
+powershell -ExecutionPolicy Bypass -File docs/refresh.ps1
+```
+
+Примечание: Messenger не используется — снимок по шинам не генерируется.
+
 

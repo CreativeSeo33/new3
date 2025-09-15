@@ -69,3 +69,10 @@ Thumbs.db
 /phpunit.xml
 /.phpunit.cache/
 ###< phpunit/phpunit ###
+
+# PHPStan cache and container dump
+/var/phpstan/
+/var/cache/dev/phpstan-container.xml
+###> phpstan/phpstan ###
+phpstan.neon
+###< phpstan/phpstan ###

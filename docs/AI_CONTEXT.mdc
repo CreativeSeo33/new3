@@ -1,0 +1,28 @@
+## Статический анализ (PHPStan)
+
+- Конфигурация: `phpstan.neon.dist`
+- Кэш и временные файлы: `var/phpstan`
+- Путь к дампу контейнера Symfony (XML): `var/cache/dev/phpstan-container.xml`
+
+Команды запуска:
+- Полный анализ: `composer stan`
+- Быстрый анализ (только `src`, без прогресса): `composer stan:quick`
+- Генерация baseline: `composer stan:baseline`
+
+Обновление контейнера XML:
+- Рекомендуемо: `powershell -ExecutionPolicy Bypass -File tools/analyse.ps1`
+- Либо вручную: `php bin/console debug:container --format=xml > var/cache/dev/phpstan-container.xml`
+
+Правило приёмки:
+- Патчи не должны добавлять новые ошибки PHPStan; при необходимости обновляй baseline (`phpstan-baseline.neon`).
+
+Примечание:
+- Messenger в проекте не используется — на статический анализ это не влияет.
+
+Пост-замечание для пользователя:
+- После применения патча выполните установку dev-зависимостей: `composer update` (или `composer install`).
+- Запуск анализа:
+  - Генерация контейнера и проверка: `powershell -ExecutionPolicy Bypass -File tools/analyse.ps1`
+  - Быстрый прогон: `composer stan:quick`
+  - Генерация baseline: `composer stan:baseline`
+

@@ -1,0 +1,32 @@
+ Found 30 mapped entities:
+
+ [OK]   App\Entity\Attribute
+ [OK]   App\Entity\AttributeGroup
+ [OK]   App\Entity\Carousel
+ [OK]   App\Entity\Cart
+ [OK]   App\Entity\CartIdempotency
+ [OK]   App\Entity\CartItem
+ [OK]   App\Entity\Category
+ [OK]   App\Entity\City
+ [OK]   App\Entity\CityModal
+ [OK]   App\Entity\DeliveryType
+ [OK]   App\Entity\Fias
+ [OK]   App\Entity\Manufacturer
+ [OK]   App\Entity\Option
+ [OK]   App\Entity\OptionValue
+ [OK]   App\Entity\Order
+ [OK]   App\Entity\OrderCustomer
+ [OK]   App\Entity\OrderDelivery
+ [OK]   App\Entity\OrderProductOptions
+ [OK]   App\Entity\OrderProducts
+ [OK]   App\Entity\OrderStatus
+ [OK]   App\Entity\Product
+ [OK]   App\Entity\ProductAttributeAssignment
+ [OK]   App\Entity\ProductImage
+ [OK]   App\Entity\ProductOptionValueAssignment
+ [OK]   App\Entity\ProductSeo
+ [OK]   App\Entity\ProductToCategory
+ [OK]   App\Entity\PvzPoints
+ [OK]   App\Entity\PvzPrice
+ [OK]   App\Entity\Settings
+ [OK]   App\Entity\User

@@ -1,0 +1,7 @@
+docs/runtime/* linguist-generated
+docs/db/schema.sql linguist-generated
+docs/db/entities.txt linguist-generated
+
+var/phpstan/* linguist-generated
+var/cache/dev/phpstan-container.xml linguist-generated
+
