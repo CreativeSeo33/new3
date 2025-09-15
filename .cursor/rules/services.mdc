@@ -1,0 +1,64 @@
+---
+alwaysApply: true
+---
+
+## Ключевые сервисы (Services)
+
+Описание основных доменных сервисов и их зоны ответственности. Для деталей смотри исходники в `src/Service/**`.
+
+### Корзина (Cart)
+
+- `App\Service\CartManager`: CRUD-операции над корзиной с блокировками и транзакциями; add/update/remove/clear/merge; батч-операции; диспатч событий. Работает через `CartLockService`, `InventoryService`, `CartCalculator`, `LivePriceCalculator`, `DeliveryContext`.
+- `App\Service\CartCalculator`: Пересчет итогов корзины. Быстрый пересчет позиций под локом (`recalculateTotalsOnly`) и «тяжелый» расчет доставки/скидок вне критической секции (`recalculateShippingAndDiscounts`).
+- `App\Service\LivePriceCalculator`: Актуальные цены позиций (LIVE‑режим). Берет максимум среди цен опций, иначе базовая цена товара.
+- `App\Service\InventoryService`: Проверки доступности товара/вариантов по складу, валидация комбинаций опций, кэширование выборок назначений опций.
+- `App\Service\CartLockService`: Неблокирующие локи корзины с ретраями и джиттером. Обертка поверх Symfony Lock.
+- `App\Service\CartContext`: Поиск/создание текущей корзины на основе токена в cookie/сессии, миграция legacy cookie, продление TTL, установка cookie в Response.
+- `App\Service\CartSessionStorage`: Минимальные ссылки на корзину в сессии (token/id), гостевой snapshot товаров, очистка/миграция.
+- `App\Service\CartDeltaBuilder`: Формирование ответов Cart API: full/summary/delta, анализ изменений для точечных ответов.
+- `App\Service\Idempotency\IdempotencyService`: Идемпотентность операций корзины/чекаута: begin/finish, обработка конфликтов/повторов/устаревших записей.
+- `App\Service\Idempotency\IdempotencyRequestHasher`: Канонизация запросов и вычисление хеша для идемпотентности.
+
+### Доставка (Delivery)
+
+- `App\Service\Delivery\DeliveryService`: Оркестратор расчета доставки. Выбор метода, кэш квот, интеграция с `DeliveryContext` и `PvzPriceRepository`.
+- `App\Service\Delivery\Method\PvzDeliveryMethod`: Стоимость ПВЗ. Поддержка типов расчета (за товар / фикс), порог бесплатной доставки, трассировка.
+- `App\Service\Delivery\Method\CourierDeliveryMethod`: Стоимость курьером. Тип расчета, наценка, пороги бесплатной доставки, валидация данных доставки.
+- `App\Service\Delivery\Method\DeliveryMethodInterface`: Контракт стратегий расчета (код, лейбл, тип, calculate).
+- `App\Service\Delivery\Dto\CalculationContext`, `DeliveryCalculationResult`: DTO для контекста и результата расчета.
+- `App\Service\DeliveryContext`: Хранение/синхронизация контекста доставки в сессии; ensureCity через `GeoIpService`; sync в `Cart`.
+
+### Каталог/Товары
+
+- `App\Service\ProductLifecycleService`: Хуки жизненного цикла товара: код/даты/slug, материализация `effectivePrice`, синхронизация производителя.
+- `App\Service\ProductCopyService`: Копирование товара с опциями/SEO/категориями/изображениями/атрибутами; смена типа; генерация slug; транзакционность.
+- `App\Service\ProductVariantService`: Работа с вариантами: доступный сток по комбинации опций, валидации комбинаций и SKU, получение варианта по SKU/опциям, перечисление доступных комбинаций (кэш).
+- `App\Service\PriceNormalizer`: Утилиты нормализации цен в целые RUB (жесткие проверки формата).
+- `App\Service\AttributeCodeGenerator`, `App\Service\OptionCodeGenerator`: Генерация и нормализация кодов из имен с обеспечением уникальности.
+- `App\Service\BreadcrumbBuilder`: Построение breadcrumbs для категорий/товаров с кэшем.
+
+### FIAS/Гео/Навигация
+
+- `App\Service\FiasService`: Обертки над `FiasRepository`: поиск по индексу/имени/уровню, регионы/города/улицы, путь адреса.
+- `App\Service\GeoIpService`: Грубая эвристика города по IP (fallback для `DeliveryContext.ensureCity`).
+- `App\Service\FooterCategoryService` и внутренний `NavbarCategoryService`: Выборки категорий для футера/навигации.
+
+### Медиа/Изображения
+
+- `App\Service\ImageCacheService`: Генерация/обновление кэша LiipImagine на лету под размер/фильтр, массовая генерация, безопасная нормализация путей.
+- `App\Service\ImageWarmupService`: Прогрев/очистка кэша LiipImagine по списку фильтров.
+
+### Пагинация/Утилиты/Логи
+
+- `App\Service\PaginationService`: Нормализация `itemsPerPage` по глобальным/City/Pvz настройкам из параметров приложения.
+- `App\Service\LoggerService`: Централизованное логирование (info/warning/error/debug/critical) + хелперы для HTTP/DB/пользовательских действий.
+
+### Как использовать этот файл
+
+- Для навигации ИИ по проекту: быстро понять, где реализована конкретная бизнес‑функция.
+- Для изменений: при добавлении/переименовании сервиса или значимого изменения ответственности — обновить этот файл.
+
+### Инструкция для агента
+
+- При любых изменениях в `src/Service/**` (новые классы, удаление, переименование, значимые изменения обязанностей) — обновляй этот файл и добавляй/корректируй краткие описания.
+

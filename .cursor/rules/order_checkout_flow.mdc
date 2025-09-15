@@ -1,0 +1,111 @@
+# Order Checkout: Business Logic Flow (Symfony)
+
+Назначение: быстрое понимание ИИ‑агентом сценария оформления заказа и точек расширения.
+
+## Точки входа
+- GET `/checkout` → `App\Controller\Catalog\CheckoutController::index`
+  - Загружает актуальную корзину, рендерит страницу.
+- POST `/checkout` → `App\Controller\Catalog\CheckoutController::submit`
+  - Принимает JSON с данными покупателя; создаёт `Order` (+ связанные сущности) в транзакции; закрывает корзину; очищает checkout‑контекст; возвращает `{ id, orderId, redirectUrl }`.
+
+## Пошаговый бизнес‑флоу (POST /checkout)
+1) Контроллер получает `userId`, вытягивает корзину на запись
+   - `CartManager::getOrCreateForWrite(userId)` — гарантирует актуализацию и пересчёт доставки перед оформлением.
+2) Валидация входных полей (имя/телефон/email). Сохранение черновика в сессию
+   - `CheckoutContext::setCustomer([...])`, `setComment(...)`, `setPaymentMethod(...)`.
+3) Транзакция Doctrine (`EntityManager::wrapInTransaction`):
+   - Создание `Order`:
+     - `orderId` ← `OrderRepository::getNextOrderId()`
+     - `total` ← `Cart::getTotal()`
+     - `comment` из payload
+   - Создание `OrderCustomer` из payload + IP/User‑Agent; двусторонняя связь с `Order`.
+   - Создание `OrderDelivery` на основе `DeliveryContext` и расчёта `DeliveryService::calculateForCart($cart)`:
+     - Заполнение `type`, `city`, `cost`, `isFree`, `isCustomCalculate`, `pricingSource`, `pricingTrace`.
+     - Для `pvz` — установка `pvz/pvzCode` при валидации города и кода пункта.
+     - Для `courier` — установка `address`.
+     - При наличии `cityId` в payload — ссылка на `Fias` (`cityFias`).
+     - Валидация провайдером доставки: `DeliveryProviderRegistry::get($method)->validate($orderDelivery)`.
+   - Перенос позиций корзины в заказ:
+     - Для каждого `CartItem` → `OrderProducts` с `productId`, `productName`, `price` (unit), `quantity` (qty).
+     - Перенос выбранных опций в `OrderProductOptions` из `CartItem.selectedOptionsData` (optionCode/valueCode/valueName/sku/price).
+   - Персист: `persist(OrderCustomer|OrderDelivery|OrderProducts|OrderProductOptions|Order)` → `flush()`.
+   - Закрытие корзины: `Cart::setExpiresAt(new DateTimeImmutable('-1 second'))`.
+4) Очистка сессионного контекста: `CheckoutContext::clear()`.
+5) Ответ JSON: `{ id, orderId, redirectUrl: /checkout/success/{orderId} }`.
+
+## Ключевые участники
+- Контроллер: `App\Controller\Catalog\CheckoutController::submit`
+- Корзина: `App\Service\CartManager` (+ `Cart`/`CartItem`)
+- Сессии checkout/delivery: `App\Service\CheckoutContext`, `App\Service\DeliveryContext`
+- Доставка: `App\Service\Delivery\DeliveryService`, `App\Service\Delivery\Provider\DeliveryProviderRegistry`
+- Репозиторий: `App\Repository\OrderRepository::getNextOrderId`
+- Сущности заказа: `Order`, `OrderCustomer`, `OrderDelivery`, `OrderProducts`, `OrderProductOptions`
+
+## Важные детали и риски
+- Весь save в транзакции; в случае исключений (например, валидация доставки) — откат и 400.
+- Корзина после успешного оформления помечается истёкшей (мягкое закрытие).
+- `orderId` = `MAX(orderId)+1` → подвержено гонкам. Рекомендация: уникальный индекс + последовательность/таблица счётчиков с атомарной вставкой и ретраями (см. `docs/order-save-audit.md`).
+- На момент анализа события/уведомления (email, доменные события) при создании заказа не диспатчатся.
+
+## Где смотреть в коде
+- Контроллер (основная логика): `src/Controller/Catalog/CheckoutController.php`
+- Репозиторий: `src/Repository/OrderRepository.php`
+- Доставка: `src/Service/Delivery/DeliveryService.php`, `src/Service/Delivery/Provider/DeliveryProviderRegistry.php`
+- Сессии: `src/Service/CheckoutContext.php`, `src/Service/DeliveryContext.php`
+- Сущности: `src/Entity/Order*.php`
+
+## Псевдокод (сокращённо)
+```php
+$cart = $cartManager->getOrCreateForWrite($userId);
+assert($cart->getItems()->count() > 0);
+
+$checkout->setCustomer([...]);
+$checkout->setComment($comment);
+$checkout->setPaymentMethod($paymentMethod);
+
+$em->wrapInTransaction(function () use (...) {
+  $order = (new Order())
+    ->setOrderId($orders->getNextOrderId())
+    ->setComment($comment)
+    ->setTotal($cart->getTotal());
+
+  $customer = (new OrderCustomer())->setName($name)->setPhone($phone)->setEmail($email)
+    ->setIp($ip)->setUserAgent($ua);
+  $order->setCustomer($customer);
+
+  $calc = $deliveryService->calculateForCart($cart);
+  $delivery = (new OrderDelivery())/* fill from DeliveryContext + $calc */;
+  $provider = $deliveryProviderRegistry->get($method);
+  $provider?->validate($delivery);
+  $order->setDelivery($delivery);
+
+  foreach ($cart->getItems() as $it) {
+    $op = (new OrderProducts())
+      ->setProductId($it->getProduct()->getId())
+      ->setProductName($it->getProductName())
+      ->setPrice($it->getUnitPrice())
+      ->setQuantity($it->getQty());
+    $order->addProduct($op);
+
+    foreach ($it->getSelectedOptionsData() ?? [] as $opt) {
+      $opo = (new OrderProductOptions())/* fill optionName/value/price */;
+      $em->persist($opo);
+    }
+    $em->persist($op);
+  }
+
+  $cart->setExpiresAt(new \DateTimeImmutable('-1 second'));
+  $em->persist($customer);
+  $em->persist($order);
+  $em->flush();
+});
+
+$checkout->clear();
+return json(['id' => $order->getId(), 'orderId' => $order->getOrderId(), 'redirectUrl' => ...]);
+```
+
+## Ссылки на доп. документы
+- `docs/order-save-flow.md`
+- `docs/checkout-submit-transaction.md`
+- `docs/order-save-audit.md`
+
