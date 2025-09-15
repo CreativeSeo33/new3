@@ -14,6 +14,17 @@ use App\Service\PaginationService;
 
 /**
  * Provides ProductResource items and collections from Product entity.
+ *
+ * AI-META v1
+ * role: Поставщик данных для ProductResource (коллекции/одиночные), backend-пагинация и фильтры
+ * module: Admin
+ * dependsOn:
+ *   - App\Repository\ProductRepository
+ *   - App\Service\PaginationService
+ * invariants:
+ *   - Пагинация и фильтры применяются на уровне Doctrine (не во Vue)
+ * transaction: none
+ * lastUpdated: 2025-09-15
  */
 class ProductStateProvider implements ProviderInterface
 {

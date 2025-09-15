@@ -9,6 +9,17 @@ use Doctrine\ORM\EntityManagerInterface;
 
 class DeliveryTypeProcessor implements ProcessorInterface
 {
+    /**
+     * AI-META v1
+     * role: Процессор API Platform для обеспечения единственного default=true у DeliveryType
+     * module: Admin
+     * dependsOn:
+     *   - Doctrine\ORM\EntityManagerInterface
+     * invariants:
+     *   - Перед сохранением текущего DeliveryType все остальные default сбрасываются в false
+     * transaction: em
+     * lastUpdated: 2025-09-15
+     */
     public function __construct(private EntityManagerInterface $entityManager)
     {
     }

@@ -15,6 +15,22 @@ use Symfony\Component\String\Slugger\SluggerInterface;
 
 class ProductCopyService
 {
+    /**
+     * AI-META v1
+     * role: Копирование товара вместе со связанными сущностями; опциональная смена типа
+     * module: Admin
+     * dependsOn:
+     *   - Doctrine\ORM\EntityManagerInterface
+     *   - Symfony\Component\String\Slugger\SluggerInterface
+     *   - App\Service\ProductLifecycleService
+     * invariants:
+     *   - Копирование выполняется в ручной транзакции (begin/commit/rollback)
+     *   - Slug генерируется уникальным; опции/SEO/категории/атрибуты копируются по флагам
+     * transaction: custom
+     * tests:
+     *   - tests/Service/ProductClonerTest.php
+     * lastUpdated: 2025-09-15
+     */
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly SluggerInterface $slugger,

@@ -14,6 +14,22 @@ use Symfony\Component\Uid\Ulid;
 
 final class CartContext
 {
+    /**
+     * AI-META v1
+     * role: Поиск/создание текущей корзины с токеном в cookie; миграция legacy cookie
+     * module: Cart
+     * dependsOn:
+     *   - Doctrine\ORM\EntityManagerInterface
+     *   - App\Repository\CartRepository
+     *   - Symfony\Component\Lock\LockFactory
+     *   - Symfony\Component\HttpFoundation\RequestStack
+     *   - App\Http\CartCookieFactory
+     * invariants:
+     *   - Только токен‑cookie используется как первичный идентификатор гостевой корзины
+     *   - TTL корзины продлевается только на write‑операциях; TTL по умолчанию 180 дней
+     * transaction: em
+     * lastUpdated: 2025-09-15
+     */
     private const CART_TTL_DAYS = 180;
 
     public function __construct(

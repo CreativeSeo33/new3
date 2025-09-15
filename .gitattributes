@@ -1,3 +1,4 @@
+docs/runtime/ai-index.json linguist-generated
 docs/runtime/* linguist-generated
 docs/db/schema.sql linguist-generated
 docs/db/entities.txt linguist-generated

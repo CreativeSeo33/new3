@@ -24,6 +24,29 @@ use Symfony\Component\Routing\Attribute\Route;
 use App\Entity\Fias;
 use App\Entity\PvzPoints;
 
+/**
+ * AI-META v1
+ * role: Страница и API оформления заказа; перенос данных из Cart в Order
+ * module: Order
+ * dependsOn:
+ *   - App\Service\CartManager
+ *   - App\Service\CheckoutContext
+ *   - App\Service\Delivery\DeliveryContext
+ *   - App\Service\Delivery\DeliveryService
+ *   - App\Service\Delivery\Provider\DeliveryProviderRegistry
+ *   - App\Repository\OrderRepository
+ *   - Doctrine\ORM\EntityManagerInterface
+ * invariants:
+ *   - Создание Order/связанных сущностей выполняется в одной транзакции Doctrine
+ *   - После успешного оформления корзина помечается истёкшей (мягкое закрытие)
+ *   - Валидация данных доставки провайдером перед сохранением
+ * transaction: em
+ * routes:
+ *   - GET /checkout checkout_page
+ *   - POST /checkout checkout_submit
+ *   - GET /checkout/success/{orderId} checkout_success
+ * lastUpdated: 2025-09-15
+ */
 final class CheckoutController extends AbstractController
 {
 	public function __construct(
@@ -49,6 +72,22 @@ final class CheckoutController extends AbstractController
 		]);
 	}
 
+	/**
+	 * AI-META v1
+	 * role: Транзакционное оформление заказа (создание Order из Cart)
+	 * module: Order
+	 * dependsOn:
+	 *   - Doctrine\ORM\EntityManagerInterface
+	 *   - App\Repository\OrderRepository
+	 *   - App\Service\Delivery\DeliveryService
+	 * invariants:
+	 *   - Вся операция выполняется в одной транзакции Doctrine
+	 *   - Корзина помечается истёкшей после успешного оформления
+	 * transaction: em
+	 * routes:
+	 *   - POST /checkout checkout_submit
+	 * lastUpdated: 2025-09-15
+	 */
 	#[Route('/checkout', name: 'checkout_submit', methods: ['POST'])]
 	public function submit(
 		Request $request,

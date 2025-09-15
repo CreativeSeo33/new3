@@ -12,6 +12,19 @@ use App\Exception\InvalidDeliveryDataException;
 
 final class CourierDeliveryMethod implements DeliveryMethodInterface, DeliveryProviderInterface
 {
+    /**
+     * AI-META v1
+     * role: Метод курьерской доставки; расчёт с учётом наценки и порога бесплатной доставки
+     * module: Delivery
+     * dependsOn:
+     *   - App\Service\Delivery\Dto\CalculationContext
+     *   - App\Entity\PvzPrice
+     * invariants:
+     *   - Стоимость = базовая (по городу/типу) + конфигурационная наценка
+     *   - traceData фиксирует источник/наценку/порог/итог
+     * transaction: none
+     * lastUpdated: 2025-09-15
+     */
     private const METHOD_CODE = 'courier';
 
     public function __construct(

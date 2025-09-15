@@ -14,6 +14,20 @@ use Psr\Cache\CacheItemPoolInterface;
 /**
  * Основной сервис для управления расчетами доставки.
  * Заменяет старый ShippingCalculator.
+ *
+ * AI-META v1
+ * role: Оркестратор расчёта доставки; выбор метода, кэширование котировок, интеграция с контекстом
+ * module: Delivery
+ * dependsOn:
+ *   - App\Service\DeliveryContext
+ *   - App\Repository\PvzPriceRepository
+ *   - Psr\Cache\CacheItemPoolInterface
+ *   - App\Service\Delivery\Method\DeliveryMethodInterface (tagged app.delivery_method)
+ * invariants:
+ *   - Город обязателен для расчёта; метод по умолчанию 'pvz'
+ *   - Кэширование котировок по ключу (город/метод/qty) с малым TTL
+ * transaction: none
+ * lastUpdated: 2025-09-15
  */
 final class DeliveryService
 {

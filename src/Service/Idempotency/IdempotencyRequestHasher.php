@@ -7,6 +7,18 @@ use Symfony\Component\HttpFoundation\Request;
 
 final class IdempotencyRequestHasher
 {
+    /**
+     * AI-META v1
+     * role: Канонизация запроса и вычисление стабильного хеша для идемпотентности
+     * module: Cart
+     * dependsOn:
+     *   - Symfony\Component\HttpFoundation\Request
+     * invariants:
+     *   - Стабильная канонизация JSON тела и маршрутных параметров
+     *   - Списки сортируются адресно (только для известных полей), ключи упорядочены
+     * transaction: none
+     * lastUpdated: 2025-09-15
+     */
     public function build(Request $r, array $routeParams = []): array
     {
         $method = strtoupper($r->getMethod());

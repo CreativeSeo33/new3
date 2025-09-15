@@ -10,6 +10,21 @@ use App\Service\PriceNormalizer;
 
 final class CartCalculator
 {
+    /**
+     * AI-META v1
+     * role: Пересчёт сумм корзины; быстрый totals-only и тяжёлый пересчёт доставки/скидок
+     * module: Cart
+     * dependsOn:
+     *   - App\Service\Delivery\DeliveryService
+     *   - App\Service\LivePriceCalculator
+     * invariants:
+     *   - recalculateTotalsOnly не выполняет внешних IO и используется под локом
+     *   - Полный пересчёт доставки выполняется вне критической секции
+     * transaction: none
+     * tests:
+     *   - tests/Service/PriceNormalizerTest.php
+     * lastUpdated: 2025-09-15
+     */
     public function __construct(
         private DeliveryService $delivery,
         private LivePriceCalculator $livePrice

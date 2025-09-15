@@ -14,6 +14,17 @@ use Symfony\Component\HttpFoundation\Request;
  * - full: полная корзина (текущая реализация)
  * - summary: минимальные данные для обновления UI totals
  * - delta: точечные изменения по позициям
+ *
+ * AI-META v1
+ * role: Построение full/summary/delta payload для Cart API и определение режима ответа
+ * module: Cart
+ * dependsOn:
+ *   - App\Service\CartCalculator
+ *   - App\Service\LivePriceCalculator
+ * invariants:
+ *   - Не изменяет состояние корзины; только агрегирует данные для ответа
+ * transaction: none
+ * lastUpdated: 2025-09-15
  */
 final class CartDeltaBuilder
 {

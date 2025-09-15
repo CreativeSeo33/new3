@@ -9,6 +9,22 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 
+/**
+ * AI-META v1
+ * role: Админ-эндпойнт копирования товара с опциональным изменением типа/атрибутов
+ * module: Admin
+ * dependsOn:
+ *   - App\Service\ProductCopyService
+ * invariants:
+ *   - Валидация входных опций перед копированием
+ *   - Ошибки пользователя возвращаются 400; прочие — 500
+ * transaction: none
+ * tests:
+ *   - tests/Controller/ProductCloneControllerTest.php
+ * routes:
+ *   - POST /api/admin/products/{id}/copy admin_api_product_copy
+ * lastUpdated: 2025-09-15
+ */
 final class ProductCopyController extends AbstractController
 {
     public function __construct(

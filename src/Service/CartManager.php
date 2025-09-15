@@ -29,6 +29,33 @@ use App\Service\LivePriceCalculator;
  * - Добавлена общая логика executeWithLock() для всех операций
  * - Улучшена обработка опций товара
  * - Добавлена валидация входных параметров
+ *
+ * AI-META v1
+ * role: Оркестратор операций с корзиной (add/update/remove/merge/batch) с блокировками и транзакциями
+ * module: Cart
+ * dependsOn:
+ *   - Doctrine\ORM\EntityManagerInterface
+ *   - App\Repository\CartRepository
+ *   - App\Repository\ProductRepository
+ *   - App\Service\CartCalculator
+ *   - App\Service\InventoryService
+ *   - App\Service\CartLockService
+ *   - Symfony\Component\HttpFoundation\RequestStack
+ *   - Symfony\Contracts\EventDispatcher\EventDispatcherInterface
+ *   - App\Service\DeliveryContext
+ *   - App\Service\CheckoutContext
+ *   - App\Http\CartCookieFactory
+ *   - App\Service\LivePriceCalculator
+ * invariants:
+ *   - Все write-операции выполняются под локом корзины с ретраями и в транзакции
+ *   - Внутри критической секции только быстрый пересчёт totals; тяжёлые вычисления вне лока
+ *   - Комбинации опций валидируются и формируют optionsHash (уникальность позиции)
+ *   - Источник истины — серверные сущности Cart/CartItem; суммы не считаются на клиенте
+ * transaction: em
+ * tests:
+ *   - tests/Service/CartManagerIntegrationTest.php
+ *   - tests/Service/InventoryServiceIntegrationTest.php
+ * lastUpdated: 2025-09-15
  */
 
 final class CartManager

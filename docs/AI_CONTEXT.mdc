@@ -26,6 +26,37 @@
   - Быстрый прогон: `composer stan:quick`
   - Генерация baseline: `composer stan:baseline`
 
+### AI‑метки и индекс
+
+- Машиночитаемые AI‑метки добавлены в ключевые классы (`src/**`) в формате AI-META v1 (PHPDoc докблок на уровне класса; редко — на уровне метода).
+- Индекс меток генерируется в `docs/runtime/ai-index.json` и может быть использован ИИ для навигации по ролям/границам/инвариантам и маршрутам.
+
+Формат AI‑метки (минимум):
+```
+/**
+ * AI-META v1
+ * role: Краткая роль класса (1–2 строки)
+ * module: Catalog|Cart|Order|Admin|Delivery|Media|Shared
+ * dependsOn:
+ *   - FQCN или ID сервиса контейнера
+ * invariants:
+ *   - Ключевые инварианты/предусловия
+ * transaction: em|none|custom
+ * tests:
+ *   - tests/... (опционально)
+ * routes:
+ *   - METHOD PATH ROUTE_NAME (для контроллеров)
+ * lastUpdated: YYYY-MM-DD
+ */
+```
+
+- Правило: если меняется роль/зависимости/инварианты класса — обнови докблок и перегенерируй индекс.
+- Генерация на Windows:
+```
+powershell -ExecutionPolicy Bypass -File tools/generate-ai-index.ps1
+```
+— скрипт обновит `docs/runtime/routes.json` (если доступен `bin/console`), опционально `openapi.json` и соберёт `ai-index.json`.
+
 Frontend (Stimulus-first)
 - Используем Symfony UX Stimulus Bundle. Новые интерактивные фичи делаем через Stimulus‑контроллеры в assets/controllers/*_controller.[js|ts].
 - Разметка: data-controller, data-action, targets/values/classes; без inline <script> в Twig.

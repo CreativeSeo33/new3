@@ -29,6 +29,41 @@ use App\Exception\CartItemNotFoundException;
 use App\Exception\InsufficientStockException;
 use Psr\Log\LoggerInterface;
 
+/**
+ * AI-META v1
+ * role: REST API корзины: чтение/мутации, ETag и идемпотентность для безопасных повторов
+ * module: Cart
+ * dependsOn:
+ *   - App\Service\CartManager
+ *   - App\Service\CartContext
+ *   - App\Service\CartCalculator
+ *   - App\Service\LivePriceCalculator
+ *   - App\Service\Delivery\DeliveryService
+ *   - App\Service\Idempotency\IdempotencyService
+ *   - Doctrine\ORM\EntityManagerInterface
+ *   - App\Http\CartWriteGuard
+ *   - App\Http\CartResponse
+ *   - App\Http\CartEtags
+ * invariants:
+ *   - Все write-операции выполняются под блокировкой корзины и ETag-предикатами
+ *   - Источник истины по суммам/позициям — серверные Cart/CartItem (без клиентских пересчётов)
+ *   - Тяжёлые расчёты (доставка/LIVE) выполняются вне критической секции
+ *   - Идемпотентность write-запросов через заголовок Idempotency-Key
+ * transaction: em
+ * tests:
+ *   - tests/Controller/Api/CartApiOptimizationTest.php
+ *   - tests/Service/CartManagerIntegrationTest.php
+ * routes:
+ *   - GET /api/cart api_cart_get
+ *   - POST /api/cart/items api_cart_add_item
+ *   - PATCH /api/cart/items/{itemId} api_cart_update_qty
+ *   - DELETE /api/cart/items/{itemId} api_cart_remove_item
+ *   - DELETE /api/cart api_cart_clear
+ *   - PATCH /api/cart api_cart_update_pricing_policy
+ *   - POST /api/cart/reprice api_cart_reprice
+ *   - POST /api/cart/batch api_cart_batch
+ * lastUpdated: 2025-09-15
+ */
 #[Route('/api/cart')]
 final class CartApiController extends AbstractController
 {

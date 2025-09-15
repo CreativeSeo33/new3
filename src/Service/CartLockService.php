@@ -8,6 +8,16 @@ use Symfony\Component\Lock\LockFactory;
 
 /**
  * Исключение, бросаемое при невозможности захватить блокировку корзины
+ *
+ * AI-META v1
+ * role: Исключение для сигнализации об отказе в блокировке корзины
+ * module: Cart
+ * dependsOn:
+ *   - TODO: Нет прямых зависимостей
+ * invariants:
+ *   - Сообщение/задержка retryAfterMs используются клиентом для Retry-After
+ * transaction: none
+ * lastUpdated: 2025-09-15
  */
 final class CartLockException extends \RuntimeException
 {
@@ -27,6 +37,17 @@ final class CartLockException extends \RuntimeException
 
 final class CartLockService
 {
+	/**
+	 * AI-META v1
+	 * role: Неблокирующие локи корзины с ретраями и джиттером
+	 * module: Cart
+	 * dependsOn:
+	 *   - Symfony\Component\Lock\LockFactory
+	 * invariants:
+	 *   - Критическая секция ограничена; при исчерпании попыток выбрасывается CartLockException
+	 * transaction: none
+	 * lastUpdated: 2025-09-15
+	 */
 	public function __construct(private LockFactory $lockFactory) {}
 
 	/**

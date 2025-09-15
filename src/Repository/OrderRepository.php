@@ -9,6 +9,19 @@ use Doctrine\Persistence\ManagerRegistry;
 
 final class OrderRepository extends ServiceEntityRepository
 {
+    /**
+     * AI-META v1
+     * role: Репозиторий заказов; генерация порядкового orderId (историческая реализация)
+     * module: Order
+     * dependsOn:
+     *   - Doctrine\Persistence\ManagerRegistry
+     * invariants:
+     *   - getNextOrderId = MAX(orderId)+1 (подвержено гонкам; для production рекомендована последовательность)
+     * transaction: none
+     * tests:
+     *   - TODO: Добавить тест на конкурирующие вызовы getNextOrderId
+     * lastUpdated: 2025-09-15
+     */
 	public function __construct(ManagerRegistry $registry)
 	{
 		parent::__construct($registry, Order::class);

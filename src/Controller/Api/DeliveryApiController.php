@@ -14,6 +14,30 @@ use Symfony\Component\Routing\Attribute\Route;
 use App\Http\CartWriteGuard;
 use App\Http\CartResponse;
 
+/**
+ * AI-META v1
+ * role: Внутренний API управления контекстом доставки и котировками для корзины
+ * module: Delivery
+ * dependsOn:
+ *   - App\Service\DeliveryContext
+ *   - App\Service\CartManager
+ *   - App\Service\Delivery\DeliveryService
+ *   - App\Service\CartCalculator
+ *   - Doctrine\ORM\EntityManagerInterface
+ *   - App\Http\CartWriteGuard
+ *   - App\Http\CartResponse
+ * invariants:
+ *   - Изменения контекста доставки синхронизируются в Cart
+ *   - Write-операции требуют ETag-предикаты через CartWriteGuard
+ * transaction: em
+ * routes:
+ *   - GET /api/delivery/context api_delivery_context
+ *   - POST /api/delivery/select-city api_delivery_select_city
+ *   - POST /api/delivery/select-method api_delivery_select_method
+ *   - POST /api/delivery/select-pvz api_delivery_select_pvz
+ *   - GET /api/delivery/pvz-points api_delivery_pvz_points
+ * lastUpdated: 2025-09-15
+ */
 #[Route('/api/delivery')]
 final class DeliveryApiController extends AbstractController
 {

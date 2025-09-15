@@ -10,6 +10,19 @@ use Doctrine\ORM\EntityManagerInterface;
 
 final class IdempotencyService
 {
+    /**
+     * AI-META v1
+     * role: Идемпотентность write-операций корзины (begin/finish, replay/conflict/in_flight)
+     * module: Cart
+     * dependsOn:
+     *   - Doctrine\ORM\EntityManagerInterface
+     *   - App\Repository\CartIdempotencyRepository
+     * invariants:
+     *   - TTL хранения записей по ключу — 48 часов
+     *   - Захват in-flight и восстановление просроченных записей с ретраями
+     * transaction: em
+     * lastUpdated: 2025-09-15
+     */
     public const TTL_HOURS = 48;
     public const STALE_PROCESSING_SECONDS = 120;
 

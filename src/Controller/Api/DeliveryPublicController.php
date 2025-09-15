@@ -15,6 +15,23 @@ use Symfony\Component\Routing\Attribute\Route;
 /**
  * Публичные эндпойнты доставки для фронта каталога.
  * Контролируем выдачу вручную (без ApiResource), с кешированием и пагинацией.
+ *
+ * AI-META v1
+ * role: Публичный API доставки (ПВЗ/стоимость) с кешированием и пагинацией
+ * module: Delivery
+ * dependsOn:
+ *   - Doctrine\ORM\EntityManagerInterface
+ *   - App\Repository\PvzPriceRepository
+ *   - Psr\Cache\CacheItemPoolInterface
+ * invariants:
+ *   - Кеширование ответов по городу/странице/лимиту
+ *   - Параметры пагинации валидируются и ограничиваются сервером
+ * transaction: none
+ * routes:
+ *   - GET /delivery/points public_delivery_points
+ *   - GET /delivery/pvz-points public_delivery_pvz_points
+ *   - GET /delivery/price public_delivery_price
+ * lastUpdated: 2025-09-15
  */
 #[Route('/delivery')]
 final class DeliveryPublicController extends AbstractController

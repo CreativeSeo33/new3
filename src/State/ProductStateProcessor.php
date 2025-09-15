@@ -17,6 +17,21 @@ use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 /**
  * Processes ProductResource writes to Product entity.
+ *
+ * AI-META v1
+ * role: Обработка записей ProductResource (создание/обновление/удаление) с частичными обновлениями
+ * module: Admin
+ * dependsOn:
+ *   - Doctrine\ORM\EntityManagerInterface
+ *   - App\Repository\ProductRepository
+ *   - App\Repository\CartItemRepository
+ *   - Symfony\Component\HttpFoundation\RequestStack
+ *   - App\Service\PaginationService
+ * invariants:
+ *   - Удаление товара запрещено, если он используется в корзинах (409)
+ *   - PATCH обрабатывает только явные поля из тела запроса
+ * transaction: em
+ * lastUpdated: 2025-09-15
  */
 class ProductStateProcessor implements ProcessorInterface
 {

@@ -9,6 +9,19 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Annotation\Route;
 
+/**
+ * AI-META v1
+ * role: Выдача кэшированных изображений под заданный размер через ImageCacheService
+ * module: Media
+ * dependsOn:
+ *   - App\Service\ImageCacheService
+ * invariants:
+ *   - Путь изображения нормализуется сервисом; размер валидируется
+ * transaction: none
+ * routes:
+ *   - GET /media/cache/{size}/{path} media_image_cache
+ * lastUpdated: 2025-09-15
+ */
 class ImageCacheController
 {
     public function __construct(private readonly ImageCacheService $imageCacheService)

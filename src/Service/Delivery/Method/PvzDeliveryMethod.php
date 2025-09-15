@@ -12,6 +12,19 @@ use App\Exception\InvalidDeliveryDataException;
 
 final class PvzDeliveryMethod implements DeliveryMethodInterface, DeliveryProviderInterface
 {
+    /**
+     * AI-META v1
+     * role: Метод доставки ПВЗ; расчёт тарифов и валидация данных для OrderDelivery
+     * module: Delivery
+     * dependsOn:
+     *   - App\Service\Delivery\Dto\CalculationContext
+     *   - App\Entity\PvzPrice
+     * invariants:
+     *   - Порог бесплатной доставки берётся из БД либо из конфигурации по умолчанию
+     *   - traceData фиксирует источник и параметры расчёта
+     * transaction: none
+     * lastUpdated: 2025-09-15
+     */
     private const METHOD_CODE = 'pvz';
 
     public function __construct(
