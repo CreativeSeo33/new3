@@ -1,0 +1,93 @@
+---
+alwaysApply: false
+---
+
+# Page Map: Корзина (Cart) (/cart)
+
+meta:
+  id: cart
+  route: /cart
+  templates:
+    - templates/catalog/cart/index.html.twig
+  layout: catalog/base.html.twig
+
+controllers:
+  - src/Controller/Catalog/CartController.php
+  - src/Controller/Catalog/CheckoutController.php
+  - src/Controller/Catalog/IndexController.php
+  - src/Controller/Catalog/Product/ProductCatalogController.php
+
+api:
+  - src/Controller/Api/CartApiController.php (/api/cart/*)
+  - src/Controller/Api/DeliveryApiController.php (/api/delivery/*)
+  - src/Controller/Api/DeliveryPublicController.php (/delivery/*)
+
+entities:
+  - App\Entity\Cart (ApiResource)
+  - App\Entity\CartItem (ApiResource)
+  - App\Entity\DeliveryType (ApiResource)
+
+services:
+  - App\Service\CartManager
+  - App\Service\Delivery\DeliveryService
+  - App\Service\DeliveryContext
+  - App\Service\CartCalculator
+  - App\Service\CartLockService
+  - App\Service\CartContext
+  - App\Service\LivePriceCalculator
+  - App\Service\CartDeltaBuilder
+  - App\Service\Idempotency\IdempotencyService
+  - App\Service\Idempotency\IdempotencyRequestHasher
+  - App\Http\CartWriteGuard
+  - App\Http\CartResponse
+  - App\Http\CartEtags
+
+repositories:
+  - App\Repository\CartRepository
+  - App\Repository\DeliveryTypeRepository
+  - App\Repository\ProductRepository
+  - App\Repository\OrderRepository
+  - App\Repository\PvzPriceRepository
+
+jsModules:
+  - assets/catalog/src/features/cart-items-manager (Stimulus)
+  - assets/catalog/src/features/delivery-methods (Stimulus)
+  - assets/controllers/cart_counter_controller.js (Stimulus)
+
+twigExtensions|filters|functions:
+  - src/Twig/PriceExtension.php (format_price)
+  - imagine_filter (filter)
+
+dom:
+  testids:
+    - name: cart-items
+      selector: '#cart-items'
+    - name: cart-item
+      selector: '#cart-items tr[data-item-id]'
+    - name: qty-input
+      selector: '.qty-input'
+    - name: remove
+      selector: '.remove'
+    - name: row-total
+      selector: '.row-total'
+    - name: delivery-root
+      selector: '#delivery-methods'
+    - name: delivery-method-code
+      selector: '#delivery-methods-list input[name="delivery-method"]'
+    - name: subtotal
+      selector: '[data-cart-subtotal]'
+    - name: shipping
+      selector: '[data-cart-shipping]'
+    - name: shipping-term
+      selector: '[data-cart-shipping-term]'
+    - name: total
+      selector: '[data-cart-total]'
+
+invariants:
+  - Источник истины по суммам/позициям — серверные Cart/CartItem (без клиентских пересчётов)
+  - Write-операции выполняются под блокировкой корзины и ETag-предикатами
+  - Изменения доставки синхронизируются с корзиной
+  - Frontend только отображает данные, не пересчитывает значения
+  - Пагинация/фильтрация/сортировка — на бэкенде через API Platform
+
+links: [@services.mdc, @doctrine_entities.mdc, @order_checkout_flow.mdc, @paginationapiplatformmapping.mdc]

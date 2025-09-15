@@ -140,4 +140,12 @@ alwaysApply: true
 - Отсутствуют логи/секреты в VCS; логи — в `var/log/*`
 - Интерактив в Twig — через Stimulus (см. @stimulus_policy.mdc)
 - Связанные .mdc обновлены при правках: @doctrine_entities.mdc, @services.mdc, @order_checkout_flow.mdc
+- Для каждой страницы/шаблона существует и поддерживается карта страницы в .cursor/rules/page_<id>_map.mdc (alwaysApply: false, один фронт‑маттер, H1)
+- В шаблоне есть короткий указатель на карту: {# ai:page=<id> map=@page_<id>_map.mdc v=1 #} (для HTML/Vue — <!-- ai:page=<id> map=@page_<id>_map.mdc v=1 -->)
+- DOM‑якоря реализованы через Stimulus targets (data-*-target); при отсутствии Stimulus — через data-testid. Атрибуты data-ai-* не используются
+- При изменениях маршрутов/контроллеров/сервисов/шаблонов, связанных со страницей, обновлены соответствующий @page_<id>_map.mdc и индекс страниц @pages_index.mdc
+- Page maps обновлены при правках страниц/контроллеров/сервисов: @page_*_map.mdc
+- Новые/изменённые .mdc для карт страниц не увеличивают pinned‑набор (все alwaysApply: false); pinned‑файлы не меняются без необходимости
+- Соответствие Stimulus‑first: в Twig/HTML отсутствуют inline <script>, интерактив — только через внешние контроллеры
+- В картах страниц валидные ссылки @..., корректные пути к контроллерам/сервисам/модулям, без дубликатов секций и с единым стилем RU
 

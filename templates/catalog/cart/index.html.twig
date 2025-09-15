@@ -3,6 +3,7 @@
 {% block title %}Корзина — {{ parent() }}{% endblock %}
 
 {% block catalog_body %}
+{# ai:page=cart map=@page_cart_map.mdc v=1 #}
 <div class="container mx-auto px-4 py-6 relative">
   <!-- Spinner для всей корзины -->
   {% include 'components/spinner.html.twig' with {
@@ -26,9 +27,9 @@
             <th class="py-2 pr-4"></th>
           </tr>
         </thead>
-        <tbody id="cart-items" data-module="cart-items-manager">
+        <tbody id="cart-items" data-module="cart-items-manager" data-testid="cart-items">
           {% for item in cart.items %}
-            <tr class="border-b" data-item-id="{{ item.id }}">
+            <tr class="border-b" data-item-id="{{ item.id }}" data-testid="cart-item">
               <td class="py-2 pr-4">
                 {% if item.product and item.product.image|length > 0 %}
                   {% set firstImage = item.product.image|sort((a,b) => a.sortOrder <=> b.sortOrder)|first %}
@@ -80,19 +81,21 @@
                 {{ format_price(displayPrice) }}
               </td>
               <td class="py-2 pr-4">
-                <input 
-                  type="number" 
-                  class="qty-input w-20 border rounded px-2 py-1" 
-                  value="{{ item.qty }}" 
+                <input
+                  type="number"
+                  class="qty-input w-20 border rounded px-2 py-1"
+                  value="{{ item.qty }}"
                   min="1"
                   data-item-id="{{ item.id }}"
+                  data-testid="qty-input"
                 >
               </td>
-              <td class="py-2 pr-4 row-total">{{ format_price(item.rowTotal) }}</td>
+              <td class="py-2 pr-4 row-total" data-testid="row-total">{{ format_price(item.rowTotal) }}</td>
               <td class="py-2 pr-4">
-                <button 
-                  class="remove text-red-600 hover:underline" 
+                <button
+                  class="remove text-red-600 hover:underline"
                   data-item-id="{{ item.id }}"
+                  data-testid="remove"
                 >
                   Удалить
                 </button>
@@ -104,7 +107,7 @@
     </div>
 
     <div class="mt-4" data-module="delivery-methods" data-selected-code="{{ deliveryContext.methodCode|default('') }}">
-      <div id="delivery-methods" class="p-4 border rounded">
+      <div id="delivery-methods" class="p-4 border rounded" data-testid="delivery-root">
         <div class="font-medium mb-2">Способ доставки</div>
         <div id="delivery-methods-list" class="space-y-2">
           {% if types is defined and types is not empty %}
@@ -112,7 +115,7 @@
             {% for t in types %}
               {% set isSelected = (t.code == selectedCode) or (selectedCode is empty and t.default) %}
               <label class="flex items-center gap-2 cursor-pointer">
-                <input type="radio" name="delivery-method" value="{{ t.code }}" {% if isSelected %}checked{% endif %}>
+                <input type="radio" name="delivery-method" value="{{ t.code }}" {% if isSelected %}checked{% endif %} data-testid="delivery-method-code">
                 <span>{{ t.name ?? t.code }}</span>
               </label>
             {% endfor %}
