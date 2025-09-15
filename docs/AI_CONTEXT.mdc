@@ -26,3 +26,8 @@
   - Быстрый прогон: `composer stan:quick`
   - Генерация baseline: `composer stan:baseline`
 
+Frontend (Stimulus-first)
+- Используем Symfony UX Stimulus Bundle. Новые интерактивные фичи делаем через Stimulus‑контроллеры в assets/controllers/*_controller.[js|ts].
+- Разметка: data-controller, data-action, targets/values/classes; без inline <script> в Twig.
+- Регистрация: assets/controllers.json + startStimulusApp() в assets/bootstrap.js.
+- PR acceptance: без “голого JS” с обработчиками на document/window; исключения — только по необходимости, но в оболочке Stimulus.

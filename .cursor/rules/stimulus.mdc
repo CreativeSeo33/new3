@@ -1,0 +1,117 @@
+---
+alwaysApply: true
+---
+Общая установка
+
+Используй Symfony UX Stimulus Bundle. Не создавай произвольные JS‑утилиты/inline‑скрипты, если задачу можно решить Stimulus‑контроллером + Twig атрибутами.
+Генерируй новые контроллеры через php bin/console make:stimulus-controller <name> или вручную в assets/controllers/<name>_controller.[js|ts].
+Предпочитай разметку: data-controller, data-action, data-<name>-target, значения (values), классы (classes), а также Turbo/UX вместо навешивания слушателей в коде.
+Где писать код
+
+Контроллер: assets/controllers/<name>_controller.js (или .ts).
+Регистрация: авто через assets/controllers.json и startStimulusApp() в assets/bootstrap.js. Если записи в controllers.json нет — добавь.
+Шаблон: связывай контроллеры в Twig/HTML через data-* атрибуты. Не вставляй <script> в Twig, кроме оговоренных исключений.
+API паттерны Stimulus
+
+Targets/Values/Classes/Outlets: используй вместо ручного поиска DOM и хардкода.
+Actions: click->name#method, input->name#update, и т.д.
+Сетевые вызовы: если нужно — fetch внутри метода контроллера. Для навигации/форм предпочитай Turbo (data-turbo="true") и серверные ответы.
+Стили/состояния: меняй через classes или data-*, не через inline‑стили.
+Запрещено/Не рекомендуется
+
+Не добавляй глобальные слушатели на document/window, если можно ограничиться контроллером.
+Не добавляй jQuery и сторонние UI‑фреймворки без явного запроса.
+Не генерируй “чистый” JS вне Stimulus (отдельные утилиты допустимы только как импортируемые модули для контроллеров).
+Принцип работы над задачей
+
+Если фича — интерактив на одной странице/элементе → создать/обновить Stimulus‑контроллер.
+Пропиши data-controller и data-action в Twig.
+Если нужен state/конфиг — используй values (строки, числа, boolean, массивы).
+Проверь, что контроллер зарегистрирован и подключён.
+Выдай diff: контроллер + правки Twig + запись в controllers.json (если нужно).
+Исключения
+
+Можно отступить от Stimulus только если требуется сложная интеграция (Canvas/WebGL, сторонний виджет) — тогда всё равно оборачивай в Stimulus‑контроллер как точку входа.
+Напомни в ответе, почему отступил.
+Критерии приёмки PR
+
+Нет inline <script> в Twig (кроме явного исключения).
+Вся логика — в Stimulus‑контроллерах, параметры — через values.
+Контроллер покрыт минимальной документацией (JSDoc) и использует targets/actions.
+Работает с текущей сборкой (AssetMapper/Encore).
+Шаблон контроллера и разметки
+
+Контроллер assets/controllers/<name>_controller.js
+
+// assets/controllers/toggle_controller.js
+import { Controller } from '@hotwired/stimulus';
+
+export default class extends Controller {
+  static targets = ['panel', 'button'];
+  static classes = ['active'];
+  static values = { open: Boolean, url: String };
+
+  connect() {
+    // Инициализация на основании значения
+    this.updateState(this.openValue ?? false);
+  }
+
+  toggle() {
+    this.updateState(!this.openValue);
+  }
+
+  async load(event) {
+    event.preventDefault();
+    if (!this.urlValue) return;
+
+    this.buttonTarget.disabled = true;
+    try {
+      const resp = await fetch(this.urlValue, { headers: { 'X-Requested-With': 'XMLHttpRequest' }});
+      this.panelTarget.innerHTML = await resp.text();
+    } finally {
+      this.buttonTarget.disabled = false;
+    }
+  }
+
+  updateState(open) {
+    this.openValue = open;
+    this.element.classList.toggle(this.activeClass, open);
+    this.panelTarget.hidden = !open;
+    this.buttonTarget.setAttribute('aria-expanded', String(open));
+  }
+}
+Регистрация (если нужна) assets/controllers.json
+
+{
+  "controllers": {
+    "toggle": {
+      "enabled": true,
+      "fetch": "eager"
+    }
+  }
+}
+Twig‑разметка
+
+<div
+  data-controller="toggle"
+  data-toggle-open-value="false"
+  data-toggle-url-value="{{ path('widget_content') }}"
+  data-toggle-active-class="is-open"
+>
+  <button
+    type="button"
+    data-toggle-target="button"
+    data-action="click->toggle#toggle click->toggle#load"
+  >
+    Toggle
+  </button>
+
+  <div data-toggle-target="panel" hidden></div>
+</div>
+Проверка подключения Stimulus
+
+В assets/bootstrap.js должен быть вызов startStimulusApp():
+
+// assets/bootstrap.js
+import { startStimulusApp } from '@symfony/stimulus-bundle';
+startStimulusApp(); // автоподхват контроллеров из controllers.json
