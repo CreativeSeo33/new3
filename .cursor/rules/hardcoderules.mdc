@@ -35,8 +35,12 @@ API_BASE_URL=https://api.example.com
 MAX_UPLOAD_SIZE=10485760
 PAGINATION_LIMIT=20
 TAX_RATE=0.21
+ADMIN_EMAIL=admin@example.com
+ORDER_PENDING_TIMEOUT=3600
+```
 2. Services Configuration (config/services.yaml)
 
+```yaml
 # ✅ CORRECT: Custom parameters
 parameters:
     app.pagination.default_limit: '%env(int:PAGINATION_LIMIT)%'
@@ -51,23 +55,29 @@ parameters:
     
     # Business constants
     app.user.max_login_attempts: 5
-    app.order.pending_timeout: 3600
+    app.order.pending_timeout: '%env(int:ORDER_PENDING_TIMEOUT)%'
+```
 3. Package-specific Configuration
 
+```yaml
 # config/packages/api_platform.yaml
 api_platform:
     defaults:
         pagination_items_per_page: '%app.pagination.default_limit%'
         pagination_maximum_items_per_page: 100
-    
+```
+
+```yaml
 # config/packages/framework.yaml
 framework:
     http_client:
         default_options:
             base_uri: '%app.api.base_url%'
+```
 Backend Implementation Rules
 ✅ CORRECT: Using Configuration in Services
 
+```php
 // Service with injected parameters
 class OrderService
 {
@@ -82,16 +92,20 @@ class OrderService
         return $amount * $this->taxRate; // ✅ From config
     }
 }
+```
 
-// Service configuration
+```yaml
+# Service configuration
 services:
     App\Service\OrderService:
         arguments:
             $taxRate: '%app.business.tax_rate%'
             $pendingTimeout: '%app.order.pending_timeout%'
             $adminEmail: '%app.notification.admin_email%'
+```
 ✅ CORRECT: Using ParameterBagInterface
 
+```php
 class ConfigurableService
 {
     public function __construct(
@@ -108,8 +122,10 @@ class ConfigurableService
         return $this->parameterBag->get('app.upload.max_size');
     }
 }
+```
 ❌ INCORRECT: Hardcoded Values
 
+```php
 // ❌ WRONG: Hardcoded values in code
 class BadOrderService
 {
@@ -129,9 +145,11 @@ class BadOrderService
         // ...
     }
 }
+```
 Frontend Configuration Rules
 ✅ CORRECT: Environment-based Configuration
 
+```javascript
 // config/frontend.js - Generated from Symfony
 window.APP_CONFIG = {
     API_BASE_URL: '{{ app_config.api.base_url }}',
@@ -142,7 +160,9 @@ window.APP_CONFIG = {
         ANALYTICS: {{ app_config.features.analytics ? 'true' : 'false' }}
     }
 };
+```
 
+```javascript
 // Vue component using configuration
 export default {
     data() {
@@ -159,8 +179,10 @@ export default {
         }
     }
 }
+```
 ❌ INCORRECT: Hardcoded Frontend Values
 
+```javascript
 // ❌ WRONG: Hardcoded values in Vue
 export default {
     data() {
@@ -170,28 +192,35 @@ export default {
         }
     }
 }
+```
 Configuration Categories
 1. Business Logic Configuration
 
+```yaml
 parameters:
     app.business.tax_rate: '%env(float:TAX_RATE)%'
     app.business.discount_threshold: '%env(float:DISCOUNT_THRESHOLD)%'
     app.business.free_shipping_amount: '%env(float:FREE_SHIPPING_AMOUNT)%'
     app.business.max_order_items: '%env(int:MAX_ORDER_ITEMS)%'
+```
 2. Technical Configuration
 
+```yaml
 parameters:
     app.cache.ttl: '%env(int:CACHE_TTL)%'
     app.api.timeout: '%env(int:API_TIMEOUT)%'
     app.upload.allowed_extensions: '%env(csv:ALLOWED_EXTENSIONS)%'
     app.pagination.max_limit: '%env(int:PAGINATION_MAX_LIMIT)%'
+```
 3. Feature Flags
 
+```yaml
 parameters:
     app.features.maintenance_mode: '%env(bool:MAINTENANCE_MODE)%'
     app.features.registration_enabled: '%env(bool:REGISTRATION_ENABLED)%'
     app.features.payment_gateway: '%env(PAYMENT_GATEWAY)%'
     app.features.analytics_enabled: '%env(bool:ANALYTICS_ENABLED)%'
+```
 Code Review Guidelines
 When reviewing code, ensure:
 
@@ -204,6 +233,7 @@ When reviewing code, ensure:
 ✅ Business rules are configurable, not hardcoded
 Configuration Validation
 
+```php
 // ✅ Add configuration validation
 class ConfigurationValidator
 {
@@ -215,6 +245,7 @@ class ConfigurationValidator
         }
     }
 }
+```
 Exception Cases
 Only acceptable hardcoded values:
 

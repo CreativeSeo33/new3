@@ -115,3 +115,4 @@ Twig‑разметка
 // assets/bootstrap.js
 import { startStimulusApp } from '@symfony/stimulus-bundle';
 startStimulusApp(); // автоподхват контроллеров из controllers.json
+

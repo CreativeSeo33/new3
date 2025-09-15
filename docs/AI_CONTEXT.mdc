@@ -1,3 +1,57 @@
+---
+alwaysApply: true
+---
+
+# AI_CONTEXT v2
+
+Последнее обновление: 2025-09-15
+
+## Назначение
+Короткий якорный контекст для ИИ: архитектура, инварианты и ссылки на подробные правила. Используется как pinned-документ для ускорения и повышения качества генерации.
+
+## Технологии и сборка (кратко)
+- Symfony 7.3 + API Platform 4.1; Doctrine ORM/DBAL 3
+- Admin (SPA): Vue 3, TS strict, TailwindCSS; сборка — Webpack Encore
+- Catalog: FSD в `assets/catalog/src`
+- Entrypoints: `admin` → `assets/admin/admin.ts`; `catalog` → `assets/catalog/catalog.ts`
+
+## Приоритет правил
+1) Архитектурные инварианты → @projectrules.mdc
+2) Запрет хардкодов → @hardcoderules.mdc
+3) Checkout/бизнес‑флоу → @order_checkout_flow.mdc
+4) Справочники → @services.mdc, @doctrine_entities.mdc
+5) Диагностика → @logs.mdc
+6) Stimulus‑policy → @stimulus_policy.mdc
+
+## Stimulus‑first (UX)
+- Интерактив в Twig — через Symfony UX Stimulus (`data-controller`, `data-action`, targets/values), без inline `<script>`
+- Исключения — только по необходимости; всё равно через внешний Stimulus‑контроллер
+- Для Vue‑админки не применяется (SPA). Подробнее: @stimulus_policy.mdc
+
+## Архитектурные роли (ссылка на канон)
+- Frontend (Vue, SPA) — только UI/роутинг/загрузка данных, без бизнес‑логики → см. @projectrules.mdc
+- Backend (API Platform) — бизнес‑правила, фильтры/сортировка, пагинация, валидация → см. @projectrules.mdc
+
+## API Platform и пагинация (дефолты)
+- Управление страницей/лимитом через query (`page`, `itemsPerPage`).
+- Клиент получает метаданные пагинации от API; фронтенд не пересчитывает.
+- Для админ‑ресурсов проверь чек‑лист: @paginationapiplatformmapping.mdc
+
+## Логи и диагностика (быстро)
+```bash
+Get-Content var/log/dev.log -Tail 20
+Get-Content var/log/request_dev.log -Tail 10
+php bin/console doctrine:schema:validate
+```
+Подробно: @logs.mdc
+
+## Критерии приёмки изменений
+- Соблюдение инвариантов архитектуры и разграничения обязанностей (см. @projectrules.mdc)
+- Нет хардкодов; все конфиги через ENV/параметры DI (см. @hardcoderules.mdc)
+- Интерактив в Twig — через Stimulus (см. @stimulus_policy.mdc)
+- Пагинация/фильтры — на бэкенде; Vue только отображает
+- При изменениях сущностей/сервисов/checkout обновлены связанные .mdc: @doctrine_entities.mdc, @services.mdc, @order_checkout_flow.mdc
+
 ## Статический анализ (PHPStan)
 
 - Конфигурация: `phpstan.neon.dist`

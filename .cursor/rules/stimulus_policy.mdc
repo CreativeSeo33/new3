@@ -1,0 +1,68 @@
+---
+alwaysApply: false
+---
+
+# Stimulus‑first (UX)
+
+Политика применима к Twig/UX части витрины; к admin SPA (Vue) не применяется — см. @projectrules.mdc.
+
+## Где писать код
+- Контроллеры: `assets/controllers/<name>_controller.js|ts`
+- Регистрация: `assets/controllers.json` и `startStimulusApp()` в `assets/bootstrap.js`
+
+## Разметка
+- Используй `data-controller`, `data-action`, `data-<name>-target`, значения (`...-value`) и классы (`...-class`)
+- Не использовать inline `<script>` в Twig; не вешать глобальные слушатели на `document/window`, если можно ограничить область
+
+## Пример контроллера
+```javascript
+import { Controller } from '@hotwired/stimulus';
+
+export default class extends Controller {
+  static targets = ['panel', 'button'];
+  static classes = ['active'];
+  static values = { open: Boolean, url: String };
+
+  connect() { this.updateState(this.openValue ?? false); }
+  toggle() { this.updateState(!this.openValue); }
+
+  async load(event) {
+    event.preventDefault();
+    if (!this.urlValue) return;
+    this.buttonTarget.disabled = true;
+    try {
+      const resp = await fetch(this.urlValue, { headers: { 'X-Requested-With': 'XMLHttpRequest' }});
+      this.panelTarget.innerHTML = await resp.text();
+    } finally {
+      this.buttonTarget.disabled = false;
+    }
+  }
+
+  updateState(open) {
+    this.openValue = open;
+    this.element.classList.toggle(this.activeClass, open);
+    this.panelTarget.hidden = !open;
+    this.buttonTarget.setAttribute('aria-expanded', String(open));
+  }
+}
+```
+
+## Пример Twig‑разметки
+```twig
+<div
+  data-controller="toggle"
+  data-toggle-open-value="false"
+  data-toggle-url-value="{{ path('widget_content') }}"
+  data-toggle-active-class="is-open"
+>
+  <button
+    type="button"
+    data-toggle-target="button"
+    data-action="click->toggle#toggle click->toggle#load"
+  >
+    Toggle
+  </button>
+  <div data-toggle-target="panel" hidden></div>
+</div>
+```
+

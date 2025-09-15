@@ -18,27 +18,31 @@ alwaysApply: true
 
 ## Технологический стек и версии
 
-- PHP >= 8.2
-- Symfony: 7.3.* (FrameworkBundle, Security, Twig, Validator, Serializer, Lock, Monolog, UX пакеты)
-- API Platform: ^4.1; форматы: jsonld, json, html; patch: `application/merge-patch+json`; `stateless: true`
-- Doctrine: ORM ^3.5, DBAL ^3; Migrations Bundle ^3.4
-- Auth: LexikJWTAuthenticationBundle ^3.1 (присутствует), основная аутентификация/ACL — `security.yaml`
-- CORS: NelmioCorsBundle (источник из ENV `%env(CORS_ALLOW_ORIGIN)%`)
-- Медиа: LiipImagineBundle 2.12.3
-- Frontend: Vue ^3.5.18, Vue Router ^4.5.1, Pinia ^3.0.3, TypeScript ^5.9.2
-- CSS: TailwindCSS ^3.4.17 (PostCSS, autoprefixer)
-- Сборка: Webpack/Encore ^5 (Vue Loader включён для `admin`); Vite ^5 для Storybook окружения
+- Symfony 7.3 + API Platform 4.1; Doctrine ORM/DBAL 3
+- Admin (SPA): Vue 3, TypeScript strict, TailwindCSS; сборка — Webpack Encore
+- Catalog: FSD в `assets/catalog/src`
+- Auth/CORS/Media/UX: LexikJWT, NelmioCors, LiipImagine, Symfony UX (Stimulus/Twig/Live)
+
+## Приоритет правил
+
+1) Архитектурные инварианты → @projectrules.mdc
+2) Запрет хардкодов → @hardcoderules.mdc
+3) Checkout/бизнес‑флоу → @order_checkout_flow.mdc
+4) Справочники → @services.mdc, @doctrine_entities.mdc
+5) Диагностика → @logs.mdc
+6) Stimulus‑policy → @stimulus_policy.mdc
 
 ## Сборка и артефакты
 
-- Точки входа Encore:
-  - `admin`: `assets/admin/admin.ts`
-  - `catalog`: `assets/catalog/catalog.ts`
-- Команды (выполнять из корня):
-  - `npm run build` — полная сборка
-  - `npm run build:admin`, `npm run build:catalog` — таргетированные сборки
-  - `npm run dev:*`/`watch` — режим разработки
-- Storybook: каталоги вывода `public/storybook-admin`, `public/storybook-catalog`
+- Точки входа: `admin` → `assets/admin/admin.ts`; `catalog` → `assets/catalog/catalog.ts`
+- Сборка: `npm run build` | `npm run build:admin` | `npm run build:catalog`; dev: `npm run dev:*`
+- Storybook: `public/storybook-admin`, `public/storybook-catalog`
+
+## Stimulus‑first (Twig/UX)
+
+- Интерактив в Twig — через Symfony UX Stimulus (`data-controller`, `data-action`, targets/values), без inline `<script>`
+- Исключения — только по необходимости; всё равно через внешний Stimulus‑контроллер
+- Подробнее: @stimulus_policy.mdc
 
 ## Архитектура фронтенда
 
@@ -99,10 +103,8 @@ alwaysApply: true
 - Диагностика:
   - Последние ошибки: `Get-Content var/log/dev.log -Tail 20`
   - HTTP/роутинг: `Get-Content var/log/request_dev.log -Tail 10`
-  - Doctrine: `Get-Content var/log/doctrine_dev.log -Tail 15`; `php bin/console doctrine:schema:validate`
-  - Аутентификация: `Get-Content var/log/security_dev.log -Tail 10`
-  - Deprecated: `Get-Content var/log/deprecation_dev.log -Tail 10`
-  - Мониторинг: `Get-Content var/log/dev.log -Wait -Tail 5`
+  - Doctrine: `Get-Content var/log/doctrine_dev.log -Tail 15`
+- Подробнее: @logs.mdc
 
 ## Ключевые пути репозитория
 
@@ -119,6 +121,7 @@ alwaysApply: true
 - Справочник сущностей Doctrine: `@doctrine_entities.mdc`
 - Ключевые сервисы (назначение/зоны ответственности): `@services.mdc`
 - Сценарий оформления заказа: `@order_checkout_flow.mdc`
+ - Пагинация API Platform: `@paginationapiplatformmapping.mdc`
 
 ### Инструкция для агента
 
@@ -134,4 +137,6 @@ alwaysApply: true
 - Корзинные значения читаются из API; нет клиентских пересчётов
 - Код собирается из корня командами npm; артефакты не коммитятся
 - Отсутствуют логи/секреты в VCS; логи — в `var/log/*`
+- Интерактив в Twig — через Stimulus (см. @stimulus_policy.mdc)
+- Связанные .mdc обновлены при правках: @doctrine_entities.mdc, @services.mdc, @order_checkout_flow.mdc
 

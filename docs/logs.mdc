@@ -23,4 +23,3 @@ php bin/console doctrine:schema:validate
 - Быстрый поиск ошибок: `Get-Content var/log/dev.log | Select-String "ERROR|CRITICAL"`
 - Диагностика роутинга: `php bin/console debug:router`
 
- 

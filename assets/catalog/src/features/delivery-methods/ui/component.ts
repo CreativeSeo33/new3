@@ -13,18 +13,28 @@ export class DeliveryMethods extends Component {
 
   async init(): Promise<void> {
     try {
-      const [ctx, types] = await Promise.all([
-        fetchDeliveryContext(),
-        fetchDeliveryTypes(),
-      ]);
+      const selectedAttr = this.dataset.str('selectedCode', '');
+      const selectedFromAttr = selectedAttr.length > 0 ? selectedAttr : null;
 
-      const selectedFromCtx = (ctx && typeof ctx.methodCode === 'string') ? ctx.methodCode : null;
+      const ssrRadios = this.$$('#delivery-methods-list input[type="radio"][name="delivery-method"]');
+      const hasSSRList = ssrRadios.length > 0;
 
-      // Если API вернуло пусто, не затираем SSR-рендер. Просто применим выбранный, если есть, и повесим обработчики
-      if (!Array.isArray(types) || types.length === 0) {
+      const ctxPromise: Promise<Record<string, any>> = selectedFromAttr
+        ? Promise.resolve({ methodCode: selectedFromAttr })
+        : fetchDeliveryContext();
+
+      const typesPromise: Promise<DeliveryTypeDto[] | null> = hasSSRList
+        ? Promise.resolve<DeliveryTypeDto[] | null>(null)
+        : fetchDeliveryTypes();
+
+      const [ctx, types] = await Promise.all([ctxPromise, typesPromise]);
+
+      const selectedFromCtx = (ctx && typeof (ctx as any).methodCode === 'string') ? (ctx as any).methodCode : null;
+
+      // Если API не запрашивали или вернуло пусто, не затираем SSR-рендер
+      if (!types || !Array.isArray(types) || types.length === 0) {
         if (selectedFromCtx) {
-          const radios = this.$$('#delivery-methods-list input[type="radio"][name="delivery-method"]');
-          radios.forEach((r: any) => { r.checked = (r.value === selectedFromCtx); });
+          ssrRadios.forEach((r: any) => { r.checked = (r.value === selectedFromCtx); });
           this.currentCode = selectedFromCtx;
         } else {
           const firstChecked = this.$('#delivery-methods-list input[type="radio"][name="delivery-method"]:checked') as HTMLInputElement | null;

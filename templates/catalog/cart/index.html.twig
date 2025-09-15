@@ -103,7 +103,7 @@
       </table>
     </div>
 
-    <div class="mt-4" data-module="delivery-methods">
+    <div class="mt-4" data-module="delivery-methods" data-selected-code="{{ deliveryContext.methodCode|default('') }}">
       <div id="delivery-methods" class="p-4 border rounded">
         <div class="font-medium mb-2">Способ доставки</div>
         <div id="delivery-methods-list" class="space-y-2">

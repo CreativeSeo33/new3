@@ -85,3 +85,5 @@ UI-specific formatting (display dates, currency formatting)
 Client-side form validation for UX (must be duplicated on backend)
 Local component state for UI interactions (modals, dropdowns, etc.)
 Temporary state during API calls (loading, error states)
+
+Для Twig/UX интерактива см. @stimulus_policy.mdc (Stimulus‑first).

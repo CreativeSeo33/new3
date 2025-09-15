@@ -1,0 +1,36 @@
+---
+alwaysApply: false
+---
+
+# Ключевые сервисы
+
+Справочник доменных сервисов и их зоны ответственности. Подробная реализация — в `src/Service/**`.
+
+## Корзина (Cart)
+- `CartManager`: CRUD/блокировки/транзакции; add/update/remove/clear/merge; события
+- `CartCalculator`: пересчёт итогов; быстрый и «тяжёлый» режим
+- `LivePriceCalculator`: актуализация цен позиций
+- `InventoryService`: валидации наличия и комбинаций опций
+- `CartLockService`: неблокирующие локи (Symfony Lock)
+- `CartContext`, `CartSessionStorage`, `CartDeltaBuilder`
+- Идемпотентность: `IdempotencyService`, `IdempotencyRequestHasher`
+
+## Доставка (Delivery)
+- `DeliveryService`: оркестр расчёта; квоты/кэш; интеграция с `PvzPriceRepository`
+- Методы: `PvzDeliveryMethod`, `CourierDeliveryMethod` (стратегии)
+- DTO: `CalculationContext`, `DeliveryCalculationResult`; контекст: `DeliveryContext`
+
+## Каталог/Товары
+- `ProductLifecycleService`, `ProductCopyService`, `ProductVariantService`
+- `PriceNormalizer`, генераторы кодов: `AttributeCodeGenerator`, `OptionCodeGenerator`
+- `BreadcrumbBuilder`
+
+## FIAS/Гео/Навигация
+- `FiasService`, `GeoIpService`, `FooterCategoryService`, `NavbarCategoryService`
+
+## Медиа
+- `ImageCacheService`, `ImageWarmupService`
+
+## Утилиты
+- `PaginationService`, `LoggerService`
+
