@@ -13,9 +13,9 @@ const defaultHeaders = {
  */
 export async function http<T = any>(
   path: string,
-  options: HttpOptions = {}
+  options: HttpOptions & { signal?: AbortSignal } = {}
 ): Promise<T> {
-  const { method = 'GET', headers = {}, body } = options;
+  const { method = 'GET', headers = {}, body, signal } = options as any;
   const url = base + path;
 
   // Добавляем CSRF токен для state-changing методов
@@ -33,7 +33,8 @@ export async function http<T = any>(
   const config: RequestInit = {
     method,
     credentials: 'same-origin',
-    headers: finalHeaders
+    headers: finalHeaders,
+    signal
   };
 
   // ВАЖНО: для GET отключаем кэш браузера, чтобы не получать 304 с ETag
@@ -98,7 +99,7 @@ export async function http<T = any>(
  */
 export async function get<T = any>(
   path: string,
-  options: HttpGetOptions = {}
+  options: HttpGetOptions & { signal?: AbortSignal } = {}
 ): Promise<T> {
   return http<T>(path, { ...options, method: 'GET' });
 }

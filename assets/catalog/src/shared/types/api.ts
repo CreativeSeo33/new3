@@ -108,9 +108,12 @@ export interface HttpOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   headers?: Record<string, string>;
   body?: any;
+  signal?: AbortSignal;
 }
 
-export interface HttpGetOptions extends Omit<HttpOptions, 'method' | 'body'> {}
+export interface HttpGetOptions extends Omit<HttpOptions, 'method' | 'body'> {
+  signal?: AbortSignal;
+}
 export interface HttpPostOptions extends Omit<HttpOptions, 'method'> {}
 export interface HttpPutOptions extends Omit<HttpOptions, 'method'> {}
 export interface HttpPatchOptions extends Omit<HttpOptions, 'method'> {}
