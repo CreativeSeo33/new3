@@ -28,9 +28,10 @@ alwaysApply: true
 1) Архитектурные инварианты → @projectrules.mdc
 2) Запрет хардкодов → @hardcoderules.mdc
 3) Checkout/бизнес‑флоу → @order_checkout_flow.mdc
-4) Справочники → @services.mdc, @doctrine_entities.mdc
-5) Диагностика → @logs.mdc
-6) Stimulus‑policy → @stimulus_policy.mdc
+4) Пагинация (API Platform) → @paginationapiplatformmapping.mdc
+5) Справочники → @services.mdc, @doctrine_entities.mdc
+6) Диагностика → @logs.mdc
+7) Stimulus‑policy → @stimulus_policy.mdc
 
 ## Сборка и артефакты
 
@@ -121,7 +122,7 @@ alwaysApply: true
 - Справочник сущностей Doctrine: `@doctrine_entities.mdc`
 - Ключевые сервисы (назначение/зоны ответственности): `@services.mdc`
 - Сценарий оформления заказа: `@order_checkout_flow.mdc`
- - Пагинация API Platform: `@paginationapiplatformmapping.mdc`
+- Пагинация API Platform: `@paginationapiplatformmapping.mdc`
 
 ### Инструкция для агента
 
