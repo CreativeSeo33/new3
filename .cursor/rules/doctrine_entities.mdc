@@ -1,0 +1,125 @@
+---
+alwaysApply: true
+---
+
+### Сущности Doctrine
+
+| Сущность | Важные поля | Связи | Описание |
+| --- | --- | --- | --- |
+| `App\Entity\User` | `id`, `name` (unique), `roles`, `password` | — | Пользователь (используется для аутентификации/ролей). |
+| `App\Entity\Product` | `id`, `name`, `slug` (unique), `status`, `type`, `quantity`, `effectivePrice`, `pricing{price,salePrice,currency}`, `timestamps{createdAt,updatedAt}`, `code`(Ulid) | `ManyToOne` → `Manufacturer` (`manufacturerRef`); `OneToOne` ↔ `ProductSeo` (`seo`); `OneToMany` ← `ProductToCategory` (`category`); `OneToMany` ← `ProductImage` (`image`); `OneToMany` ← `Carousel`; `OneToMany` ← `ProductOptionValueAssignment` (`optionAssignments`); `OneToMany` ← `ProductAttributeAssignment` (`attributeAssignments`) | Товар с ценами (embeddable), SEO, опциями/атрибутами, изображениями и категоризацией. |
+| `App\Entity\ProductSeo` | `metaTitle`, `metaDescription`, `metaKeywords`, `h1` | `OneToOne` → `Product` (owning side by `product_id`) | SEO-поля товара, хранится отдельно. |
+| `App\Entity\Category` | `id`, `name`, `slug`, `visibility`, `parentCategoryId`, `metaTitle`, `metaDescription`, `metaKeywords`, `metaH1`, `description`, `navbarVisibility`, `footerVisibility`, `sortOrder` | `OneToMany` ← `ProductToCategory` (`product`) | Категории каталога. Связь с продуктом через таблицу связей. |
+| `App\Entity\ProductToCategory` | `id`, `isParent`, `position`, `visibility` | `ManyToOne` → `Product`; `ManyToOne` → `Category` | Связь товар—категория (уникальная пара), с доп.атрибутами. |
+| `App\Entity\ProductImage` | `id`, `imageUrl`, `sortOrder` | `ManyToOne` → `Product` | Изображения товара (сортируемые). |
+| `App\Entity\Carousel` | `id`, `name`, `productsId` (json), `sort`, `place` | `ManyToOne` → `Product` | Карусель/подборка для витрины. |
+| `App\Entity\Manufacturer` | `id`, `name` (unique) | — | Производитель, ссылка из `Product`. |
+| `App\Entity\Option` | `id`, `name`, `sortOrder`, `code` (unique) | `OneToMany` ← `OptionValue` (`optionValues`) | Тип опции (например, размер/цвет). |
+| `App\Entity\OptionValue` | `id`, `value`, `sortOrder`, `code` | `ManyToOne` → `Option` (`optionType`) | Значение опции. |
+| `App\Entity\ProductOptionValueAssignment` | `id`, `height`, `price`, `setPrice`, `bulbsCount`, `lightingArea`, `sku`, `attributes`(json), `originalSku`, `salePrice`, `sortOrder`, `quantity` | `ManyToOne` → `Product`; `ManyToOne` → `Option`; `ManyToOne` → `OptionValue`; `ManyToMany` ↔ `CartItem` | Привязка значения опции к товару (варианты/SKU). Индексы под фильтры. |
+| `App\Entity\AttributeGroup` | `id`, `name`, `sortOrder`, `code` | `OneToMany` ← `Attribute` (`attributes`) | Группа атрибутов (фасетные/описательные). |
+| `App\Entity\Attribute` | `id`, `name`, `sortOrder`, `showInCategory`, `shortName`, `code` | `ManyToOne` → `AttributeGroup` | Определение атрибута. |
+| `App\Entity\ProductAttributeAssignment` | `id`, `dataType`, `stringValue`, `textValue`, `intValue`, `decimalValue`, `boolValue`, `dateValue`, `jsonValue`, `unit`, `position`, `sortOrder` | `ManyToOne` → `Product`; `ManyToOne` → `Attribute`; `ManyToOne` → `AttributeGroup` | Значение атрибута товара. Уникальность по (`product`,`attribute`,`position`). |
+| `App\Entity\Order` | `id`, `orderId`, `dateAdded`, `comment`, `status`, `total` | `OneToMany` ← `OrderProducts` (`products`); `OneToOne` ↔ `OrderCustomer` (`customer`); `OneToOne` ↔ `OrderDelivery` (`delivery`) | Заказ: товары, данные клиента и доставки. |
+| `App\Entity\OrderProducts` | `id`, `product_id`, `product_name`, `price`, `salePrice`, `quantity` | `ManyToOne` → `Order` (`orders`); `OneToMany` ← `OrderProductOptions` (`options`) | Позиция заказа (товар в заказе). |
+| `App\Entity\OrderProductOptions` | `id`, `product_id`, `optionName`, `value`(json), `price` | `ManyToOne` → `OrderProducts` (`product`) | Опции конкретной позиции заказа. |
+| `App\Entity\OrderCustomer` | `id`, `name`, `phone`, `email`, `ip`, `userAgent`, `phoneNormal`, `comment` | `OneToOne` → `Order` (inverse by `customer`) | Данные клиента заказа. |
+| `App\Entity\OrderDelivery` | `id`, `type`, `address`, `city`, `cost`, `pvz`, `isFree`, `isCustomCalculate`, `pricingSource`, `pricingTrace`(json), `pvzCode`, `delivery_date`, `delivery_time` | `OneToOne` → `Order` (inverse by `delivery`); `ManyToOne` → `Fias` (`cityFias`) | Доставка заказа, с привязкой к FIAS. |
+| `App\Entity\OrderStatus` | `id`, `name`, `sort` | — | Справочник статусов заказа (админ). |
+| `App\Entity\City` | `id`, `address`, `postalCode`, `federalDistrict`, `regionType`, `region`, `cityType`, `city`, `kladrId`, `fiasLevel`, `geoLat`, `geoLon`, `population` | — | Справочник городов (исторический, отдельный от FIAS). |
+| `App\Entity\CityModal` | `id`, `fiasId`, `name`, `sort` | — | Топ‑города для модалки выбора города. |
+| `App\Entity\Fias` | `id`(fias_id), `parentId`, `postalcode`, `offname`, `shortname`, `level` | — | FIAS записи; используется Pvz*, Delivery и др. для нормализации городов. |
+| `App\Entity\PvzPoints` | `id`, `code`, `name`, `cityCode`, `address`, `tariffZone`, `price`, `deliveryPeriod`, `phone`, `region`, `typeOfOffice`, `metro`, `onlyPrepaidOrders`, `postal`, `city`, `time`, `card`, `shirota`, `dolgota`, `company` | `ManyToOne` → `Fias` (`cityFias`) | Точки выдачи заказов. |
+| `App\Entity\PvzPrice` | `id`, `city`, `srok`, `city2`, `code`, `alias`, `region`, `cost`, `free`, `calculatePrice`, `calculateDeliveryPeriod` | `ManyToOne` → `Fias` (`cityFias`) | Цены доставки по городам. |
+| `App\Entity\DeliveryType` | `id`, `name`, `code`(unique), `active`, `sortOrder`, `default` | — | Типы доставки (админ). |
+| `App\Entity\Settings` | `id`, `name`, `value` | — | Общие настройки (админ, /admin/settings). |
+| `App\Entity\Cart` | `id`(Ulid), `userId`, `token`(uuid), `currency`, `pricingPolicy`, `subtotal`, `discountTotal`, `total`, `createdAt`, `updatedAt`, `expiresAt`, `version`, `shippingMethod`, `shippingCost`, `shipToCity`, `shippingData`(json) | `OneToMany` ← `CartItem` (`items`) | Серверная корзина — источник истины. |
+| `App\Entity\CartItem` | `id`, `productName`, `unitPrice`, `qty`, `rowTotal`, `optionsPriceModifier`, `effectiveUnitPrice`, `optionsHash`, `selectedOptionsData`(json), `optionsSnapshot`(json), `pricedAt`, `version` | `ManyToOne` → `Cart`; `ManyToOne` → `Product`; `ManyToMany` ↔ `ProductOptionValueAssignment` | Позиция корзины с зафиксированными ценами/опциями. |
+| `App\Entity\CartIdempotency` | `id`, `idempotencyKey`(unique), `cartId`(string ulid), `endpoint`, `requestHash`, `status`, `httpStatus`, `responseData`(json), `instanceId`, `createdAt`, `expiresAt` | — | Идемпотентность операций корзины/чекаута. |
+
+### Встроенные (Embeddables)
+
+- `App\Entity\Embeddable\ProductPrice`: `price`, `salePrice`, `currency` — используется в `Product` как `pricing`.
+- `App\Entity\Embeddable\ProductTimestamps`: `createdAt` (date_added), `updatedAt` (date_edited) — используется в `Product` как `timestamps`.
+
+### Ключевые связи (суммарно)
+
+- Product ↔ Manufacturer: `ManyToOne` (`manufacturerRef`)
+- Product ↔ ProductSeo: `OneToOne` (owning side: `ProductSeo.product`)
+- Product ↔ Category: через `ProductToCategory` (`OneToMany` у Product, `ManyToOne` к Category)
+- Product ↔ ProductImage: `OneToMany`
+- Product ↔ Carousel: `OneToMany`
+- Product ↔ Option/OptionValue: через `ProductOptionValueAssignment` (`ManyToOne` к обоим)
+- Product ↔ Attribute/AttributeGroup: через `ProductAttributeAssignment`
+- Order ↔ OrderProducts: `OneToMany`
+- Order ↔ OrderCustomer: `OneToOne`
+- Order ↔ OrderDelivery: `OneToOne`
+- PvzPoints/PvzPrice ↔ Fias: `ManyToOne`
+- Cart ↔ CartItem: `OneToMany`
+- CartItem ↔ ProductOptionValueAssignment: `ManyToMany`
+
+### Примечания
+
+- Уникальные ограничения: `Product.slug`, `Product.code` (Ulid), `Manufacturer.name`, `Option.code`, `ProductToCategory(product,category)`, `OptionValue(code within option)`, `CartItem(uniq_cart_product_options)`.
+- Индексы и фильтры настроены под API Platform (по ценам/атрибутам/опциям/сортировкам).
+- Источник истины по корзине/ценам — серверные `Cart`/`CartItem`/`Product*Assignment` (без клиентских пересчётов).### Сущности Doctrine
+
+| Сущность | Важные поля | Связи | Описание |
+| --- | --- | --- | --- |
+| `App\Entity\User` | `id`, `name` (unique), `roles`, `password` | — | Пользователь (используется для аутентификации/ролей). |
+| `App\Entity\Product` | `id`, `name`, `slug` (unique), `status`, `type`, `quantity`, `effectivePrice`, `pricing{price,salePrice,currency}`, `timestamps{createdAt,updatedAt}`, `code`(Ulid) | `ManyToOne` → `Manufacturer` (`manufacturerRef`); `OneToOne` ↔ `ProductSeo` (`seo`); `OneToMany` ← `ProductToCategory` (`category`); `OneToMany` ← `ProductImage` (`image`); `OneToMany` ← `Carousel`; `OneToMany` ← `ProductOptionValueAssignment` (`optionAssignments`); `OneToMany` ← `ProductAttributeAssignment` (`attributeAssignments`) | Товар с ценами (embeddable), SEO, опциями/атрибутами, изображениями и категоризацией. |
+| `App\Entity\ProductSeo` | `metaTitle`, `metaDescription`, `metaKeywords`, `h1` | `OneToOne` → `Product` (owning side by `product_id`) | SEO-поля товара, хранится отдельно. |
+| `App\Entity\Category` | `id`, `name`, `slug`, `visibility`, `parentCategoryId`, `metaTitle`, `metaDescription`, `metaKeywords`, `metaH1`, `description`, `navbarVisibility`, `footerVisibility`, `sortOrder` | `OneToMany` ← `ProductToCategory` (`product`) | Категории каталога. Связь с продуктом через таблицу связей. |
+| `App\Entity\ProductToCategory` | `id`, `isParent`, `position`, `visibility` | `ManyToOne` → `Product`; `ManyToOne` → `Category` | Связь товар—категория (уникальная пара), с доп.атрибутами. |
+| `App\Entity\ProductImage` | `id`, `imageUrl`, `sortOrder` | `ManyToOne` → `Product` | Изображения товара (сортируемые). |
+| `App\Entity\Carousel` | `id`, `name`, `productsId` (json), `sort`, `place` | `ManyToOne` → `Product` | Карусель/подборка для витрины. |
+| `App\Entity\Manufacturer` | `id`, `name` (unique) | — | Производитель, ссылка из `Product`. |
+| `App\Entity\Option` | `id`, `name`, `sortOrder`, `code` (unique) | `OneToMany` ← `OptionValue` (`optionValues`) | Тип опции (например, размер/цвет). |
+| `App\Entity\OptionValue` | `id`, `value`, `sortOrder`, `code` | `ManyToOne` → `Option` (`optionType`) | Значение опции. |
+| `App\Entity\ProductOptionValueAssignment` | `id`, `height`, `price`, `setPrice`, `bulbsCount`, `lightingArea`, `sku`, `attributes`(json), `originalSku`, `salePrice`, `sortOrder`, `quantity` | `ManyToOne` → `Product`; `ManyToOne` → `Option`; `ManyToOne` → `OptionValue`; `ManyToMany` ↔ `CartItem` | Привязка значения опции к товару (варианты/SKU). Индексы под фильтры. |
+| `App\Entity\AttributeGroup` | `id`, `name`, `sortOrder`, `code` | `OneToMany` ← `Attribute` (`attributes`) | Группа атрибутов (фасетные/описательные). |
+| `App\Entity\Attribute` | `id`, `name`, `sortOrder`, `showInCategory`, `shortName`, `code` | `ManyToOne` → `AttributeGroup` | Определение атрибута. |
+| `App\Entity\ProductAttributeAssignment` | `id`, `dataType`, `stringValue`, `textValue`, `intValue`, `decimalValue`, `boolValue`, `dateValue`, `jsonValue`, `unit`, `position`, `sortOrder` | `ManyToOne` → `Product`; `ManyToOne` → `Attribute`; `ManyToOne` → `AttributeGroup` | Значение атрибута товара. Уникальность по (`product`,`attribute`,`position`). |
+| `App\Entity\Order` | `id`, `orderId`, `dateAdded`, `comment`, `status`, `total` | `OneToMany` ← `OrderProducts` (`products`); `OneToOne` ↔ `OrderCustomer` (`customer`); `OneToOne` ↔ `OrderDelivery` (`delivery`) | Заказ: товары, данные клиента и доставки. |
+| `App\Entity\OrderProducts` | `id`, `product_id`, `product_name`, `price`, `salePrice`, `quantity` | `ManyToOne` → `Order` (`orders`); `OneToMany` ← `OrderProductOptions` (`options`) | Позиция заказа (товар в заказе). |
+| `App\Entity\OrderProductOptions` | `id`, `product_id`, `optionName`, `value`(json), `price` | `ManyToOne` → `OrderProducts` (`product`) | Опции конкретной позиции заказа. |
+| `App\Entity\OrderCustomer` | `id`, `name`, `phone`, `email`, `ip`, `userAgent`, `phoneNormal`, `comment` | `OneToOne` → `Order` (inverse by `customer`) | Данные клиента заказа. |
+| `App\Entity\OrderDelivery` | `id`, `type`, `address`, `city`, `cost`, `pvz`, `isFree`, `isCustomCalculate`, `pricingSource`, `pricingTrace`(json), `pvzCode`, `delivery_date`, `delivery_time` | `OneToOne` → `Order` (inverse by `delivery`); `ManyToOne` → `Fias` (`cityFias`) | Доставка заказа, с привязкой к FIAS. |
+| `App\Entity\OrderStatus` | `id`, `name`, `sort` | — | Справочник статусов заказа (админ). |
+| `App\Entity\City` | `id`, `address`, `postalCode`, `federalDistrict`, `regionType`, `region`, `cityType`, `city`, `kladrId`, `fiasLevel`, `geoLat`, `geoLon`, `population` | — | Справочник городов (исторический, отдельный от FIAS). |
+| `App\Entity\CityModal` | `id`, `fiasId`, `name`, `sort` | — | Топ‑города для модалки выбора города. |
+| `App\Entity\Fias` | `id`(fias_id), `parentId`, `postalcode`, `offname`, `shortname`, `level` | — | FIAS записи; используется Pvz*, Delivery и др. для нормализации городов. |
+| `App\Entity\PvzPoints` | `id`, `code`, `name`, `cityCode`, `address`, `tariffZone`, `price`, `deliveryPeriod`, `phone`, `region`, `typeOfOffice`, `metro`, `onlyPrepaidOrders`, `postal`, `city`, `time`, `card`, `shirota`, `dolgota`, `company` | `ManyToOne` → `Fias` (`cityFias`) | Точки выдачи заказов. |
+| `App\Entity\PvzPrice` | `id`, `city`, `srok`, `city2`, `code`, `alias`, `region`, `cost`, `free`, `calculatePrice`, `calculateDeliveryPeriod` | `ManyToOne` → `Fias` (`cityFias`) | Цены доставки по городам. |
+| `App\Entity\DeliveryType` | `id`, `name`, `code`(unique), `active`, `sortOrder`, `default` | — | Типы доставки (админ). |
+| `App\Entity\Settings` | `id`, `name`, `value` | — | Общие настройки (админ, /admin/settings). |
+| `App\Entity\Cart` | `id`(Ulid), `userId`, `token`(uuid), `currency`, `pricingPolicy`, `subtotal`, `discountTotal`, `total`, `createdAt`, `updatedAt`, `expiresAt`, `version`, `shippingMethod`, `shippingCost`, `shipToCity`, `shippingData`(json) | `OneToMany` ← `CartItem` (`items`) | Серверная корзина — источник истины. |
+| `App\Entity\CartItem` | `id`, `productName`, `unitPrice`, `qty`, `rowTotal`, `optionsPriceModifier`, `effectiveUnitPrice`, `optionsHash`, `selectedOptionsData`(json), `optionsSnapshot`(json), `pricedAt`, `version` | `ManyToOne` → `Cart`; `ManyToOne` → `Product`; `ManyToMany` ↔ `ProductOptionValueAssignment` | Позиция корзины с зафиксированными ценами/опциями. |
+| `App\Entity\CartIdempotency` | `id`, `idempotencyKey`(unique), `cartId`(string ulid), `endpoint`, `requestHash`, `status`, `httpStatus`, `responseData`(json), `instanceId`, `createdAt`, `expiresAt` | — | Идемпотентность операций корзины/чекаута. |
+
+### Встроенные (Embeddables)
+
+- `App\Entity\Embeddable\ProductPrice`: `price`, `salePrice`, `currency` — используется в `Product` как `pricing`.
+- `App\Entity\Embeddable\ProductTimestamps`: `createdAt` (date_added), `updatedAt` (date_edited) — используется в `Product` как `timestamps`.
+
+### Ключевые связи (суммарно)
+
+- Product ↔ Manufacturer: `ManyToOne` (`manufacturerRef`)
+- Product ↔ ProductSeo: `OneToOne` (owning side: `ProductSeo.product`)
+- Product ↔ Category: через `ProductToCategory` (`OneToMany` у Product, `ManyToOne` к Category)
+- Product ↔ ProductImage: `OneToMany`
+- Product ↔ Carousel: `OneToMany`
+- Product ↔ Option/OptionValue: через `ProductOptionValueAssignment` (`ManyToOne` к обоим)
+- Product ↔ Attribute/AttributeGroup: через `ProductAttributeAssignment`
+- Order ↔ OrderProducts: `OneToMany`
+- Order ↔ OrderCustomer: `OneToOne`
+- Order ↔ OrderDelivery: `OneToOne`
+- PvzPoints/PvzPrice ↔ Fias: `ManyToOne`
+- Cart ↔ CartItem: `OneToMany`
+- CartItem ↔ ProductOptionValueAssignment: `ManyToMany`
+
+### Примечания
+
+- Уникальные ограничения: `Product.slug`, `Product.code` (Ulid), `Manufacturer.name`, `Option.code`, `ProductToCategory(product,category)`, `OptionValue(code within option)`, `CartItem(uniq_cart_product_options)`.
+- Индексы и фильтры настроены под API Platform (по ценам/атрибутам/опциям/сортировкам).
+- Источник истины по корзине/ценам — серверные `Cart`/`CartItem`/`Product*Assignment` (без клиентских пересчётов).

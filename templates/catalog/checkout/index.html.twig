@@ -70,8 +70,10 @@
                     <div class="text-sm truncate">{{ item.productName }}</div>
                   {% endif %}
                   {% if item.optionAssignments is defined and item.optionAssignments|length > 0 %}
+                    {% set sortedAssignments = item.optionAssignments
+                      |sort((a,b) => (a.option.sortOrder <=> b.option.sortOrder) ?: ((a.sortOrder ?? 2147483647) <=> (b.sortOrder ?? 2147483647))) %}
                     <div class="mt-1 text-xs text-gray-600">
-                      {% for assignment in item.optionAssignments %}
+                      {% for assignment in sortedAssignments %}
                         <span class="inline-block bg-gray-100 rounded px-2 py-0.5 mr-1 mb-1">{{ assignment.option.name }}: {{ assignment.value.value }}</span>
                       {% endfor %}
                     </div>

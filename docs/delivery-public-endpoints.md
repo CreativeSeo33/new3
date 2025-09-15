@@ -82,3 +82,6 @@ curl "http://127.0.0.1:8000/delivery/points?city=Москва&page=1&itemsPerPag
 - Выдача полей в `/delivery/points` ограничена безопасным набором для фронта.
 
 
+
+
+
