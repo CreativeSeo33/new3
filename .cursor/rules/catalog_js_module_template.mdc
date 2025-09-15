@@ -1,0 +1,78 @@
+---
+alwaysApply: false
+---
+
+# Шаблон FSD‑модуля каталога (TypeScript)
+
+Структура
+- assets/catalog/src/features/<feature-name>/
+  - api/index.ts — HTTP
+  - ui/component.ts — DOM/события
+  - index.ts — init(root, opts) => () => destroy()
+
+Пример api/index.ts
+```ts
+import { get, post, patch, del } from '@shared/api/http';
+
+export interface DeliveryContext { cityName?: string; methodCode?: string }
+export interface SelectCityRequest { cityName: string }
+export interface SelectMethodRequest { methodCode: 'pvz'|'courier'; address?: string }
+export interface SelectResponse { total: number; shippingCost: number; error?: string }
+
+export function getDeliveryContext() { return get<DeliveryContext>('/api/delivery/context'); }
+export function selectCity(body: SelectCityRequest) { return post<SelectResponse>('/api/delivery/select-city', body); }
+export function selectMethod(body: SelectMethodRequest) { return post<SelectResponse>('/api/delivery/select-method', body); }
+export function selectPvz(pvzCode: string) { return post<SelectResponse>('/api/delivery/select-pvz', { pvzCode }); }
+export function searchCities(q: string) {
+  const params = new URLSearchParams({ level: '3', shortname: 'г.', offname: q, itemsPerPage: '10' });
+  return get<any[]>('/api/fias?' + params.toString());
+}
+```
+
+Пример ui/component.ts
+```ts
+export class ComponentName {
+  private unsubs: Array<() => void> = [];
+  private abort?: AbortController;
+
+  constructor(private root: HTMLElement) {}
+
+  async init(): Promise<void> {
+    // init, bind events, load initial data
+  }
+
+  destroy(): void {
+    this.abort?.abort();
+    this.unsubs.forEach(fn => fn());
+    this.unsubs = [];
+  }
+
+  private bind(el: Element | Document | Window, ev: string, cb: EventListener, opts?: AddEventListenerOptions) {
+    el.addEventListener(ev, cb, opts);
+    const off = () => el.removeEventListener(ev, cb, opts);
+    this.unsubs.push(off);
+    return off;
+  }
+}
+```
+
+Пример index.ts
+```ts
+import { ComponentName } from './ui/component';
+
+export interface ModuleOptions {}
+
+export function init(root: HTMLElement, _opts: ModuleOptions = {}) {
+  const cmp = new ComponentName(root);
+  cmp.init().catch(console.error);
+  return () => cmp.destroy();
+}
+
+export * from './api';
+```
+
+Правила верстки
+- Оберните блок в контейнер с data-module="<feature-name>".
+- Передайте параметры через data-* атрибуты (kebab-case).
+- Добавьте data-testid для якорей автотестов (если нет targets).
+

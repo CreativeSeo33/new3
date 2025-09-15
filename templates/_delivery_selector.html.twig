@@ -3,6 +3,7 @@
     <div class="flex-1">
       <label class="block text-sm mb-1">Город</label>
       <input id="city-input" class="w-full border rounded px-3 py-2" value="{{ app.session.get('checkout')['delivery']['city']['cityName'] ?? '' }}" placeholder="Ваш город">
+      <div id="city-suggest" class="mt-1 border rounded bg-white shadow hidden max-h-60 overflow-auto z-10"></div>
     </div>
     <button id="set-city" class="px-3 py-2 border rounded">OK</button>
   </div>
@@ -42,6 +43,80 @@ const pvzSelect = document.getElementById('pvz-select');
 const pvzEmpty = document.getElementById('pvz-empty');
 const courierBlock = document.getElementById('courier-block');
 const addrInput = document.getElementById('courier-address');
+
+// City autocomplete
+const cityInput = document.getElementById('city-input');
+const citySuggest = document.getElementById('city-suggest');
+
+const debounce = (fn, wait = 300) => {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), wait);
+  };
+};
+
+let cityFetchAbort = null;
+
+function hideCitySuggest() {
+  if (citySuggest) {
+    citySuggest.classList.add('hidden');
+    citySuggest.innerHTML = '';
+  }
+}
+
+function renderCitySuggestions(items) {
+  if (!citySuggest) return;
+  citySuggest.innerHTML = '';
+  if (!Array.isArray(items) || items.length === 0) { hideCitySuggest(); return; }
+  for (const it of items) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'w-full text-left px-3 py-2 hover:bg-gray-100';
+    const text = [it.offname, it.shortname].filter(Boolean).join(' ');
+    btn.textContent = text || '';
+    btn.addEventListener('click', () => {
+      if (cityInput) cityInput.value = it.offname || text;
+      hideCitySuggest();
+    });
+    citySuggest.appendChild(btn);
+  }
+  citySuggest.classList.remove('hidden');
+}
+
+async function fetchCities(q) {
+  if (!q || q.length < 3) { hideCitySuggest(); return; }
+  if (cityFetchAbort) cityFetchAbort.abort();
+  cityFetchAbort = new AbortController();
+  const params = new URLSearchParams();
+  params.set('level', '3');
+  params.set('shortname', 'г.');
+  params.set('offname', q);
+  params.set('itemsPerPage', '10');
+  try {
+    const res = await fetch('/api/fias?' + params.toString(), { signal: cityFetchAbort.signal, headers: { 'Accept': 'application/json' } });
+    const data = await res.json().catch(() => ({}));
+    const list = Array.isArray(data) ? data : (data['hydra:member'] || data.items || []);
+    renderCitySuggestions(Array.isArray(list) ? list : []);
+  } catch (e) {
+    if (e && e.name !== 'AbortError') hideCitySuggest();
+  }
+}
+
+const onCityInput = debounce((e) => {
+  const q = (e.target && e.target.value ? e.target.value : '').trim();
+  fetchCities(q);
+}, 300);
+
+cityInput && cityInput.addEventListener('input', onCityInput);
+document.addEventListener('click', (e) => {
+  if (e.target !== cityInput && !(citySuggest && citySuggest.contains(e.target))) {
+    hideCitySuggest();
+  }
+});
+cityInput && cityInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') hideCitySuggest();
+});
 
 const toggleBlocks = (m) => {
   const isPvz = m === 'pvz';

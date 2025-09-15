@@ -4,7 +4,9 @@ alwaysApply: false
 
 # Stimulus‑first (UX)
 
-Политика применима к Twig/UX части витрины; к admin SPA (Vue) не применяется — см. @projectrules.mdc.
+Применимость
+- Для каталога (`templates/catalog/**`, `assets/catalog/src/**`) — приоритет у @catalog_js_architecture.mdc (FSD, data‑module, TypeScript). Stimulus допустим как исключение для малых UI‑паттернов или миграций; inline `<script>` запрещены.
+- Для остальных Twig/UX блоков и legacy‑участков — данная политика применяется полностью.
 
 ## Где писать код
 - Контроллеры: `assets/controllers/<name>_controller.js|ts`

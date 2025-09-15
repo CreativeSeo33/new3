@@ -1,0 +1,92 @@
+---
+alwaysApply: true
+---
+
+# Catalog JS Architecture Policy (FSD, TypeScript, no inline scripts)
+
+Область действия: витрина каталога (templates/catalog/**, assets/catalog/src/**).
+Цель: единообразная модульная архитектура JS по FSD, без inline‑скриптов, с типобезопасностью и разделением ответственности.
+
+Допустимые паттерны
+- Primary (обязательно для каталога): FSD‑модули через data-module и реестр.
+  - Корень: assets/catalog/src/
+  - Слои: shared/, entities/, features/, widgets/, pages/
+  - Инициализация: bootstrap + registry; модуль экспортирует init(root, opts) => () => destroy()
+- Secondary (исключение): Stimulus‑контроллеры в assets/controllers/**
+  - Только для малых UI‑паттернов или миграций. Для бизнес‑фич каталога — предпочитать FSD.
+
+Запреты (строго)
+- Никаких inline <script> в Twig/HTML. Любой найденный — выносить в внешний модуль.
+- Нельзя писать новый код на JS. Только TypeScript (.ts).
+- Нельзя вызывать fetch/XHR напрямую в UI‑слое. Все HTTP — через @shared/api/http (get/post/patch/del).
+- Нельзя хардкодить API‑пути строками в UI. Пути и функции — только в API‑слое модуля.
+- Никаких глобальных слушателей (document/window) без крайней необходимости. Слушатели должны быть ограничены корневым элементом модуля; при необходимости глобали — обязательный destroy() и отписка.
+- Нельзя смешивать Stimulus и FSD внутри одной фичи/блока: выбрать один подход.
+
+Требования к структуре модуля (Feature)
+- Директория: assets/catalog/src/features/<feature-name>/
+  - api/index.ts — HTTP‑функции, типы ответов/запросов
+  - ui/component.ts — логика DOM/событий, без raw fetch (только вызовы из ../api)
+  - index.ts — экспорт init(root, opts) => () => destroy(), реэкспорт API при необходимости
+- Типы: в @shared/types/** или рядом с фичей; строгая типизация всех API.
+- Утилиты/форматирование: использовать @shared/utils/**, @shared/lib/formatPrice.
+- Регистрация в реестре: assets/catalog/src/app/registry.ts (или актуальный путь реестра)
+  - Ключ — имя из data-module, значение — ленивая загрузка и экспорт init.
+
+Правила верстки (Twig/HTML)
+- Для каждого интерактивного блока:
+  - Обернуть HTML в корневой контейнер с data-module="<feature-name>".
+  - Параметры — через data-* атрибуты (kebab-case), читаются как dataset.
+  - Добавить стабильные якоря для тестов/ИИ через data-testid (kebab-case) там, где нет targets.
+- Удалить inline <script>; никакого кода в шаблонах.
+- Если на странице уже есть FSD‑модули (например, cart-items-manager) — новые блоки тоже через FSD, а не Stimulus.
+
+Слой API (обязательно)
+- Все сетевые вызовы — из features/<name>/api/index.ts, через @shared/api/http.
+- Эндпоинты — в одном месте; никаких строковых путей в UI.
+- Строгие типы запросов/ответов; обработка ошибок (try/catch), возврат нормализованных данных.
+
+Жизненный цикл и очистка
+- init() возвращает destroy():
+  - Отписка от всех событий/глобальных слушателей
+  - Отмена активных запросов (AbortController)
+  - Очистка таймеров/интервалов
+
+События и интеграции
+- Коммуникация между модулями — через DOM‑события или общий event bus (если есть).
+- Примеры событий: cart:updated, delivery:changed, ui:error.
+- Не тянуть импорты между фичами без необходимости; использовать события или shared‑слой.
+
+Именование и алиасы
+- Алиасы: @ → assets/catalog/src; @shared, @features, @entities, @widgets, @pages.
+- Имена модулей и data-module — kebab-case: delivery-selector, cart-items-manager.
+- Файлы TypeScript: .ts (не .js).
+
+Проверки для агента (acceptance)
+- Если в редактируемом шаблоне найден <script> — вынести логику в features/<name> и удалить <script>.
+- Если требуется интерактив — создать FSD‑модуль, зарегистрировать в реестре, добавить data-module на корневой элемент.
+- В новом/изменённом коде отсутствуют:
+  - необработанные fetch/XHR
+  - прямые строковые URL API в UI
+  - глобальные слушатели без отписки в destroy()
+  - необработанные ошибки API
+- В коде присутствуют:
+  - строгие типы API
+  - destroy() с отпиской
+  - data-testid якоря на ключевых узлах (если нет targets)
+- Если страница целиком на Stimulus и фича минимальная — допустимо реализовать как Stimulus, но без inline <script> и с targets/values. Для каталога предпочтение за FSD.
+
+Миграция существующих inline‑скриптов (обязательный алгоритм)
+1) Выделить корневой контейнер в шаблоне и проставить data-module="<feature-name>" + data-testid для якорей.
+2) Создать features/<feature-name>/{api,index.ts,ui/component.ts}, перенести HTTP в API‑слой, DOM‑логику в компонент.
+3) Использовать @shared/api/http, formatPrice, DOM‑утилиты.
+4) Зарегистрировать модуль в реестре; удалить <script> из Twig.
+5) Обеспечить destroy() (отписки/abort).
+6) Добавить минимальные автотест‑селекторы (data-testid) и обработку ошибок.
+
+Связанные правила
+- @projectrules.mdc
+- @hardcoderules.mdc
+- @services.mdc
+- @ai_context.mdc
+

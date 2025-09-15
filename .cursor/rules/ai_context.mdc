@@ -32,6 +32,8 @@ alwaysApply: true
 5) Справочники → @services.mdc, @doctrine_entities.mdc
 6) Диагностика → @logs.mdc
 7) Stimulus‑policy → @stimulus_policy.mdc
+8) Catalog JS Architecture (каталог/FSD) → @catalog_js_architecture.mdc
+и в разделе “Twig/UX для каталога” оставить явную оговорку о приоритете FSD.
 
 ## Сборка и артефакты
 
@@ -39,11 +41,9 @@ alwaysApply: true
 - Сборка: `npm run build` | `npm run build:admin` | `npm run build:catalog`; dev: `npm run dev:*`
 - Storybook: `public/storybook-admin`, `public/storybook-catalog`
 
-## Stimulus‑first (Twig/UX)
+## Twig/UX для каталога
 
-- Интерактив в Twig — через Symfony UX Stimulus (`data-controller`, `data-action`, targets/values), без inline `<script>`
-- Исключения — только по необходимости; всё равно через внешний Stimulus‑контроллер
-- Подробнее: @stimulus_policy.mdc
+- Каталог (Twig/UX): FSD через data-module и реестр. Stimulus — исключение для малых UI‑паттернов. Inline `<script>` запрещены. См. @catalog_js_architecture.mdc
 
 ## Архитектура фронтенда
 
@@ -123,6 +123,7 @@ alwaysApply: true
 - Ключевые сервисы (назначение/зоны ответственности): `@services.mdc`
 - Сценарий оформления заказа: `@order_checkout_flow.mdc`
 - Пагинация API Platform: `@paginationapiplatformmapping.mdc`
+- Политика каталога (FSD, TS, без inline): `@catalog_js_architecture.mdc`
 
 ### Инструкция для агента
 
@@ -138,7 +139,9 @@ alwaysApply: true
 - Корзинные значения читаются из API; нет клиентских пересчётов
 - Код собирается из корня командами npm; артефакты не коммитятся
 - Отсутствуют логи/секреты в VCS; логи — в `var/log/*`
-- Интерактив в Twig — через Stimulus (см. @stimulus_policy.mdc)
+- Каталог: интерактив реализован как FSD‑модули (TypeScript, data‑module, раздельные API/UI, `destroy()`); нет inline `<script>`.
+- Stimulus допускается как исключение для небольших UI‑паттернов; без inline‑скриптов и с targets/values.
+- Допустимо расширение pinned‑набора для глобальных политик: `@catalog_js_architecture.mdc`.
 - Связанные .mdc обновлены при правках: @doctrine_entities.mdc, @services.mdc, @order_checkout_flow.mdc
 - Для каждой страницы/шаблона существует и поддерживается карта страницы в .cursor/rules/page_<id>_map.mdc (alwaysApply: false, один фронт‑маттер, H1)
 - В шаблоне есть короткий указатель на карту: {# ai:page=<id> map=@page_<id>_map.mdc v=1 #} (для HTML/Vue — <!-- ai:page=<id> map=@page_<id>_map.mdc v=1 -->)
@@ -146,6 +149,4 @@ alwaysApply: true
 - При изменениях маршрутов/контроллеров/сервисов/шаблонов, связанных со страницей, обновлены соответствующий @page_<id>_map.mdc и индекс страниц @pages_index.mdc
 - Page maps обновлены при правках страниц/контроллеров/сервисов: @page_*_map.mdc
 - Новые/изменённые .mdc для карт страниц не увеличивают pinned‑набор (все alwaysApply: false); pinned‑файлы не меняются без необходимости
-- Соответствие Stimulus‑first: в Twig/HTML отсутствуют inline <script>, интерактив — только через внешние контроллеры
-- В картах страниц валидные ссылки @..., корректные пути к контроллерам/сервисам/модулям, без дубликатов секций и с единым стилем RU
 
