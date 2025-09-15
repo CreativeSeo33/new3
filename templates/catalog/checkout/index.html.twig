@@ -3,6 +3,7 @@
 {% block title %}Оформление заказа — {{ parent() }}{% endblock %}
 
 {% block catalog_body %}
+{# ai:page=checkout map=@page_checkout_map.mdc v=1 #}
   <div class="container mx-auto px-4 py-6">
     <h1 class="text-2xl font-semibold mb-6">Оформление заказа</h1>
 
@@ -41,9 +42,9 @@
       <aside class="md:col-span-1 p-4 border rounded h-fit">
         <h2 class="text-lg font-medium mb-4">Ваш заказ</h2>
         {% if cart.items|length > 0 %}
-          <div id="checkout-cart-items" class="space-y-3">
+          <div id="checkout-cart-items" class="space-y-3" data-testid="cart-items">
             {% for item in cart.items %}
-              <div class="flex gap-3 items-start border-b pb-3" data-item-id="{{ item.id }}">
+              <div class="flex gap-3 items-start border-b pb-3" data-item-id="{{ item.id }}" data-testid="cart-item">
                 <div class="w-16 h-16 shrink-0">
                   {% if item.product and item.product.image|length > 0 %}
                     {% set firstImage = item.product.image|sort((a,b) => a.sortOrder <=> b.sortOrder)|first %}
@@ -80,7 +81,7 @@
                   {% endif %}
                   <div class="text-sm text-gray-700 mt-1">
                     {% set displayPrice = item.effectiveUnitPrice > 0 ? item.effectiveUnitPrice : item.unitPrice %}
-                    {{ format_price(displayPrice) }} × {{ item.qty }} = <span class="font-medium">{{ format_price(item.rowTotal) }}</span>
+                    {{ format_price(displayPrice) }} × {{ item.qty }} = <span class="font-medium" data-testid="row-total">{{ format_price(item.rowTotal) }}</span>
                   </div>
                 </div>
               </div>
@@ -89,19 +90,19 @@
 
           <div class="border-t mt-3 pt-3 text-sm">
             {% if delivery.cost is defined and delivery.cost is not null %}
-              <div>Стоимость товаров: <span id="cart-subtotal" data-cart-subtotal>{{ cart.subtotal|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
-              <div>Доставка: <span id="cart-shipping" data-cart-shipping>{{ delivery.cost|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
+              <div>Стоимость товаров: <span id="cart-subtotal" data-cart-subtotal data-testid="subtotal">{{ cart.subtotal|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
+              <div>Доставка: <span id="cart-shipping" data-cart-shipping data-testid="shipping">{{ delivery.cost|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
               {% if delivery.term %}
-                <div class="text-sm text-gray-600" id="cart-shipping-term" data-cart-shipping-term>{{ delivery.term }}</div>
+                <div class="text-sm text-gray-600" id="cart-shipping-term" data-cart-shipping-term data-testid="shipping-term">{{ delivery.term }}</div>
               {% endif %}
               <div class="border-t pt-2 font-semibold">
-                Итого: <span id="cart-total" data-cart-total>{{ (cart.subtotal + delivery.cost)|number_format(0, '.', ' ') ~ ' руб.' }}</span>
+                Итого: <span id="cart-total" data-cart-total data-testid="total">{{ (cart.subtotal + delivery.cost)|number_format(0, '.', ' ') ~ ' руб.' }}</span>
               </div>
             {% else %}
-              <div>Стоимость товаров: <span id="cart-subtotal" data-cart-subtotal>{{ cart.subtotal|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
-              <div>Доставка: <span id="cart-shipping" data-cart-shipping>Расчет менеджером</span></div>
+              <div>Стоимость товаров: <span id="cart-subtotal" data-cart-subtotal data-testid="subtotal">{{ cart.subtotal|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
+              <div>Доставка: <span id="cart-shipping" data-cart-shipping data-testid="shipping">Расчет менеджером</span></div>
               <div class="border-t pt-2 font-semibold">
-                Итого: <span id="cart-total" data-cart-total>{{ cart.subtotal|number_format(0, '.', ' ') ~ ' руб.' }}</span>
+                Итого: <span id="cart-total" data-cart-total data-testid="total">{{ cart.subtotal|number_format(0, '.', ' ') ~ ' руб.' }}</span>
               </div>
             {% endif %}
           </div>

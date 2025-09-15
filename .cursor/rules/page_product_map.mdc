@@ -1,0 +1,63 @@
+---
+alwaysApply: false
+---
+# Page Map: Страница товара (/product/{slug})
+
+meta:
+  id: product
+  route: /product/{slug}
+  templates:
+    - templates/catalog/product/show.html.twig
+  layout: templates/catalog/base.html.twig
+
+controllers:
+  - src/Controller/Catalog/Product/ProductCatalogController.php
+
+api:
+  # страница рендерится сервером; JSON отдается тем же контроллером при Accept: application/json
+
+entities:
+  - App\Entity\Product (ApiResource)
+
+services:
+  - App\Service\BreadcrumbBuilder
+
+repositories:
+  - App\Repository\ProductRepository
+
+jsModules:
+  - assets/catalog/src/features/product-options
+  - assets/catalog/src/features/product-option-price-updater
+  - assets/catalog/src/features/product-price-calculator
+  - assets/catalog/src/features/quantity-selector
+  - assets/catalog/src/features/add-to-cart
+
+twig:
+  functions:
+    - src/Twig/PriceExtension.php (format_price)
+  filters:
+    - imagine_filter [LiipImagineBundle]
+
+dom:
+  testids:
+    - name: gallery
+      selector: '.product-gallery-swiper'
+    - name: price
+      selector: '#product-price'
+    - name: old-price
+      selector: '#old-price'
+    - name: discount-badge
+      selector: '#discount-badge'
+    - name: options
+      selector: '[data-module="product-options"]'
+    - name: qty-input
+      selector: '[data-module="quantity-selector"]'
+    - name: add-to-cart
+      selector: '[data-module="add-to-cart"]'
+
+invariants:
+  - Вся логика цен/скидок и выбор опций валидируется на бэкенде; фронт — только UI
+  - Страница использует LiipImagine для изображений; без inline <script>
+
+links: [@services.mdc, @doctrine_entities.mdc]
+

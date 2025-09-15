@@ -1,0 +1,77 @@
+---
+alwaysApply: false
+---
+
+# Page Map: Оформление заказа (/checkout)
+
+meta:
+  id: checkout
+  route: /checkout
+  templates:
+    - templates/catalog/checkout/index.html.twig
+  layout: templates/catalog/base.html.twig
+
+controllers:
+  - src/Controller/Catalog/CheckoutController.php
+
+api:
+  # страница использует серверный рендер без прямых API-вызовов
+
+entities:
+  - App\Entity\Cart (ApiResource)
+  - App\Entity\CartItem (ApiResource)
+  - App\Entity\Order
+  - App\Entity\OrderCustomer
+  - App\Entity\OrderProducts
+  - App\Entity\OrderProductOptions
+  - App\Entity\OrderDelivery
+  - App\Entity\Fias
+  - App\Entity\PvzPoints
+
+services:
+  - App\Service\CartManager
+  - App\Service\Delivery\DeliveryService
+  - App\Service\CheckoutContext
+  - App\Service\DeliveryContext
+  - App\Service\Delivery\Provider\DeliveryProviderRegistry
+
+repositories:
+  - App\Repository\OrderRepository
+
+jsModules:
+  # нет, логика формы инлайном (см. шаблон)
+
+twig:
+  functions:
+    - src/Twig/PriceExtension.php (format_price)
+  filters:
+    - imagine_filter [LiipImagineBundle]
+
+dom:
+  testids:
+    - name: cart-items
+      selector: '[data-testid="cart-items"]'
+    - name: cart-item
+      selector: '[data-testid="cart-item"]'
+    - name: row-total
+      selector: '[data-testid="row-total"]'
+    - name: delivery-root
+      selector: '#delivery-methods'
+    - name: delivery-method-code
+      selector: '#delivery-methods-list input[name="delivery-method"]'
+    - name: subtotal
+      selector: '[data-testid="subtotal"]'
+    - name: shipping
+      selector: '[data-testid="shipping"]'
+    - name: shipping-term
+      selector: '[data-testid="shipping-term"]'
+    - name: total
+      selector: '[data-testid="total"]'
+
+invariants:
+  - Источник истины по суммам/позициям — серверные Cart/CartItem (без клиентских пересчётов)
+  - Оформление POST /checkout выполняется транзакционно; корзина закрывается после успеха
+  - Frontend только отображает; все расчёты на бэкенде
+
+links: [@services.mdc, @doctrine_entities.mdc, @order_checkout_flow.mdc]
+

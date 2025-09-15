@@ -1,130 +1,166 @@
 
-
-@index.html.twig Ты — ИИ‑архитектор Cursor. Реализуй “page map” для указанной страницы, минимизируя инлайн‑правки в шаблоне.
+Ты — ИИ‑архитектор Cursor. Сформируй “page map” для указанной страницы по строгим правилам, минимизируя инлайн‑правки в шаблонах.
 
 Параметры запуска
-- cart: короткий слаг страницы, .
-- route: основной маршрут (пример: /cart).
-- templatePath: путь к шаблону (Twig/Vue), пример: templates/catalog/cart/index.html.twig.
-- extraTemplates?[]: дополнительные шаблоны этой страницы (если есть).
-- controllers?[]: контроллеры страницы (если можно — autodetect из routes).
+- pageId: обязательный короткий слаг (kebab-case).
+- route: обязательный маршрут, напр. /cart.
+- templatePath: обязательный путь к главному шаблону, напр. templates/catalog/cart/index.html.twig.
+- extraTemplates?[]: доп. шаблоны этой страницы.
+- controllers?[]: контроллеры страницы.
 - apiControllers?[]: API контроллеры/эндпоинты.
 - jsModules?[]: JS/Stimulus модули.
-- services?[]: используемые сервисы.
+- services?[]: сервисы DI.
+- httpServices?[]: классы из `src/Http/*`.
 - repositories?[]: репозитории.
-- entities?[]: связанные Entity/ApiResource.
-- invariants?[]: важные инварианты страницы (кратко).
-- domAnchors?[]: ключевые якоря DOM, если уже известны (см. формат ниже).
+- entities?[]: Entity/ApiResource (указывай `uriTemplate`, если известно).
+- twigFunctions?[]: Twig‑функции с путями расширений.
+- twigFilters?[]: Twig‑фильтры (можно с путями расширений).
+- invariants?[]: инварианты страницы.
+- domAnchors?[]: ключевые якоря DOM (если заранее известны).
+- options:
+  - includeProvidedOnly: true|false (по умолчанию true) — включать минимум все переданные элементы; не выдумывать лишнего.
+  - verifyExistence: true|false (по умолчанию true) — проверять существование путей/файлов; отсутствующие помечать TODO.
+  - codeScan: true|false (по умолчанию false) — при true просканировать код (конструкторы/инъекции/use) и предложить дополнения; помечать как inferred.
+  - scanDepth: число (по умолчанию 2) — глубина для codeScan.
+  - anchorsMode: auto|stimulus|testid (по умолчанию auto). В auto: сначала попытка через Stimulus targets, иначе data-testid.
+  - addPagePointer: true|false (по умолчанию true) — добавить комментарий‑указатель в шаблон.
+  - updateIndex: true|false (по умолчанию true) — создать/обновить `/.cursor/rules/pages_index.mdc`.
+  - updateAiContext: true|false (по умолчанию false) — добавить в `ai_context.mdc` ссылку на индекс и критерий, если их нет.
+  - outputFormat: files|summary (по умолчанию files).
 
-Цель
-- Вынести подробную “карту страницы” в `.cursor/rules/page_<pageId>_map.mdc` (alwaysApply: false).
-- В шаблоне оставить один короткий Twig/HTML‑комментарий‑указатель на карту.
-- Для DOM‑якорей опираться на Stimulus targets либо `data-testid`. Не использовать `data-ai-*`.
-- Обновить индекс страниц `.cursor/rules/pages_index.mdc`.
-- Уточнить критерии приёмки в `.cursor/rules/ai_context.mdc`: “при изменениях страниц/контроллеров/сервисов обновлять @page_*_map.mdc”.
+Цели
+- Создать/обновить `/.cursor/rules/page_<pageId>_map.mdc` с `alwaysApply: false`.
+- Вставить в шаблон одну строку‑указатель: для Twig `{# ai:page=<pageId> map=@page_<pageId>_map.mdc v=1 #}`; для HTML/Vue — аналогичный HTML‑комментарий.
+- Нормализовать DOM‑якоря: предпочтительно Stimulus targets; иначе `data-testid`. Не использовать `data-ai-*`.
+- Обновить `/.cursor/rules/pages_index.mdc` (если `options.updateIndex = true`).
+- Опционально уточнить `ai_context.mdc` (если `options.updateAiContext = true`): добавить “Индекс карт страниц: `@pages_index.mdc`” и единый критерий про обновление page maps.
 
-Требования и ограничения
-- Язык — русский, стиль — краткий.
-- Не создавай pinned‑файлов; все новые .mdc — `alwaysApply: false`.
-- Не меняй бизнес‑логику. Не добавляй inline `<script>`; соответствуй Stimulus‑first.
-- Строгий формат фронт‑маттера: единый блок наверху файла:
+Жесткие требования
+- Язык — русский; стиль — краткий.
+- Не менять бизнес‑логику. Не добавлять inline `<script>`. Соблюдать Stimulus‑first.
+- Не создавать pinned‑файлов. Все новые `.mdc` — только с единым фронт‑маттером:
   ---
   alwaysApply: false
   ---
-- Сохрани существующие Stimulus атрибуты; если нужно добавить якоря — сначала попробуй targets, затем `data-testid`.
-- Если нет Stimulus‑контроллера — не генерируй новый JS‑код; просто добавь `data-testid`.
+- Включай в карту абсолютно все элементы из переданных списков `controllers`, `apiControllers`, `services`, `httpServices`, `repositories`, `entities`, `jsModules`, `twigFunctions`, `twigFilters` — без пропусков.
+- Если `options.verifyExistence = true`:
+  - Проверяй существование каждого пути. Если файл/класс не найден — оставь пункт и добавь в конце строки `# TODO: not found, needs verify`.
+  - Не подменяй неймспейсы и имена; не догадывайся.
+- Если `options.includeProvidedOnly = true`:
+  - Ничего не добавляй сверх переданного. Исключение — когда `options.codeScan = true`: найденные зависимости выноси в секцию `inferred.*`.
+- Twig классификация:
+  - Функции — в `twig.functions` с путём расширения и именем в скобках.
+  - Фильтры — в `twig.filters` (можно указать расширение).
+  - Пример: `format_price` → функция из `src/Twig/PriceExtension.php`; `imagine_filter` → фильтр (LiipImagine).
+- `meta.layout` — полный путь к базовому шаблону, напр. `templates/catalog/base.html.twig`.
+- `links` — валидные `@...` ссылки; начинай с `@`.
 
-Шаги выполнения
-1) Определи pageId, route, шаблон(ы)
-- Если pageId не задан — derives из имени файла шаблона: `cart/index.html.twig` → cart.
-- Найди основной `{% block %}` для контента (Twig) или корневой тег (Vue/HTML).
+DOM‑якоря
+- Если есть `data-controller` — добавь недостающие `data-*-target` на ключевые узлы.
+- Если Stimulus не используется — добавь `data-testid` (kebab‑case).
+- Базовый набор имён: list, row, qtyInput, removeButton, rowTotal, deliveryRoot, methodCode, subtotal, shipping, shippingTerm, total.
+- Никаких `data-ai-*`.
 
-2) Создай/обнови .cursor/rules/page_<pageId>_map.mdc
-- Структура:
-  ---
-  alwaysApply: false
-  ---
-  # Page Map: <Page Title> (<route>)
+Структура файла `.cursor/rules/page_<pageId>_map.mdc`
+---
+alwaysApply: false
+---
+# Page Map: <Человекочитаемое имя> (<route>)
 
-  meta:
-    id: <pageId>
-    route: <route>
-    templates:
-      - <templatePath>
-      # + extraTemplates если есть
-    layout?: <extends/base>
-  controllers:
-    - src/Controller/...
-  api:
-    - src/Controller/Api/... (/api/..)
-  entities:
-    - App\Entity\... (ApiResource?: /api/...)
-  services:
-    - App\Service\...
-  repositories:
-    - App\Repository\...
-  jsModules:
-    - assets/... (Stimulus/Vue/ES)
-  twigExtensions|filters|functions:
-    - src/Twig/... (имя)
-  dom:
-    # Предпочтительно через Stimulus targets; если их нет — data-testid
-    targets?:    # если есть data-controller и targets
-      <controllerName>:
-        - name: <targetName>
-          selector: <css селектор или описание узла>
-    testids?:    # если targets нет
-      - name: <logicalName>
-        selector: <css селектор>
-  invariants:
-    - ...
-  links: [@services.mdc, doctrine_entities.mdc, @order_checkout_flow.mdc] # при необходимости
+meta:
+  id: <pageId>
+  route: <route>
+  templates:
+    - <templatePath>
+    # + extraTemplates (если есть)
+  layout: <templates/.../base.html.twig>
 
-3) Вставь короткий указатель в шаблон
-- Вставить сразу внутри основного блока шаблона одной строкой:
-  - Twig: {# ai:page=<pageId> map=@page_<pageId>_map.mdc v=1 #}
-  - Vue/HTML: <!-- ai:page=<pageId> map=@page_<pageId>_map.mdc v=1 -->
-- Если указатель уже есть — не дублируй; обнови до актуального имени карты.
+controllers:
+  - src/Controller/...           # из controllers[]
 
-4) Нормализуй DOM‑якоря
-- Если в шаблоне есть `data-controller` → добавь недостающие `data-*-target` для ключевых узлов (список, строка, qty‑input, remove‑button, totals: subtotal/shipping/total, выбор доставки).
-- Если Stimulus не используется — добавь `data-testid` с короткими именами:
-  - Примеры: cart-items, cart-item, qty-input, remove, row-total, delivery-root, delivery-method-code, subtotal, shipping, shipping-term, total.
-- Не добавляй `data-ai-*`. Не ломай существующий CSS/JS.
+api:
+  - src/Controller/Api/... (/api/...)   # из apiControllers[]
 
-5) Обнови индекс страниц `.cursor/rules/pages_index.mdc`
-- Создай/обнови файл:
+entities:
+  - App\Entity\... (ApiResource[: <uriTemplate>])  # из entities[]
+
+services:
+  - App\Service\...              # из services[]
+
+httpServices?:                  # если переданы httpServices[]
+  - src/Http/...
+
+repositories:
+  - App\Repository\...           # из repositories[]
+
+jsModules:
+  - assets/...                   # из jsModules[]
+
+twig:
+  functions:
+    - src/Twig/... (<functionName>)  # из twigFunctions[]
+  filters:
+    - <filterName> [<extensionPath?>]  # из twigFilters[]
+
+dom:
+  targets?:                      # если anchorsMode = stimulus и есть data-controller
+    <controllerName>:
+      - name: list|row|qtyInput|removeButton|rowTotal|deliveryRoot|methodCode|subtotal|shipping|shippingTerm|total
+        selector: <CSS селектор или пояснение>
+  testids?:                      # если anchorsMode = testid или stimulus недоступен
+    - name: cart-items|cart-item|qty-input|remove|row-total|delivery-root|delivery-method-code|subtotal|shipping|shipping-term|total
+      selector: <CSS селектор>
+
+inferred?:                       # добавлять только при options.codeScan = true
+  services?: [ ... ]
+  repositories?: [ ... ]
+  controllers?: [ ... ]
+
+invariants:
+  - ...                          # из invariants[]
+
+links: [@services.mdc, @doctrine_entities.mdc, @order_checkout_flow.mdc]  # по необходимости
+
+Правки в шаблоне
+- Вставь указатель (если `options.addPagePointer = true`):
+  - Twig: `{# ai:page=<pageId> map=@page_<pageId>_map.mdc v=1 #}`
+  - HTML/Vue: `<!-- ai:page=<pageId> map=@page_<pageId>_map.mdc v=1 -->`
+- Приведи DOM‑якоря к `anchorsMode`: добавь targets или `data-testid`.
+- Удали пустые/лишние inline‑скрипты, не меняя поведение.
+
+Обновление индекса и контекста
+- `/.cursor/rules/pages_index.mdc` (если `options.updateIndex = true`):
   ---
   alwaysApply: false
   ---
   # Pages Index
 
   - @page_<pageId>_map.mdc
-  # Сохрани/дополни существующие записи, сортируй по id.
+  # Список отсортирован по id; каждая запись на новой строке.
+- `/.cursor/rules/ai_context.mdc` (если `options.updateAiContext = true`):
+  - Добавь в “Связанные правила Cursor”: `@pages_index.mdc` (если отсутствует).
+  - В “Критерии приёмки”: “При изменениях маршрутов/контроллеров/сервисов/шаблонов страницы обновлён соответствующий `@page_<id>_map.mdc` и (при наличии) `@pages_index.mdc`.”
 
-6) Уточни критерии приёмки в `.cursor/rules/ai_context.mdc`
-- Убедись, что есть пункт: “Page maps обновлены при правках страниц/контроллеров/сервисов: @page_*_map.mdc”.
-- Если такого пункта нет — добавь его в конец списка “Критерии приёмки изменений (для задач ИИ)”.
-- Не изменяй другие пункты.
+Проверки качества
+- В `.mdc` один фронт‑маттер; нет повторных `---`.
+- RU‑язык; корректные `@...` ссылки; `meta.layout` — полный путь.
+- В шаблоне нет inline `<script>`.
+- Все переданные элементы включены; отсутствующие файлы помечены `# TODO: not found, needs verify`.
+- pinned‑набор не увеличен (`alwaysApply: false` для всех новых `.mdc`).
 
-7) Проверки качества
-- В .mdc один фронт‑маттер, корректные ссылки `@...`.
-- В шаблоне нет сломанных блоков и inline `<script>`.
-- DOM‑якоря присутствуют либо через Stimulus targets, либо через `data-testid`.
-- Порог pinned не увеличен.
-
-Выходной формат
-- Сначала краткий reasoning (до 5 строк): что создано/обновлено.
-- Затем единый unified git diff с изменениями:
-  - Новый/изменённый `.cursor/rules/page_<pageId>_map.mdc`
-  - Обновлённый шаблон(ы) с комментариями/якорями
-  - Обновлённый `.cursor/rules/pages_index.mdc`
-  - Изменённый `.cursor/rules/ai_context.mdc` (только добавление пункта про page maps, если его не было)
-- Не включай изменения вне указанных файлов.
-
-Подсказки по именованию anchors
-- targets: ориентируйся на семантику контроллера: `<controller>-target="list|row|qtyInput|removeButton|rowTotal|deliveryRoot|methodCode|subtotal|shipping|shippingTerm|total"`.
-- testids: kebab‑case, коротко и стабильно: cart-items, cart-item, qty-input, remove, row-total, delivery-root, delivery-method-code, subtotal, shipping, shipping-term, total.
+Формат вывода
+- options.outputFormat = files (по умолчанию):
+  - Верни полный контент каждого нового/изменённого файла в отдельных блоках:
+    BEGIN FILE: <путь/имя файла>
+    <полное новое содержимое файла>
+    END FILE
+  - Минимальный набор файлов:
+    - `/.cursor/rules/page_<pageId>_map.mdc`
+    - Изменённый шаблон по `templatePath` (если добавлялся указатель/якоря)
+    - `/.cursor/rules/pages_index.mdc` (если обновлялся)
+    - `/.cursor/rules/ai_context.mdc` (если обновлялся)
+- options.outputFormat = summary:
+  - Кратко перечисли, какие файлы надо создать/обновить и какие секции добавлены/изменены, без кода.
 
 Примеры вставок
 - Twig указатель:
@@ -133,9 +169,3 @@
   <tbody id="cart-items" data-testid="cart-items"> ... </tbody>
 - Stimulus targets:
   <tbody data-controller="cart-items" data-cart-items-target="list"> ... </tbody>
-
-Если данных недостаточно
-- Автодополнить список controllers/api/services по очевидным именам/пути от шаблона и route.
-- Пометь сомнительные места комментариями в карте: “TODO: уточнить …”.
-
-Выполни задание и верни один git diff.

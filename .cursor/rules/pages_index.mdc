@@ -5,3 +5,5 @@ alwaysApply: false
 # Pages Index
 
 - @page_cart_map.mdc
+- @page_checkout_map.mdc
+- @page_product_map.mdc

@@ -5,6 +5,7 @@
 {% endblock %}
 
 {% block catalog_body %}
+{# ai:page=product map=@page_product_map.mdc v=1 #}
   <!-- Основная информация о товаре -->
   <div class="bg-gradient-to-b from-gray-50 to-white">
     <div class="container mx-auto px-4 py-8">
@@ -25,6 +26,7 @@
               <div class="gallery-main-swiper mb-4">
                 <swiper-container
                   class="product-gallery-swiper"
+                  data-testid="gallery"
                   slides-per-view="1"
                   space-between="0"
                   loop="true"
@@ -155,19 +157,19 @@
             {% if currentPrice is not null and currentPrice > 0 %}
               <div class="flex items-baseline gap-3">
                 {% if salePrice is not null and salePrice > 0 %}
-                  <span id="product-price" class="text-4xl font-bold text-gray-900">
+                  <span id="product-price" data-testid="price" class="text-4xl font-bold text-gray-900">
                     {{ salePrice }} руб.
                   </span>
-                  <span class="text-lg text-gray-500 line-through" id="old-price">{{ currentPrice }} руб.</span>
-                  <span class="bg-red-500 text-white px-2 py-1 rounded text-sm font-medium" id="discount-badge">
+                  <span class="text-lg text-gray-500 line-through" id="old-price" data-testid="old-price">{{ currentPrice }} руб.</span>
+                  <span class="bg-red-500 text-white px-2 py-1 rounded text-sm font-medium" id="discount-badge" data-testid="discount-badge">
                     -{{ ((currentPrice - salePrice) / currentPrice * 100)|round }}%
                   </span>
                 {% else %}
-                  <span id="product-price" class="text-4xl font-bold text-gray-900">
+                  <span id="product-price" data-testid="price" class="text-4xl font-bold text-gray-900">
                     {{ currentPrice }} руб.
                   </span>
-                  <span class="text-lg text-gray-500 line-through hidden" id="old-price">{{ currentPrice }} руб.</span>
-                  <span class="bg-red-500 text-white px-2 py-1 rounded text-sm font-medium hidden" id="discount-badge">
+                  <span class="text-lg text-gray-500 line-through hidden" id="old-price" data-testid="old-price">{{ currentPrice }} руб.</span>
+                  <span class="bg-red-500 text-white px-2 py-1 rounded text-sm font-medium hidden" id="discount-badge" data-testid="discount-badge">
                     0%
                   </span>
                 {% endif %}
@@ -192,7 +194,7 @@
           </div>
 
           <!-- Опции товара -->
-          <form class="space-y-6" data-module="product-options">
+          <form class="space-y-6" data-module="product-options" data-testid="options">
             {% if product.optionAssignments is defined and product.optionAssignments|length > 0 %}
               <div class="space-y-4">
                 <h3 class="text-lg font-semibold text-gray-900">Выберите вариант</h3>
@@ -274,6 +276,7 @@
                   Количество:
                 </label>
                 <div data-module="quantity-selector"
+                     data-testid="qty-input"
                      data-product-id="{{ product.id }}"
                      data-min="1"
                      data-max="{{ product.quantity ?? 999 }}"
@@ -286,6 +289,7 @@
               <button type="button" data-product-id="{{ product.id }}"
                       data-quantity="1"
                       data-module="add-to-cart"
+                      data-testid="add-to-cart"
                       class="js-add-to-cart w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none disabled:transform-none relative overflow-hidden group">
                 <!-- Анимированный фон -->
                 <div class="absolute inset-0 bg-gradient-to-r from-blue-400 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
