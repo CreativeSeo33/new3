@@ -1,7 +1,7 @@
 import { Component } from '@shared/ui/Component';
 import { fetchDeliveryTypes, fetchDeliveryContext, selectDeliveryMethod, type DeliveryTypeDto } from '../api';
 import { getCart as fetchFullCart } from '@features/add-to-cart/api';
-import { formatPrice } from '@shared/lib/formatPrice';
+import { updateCartSummary } from '@shared/ui/updateCartSummary';
 
 export interface DeliveryMethodsOptions {}
 
@@ -95,42 +95,8 @@ export class DeliveryMethods extends Component {
       // Всегда берем источник истины из полной корзины
       const cart = await fetchFullCart();
 
-      // subtotal
-      const subtotalEl = document.getElementById('cart-subtotal');
-      if (subtotalEl && cart.subtotal !== undefined && cart.subtotal !== null && !isNaN(cart.subtotal)) {
-        subtotalEl.textContent = formatPrice(cart.subtotal);
-      }
-
-      // shipping cost
-      const shippingEl = document.getElementById('cart-shipping');
-      if (shippingEl) {
-        if (cart.shipping && cart.shipping.cost !== undefined && cart.shipping.cost !== null && !isNaN(cart.shipping.cost)) {
-          shippingEl.textContent = formatPrice(cart.shipping.cost);
-        } else {
-          shippingEl.textContent = 'Расчет менеджером';
-        }
-      }
-
-      // shipping term
-      const termEl = document.getElementById('cart-shipping-term');
-      if (termEl) {
-        const term = (cart as any)?.shipping?.data?.term;
-        if (typeof term === 'string' && term.length > 0) {
-          termEl.textContent = term;
-          termEl.classList.remove('hidden');
-        } else {
-          termEl.textContent = '';
-          termEl.classList.add('hidden');
-        }
-      }
-
-      // total = subtotal + shipping (как на сервере)
-      const totalEl = document.getElementById('cart-total');
-      if (totalEl) {
-        const subtotal = cart.subtotal || 0;
-        const ship = (cart.shipping && cart.shipping.cost) || 0;
-        totalEl.textContent = formatPrice(subtotal + ship);
-      }
+      // Единообразное обновление сайдбара
+      updateCartSummary(cart);
     } catch (e) {
       this.renderError('Ошибка при выборе доставки');
     }

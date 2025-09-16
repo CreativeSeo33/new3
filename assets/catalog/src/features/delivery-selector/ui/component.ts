@@ -1,6 +1,8 @@
 import { Component } from '@shared/ui/Component';
 import { Spinner } from '@shared/ui/spinner';
 import { getDeliveryContext, fetchPvzPoints, selectMethod, selectPvz, type DeliveryMethodCode, type DeliveryContextDto } from '../api';
+import { getCart as fetchFullCart } from '@features/add-to-cart/api';
+import { updateCartSummary } from '@shared/ui/updateCartSummary';
 
 export interface DeliverySelectorOptions {}
 
@@ -74,13 +76,16 @@ export class DeliverySelector extends Component {
         const value = (e.target as HTMLInputElement).value as DeliveryMethodCode;
         try {
           this.showSpinner();
-          const data = await selectMethod({ methodCode: value });
+          await selectMethod({ methodCode: value });
           this.toggleBlocks(value);
           if (value === 'pvz') {
             await this.loadPvz(this.currentCityName || '');
           }
-          if (this.shipCostEl) this.shipCostEl.textContent = this.formatRub(data.shippingCost);
-          if (this.totalEl) this.totalEl.textContent = this.formatRub(data.total);
+          // Берём источник истины из полной корзины
+          try {
+            const cart = await fetchFullCart();
+            updateCartSummary(cart);
+          } catch (_) {}
         } catch (e) {
           // ignore
         } finally {
@@ -95,9 +100,11 @@ export class DeliverySelector extends Component {
       if (!pvzCode) return;
       try {
         this.showSpinner();
-        const data = await selectPvz(pvzCode);
-        if (this.shipCostEl) this.shipCostEl.textContent = this.formatRub(data.shippingCost);
-        if (this.totalEl) this.totalEl.textContent = this.formatRub(data.total);
+        await selectPvz(pvzCode);
+        try {
+          const cart = await fetchFullCart();
+          updateCartSummary(cart);
+        } catch (_) {}
       } catch (e) {
         alert('Ошибка');
       } finally {
@@ -113,9 +120,11 @@ export class DeliverySelector extends Component {
       if (!address) return;
       try {
         this.showSpinner();
-        const data = await selectMethod({ methodCode: 'courier', address });
-        if (this.shipCostEl) this.shipCostEl.textContent = this.formatRub(data.shippingCost);
-        if (this.totalEl) this.totalEl.textContent = this.formatRub(data.total);
+        await selectMethod({ methodCode: 'courier', address });
+        try {
+          const cart = await fetchFullCart();
+          updateCartSummary(cart);
+        } catch (_) {}
       } catch (e) {
         alert('Ошибка');
       } finally {

@@ -1,6 +1,7 @@
 import { Component } from '@shared/ui/Component';
 import { updateCartItemQuantity, removeCartItem, getCart, getCartSummary } from '../api';
 import { formatPrice } from '@shared/lib/formatPrice';
+import { updateCartSummary } from '@shared/ui/updateCartSummary';
 import type { Cart, CartDelta } from '@shared/types/api';
 import { getCart as getFullCart } from '@features/add-to-cart/api';
 
@@ -344,41 +345,8 @@ export class CartItemsManager extends Component {
    * Обновляет все суммы корзины на основе полных данных
    */
   private updateTotalsFromFullCart(cartData: Cart): void {
-    // Обновляем субтотал
-    const subtotalEl = document.getElementById('cart-subtotal');
-    if (subtotalEl && cartData.subtotal !== undefined && cartData.subtotal !== null && !isNaN(cartData.subtotal)) {
-      subtotalEl.textContent = this.options.formatPrice!(cartData.subtotal);
-    }
-
-    // Обновляем стоимость доставки
-    const shippingEl = document.getElementById('cart-shipping');
-    if (shippingEl && cartData.shipping?.cost !== undefined && cartData.shipping?.cost !== null && !isNaN(cartData.shipping.cost)) {
-      shippingEl.textContent = this.options.formatPrice!(cartData.shipping.cost);
-    }
-
-    // Обновляем срок доставки
-    const shippingTermEl = document.getElementById('cart-shipping-term');
-    if (shippingTermEl && cartData.shipping?.data?.term) {
-      shippingTermEl.textContent = cartData.shipping.data.term;
-    }
-
-    // Рассчитываем итого на клиенте: субтотал + стоимость доставки
-    const subtotal = cartData.subtotal || 0;
-    const shippingCost = cartData.shipping?.cost || 0;
-    const calculatedTotal = subtotal + shippingCost;
-
-    // Обновляем итоговую сумму
-    let totalEl = document.querySelector('[data-cart-total]');
-
-    if (!totalEl) {
-      // Fallback на ID если data-атрибут не найден
-      totalEl = document.getElementById('cart-total');
-    }
-
-
-    if (totalEl) {
-      totalEl.textContent = this.options.formatPrice!(calculatedTotal);
-    }
+    // Единое обновление суммарных блоков
+    updateCartSummary(cartData);
   }
 
   /**
@@ -612,15 +580,8 @@ export class CartItemsManager extends Component {
    * Обновляет итоговую сумму на основе данных из полной корзины
    */
   private updateTotalFromFullCartData(cartData: Cart): void {
-    const subtotal = cartData.subtotal || 0;
-    const shippingCost = cartData.shipping?.cost || 0;
-    const calculatedTotal = subtotal + shippingCost;
-
-
-    const totalEl = document.getElementById('cart-total');
-    if (totalEl) {
-      totalEl.textContent = this.options.formatPrice!(calculatedTotal);
-    }
+    // Делегируем в общий апдейтер
+    updateCartSummary(cartData);
   }
 
   /**
