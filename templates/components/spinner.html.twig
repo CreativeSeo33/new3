@@ -1,3 +1,4 @@
+{# ai:component=spinner map=@component_spinner_map.mdc v=1 #}
 {#
   Spinner component
   Parameters:
@@ -15,7 +16,7 @@
 {% set spinner_class = extra_class ?? '' %}
 {% set spinner_color = color ?? 'primary' %}
 
-<div id="{{ spinner_id }}"
+<div id="{{ spinner_id }}" data-testid="spinner"
      class="{% if spinner_overlay %}absolute inset-0 z-20{% else %}relative{% endif %} {{ spinner_class }}"
      data-module="spinner"
      data-visible="{{ spinner_visible ? 'true' : 'false' }}"

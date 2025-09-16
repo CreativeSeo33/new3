@@ -6,6 +6,7 @@ alwaysApply: false
 
 ## Catalog (Twig/UX + FSD)
 - @component_delivery-selector_map.mdc — выбор способа доставки; root: `#delivery`
+- @component_spinner_map.mdc — индикатор загрузки; root: `[data-module="spinner"]`
 
 ### Правила и примечания
 - Карты компонентов — обязательны для всех Twig‑компонентов и не pinned (`alwaysApply: false`). При добавлении/обновлении карты не изменяйте pinned‑набор.

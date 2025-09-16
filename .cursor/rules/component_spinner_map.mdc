@@ -1,0 +1,36 @@
+---
+alwaysApply: false
+---
+
+# Component: Spinner (spinner)
+
+Назначение: универсальный индикатор загрузки. Может работать как встроенный блок или перекрывающий overlay.
+
+Файлы
+- Twig: `templates/components/spinner.html.twig`
+- Shared UI: `assets/catalog/src/shared/ui/spinner`
+- UI класс: `assets/catalog/src/shared/ui/spinner/ui/spinner.ts`
+
+Корневой селектор
+- `[data-module="spinner"]` (корневой `<div>` с `data-testid="spinner"`)
+
+Параметры (data-*)
+- `data-visible`: `'true' | 'false'` — начальная видимость (по умолчанию `false`)
+- `data-overlay`: `'true' | 'false'` — включить полупрозрачный оверлей (по умолчанию `false`)
+- `data-size`: `'small' | 'medium' | 'large'` — размер (по умолчанию `medium`)
+- `data-color`: `'primary' | 'secondary' | 'white'` — цвет (по умолчанию `primary`)
+
+Стабильные якоря
+- На корне: `data-testid="spinner"`
+- Внутренний контейнер центрирования: `.flex.items-center.justify-center.w-full.h-full`
+
+События
+- Не диспатчит собственных событий; управляется методами класса (`show`, `hide`, `setVisible`).
+
+Интеграция
+- Реестр: ключ `'spinner'` указывает на `@shared/ui/spinner` (`init`)
+- Модуль читает опции из `opts` и/или `data-*` атрибутов
+
+Примечания
+- Без inline `<script>`; вся логика — TypeScript.
+- `destroy()` очищает содержимое контейнера и отписывает слушатели через базовый `Component`.
