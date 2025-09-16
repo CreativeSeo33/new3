@@ -1,6 +1,7 @@
 import { Component } from '@shared/ui/Component';
 import { submitCheckout, saveCheckoutDraft } from '../api';
 import { validatePhone } from '@shared/lib/phone';
+import { getDeliveryContext, type DeliveryContextDto } from '@features/delivery-selector/api';
 
 export interface CheckoutFormOptions {
   storageKey?: string;
@@ -111,10 +112,46 @@ export class CheckoutFormComponent extends Component {
       return;
     }
 
+    // Валидация доставки перед оформлением
+    interface FullDeliveryContext extends DeliveryContextDto {
+      cityId?: number;
+      pickupPointId?: string | number;
+      address?: string | null;
+    }
+    const ctx = (await getDeliveryContext().catch(() => ({}))) as FullDeliveryContext;
+    const method = ((ctx?.methodCode as string) || 'pvz') as 'pvz' | 'courier';
+    if (method === 'pvz') {
+      const hasPvz = !!ctx?.pickupPointId;
+      if (!hasPvz) {
+        if (this.options?.showAlerts !== false) {
+          alert('Выберите пункт выдачи');
+        }
+        try { document.getElementById('delivery')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch {}
+        const sel = document.getElementById('pvz-select') as HTMLSelectElement | null;
+        try { sel?.focus(); } catch {}
+        return;
+      }
+    } else if (method === 'courier') {
+      const addr = (ctx?.address || '').trim();
+      if (addr.length === 0) {
+        if (this.options?.showAlerts !== false) {
+          alert('Укажите адрес для курьерской доставки');
+        }
+        try { document.getElementById('delivery')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch {}
+        const addrInput = document.getElementById('courier-address') as HTMLInputElement | null;
+        try { addrInput?.focus(); } catch {}
+        return;
+      }
+    }
+
     const submitUrl = this.el.dataset.submitUrl || '';
     if (!submitUrl) return;
 
     const payload = this.collectForm();
+    // Пробросим cityId, если он есть в контексте
+    if (typeof (ctx as any).cityId === 'number' && (ctx as any).cityId > 0) {
+      (payload as any).cityId = (ctx as any).cityId;
+    }
 
     if (this.submitButton) this.submitButton.disabled = true;
     try {
