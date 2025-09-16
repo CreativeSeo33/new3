@@ -104,19 +104,9 @@ final class ExampleBox
 
 ---
 
-### Блок 3. Ленивая загрузка HTML (ниже сгиба)
+### Блок 3. Ленивая загрузка HTML (ниже сгиба, без Turbo)
 
-Вариант A — Turbo Frame (пакет установлен: `symfony/ux-turbo`; если не установлен — TODO: подключить `symfony/ux-turbo`):
-```twig
-<turbo-frame id="promo_box" src="{{ path('promo_box_route') }}">
-  <div class="skeleton" data-testid="promo-box-skeleton">Loading…</div>
-  {# сервер вернёт готовую разметку внутри фрейма по маршруту #}
-  {# учесть HTTP‑кэш на контроллере‑обёртке #}
-  {# Убедитесь, что Turbo включён на странице #}
-</turbo-frame>
-```
-
-Вариант B — контроллер `lazy-load` (IntersectionObserver; если пакет не установлен — TODO: зарегистрировать контроллер в `assets/controllers.json` и реализовать его):
+Контроллер `lazy-load` (IntersectionObserver; зарегистрируйте контроллер в `assets/controllers.json` и реализуйте его):
 ```twig
 <div
   data-controller="lazy-load"
