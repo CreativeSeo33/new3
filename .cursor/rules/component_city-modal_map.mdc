@@ -1,0 +1,33 @@
+---
+alwaysApply: false
+---
+
+# Component: City Modal (city-modal)
+
+Назначение: модальное окно выбора города. Интеграция с `features/city-modal` и `features/autocomplete`.
+
+Файлы
+- Twig: `templates/components/CityModal.html.twig`
+- Feature: `assets/catalog/src/features/city-modal`
+
+Корневой селектор
+- `#city-modal[data-testid="city-modal-root"]` (содержит `data-module="city-modal"`)
+
+Параметры (data-*)
+- Автокомплит: внутри корня есть блок `data-module="autocomplete"` c `data-input-selector="#city-modal-input"`
+
+Стабильные якоря
+- Корень: `data-testid="city-modal-root"`
+- Список: `data-testid="city-modal-list"`
+- Шаблон спиннера: `template[data-spinner-template]`
+
+События
+- `cart:updated` (слушается глобально; эмитится после смены города)
+
+Интеграция
+- Реестр: ключ `city-modal` указывает на `@features/city-modal` (`init`)
+
+Примечания
+- Без inline `<script>`; вся логика — TypeScript (FSD feature).
+- `destroy()` фичи снимает слушатели и очищает ресурсы.
+

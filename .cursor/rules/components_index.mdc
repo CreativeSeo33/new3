@@ -9,6 +9,8 @@ alwaysApply: false
 - @component_spinner_map.mdc — индикатор загрузки; root: `[data-module="spinner"]`
 - @component_cart-counter_map.mdc — счетчик корзины; root: `[data-testid="cart-counter"]`
 
+- @component_city-modal_map.mdc — выбор города; root: `#city-modal[data-testid="city-modal-root"]`
+
 ### Правила и примечания
 - Карты компонентов — обязательны для всех Twig‑компонентов и не pinned (`alwaysApply: false`). При добавлении/обновлении карты не изменяйте pinned‑набор.
 - В шаблонах компонентов используйте якоря: `{# ai:component=<kebab> map=@component_<kebab>_map.mdc v=1 #}` или `{# ai:module=<kebab> root="<selector>" #}`.
