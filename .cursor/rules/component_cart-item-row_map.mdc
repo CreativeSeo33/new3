@@ -1,0 +1,24 @@
+---
+alwaysApply: false
+---
+
+# Component: cart-item-row
+
+Назначение: Отображение одной позиции корзины с фото, названием, опциями, ценой, qty и кнопкой удаления.
+
+Файлы
+- Twig: `templates/components/cart/cart-item-row.html.twig`
+
+Корневой селектор
+- `tr[data-testid="cart-item"][data-item-id]`
+
+Стабильные якоря
+- qty input: `[data-testid="qty-input"]`
+- row total: `[data-testid="row-total"]`
+- remove btn: `[data-testid="remove"]`
+
+Интерактив
+- Управляется FSD‑модулем `cart-items-manager` через делегирование по `tbody`.
+
+Примечания
+- Используется `format_price` и безопасная обработка изображений (`imagine_filter('md2')`).

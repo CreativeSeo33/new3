@@ -28,7 +28,7 @@ export async function fetchDeliveryTypes(): Promise<DeliveryTypeDto[]> {
 }
 
 export async function selectDeliveryMethod(methodCode: string): Promise<CartFullPayload> {
-  return post<CartFullPayload>('/api/delivery/select-method', { methodCode });
+  return post<CartFullPayload>('/api/delivery/select-method', { methodCode }, { showCartSpinner: true });
 }
 
 

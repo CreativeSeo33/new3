@@ -1,0 +1,21 @@
+{# ai:component=delivery-methods-block map=@component_delivery-methods-block_map.mdc v=1 #}
+<div class="mt-4" data-module="delivery-methods" data-selected-code="{{ deliveryContext.methodCode|default('') }}">
+  <div id="delivery-methods" class="p-4 border rounded" data-testid="delivery-root">
+    <div class="font-medium mb-2">Способ доставки</div>
+    <div id="delivery-methods-list" class="space-y-2">
+      {% if types is defined and types is not empty %}
+        {% set selectedCode = (deliveryContext.methodCode|default(null)) %}
+        {% for t in types %}
+          {% set isSelected = (t.code == selectedCode) or (selectedCode is empty and t.default) %}
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="radio" name="delivery-method" value="{{ t.code }}" {% if isSelected %}checked{% endif %} data-testid="delivery-method-code">
+            <span>{{ t.name ?? t.code }}</span>
+          </label>
+        {% endfor %}
+      {% endif %}
+    </div>
+    <div id="delivery-methods-error" class="text-sm text-red-600 mt-2 hidden"></div>
+  </div>
+</div>
+
+

@@ -1,0 +1,24 @@
+---
+alwaysApply: false
+---
+
+# Component: delivery-methods-block
+
+Назначение: Выбор способа доставки (радио‑список) и контейнер ошибок.
+
+Файлы
+- Twig: `templates/components/delivery/methods.html.twig`
+
+Корневой селектор
+- `div[data-module="delivery-methods"][data-selected-code]`
+
+Стабильные якоря
+- `#delivery-methods` (root, `data-testid="delivery-root"`)
+- радио: `input[name="delivery-method"][data-testid="delivery-method-code"]`
+- контейнер ошибок: `#delivery-methods-error`
+
+Интерактив
+- FSD‑модуль `delivery-methods` (init/destroy, обработка выбора, валидация, ошибки)
+
+Примечания
+- Никаких inline `<script>`.

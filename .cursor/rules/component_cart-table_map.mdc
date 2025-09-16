@@ -1,0 +1,24 @@
+---
+alwaysApply: false
+---
+
+# Component: cart-table
+
+Назначение: Таблица позиций корзины.
+
+Файлы
+- Twig: `templates/components/cart/cart-table.html.twig`
+- Дочерний компонент: `templates/components/cart/cart-item-row.html.twig`
+
+Корневой селектор
+- `tbody[data-testid="cart-items"][data-module="cart-items-manager"]`
+
+Стабильные якоря
+- `data-testid="cart-items"` на tbody
+- строки — см. карту `@component_cart-item-row_map.mdc`
+
+Интерактив
+- FSD‑модуль `cart-items-manager` управляет qty/remove, обновляет суммы.
+
+Примечания
+- Без inline `<script>`; вся логика — TypeScript.

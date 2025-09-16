@@ -1,0 +1,17 @@
+---
+alwaysApply: false
+---
+
+# Component: cart-actions
+
+Назначение: Кнопки действий с корзиной (переход к оформлению).
+
+Файлы
+- Twig: `templates/components/cart/cart-actions.html.twig`
+
+Корневой селектор
+- контейнер: `div.mt-6.flex.justify-end`
+- кнопка: ссылка на маршрут `checkout_page`
+
+Примечания
+- Чистый HTML, без интерактива.

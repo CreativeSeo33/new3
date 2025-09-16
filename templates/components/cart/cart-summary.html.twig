@@ -1,0 +1,21 @@
+{# ai:component=cart-summary map=@component_cart-summary_map.mdc v=1 #}
+<div class="mt-4 text-right text-lg">
+  {% if delivery.cost is defined and delivery.cost is not null %}
+    <div>Стоимость товаров: <span id="cart-subtotal" data-cart-subtotal>{{ cart.subtotal|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
+    <div>Доставка: <span id="cart-shipping" data-cart-shipping>{{ delivery.cost|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
+    {% if delivery.term %}
+      <div class="text-sm text-gray-600" id="cart-shipping-term" data-cart-shipping-term>{{ delivery.term }}</div>
+    {% endif %}
+    <div class="border-t pt-2 font-semibold">
+      Итого: <span id="cart-total" data-cart-total>{{ (cart.subtotal + delivery.cost)|number_format(0, '.', ' ') ~ ' руб.' }}</span>
+    </div>
+  {% else %}
+    <div>Стоимость товаров: <span id="cart-subtotal" data-cart-subtotal>{{ cart.subtotal|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
+    <div>Доставка: <span id="cart-shipping" data-cart-shipping>Расчет менеджером</span></div>
+    <div class="border-t pt-2 font-semibold">
+      Итого: <span id="cart-total" data-cart-total>{{ cart.subtotal|number_format(0, '.', ' ') ~ ' руб.' }}</span>
+    </div>
+  {% endif %}
+</div>
+
+

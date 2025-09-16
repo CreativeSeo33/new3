@@ -18,6 +18,13 @@ alwaysApply: false
 - @component_cart_item_map.mdc — позиция корзины; root: `[data-testid="cart-item"]`
 - @component_cart_summary_map.mdc — итоги заказа; root: `#cart-total`
 
+### Cart page components (Twig)
+- @component_cart-table_map.mdc — таблица корзины; root: `tbody[data-testid="cart-items"]`
+- @component_cart-item-row_map.mdc — строка товара; root: `tr[data-testid="cart-item"]`
+- @component_delivery-methods-block_map.mdc — выбор доставки; root: `div[data-module="delivery-methods"]`
+- @component_cart-summary_map.mdc — итоги заказа; якоря: `#cart-total` и др.
+- @component_cart-actions_map.mdc — действия (оформление заказа)
+
 ### Правила и примечания
 - Карты компонентов — обязательны для всех Twig‑компонентов и не pinned (`alwaysApply: false`). При добавлении/обновлении карты не изменяйте pinned‑набор.
 - В шаблонах компонентов используйте якорь: `{# ai:component=<kebab> map=@component_<kebab>_map.mdc v=1 #}` (использование одного `ai:module` без `map` для компонентов не допускается).

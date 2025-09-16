@@ -9,8 +9,8 @@
 {% endblock %}
 
 {% block body %}
-  {% include 'catalog/layouts/header.html.twig' %}
-  {% include 'catalog/layouts/navbar.html.twig' %}
+  {% block catalog_header %}{% include 'catalog/layouts/header.html.twig' %}{% endblock %}
+  {% block catalog_navbar %}{% include 'catalog/layouts/navbar.html.twig' %}{% endblock %}
   {% include 'catalog/layouts/breadcrumbs.html.twig' %}
 
   {% block catalog_body %}{% endblock %}
@@ -19,7 +19,7 @@
     <div id="catalog-app"></div>
   {% endif %}
 
-  {% include 'catalog/layouts/footer.html.twig' %}
+  {% block catalog_footer %}{% include 'catalog/layouts/footer.html.twig' %}{% endblock %}
 {% endblock %}
 
 {% block javascripts %}

@@ -1,0 +1,22 @@
+{# ai:component=cart-table map=@component_cart-table_map.mdc v=1 #}
+<div class="relative overflow-x-auto">
+  <table class="min-w-full text-sm">
+    <thead>
+      <tr class="text-left border-b">
+        <th class="py-2 pr-4">Фото</th>
+        <th class="py-2 pr-4">Товар</th>
+        <th class="py-2 pr-4">Цена</th>
+        <th class="py-2 pr-4">Кол-во</th>
+        <th class="py-2 pr-4">Сумма</th>
+        <th class="py-2 pr-4"></th>
+      </tr>
+    </thead>
+    <tbody id="cart-items" data-module="cart-items-manager" data-testid="cart-items">
+      {% for item in items %}
+        {% include 'components/cart/cart-item-row.html.twig' with { item: item } only %}
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+
+

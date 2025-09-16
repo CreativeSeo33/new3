@@ -1,0 +1,20 @@
+---
+alwaysApply: false
+---
+
+# Component: cart-summary
+
+Назначение: Отображение итогов корзины (subtotal, доставка, итог, срок доставки).
+
+Файлы
+- Twig: `templates/components/cart/cart-summary.html.twig`
+
+Корневой селектор
+- `div .text-right.text-lg` (контейнер блока)
+- якоря: `#cart-subtotal[data-cart-subtotal]`, `#cart-shipping[data-cart-shipping]`, `#cart-total[data-cart-total]`, `#cart-shipping-term[data-cart-shipping-term]`
+
+Интерактив
+- Значения обновляются FSD‑модулями корзины/доставки через DOM‑обновления.
+
+Примечания
+- Без логики; только отображение.

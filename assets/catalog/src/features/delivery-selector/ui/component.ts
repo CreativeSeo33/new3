@@ -163,15 +163,16 @@ export class DeliverySelector extends Component {
     super.destroy();
   }
 
-  private formatRub(valueInCents: number): string {
-    const rubles = Math.round(valueInCents / 100);
+  private formatRub(value: number): string {
+    const numeric = Number(value);
+    const safe = Number.isFinite(numeric) ? Math.round(numeric) : 0;
     try {
       return new Intl.NumberFormat('ru-RU', {
         minimumFractionDigits: 0,
         maximumFractionDigits: 0
-      }).format(rubles) + ' руб.';
+      }).format(safe) + ' руб.';
     } catch (_) {
-      return String(rubles) + ' руб.';
+      return String(safe) + ' руб.';
     }
   }
 
