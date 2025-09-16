@@ -128,6 +128,8 @@ alwaysApply: true
 - Политика производительности агента: `@agent_performance_policy.mdc`
 - Политика Twig‑компонентов (Symfony UX): `@twig_components_policy.mdc`
 - Индекс компонентов: `@components_index.mdc`
+ 
+Документация по потоку сабмита: см. docs/TRACE.md
 
 ### Инструкция для агента
 
