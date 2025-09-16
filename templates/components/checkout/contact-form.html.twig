@@ -4,14 +4,15 @@
   <form id="checkout-form" class="space-y-4">
     <div class="grid grid-cols-1 gap-4">
       <div>
-        <label class="block text-sm mb-1">Имя</label>
-        <input name="firstName" value="{{ (checkout.customer.name ?? '')|e }}" placeholder="Имя Отчество" class="w-full border rounded px-3 py-2" required />
+        <label for="firstName" class="block text-sm mb-1">Имя</label>
+        <input id="firstName" name="firstName" value="{{ (checkout.customer.name ?? '')|e }}" placeholder="Имя Отчество" class="w-full border rounded px-3 py-2" required />
       </div>
     </div>
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div>
-        <label class="block text-sm mb-1">Телефон</label>
+        <label for="phone" class="block text-sm mb-1">Телефон</label>
         <input
+          id="phone"
           name="phone"
           type="tel"
           inputmode="tel"
@@ -24,13 +25,13 @@
         />
       </div>
       <div>
-        <label class="block text-sm mb-1">E-mail</label>
-        <input name="email" value="{{ (checkout.customer.email ?? '')|e }}" placeholder="E-mail" type="email" class="w-full border rounded px-3 py-2" />
+        <label for="email" class="block text-sm mb-1">E-mail</label>
+        <input id="email" name="email" value="{{ (checkout.customer.email ?? '')|e }}" placeholder="E-mail" type="email" class="w-full border rounded px-3 py-2" />
       </div>
     </div>
     <div>
-      <label class="block text-sm mb-1">Комментарий к заказу</label>
-      <textarea name="comment" class="w-full border rounded px-3 py-2" rows="3" placeholder="Пожелания к заказу">{{ (checkout.comment ?? checkout.customer.comment ?? '')|e }}</textarea>
+      <label for="comment" class="block text-sm mb-1">Комментарий к заказу</label>
+      <textarea id="comment" name="comment" class="w-full border rounded px-3 py-2" rows="3" placeholder="Пожелания к заказу">{{ (checkout.comment ?? checkout.customer.comment ?? '')|e }}</textarea>
     </div>
   </form>
   

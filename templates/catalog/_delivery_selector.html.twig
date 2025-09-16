@@ -16,8 +16,8 @@
   <section id="delivery-methods">
     <h3 class="text-sm font-medium mb-2">Способ доставки</h3>
     <div class="space-y-2 mb-3">
-      <label class="flex items-center gap-2"><input type="radio" data-testid="delivery-method-pvz" name="deliveryMethod" value="pvz"> Пункт выдачи</label>
-      <label class="flex items-center gap-2"><input type="radio" data-testid="delivery-method-courier" name="deliveryMethod" value="courier"> Курьер</label>
+      <label for="delivery-method-pvz" class="flex items-center gap-2"><input id="delivery-method-pvz" type="radio" data-testid="delivery-method-pvz" name="deliveryMethod" value="pvz"> Пункт выдачи</label>
+      <label for="delivery-method-courier" class="flex items-center gap-2"><input id="delivery-method-courier" type="radio" data-testid="delivery-method-courier" name="deliveryMethod" value="courier"> Курьер</label>
     </div>
 
     <div id="pvz-block" data-testid="delivery-pvz-block" class="mt-2 hidden">
@@ -27,7 +27,7 @@
     </div>
 
     <div id="courier-block" data-testid="delivery-courier-block" class="mt-2 hidden">
-      <label class="block text-sm mb-1">Адрес доставки</label>
+      <label for="courier-address" class="block text-sm mb-1">Адрес доставки</label>
       <input id="courier-address" data-testid="delivery-courier-address" class="w-full border rounded px-3 py-2" placeholder="Город, улица, дом, квартира" required />
       <div id="addr-error" data-testid="delivery-addr-error" class="text-xs text-red-600 mt-1 hidden">Адрес обязателен</div>
     </div>
