@@ -103,7 +103,7 @@ final class ExampleBox
   <button type="button" data-action="app--example-box#toggle">Toggle</button>
   <span data-app--example-box-target="status"></span>
   ...
-  {# Контроллер грузится лениво благодаря fetch: lazy #}
+  {# Контроллер грузится лениво благодаря `"fetch": "lazy"` #}
 </section>
 ```
 

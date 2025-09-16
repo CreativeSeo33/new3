@@ -160,7 +160,7 @@ alwaysApply: true
 - Новые/изменённые .mdc для карт страниц не увеличивают pinned‑набор (все alwaysApply: false); pinned‑файлы не меняются без необходимости
 - Twig‑компоненты:
   - нет inline `<script>`;
-  - небольшой интерактив — через Stimulus с "fetch": "lazy"; для блоков ниже сгиба — lazy‑load (IntersectionObserver), Turbo не используется;
+  - небольшой интерактив — через Stimulus с `"fetch": "lazy"`; для блоков ниже сгиба — lazy‑load (IntersectionObserver), Turbo не используется;
   - по необходимости применяются `#[PreMount]`/`mount()`/`#[PostMount]`/`#[ExposeInTemplate]`; для реактивных сценариев — Live Components;
   - ключевые узлы — с `data-testid`;
   - для каждого компонента существует и поддерживается карта `.cursor/rules/component_<kebab>_map.mdc` (`alwaysApply: false`);

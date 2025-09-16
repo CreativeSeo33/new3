@@ -13,7 +13,7 @@ alwaysApply: false
 
 ### Правила и примечания
 - Карты компонентов — обязательны для всех Twig‑компонентов и не pinned (`alwaysApply: false`). При добавлении/обновлении карты не изменяйте pinned‑набор.
-- В шаблонах компонентов используйте якоря: `{# ai:component=<kebab> map=@component_<kebab>_map.mdc v=1 #}` или `{# ai:module=<kebab> root="<selector>" #}`.
+- В шаблонах компонентов используйте якорь: `{# ai:component=<kebab> map=@component_<kebab>_map.mdc v=1 #}` (использование одного `ai:module` без `map` для компонентов не допускается).
 - Добавляя новый компонент без карты — создайте `.cursor/rules/component_<kebab>_map.mdc` и добавьте запись в этот индекс.
-- Интерактив без inline `<script>`: Stimulus с "fetch": "lazy" или FSD‑модуль (см. `@catalog_js_architecture.mdc`).
+- Интерактив без inline `<script>`: Stimulus с `"fetch": "lazy"` или FSD‑модуль (см. `@catalog_js_architecture.mdc`).
 
