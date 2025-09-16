@@ -55,14 +55,19 @@ export async function http<T = any>(
     }
   }
 
-  // Найдём глобальный спиннер корзины, если есть
+  // Показываем глобальный спиннер корзины по флагу или авто-правилу (только cart-эндпоинты)
   let cartSpinner: Spinner | null = null;
   try {
-    const spinnerRoot = document.getElementById('cart-spinner');
-    if (spinnerRoot) {
-      // Инициализируем Spinner поверх существующей разметки (overlay: true)
-      cartSpinner = new Spinner(spinnerRoot as HTMLElement, { overlay: true, visible: true });
-      cartSpinner.show();
+    const explicit = options.showCartSpinner;
+    const isCartEndpoint = /\/api\/cart(\/|$)/.test(path);
+    const shouldShow = explicit === true || (explicit === undefined && isCartEndpoint);
+    if (shouldShow) {
+      const spinnerRoot = document.getElementById('cart-spinner');
+      if (spinnerRoot) {
+        // Инициализируем Spinner поверх существующей разметки (overlay: true)
+        cartSpinner = new Spinner(spinnerRoot as HTMLElement, { overlay: true, visible: true });
+        cartSpinner.show();
+      }
     }
   } catch (_) {
     // игнорируем ошибки инициализации спиннера

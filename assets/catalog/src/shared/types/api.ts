@@ -109,6 +109,13 @@ export interface HttpOptions {
   headers?: Record<string, string>;
   body?: any;
   signal?: AbortSignal;
+  /**
+   * Управление глобальным спиннером корзины:
+   *  - true  => всегда показывать
+   *  - false => никогда не показывать
+   *  - undefined => авто (только для /api/cart*)
+   */
+  showCartSpinner?: boolean;
 }
 
 export interface HttpGetOptions extends Omit<HttpOptions, 'method' | 'body'> {
