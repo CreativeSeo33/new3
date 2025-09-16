@@ -1,0 +1,50 @@
+---
+alwaysApply: false
+---
+
+# Component: CartCounter (cart-counter)
+
+Назначение: отображает счётчик корзины (кол-во и сумма), показывает дропдаун со списком позиций и итогами; слушает глобальные события обновления корзины.
+
+Файлы
+- Twig: `templates/components/CartCounter.html.twig`
+- Stimulus controllers: `assets/controllers/cart_counter_controller.js`, `assets/controllers/cart_dropdown_controller.js`
+- (Дополнительно) FSD Widget: `assets/catalog/src/widgets/cart-counter` (реестр: `assets/catalog/src/app/registry.ts` ключ `'cart-counter'`)
+
+Корневой селектор
+- `[data-testid="cart-counter"]`
+
+Targets (Stimulus)
+- `data-cart-counter-target="badge"`
+- `data-cart-counter-target="total"`
+- `data-cart-counter-target="list"`
+- `data-cart-counter-target="shipping"`
+- `data-cart-counter-target="dropdownTotal"`
+- `data-cart-dropdown-target="dropdown"`
+
+Параметры (data-*)
+- `data-cart-counter-count-value`: число товаров
+- `data-cart-counter-total-value`: сумма корзины (число)
+- `data-cart-counter-currency-value`: валюта (строка)
+- `data-cart-counter-url-value`: URL API для загрузки данных (именованный маршрут `api_cart_get`)
+
+События
+- `cart:updated@window -> cart-counter#onExternalUpdate`
+- `storage@window -> cart-counter#onStorageEvent`
+- `pointerenter -> cart-dropdown#enter`
+- `pointerleave -> cart-dropdown#leave`
+- `focusin -> cart-dropdown#focusIn`
+- `focusout -> cart-dropdown#focusOut`
+- `keydown@window -> cart-dropdown#onKeydown`
+- `click@document -> cart-dropdown#onDocumentClick`
+
+Стабильные якоря
+- На корне: `data-testid="cart-counter"`
+- На дропдауне: `data-testid="cart-counter-dropdown"`
+
+Интеграция
+- Использует компонент `spinner` через include `components/spinner.html.twig` (см. `@component_spinner_map.mdc`).
+
+Примечания
+- Без inline `<script>`; интерактив реализован через Stimulus контроллеры.
+- Для SPA/витрины также существует FSD‑виджет `widgets/cart-counter`; в данном Twig‑компоненте он не используется.
