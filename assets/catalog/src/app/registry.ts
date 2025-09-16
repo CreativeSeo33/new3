@@ -17,6 +17,9 @@ export const registry: Record<string, () => Promise<ModuleInitFunction>> = {
   'quantity-selector': () => import('../features/quantity-selector').then(m => m.init),
   'delivery-methods': () => import('../features/delivery-methods').then(m => m.init),
   'autocomplete': () => import('../features/autocomplete').then(m => m.init),
+  'city-modal': () => import('../features/city-modal').then(m => m.init),
+  'city-modal-trigger': () => import('../features/city-modal-trigger').then(m => m.init),
+  'mobile-menu': () => import('../features/mobile-menu').then(m => m.init),
 
   // Виджеты
   'cart-counter': () => import('../widgets/cart-counter').then(m => m.init),

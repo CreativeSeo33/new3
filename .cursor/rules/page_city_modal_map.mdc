@@ -1,0 +1,49 @@
+---
+alwaysApply: false
+---
+# Page Map: City Modal (Twig component + FSD)
+
+meta:
+  id: city-modal-component
+  templates:
+    - templates/components/CityModal.html.twig
+    - templates/catalog/layouts/header.html.twig
+  component: App\\Twig\\Components\\CityModal
+
+controllers: []
+
+api:
+  - GET /api/city_modals (список городов, API Platform)
+  - POST /api/delivery/select-city (смена города)
+
+entities: []
+
+services:
+  - App\Http\CartResponse
+  - App\Http\CartWriteGuard
+  - App\Service\DeliveryContext
+
+jsModules:
+  - assets/catalog/src/features/city-modal
+  - assets/catalog/src/features/mobile-menu
+
+twig:
+  functions:
+    - component('CityModal')
+
+dom:
+  testids:
+    - name: city-modal-root
+      selector: '#city-modal[data-testid="city-modal-root"]'
+    - name: city-modal-list
+      selector: '[data-testid="city-modal-list"]'
+    - name: city-trigger
+      selector: '[data-city-modal-trigger]'
+
+invariants:
+  - Нет inline <script> в Twig, интерактив реализован через FSD
+  - HTTP вызывает только @shared/api/http
+  - При выборе города обновляется мини-корзина событием cart:updated
+
+links: [@catalog_js_architecture.mdc, @twig_components_policy.mdc]
+
