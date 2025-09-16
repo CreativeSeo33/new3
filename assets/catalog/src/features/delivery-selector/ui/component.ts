@@ -1,4 +1,5 @@
 import { Component } from '@shared/ui/Component';
+import { Spinner } from '@shared/ui/spinner';
 import { getDeliveryContext, fetchPvzPoints, selectMethod, selectPvz, type DeliveryMethodCode, type DeliveryContextDto } from '../api';
 
 export interface DeliverySelectorOptions {}
@@ -14,6 +15,7 @@ export class DeliverySelector extends Component {
   private totalEl!: HTMLElement | null;
   private abortController: AbortController | null = null;
   private currentCityName: string | null = null;
+  private spinner: Spinner | null = null;
 
   constructor(el: HTMLElement, opts: DeliverySelectorOptions = {}) {
     super(el, opts);
@@ -35,9 +37,19 @@ export class DeliverySelector extends Component {
     this.addrInput = this.$('#courier-address') as HTMLInputElement | null;
     this.shipCostEl = this.$('#ship-cost');
     this.totalEl = document.getElementById('checkout-total');
+
+    const spinnerEl = this.$('#delivery-spinner') as HTMLElement | null;
+    if (spinnerEl) {
+      try {
+        this.spinner = new Spinner(spinnerEl, { overlay: true, visible: false });
+      } catch (_) {
+        // ignore spinner init errors
+      }
+    }
   }
 
   private async bootstrap(): Promise<void> {
+    this.showSpinner();
     const ctx: DeliveryContextDto = await getDeliveryContext().catch(() => ({ methodCode: 'pvz', cityName: null }));
     const initMethod = (ctx.methodCode || 'pvz') as DeliveryMethodCode;
     this.currentCityName = ctx.cityName || null;
@@ -46,6 +58,7 @@ export class DeliverySelector extends Component {
     if (initMethod === 'pvz') {
       await this.loadPvz(this.currentCityName || '');
     }
+    this.hideSpinner();
   }
 
   private bindEvents(): void {
@@ -54,6 +67,7 @@ export class DeliverySelector extends Component {
       radio.addEventListener('change', async (e: Event) => {
         const value = (e.target as HTMLInputElement).value as DeliveryMethodCode;
         try {
+          this.showSpinner();
           const data = await selectMethod({ methodCode: value });
           this.toggleBlocks(value);
           if (value === 'pvz') {
@@ -63,6 +77,8 @@ export class DeliverySelector extends Component {
           if (this.totalEl) this.totalEl.textContent = (data.total / 100).toFixed(2) + ' ₽';
         } catch (e) {
           // ignore
+        } finally {
+          this.hideSpinner();
         }
       });
     }
@@ -72,11 +88,14 @@ export class DeliverySelector extends Component {
       const pvzCode = this.pvzSelect?.value || '';
       if (!pvzCode) return;
       try {
+        this.showSpinner();
         const data = await selectPvz(pvzCode);
         if (this.shipCostEl) this.shipCostEl.textContent = (data.shippingCost / 100).toFixed(2);
         if (this.totalEl) this.totalEl.textContent = (data.total / 100).toFixed(2) + ' ₽';
       } catch (e) {
         alert('Ошибка');
+      } finally {
+        this.hideSpinner();
       }
     });
 
@@ -87,11 +106,14 @@ export class DeliverySelector extends Component {
       if (errEl) errEl.classList.toggle('hidden', !!address);
       if (!address) return;
       try {
+        this.showSpinner();
         const data = await selectMethod({ methodCode: 'courier', address });
         if (this.shipCostEl) this.shipCostEl.textContent = (data.shippingCost / 100).toFixed(2);
         if (this.totalEl) this.totalEl.textContent = (data.total / 100).toFixed(2) + ' ₽';
       } catch (e) {
         alert('Ошибка');
+      } finally {
+        this.hideSpinner();
       }
     });
   }
@@ -116,6 +138,7 @@ export class DeliverySelector extends Component {
     this.abortController = new AbortController();
 
     try {
+      this.showSpinner();
       const list = await fetchPvzPoints(cityName);
       if (!Array.isArray(list) || list.length === 0) {
         this.pvzEmpty.classList.remove('hidden');
@@ -129,12 +152,22 @@ export class DeliverySelector extends Component {
       }
     } catch (_) {
       this.pvzEmpty.classList.remove('hidden');
+    } finally {
+      this.hideSpinner();
     }
   }
 
   destroy(): void {
     if (this.abortController) this.abortController.abort();
     super.destroy();
+  }
+
+  private showSpinner(): void {
+    try { this.spinner?.show(); } catch (_) {}
+  }
+
+  private hideSpinner(): void {
+    try { this.spinner?.hide(); } catch (_) {}
   }
 }
 

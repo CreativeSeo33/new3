@@ -1,0 +1,68 @@
+---
+alwaysApply: false
+---
+
+Резюме
+- **High (5)**: `localStorage` для JWT в `assets/admin/**`; inline `<script>` в `templates/catalog/delivery/index.html.twig` и `templates/admin/base.html.twig`; мутация сессии через `GET` в `src/Controller/SessionController.php`; открытые API Platform операции без `security`; CSRF в UI-каталоге местами обходится прямыми `fetch`.
+- **Medium (8)**: множественные `innerHTML` в FSD‑модулях; отсутствие AbortController/таймаутов и хендлинга 429 в `assets/catalog/src/shared/api/http.ts`; отсутствие rate‑лимитов; длинный JWT TTL (7 дней); admin bootstrap GET без явной авторизации атрибутами; Stimulus controllers eager‑fetch; формы без `_token` в Twig‑каталоге (часть форм FSD‑управляемые).
+- **Low (7)**: отсутствие явных security headers (HSTS, X-Frame-Options, Referrer-Policy) в конфиге; потенциальные логи без маскирования PII; отсутствие Voter’ов; отсутствие `allow_extra_attributes: false` в API Platform; CORS зависит от ENV и может быть неверно настроен; `csrf_protection: true` глобально, но есть обходы через JS.
+
+Формы (Twig)
+- [Medium] Контактная форма без `_token`; файл: `templates/components/checkout/contact-form.html.twig:4`; контекст: "<form id=\"checkout-form\" class=...>"; рекомендация: добавить `_token` или подтвердить, что сабмит всегда через FSD+AJAX с `X-CSRF-Token` (и правило в `@forms_security.mdc`).
+- [Medium] Формы в `templates/debug/session.html.twig` (POST) без токена; файл: `templates/debug/session.html.twig:232,239,246`; контекст: "<form method=\"post\" ...>"; рекомендация: добавить скрытый `_token` и в контроллере `isCsrfTokenValid()`.
+- [High] Inline `<script>` с fetch к state‑changing endpoint без CSRF; файл: `templates/catalog/delivery/index.html.twig:76-139`; контекст: "fetch('/api/delivery/select-method', { method: 'POST', headers: {...} })"; рекомендация: вынос в FSD‑модуль + `@shared/api/http` (автоматический CSRF), правило в `@frontend_security.mdc`.
+- [Low] Admin base с inline `<script>`; файл: `templates/admin/base.html.twig:11-23`; контекст: присвоение `window.APP_CONFIG` c `|raw`; рекомендация: вынести в JSON‑скрипт‑тег type=application/json и читать на клиенте; запретить inline в `@frontend_security.mdc`.
+
+API Platform
+- [High] Ресурсы без `security` ограничений (CRUD доступны публично при `^/api security: false` в `security.yaml`): файлы: `src/Entity/Product.php`, `Attribute.php`, `AttributeGroup.php`, `Option.php`, `OptionValue.php`, `OrderStatus.php`, `ProductToCategory.php`, `ProductImage.php`, `Settings.php`, `User.php`, др.; контекст: "#[ApiResource(operations: [new Post(...), new Patch(...), new Delete()])]"; рекомендация: для публичных — только `Get/GetCollection` с нормализацией; для админских — `security: "is_granted('ROLE_ADMIN')"`; добавить `security_post_denormalize`/`processor` для write; правило в `@api_security.mdc`.
+- [High] `src/Controller/SecurityController.php:36-54` выдает JWT, при этом firewall `^/api security: false`; IDOR/неавторизованный доступ к админ‑ресурсам через API Platform возможен; рекомендация: ужесточить firewall для `/api/admin/**` и `ApiResource` маршрутов, добавить `access_control` точечно; правило в `@security_policy.mdc`.
+- [Medium] Нет `allow_extra_attributes: false` (массовое присвоение) в denorm контекстах; файл: различные `#[ApiResource(... denormalizationContext: [...])]`; рекомендация: добавить `denormalizationContext: ['allow_extra_attributes' => false, ...]` и валидацию; правило в `@api_security.mdc`.
+- [Medium] Отсутствуют `Voter`’ы для записей пользователя/настройки; поиск показал 0 Voter’ов; рекомендация: внедрить `Voter` для чувствительных сущностей (`Order`, `User`, `Settings`), правило в `@security_policy.mdc`.
+
+Frontend (Admin/Vue и Catalog/FSD/Stimulus)
+- [High] JWT хранится в `localStorage`; файлы: `assets/admin/services/auth.ts:6`, `assets/admin/services/http.ts:47-54`; контекст: "localStorage.setItem('token', token)"; рекомендация: миграция на httpOnly cookie + CSRF для write; правило в `@frontend_security.mdc`.
+- [Medium] Нет AbortController/таймаута/обработки 429 в `assets/catalog/src/shared/api/http.ts`; контекст: прямой `fetch(url, config)` без таймаута; рекомендация: добавить AbortController, таймаут, ретраи 429, централизованный 401; правило в `@frontend_security.mdc`.
+- [Medium] Множество `innerHTML` вставок в FSD модулях; файлы: `assets/catalog/src/features/*/ui/*.ts` (autocomplete, delivery-selector, city-modal, delivery-methods, add-to-cart, quantity-selector, spinner); контекст: "el.innerHTML = ..."; рекомендация: ограничить до доверенного шаблонного HTML, не вставлять пользовательские данные; правило в `@frontend_security.mdc`.
+- [Medium] Глобальные слушатели без явной отписки в нескольких модулях; файлы: `assets/catalog/src/features/*` (city-modal, autocomplete, product-price-calculator); контекст: `window.addEventListener(...)`/`document.addEventListener(...)`; рекомендация: обязательная отписка в `destroy()`, шаблон в `@catalog_js_architecture.mdc`.
+- [Low] `assets/controllers.json` включает контроллеры `live` eager; контекст: `"fetch": "eager"`; рекомендация: policy — только `"fetch": "lazy"` по умолчанию; правило в `@stimulus_policy.mdc`.
+
+Загрузки/медиа
+- [Medium] Админ добавляет изображения, путь берется из `/public/img`; файл: `src/Controller/Admin/MediaAdminController.php:89-133, 135-201`; контекст: нормализация пути + ограничение расширений, но нет проверки MIME/EXIF; рекомендация: при загрузке (когда появится) валидировать MIME/размер, чистить EXIF, хранить оригиналы вне web‑root; правило в `@uploads_security.mdc`.
+- [Low] Генерация кеша изображений без явного лимита входных форматов; файл: `ImageCacheService` косвенно; рекомендация: whitelist форматов и размерные лимиты в конфиге.
+
+CORS/JWT/Заголовки
+- [High] JWT HS256, `token_ttl: 604800` (7 дней); файл: `config/packages/lexik_jwt_authentication.yaml:1-6`; контекст: длинный TTL; рекомендация: снизить TTL access, ввести refresh по httpOnly cookie; правило в `@security_policy.mdc`.
+- [Medium] CORS: `allow_origin: ['%env(CORS_ALLOW_ORIGIN)%']`, методы широкие; файл: `config/packages/nelmio_cors.yaml:1-11`; рекомендация: в ENV указать точные origin, запретить `*` с `credentials`, добавить `Vary: Origin`; правило в `@security_policy.mdc`.
+- [Low] Нет явной настройки security headers (HSTS, X-Content-Type-Options, Referrer-Policy, frame-ancestors); файлы: `config/packages/framework.yaml` и web server; рекомендация: добавить заголовки на уровне reverse proxy/Symfony; правило в `@csp_headers.mdc`.
+
+Логи/секреты
+- [Medium] Потенциальный вывод PII (email/phone) в логах контроллеров оформления (не обнаружено явного логирования, но риски при добавлении); рекомендация: политика маскирования PII в логах; правило в `@logs.mdc`.
+- [Low] Ключи JWT и .env не найдены в репозитории (ок); рекомендация: добавить проверку в CI и git‑hooks.
+
+Карта рисков → правила Cursor
+- **@api_security.mdc**: обязательные `security` и `security_post_denormalize` для write операций; `allow_extra_attributes: false`; запрет write для публичных ресурсов; примеры на `Product`, `Settings`.
+- **@security_policy.mdc**: firewall `^/api` — ограничить публичный доступ; `access_control` для `/api/admin/**`; JWT TTL ≤ 900s, refresh cookie httpOnly; запрет IDOR; примеры проверок.
+- **@frontend_security.mdc**: запрет inline `<script>`, запрет `localStorage` для токенов, централизованный HTTP‑клиент с Abort/timeout/retry/401/429; запрет вставки неэкранированных данных через `innerHTML`.
+- **@forms_security.mdc**: `_token` обязателен для всех POST‑форм; пример интеграции в `CheckoutController` и debug‑формы; серверная `isCsrfTokenValid()`.
+- **@uploads_security.mdc**: MIME/размер/EXIF‑чистка, хранение вне web‑root, генерация ссылок только через промежуточный слой.
+- **@csp_headers.mdc**: Content‑Security‑Policy (без inline), HSTS, X-Frame-Options/frame-ancestors, Referrer‑Policy, X-Content-Type-Options; готовые snippets для Symfony/NGINX.
+- **@stimulus_policy.mdc** (усиление): `"fetch": "lazy"` по умолчанию, запрет eager без обоснования.
+
+Детализация находок
+- [High] Публичные write‑операции API Platform; файл: `src/Entity/Product.php:60-66`; контекст: "new Post(...), new Patch(...), new Delete()" при `^/api security: false`; рекомендация: добавить `security: "is_granted('ROLE_ADMIN')"` на write.
+- [High] JWT в localStorage; файл: `assets/admin/services/auth.ts:6`; контекст: "localStorage.setItem('token', token)"; рекомендация: httpOnly cookie + короткий access.
+- [High] Inline JS меняет состояние доставки; файл: `templates/catalog/delivery/index.html.twig:76-139`; контекст: `fetch('/api/delivery/select-method', { method: 'POST' ... })`; рекомендация: FSD‑модуль + CSRF через `@shared/api/http`.
+- [High] Очистка сессии через GET; файл: `src/Controller/SessionController.php:14-41`; контекст: `#[Route('/clear-session', methods: ['GET'])]` выполняет `session->clear()`; рекомендация: ограничить POST + CSRF.
+- [Medium] Нет `allow_extra_attributes: false`; файл: `src/Entity/* ApiResource denormalizationContext` множества сущностей; контекст: "denormalizationContext: ['groups' => ...]"; рекомендация: запретить массовое присвоение.
+- [Medium] Нет Abort/timeout/429; файл: `assets/catalog/src/shared/api/http.ts:71-96`; контекст: `fetch(url, config)`; рекомендация: добавить AbortController, таймаут, ретраи.
+- [Medium] `innerHTML` множественно; файл: `assets/catalog/src/features/autocomplete/ui/component.ts:70,126,170` и др.; контекст: "el.innerHTML = ..."; рекомендация: не вставлять пользовательские данные, шаблоны — статичные.
+- [Medium] Admin bootstrap GET без аннотационного `IsGranted`; файл: `src/Controller/Admin/Api/ProductBootstrapController.php:19-90`; контекст: GET `/api/admin/products/{id}/bootstrap`; рекомендация: атрибут `#[IsGranted('ROLE_ADMIN')]` и firewall для `/api/admin/**`.
+- [Low] Inline script в `templates/admin/base.html.twig:11-23`; контекст: `window.APP_CONFIG.pagination = {...|raw}`; рекомендация: перенос в `<script type="application/json" id="app-config">`.
+- [Low] Отсутствие security headers; файл: `config/packages/framework.yaml`; контекст: нет заголовков; рекомендация: добавить в реверс‑прокси/Kernel listener.
+
+TODO
+- Проверка кастомных `processor`/`state provider` на предмет утечек/IDOR — пропущена (нужно анализировать бизнес‑логику глубже).
+- Полная проверка CSP/Headers на уровне веб‑сервера (NGINX/Apache) недоступна из репозитория.
+- Rate limiter конфиг (`config/packages/rate_limiter.yaml`) отсутствует — не проверено.
+- Отсутствуют `src/Security/Voter/**` — возможно, реализованы иначе; требует уточнения.
+- Политики логирования (Monolog) по маскированию PII не найдены — нужен отдельный аудит `config/packages/monolog.yaml` (отсутствует в репо).
