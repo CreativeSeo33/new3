@@ -42,15 +42,49 @@ export class Autocomplete extends Component {
     } else {
       this.inputEl = document.createElement('input');
       this.inputEl.type = 'text';
-      this.inputEl.className = 'w-full border rounded px-3 py-2';
+      this.inputEl.className = 'py-2 px-3 ps-10 block w-full border border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none';
       if (this.optionsTyped.placeholder) this.inputEl.placeholder = this.optionsTyped.placeholder;
       this.el.appendChild(this.inputEl);
     }
 
     // Контейнер списка
     this.listEl = document.createElement('div');
-    this.listEl.className = 'mt-1 border rounded bg-white shadow hidden max-h-60 overflow-auto z-10';
-    this.el.appendChild(this.listEl);
+    this.listEl.className = 'absolute left-0 right-0 top-full mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-md max-h-60 overflow-auto z-20 hidden';
+
+    // ARIA
+    const listId = `ac-list-${Math.random().toString(36).slice(2, 9)}`;
+    this.listEl.id = listId;
+    this.listEl.setAttribute('role', 'listbox');
+    this.inputEl.setAttribute('role', 'combobox');
+    this.inputEl.setAttribute('aria-expanded', 'false');
+    this.inputEl.setAttribute('aria-controls', listId);
+
+    // Если input внутри корня — используем относительное позиционирование и иконку
+    const inputInsideRoot = this.el.contains(this.inputEl);
+    if (inputInsideRoot) {
+      this.el.classList.add('relative');
+      // Иконка поиска слева
+      const iconWrap = document.createElement('div');
+      iconWrap.className = 'absolute inset-y-0 start-0 flex items-center pointer-events-none ps-3';
+      iconWrap.innerHTML = `
+        <svg class="size-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+      `;
+      this.el.appendChild(iconWrap);
+      this.el.appendChild(this.listEl);
+    } else {
+      // Внешний input: оборачиваем в относительный контейнер и рендерим список абсолютно
+      const wrapper = document.createElement('div');
+      wrapper.className = 'relative';
+      const parent = this.inputEl.parentElement;
+      if (parent) {
+        parent.insertBefore(wrapper, this.inputEl);
+        wrapper.appendChild(this.inputEl);
+        wrapper.appendChild(this.listEl);
+      } else {
+        // fallback
+        this.inputEl.insertAdjacentElement('afterend', this.listEl);
+      }
+    }
   }
 
   private setupEvents(): void {
@@ -90,19 +124,28 @@ export class Autocomplete extends Component {
   private renderList(items: SuggestionItem[]): void {
     this.listEl.innerHTML = '';
     if (!items.length) { this.hideList(); return; }
+    const list = document.createElement('ul');
+    list.setAttribute('role', 'listbox');
+    list.className = 'divide-y divide-gray-100';
     for (const it of items) {
+      const li = document.createElement('li');
+      li.setAttribute('role', 'option');
+      li.setAttribute('aria-selected', 'false');
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = 'w-full text-left px-3 py-2 hover:bg-gray-100';
+      btn.className = 'w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:bg-gray-100';
       btn.textContent = it.label;
       btn.addEventListener('click', () => {
         this.inputEl.value = it.value;
         this.hideList();
         this.dispatchSelected(it);
       });
-      this.listEl.appendChild(btn);
+      li.appendChild(btn);
+      list.appendChild(li);
     }
+    this.listEl.appendChild(list);
     this.listEl.classList.remove('hidden');
+    this.inputEl.setAttribute('aria-expanded', 'true');
   }
 
   private dispatchSelected(item: SuggestionItem): void {
@@ -113,6 +156,7 @@ export class Autocomplete extends Component {
   private hideList(): void {
     this.listEl.classList.add('hidden');
     this.listEl.innerHTML = '';
+    this.inputEl.setAttribute('aria-expanded', 'false');
   }
 
   destroy(): void {

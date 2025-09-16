@@ -38,8 +38,8 @@ export async function fetchFiasCities(
   const list = normalizeHydra<FiasItem>(data);
   return list.map((it) => ({
     id: (it as any).id,
-    label: [it.offname, it.shortname].filter(Boolean).join(' '),
-    value: it.offname || '',
+    label: (it.offname || '').trim(),
+    value: (it.offname || '').trim(),
     raw: it
   }));
 }

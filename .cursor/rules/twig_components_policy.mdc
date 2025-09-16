@@ -1,0 +1,91 @@
+---
+alwaysApply: false
+---
+
+### Назначение и область
+Единые правила для Twig‑компонентов Symfony UX: мелкие переиспользуемые UI‑элементы с серверным рендерингом. Не используются для полноценных страниц и сложных интерактивных фич каталога (для них — FSD‑модули в `assets/catalog/src`).
+
+### Структура компонента
+- **PHP‑класс**: `src/Twig/Components/<Domain?>/<Name>.php` (`App\Twig\Components`)
+  - `#[AsTwigComponent('<Name>')]`
+  - `final` класс; публичные свойства строго типизированы
+  - Опциональные UX‑хуки: `#[PreMount]`, `mount()`, `#[PostMount]`, `#[ExposeInTemplate]`
+- **Шаблон**: `templates/components/<Domain?>/<Name>.html.twig`
+- **Вызов в Twig**:
+  - Тег: `<twig:<Name> propA=... propB=... />`
+  - Функция: `{{ component('<Name>', { propA: ..., propB: ... }) }}`
+
+### UX‑атрибуты Symfony
+- **`#[PreMount]`**: нормализация входных props (валидация, преобразование типов) до инициализации
+- **`mount()`**: загрузка данных и базовая подготовка состояния
+- **`#[PostMount]`**: пост‑обработка после `mount()`
+- **`#[ExposeInTemplate]`**: сделать методы/константы доступными в шаблоне
+
+### Live Components — когда выбирать
+Доступны: `symfony/ux-live-component` (в composer.json). Выбирайте Live, если нужен интерактив с инкрементальными запросами без полной перезагрузки (формы с шагами, счётчики, быстрые действия). Мини‑скелет:
+
+```php
+use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
+use Symfony\UX\LiveComponent\Attribute\LiveProp;
+use Symfony\UX\LiveComponent\Attribute\LiveAction;
+
+#[AsLiveComponent('ExampleLive')]
+final class ExampleLive
+{
+    #[LiveProp]
+    public int $count = 0;
+
+    #[LiveAction]
+    public function increment(): void { $this->count++; }
+}
+```
+
+Twig:
+```twig
+{{ init_live_component(this) }}
+<div data-testid="example-live">
+  <button data-action="live#action" data-live-action-param="increment">+</button>
+  <span>{{ this.count }}</span>
+  <button data-action="live#action" data-live-action-param="decrement">-</button>
+  {# метод decrement реализуйте по необходимости #}
+</div>
+```
+
+### Интерактив и запреты
+- Запрещены inline `<script>` и глобальные слушатели без отписки
+- Малый интерактив — через Stimulus‑контроллеры (`assets/controllers/**`)
+- Сложная интерактивность каталога — FSD‑модуль (см. `@catalog_js_architecture.mdc`), не смешивать с Twig‑компонентом
+
+### Производительность
+- **Lazy Stimulus по умолчанию**: в `assets/controllers.json` для новых контроллеров ставить `"fetch": "lazy"`; для app‑контроллеров вложенный ключ `default` не используется; внутри контроллеров использовать динамические `import()` для тяжёлых зависимостей
+- **Ленивая подгрузка HTML ниже сгиба**:
+  - Turbo Frames (пакет установлен: `symfony/ux-turbo`) — отдавайте фрагменты через отдельный маршрут
+  - Альтернатива: `lazy-load` контроллер на `IntersectionObserver` с загрузкой HTML по URL
+- **Тяжёлые данные** получать в сервисах/репозиториях PHP; в Twig — минимум логики
+
+### Кэширование фрагментов
+- HTTP‑кэш на контроллере‑обёртке: `ETag`/`Last-Modified`/`Cache-Control`; опционально ESI/SSI
+- CDN/edge‑кэш для публичных блоков
+- Приложенческий кэш (PSR‑6/16) на уровне сервиса/репозитория
+- Не кэшируйте персональные данные без вариаций по пользователю/сессии
+
+### A11y и i18n
+- Управление с клавиатуры, корректные `role`/`aria-*`, видимые фокус‑стили
+- Тексты — через `|trans`; числа/суммы/валюты — форматтерами
+
+### Маркеры для ИИ и тестов
+- В начале шаблона допускается: `{# ai:component=<kebab-name> #}`
+- На ключевые узлы — стабильные якоря `data-testid` (kebab‑case); не использовать `data-ai-*`
+
+### Правила именования
+- Имя компонента — PascalCase (`CartCounter`)
+- Props — camelCase (`showTotal`, `currency`)
+- `data-*` и `data-testid` — kebab‑case (`data-testid="cart-counter"`)
+
+### Acceptance для агента
+- Создана пара файлов в фактических директориях: `src/Twig/Components/...` и `templates/components/...`
+- Класс помечен `#[AsTwigComponent]`; по необходимости применены `#[PreMount]`/`mount()`/`#[PostMount]`/`#[ExposeInTemplate]`
+- Нет inline `<script>`; интерактив — Stimulus (lazy) или FSD; Live Components используются по назначению
+- Добавлены `data-testid` и, по возможности, `{# ai:component=... #}`; для «тяжёлых» компонентов определена стратегия кэширования
+- Соблюдены A11y/i18n требования
+

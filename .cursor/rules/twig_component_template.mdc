@@ -1,0 +1,204 @@
+---
+alwaysApply: false
+---
+
+### Блок 1. Базовый Twig‑компонент (PHP + Twig)
+
+```php
+<?php
+declare(strict_types=1);
+
+namespace App\Twig\Components;
+
+use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
+use Symfony\UX\TwigComponent\Attribute\PreMount;
+use Symfony\UX\TwigComponent\Attribute\PostMount;
+use Symfony\UX\TwigComponent\Attribute\ExposeInTemplate;
+
+#[AsTwigComponent('ExampleBox')]
+final class ExampleBox
+{
+    public string $title;
+    public ?string $subtitle = null;
+    public bool $highlight = false;
+
+    #[PreMount]
+    public function normalize(array $data): array
+    {
+        // нормализация входных props
+        $data['title'] = (string)($data['title'] ?? '');
+        $data['subtitle'] = isset($data['subtitle']) ? (string)$data['subtitle'] : null;
+        $data['highlight'] = filter_var($data['highlight'] ?? false, FILTER_VALIDATE_BOOL);
+        return $data;
+    }
+
+    public function mount(): void
+    {
+        // загрузка/подготовка данных (минимум логики — тяжёлое в сервисы)
+    }
+
+    #[PostMount]
+    public function after(): void
+    {
+        // пост‑обработка после mount()
+    }
+
+    #[ExposeInTemplate]
+    public function toUpper(string $value): string
+    {
+        return mb_strtoupper($value);
+    }
+}
+```
+
+```twig
+{# templates/components/ExampleBox.html.twig #}
+{# ai:component=example-box #}
+<section class="example-box" data-testid="example-box" {{ highlight ? 'data-highlight' : '' }}>
+  <h3 class="example-box__title">{{ toUpper(title) }}</h3>
+  {% if subtitle %}
+    <p class="example-box__subtitle">{{ subtitle }}</p>
+  {% endif %}
+</section>
+```
+
+Использование:
+```twig
+<twig:ExampleBox title="Hello" subtitle="World" highlight=true />
+{# или #}
+{{ component('ExampleBox', { title: 'Hello', subtitle: 'World', highlight: true }) }}
+```
+
+---
+
+### Блок 2. Подключение Stimulus (lazy)
+
+Фрагмент `assets/controllers.json` для нового контроллера:
+```json
+{
+  "controllers": {
+    "app/example-box": {
+      "enabled": true,
+      "fetch": "lazy"
+    }
+  },
+  "entrypoints": []
+}
+```
+
+Разметка компонента:
+```twig
+<section
+  data-controller="app--example-box"
+  data-action="click->app--example-box#toggle"
+  data-app--example-box-target="root"
+  data-testid="example-box"
+>
+  ...
+  <button type="button" data-action="app--example-box#toggle">Toggle</button>
+  <span data-app--example-box-target="status"></span>
+  ...
+  {# Контроллер грузится лениво благодаря fetch: lazy #}
+</section>
+```
+
+---
+
+### Блок 3. Ленивая загрузка HTML (ниже сгиба)
+
+Вариант A — Turbo Frame (пакет установлен: `symfony/ux-turbo`; если не установлен — TODO: подключить `symfony/ux-turbo`):
+```twig
+<turbo-frame id="promo_box" src="{{ path('promo_box_route') }}">
+  <div class="skeleton" data-testid="promo-box-skeleton">Loading…</div>
+  {# сервер вернёт готовую разметку внутри фрейма по маршруту #}
+  {# учесть HTTP‑кэш на контроллере‑обёртке #}
+  {# Убедитесь, что Turbo включён на странице #}
+</turbo-frame>
+```
+
+Вариант B — контроллер `lazy-load` (IntersectionObserver; если пакет не установлен — TODO: зарегистрировать контроллер в `assets/controllers.json` и реализовать его):
+```twig
+<div
+  data-controller="lazy-load"
+  data-lazy-load-url-value="{{ path('promo_box_route') }}"
+  data-testid="promo-box-placeholder"
+>
+  <div class="skeleton">Loading…</div>
+</div>
+```
+
+JS‑контроллер (эскиз, грузите лениво через `assets/controllers.json`; при желании добавьте AbortController/timeout для сетевого запроса):
+```ts
+// assets/controllers/lazy_load_controller.ts
+import { Controller } from '@hotwired/stimulus';
+
+export default class extends Controller<HTMLDivElement> {
+  static values = { url: String };
+  declare readonly urlValue: string;
+  private observer?: IntersectionObserver;
+
+  connect(): void {
+    this.observer = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          this.load();
+          this.observer?.disconnect();
+          break;
+        }
+      }
+    });
+    this.observer.observe(this.element);
+  }
+
+  async load(): Promise<void> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
+    try {
+      const res = await fetch(this.urlValue, { headers: { 'X-Requested-With': 'XMLHttpRequest' }, signal: controller.signal });
+      const html = await res.text();
+      this.element.innerHTML = html;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  disconnect(): void {
+    this.observer?.disconnect();
+  }
+}
+```
+
+---
+
+### Блок 4. Скелет Live Component (если пакет доступен; если не установлен — TODO: подключить `symfony/ux-live-component`)
+
+```php
+<?php
+declare(strict_types=1);
+
+namespace App\Twig\Components;
+
+use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
+use Symfony\UX\LiveComponent\Attribute\LiveProp;
+use Symfony\UX\LiveComponent\Attribute\LiveAction;
+
+#[AsLiveComponent('CounterLive')]
+final class CounterLive
+{
+    #[LiveProp]
+    public int $count = 0;
+
+    #[LiveAction]
+    public function increment(): void { $this->count++; }
+}
+```
+
+```twig
+{# templates/components/CounterLive.html.twig #}
+{{ init_live_component(this) }}
+<div data-testid="counter-live">
+  <button data-action="live#action" data-live-action-param="increment">+</button>
+  <span>{{ this.count }}</span>
+</div>
+```
+

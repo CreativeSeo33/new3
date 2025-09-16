@@ -126,6 +126,7 @@ alwaysApply: true
 - Пагинация API Platform: `@paginationapiplatformmapping.mdc`
 - Политика каталога (FSD, TS, без inline): `@catalog_js_architecture.mdc`
 - Политика производительности агента: `@agent_performance_policy.mdc`
+- Политика Twig‑компонентов (Symfony UX): `@twig_components_policy.mdc`
 
 ### Инструкция для агента
 
@@ -151,4 +152,5 @@ alwaysApply: true
 - При изменениях маршрутов/контроллеров/сервисов/шаблонов, связанных со страницей, обновлены соответствующий @page_<id>_map.mdc и индекс страниц @pages_index.mdc
 - Page maps обновлены при правках страниц/контроллеров/сервисов: @page_*_map.mdc
 - Новые/изменённые .mdc для карт страниц не увеличивают pinned‑набор (все alwaysApply: false); pinned‑файлы не меняются без необходимости
+- Twig‑компоненты: нет inline `<script>`; небольшой интерактив — через Stimulus с "fetch": "lazy"; для блоков ниже сгиба — Turbo Frame или lazy-load; по необходимости используются #[PreMount]/#[PostMount]/#[ExposeInTemplate]; для реактивных сценариев — Live Components; ключевые узлы — с `data-testid`.
 

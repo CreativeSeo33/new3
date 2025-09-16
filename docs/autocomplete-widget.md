@@ -13,7 +13,7 @@
 <div data-module="autocomplete" data-placeholder="Поиск..."></div>
 ```
 
-По умолчанию подключается fetcher FIAS городов (`level=3`, `shortname=г.`). Для переопределения используйте JS-инициализацию модуля и передайте `fetcher`.
+По умолчанию подключается fetcher FIAS городов (`shortname=г.`). Для переопределения используйте JS-инициализацию модуля и передайте `fetcher`.
 
 API компонента:
 - Событие `autocomplete:selected` с detail `{ id?, label, value, raw }`
