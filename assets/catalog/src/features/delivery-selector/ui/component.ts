@@ -35,8 +35,9 @@ export class DeliverySelector extends Component {
     this.pvzEmpty = this.$('#pvz-empty');
     this.courierBlock = this.$('#courier-block');
     this.addrInput = this.$('#courier-address') as HTMLInputElement | null;
-    this.shipCostEl = this.$('#ship-cost');
-    this.totalEl = document.getElementById('checkout-total');
+    // Обновляем сайдбарные суммы, если доступны, иначе — локальные
+    this.shipCostEl = (document.querySelector('[data-cart-shipping]') as HTMLElement | null) || this.$('#ship-cost');
+    this.totalEl = (document.querySelector('[data-cart-total]') as HTMLElement | null) || document.getElementById('checkout-total');
 
     const spinnerEl = this.$('#delivery-spinner') as HTMLElement | null;
     if (spinnerEl) {
@@ -73,8 +74,8 @@ export class DeliverySelector extends Component {
           if (value === 'pvz') {
             await this.loadPvz(this.currentCityName || '');
           }
-          if (this.shipCostEl) this.shipCostEl.textContent = (data.shippingCost / 100).toFixed(2);
-          if (this.totalEl) this.totalEl.textContent = (data.total / 100).toFixed(2) + ' ₽';
+          if (this.shipCostEl) this.shipCostEl.textContent = this.formatRub(data.shippingCost);
+          if (this.totalEl) this.totalEl.textContent = this.formatRub(data.total);
         } catch (e) {
           // ignore
         } finally {
@@ -90,8 +91,8 @@ export class DeliverySelector extends Component {
       try {
         this.showSpinner();
         const data = await selectPvz(pvzCode);
-        if (this.shipCostEl) this.shipCostEl.textContent = (data.shippingCost / 100).toFixed(2);
-        if (this.totalEl) this.totalEl.textContent = (data.total / 100).toFixed(2) + ' ₽';
+        if (this.shipCostEl) this.shipCostEl.textContent = this.formatRub(data.shippingCost);
+        if (this.totalEl) this.totalEl.textContent = this.formatRub(data.total);
       } catch (e) {
         alert('Ошибка');
       } finally {
@@ -108,8 +109,8 @@ export class DeliverySelector extends Component {
       try {
         this.showSpinner();
         const data = await selectMethod({ methodCode: 'courier', address });
-        if (this.shipCostEl) this.shipCostEl.textContent = (data.shippingCost / 100).toFixed(2);
-        if (this.totalEl) this.totalEl.textContent = (data.total / 100).toFixed(2) + ' ₽';
+        if (this.shipCostEl) this.shipCostEl.textContent = this.formatRub(data.shippingCost);
+        if (this.totalEl) this.totalEl.textContent = this.formatRub(data.total);
       } catch (e) {
         alert('Ошибка');
       } finally {
@@ -160,6 +161,18 @@ export class DeliverySelector extends Component {
   destroy(): void {
     if (this.abortController) this.abortController.abort();
     super.destroy();
+  }
+
+  private formatRub(valueInCents: number): string {
+    const rubles = Math.round(valueInCents / 100);
+    try {
+      return new Intl.NumberFormat('ru-RU', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(rubles) + ' руб.';
+    } catch (_) {
+      return String(rubles) + ' руб.';
+    }
   }
 
   private showSpinner(): void {

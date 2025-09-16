@@ -59,7 +59,7 @@
                   <div class="text-sm text-gray-600">Телефон: {{ p.phone }}</div>
                 {% endif %}
                 {% if p.price is not null %}
-                  <div class="text-sm text-gray-800 mt-1">Цена: {{ p.price|number_format(0, '.', ' ') }} ₽</div>
+                  <div class="text-sm text-gray-800 mt-1">Цена: {{ p.price|number_format(0, '.', ' ') }} руб.</div>
                 {% endif %}
                 {% if p.deliveryPeriod is not null %}
                   <div class="text-sm text-gray-800">Срок: {{ p.deliveryPeriod }} дн.</div>

@@ -59,7 +59,7 @@ final class CourierDeliveryMethod implements DeliveryMethodInterface, DeliveryPr
         $freeDeliveryThreshold = $city->getFree();
         $effectiveFreeThreshold = ($freeDeliveryThreshold !== null && $freeDeliveryThreshold > 0)
             ? $freeDeliveryThreshold
-            : $this->defaultFreeThreshold;
+            : 0; // 0 и NULL означает, что бесплатной доставки нет
         $baseCost = $city->getCost();
 
         // 1. Проверка на бесплатную доставку (правило общее)

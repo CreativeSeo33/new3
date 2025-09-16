@@ -102,7 +102,11 @@ final class CheckoutController extends AbstractController
 		$userId = $user instanceof AppUser ? $user->getId() : null;
 		$cart = $cartManager->getOrCreateForWrite($userId);
 		if ($cart->getItems()->count() === 0) {
-			return $this->redirectToRoute('cart_page');
+			// Для фронта возвращаем JSON с 409 и ссылкой на корзину, чтобы избежать HTML redirect
+			return $this->json([
+				'error' => 'Cart is empty',
+				'redirectUrl' => $this->generateUrl('cart_page'),
+			], 409);
 		}
 
 		$payload = json_decode($request->getContent() ?: '[]', true);
@@ -112,7 +116,10 @@ final class CheckoutController extends AbstractController
 		$comment = trim((string)($payload['comment'] ?? ''));
 		$paymentMethod = isset($payload['paymentMethod']) ? trim((string)$payload['paymentMethod']) : null;
 
-		if ($name === '' || $phone === '' || ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL))) {
+		// Лёгкая серверная валидация телефона (РФ/Generic)
+		$digits = preg_replace('/\D+/', '', $phone) ?? '';
+		$validPhone = (strlen($digits) >= 10 && strlen($digits) <= 15);
+		if ($name === '' || !$validPhone || ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL))) {
 			return $this->json(['error' => 'Проверьте корректность данных'], 400);
 		}
 

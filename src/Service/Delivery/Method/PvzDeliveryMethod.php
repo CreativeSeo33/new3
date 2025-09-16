@@ -58,7 +58,7 @@ final class PvzDeliveryMethod implements DeliveryMethodInterface, DeliveryProvid
         $freeDeliveryThreshold = $city->getFree(); // Порог бесплатной доставки из БД (может быть null)
         $effectiveFreeThreshold = ($freeDeliveryThreshold !== null && $freeDeliveryThreshold > 0)
             ? $freeDeliveryThreshold
-            : $this->defaultFreeThreshold;
+            : 0; // 0 и NULL означает, что бесплатной доставки нет
         $baseCost = $city->getCost();
 
         // 1. Проверка на бесплатную доставку по сумме заказа

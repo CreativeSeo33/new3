@@ -1,15 +1,18 @@
 import { Component } from '@shared/ui/Component';
 import { submitCheckout } from '../api';
+import { validatePhone } from '@shared/lib/phone';
 
 export interface CheckoutFormOptions {
   storageKey?: string;
   showAlerts?: boolean;
+  country?: 'RU' | 'GENERIC';
 }
 
 export class CheckoutFormComponent extends Component {
   private form: HTMLFormElement | null = null;
   private submitButton: HTMLButtonElement | null = null;
   private storageKey: string = 'checkout_form';
+  private phoneInput: HTMLInputElement | null = null;
 
   init(): void {
     this.form = this.$('form#checkout-form');
@@ -24,16 +27,26 @@ export class CheckoutFormComponent extends Component {
     if (this.form) {
       this.on('input', () => this.writeCache(this.collectForm()));
       this.on('change', () => this.writeCache(this.collectForm()));
-    }
+      // Перехватываем submit, чтобы сработала HTML5-валидация
+      this.form.addEventListener('submit', this.handleSubmit as EventListener);
 
-    if (this.submitButton) {
-      this.submitButton.addEventListener('click', this.handleSubmitClick);
+      this.phoneInput = this.form.elements.namedItem('phone') as HTMLInputElement | null;
+      if (this.phoneInput) {
+        const onPhoneInput = () => {
+          this.phoneInput!.setCustomValidity('');
+          const ok = validatePhone(this.phoneInput!.value, this.options?.country ?? 'RU').valid;
+          this.phoneInput!.classList.toggle('ring-1', !ok);
+          this.phoneInput!.classList.toggle('ring-red-500', !ok);
+        };
+        this.phoneInput.addEventListener('input', onPhoneInput);
+        this.phoneInput.addEventListener('blur', onPhoneInput);
+      }
     }
   }
 
   private readCache(): Record<string, any> {
     try {
-      const raw = localStorage.getItem(this.storageKey) || '{}';
+      const raw = sessionStorage.getItem(this.storageKey) || '{}';
       return JSON.parse(raw);
     } catch {
       return {};
@@ -42,7 +55,7 @@ export class CheckoutFormComponent extends Component {
 
   private writeCache(data: Record<string, any>): void {
     try {
-      localStorage.setItem(this.storageKey, JSON.stringify(data));
+      sessionStorage.setItem(this.storageKey, JSON.stringify(data));
     } catch {}
   }
 
@@ -64,8 +77,28 @@ export class CheckoutFormComponent extends Component {
     }
   }
 
-  private handleSubmitClick = async (): Promise<void> => {
+  private handleSubmit = async (e: Event): Promise<void> => {
+    e.preventDefault();
     if (!(this.form instanceof HTMLFormElement)) return;
+
+    // Проверка телефона до HTML5 reportValidity
+    const phoneEl = this.form.elements.namedItem('phone') as HTMLInputElement | null;
+    if (phoneEl) {
+      const v = validatePhone(phoneEl.value, this.options?.country ?? 'RU');
+      if (!v.valid) {
+        phoneEl.setCustomValidity(v.error || 'Некорректный телефон');
+        this.form.reportValidity();
+        return;
+      } else {
+        phoneEl.setCustomValidity('');
+      }
+    }
+
+    // HTML5 валидация
+    if (!this.form.checkValidity()) {
+      this.form.reportValidity();
+      return;
+    }
 
     const submitUrl = this.el.dataset.submitUrl || '';
     if (!submitUrl) return;
@@ -75,7 +108,7 @@ export class CheckoutFormComponent extends Component {
     if (this.submitButton) this.submitButton.disabled = true;
     try {
       const res = await submitCheckout(submitUrl, payload);
-      try { localStorage.removeItem(this.storageKey); } catch {}
+      try { sessionStorage.removeItem(this.storageKey); } catch {}
 
       const redirectUrl = res?.redirectUrl || '/';
       window.location.href = redirectUrl;
@@ -90,9 +123,7 @@ export class CheckoutFormComponent extends Component {
   };
 
   destroy(): void {
-    if (this.submitButton) {
-      this.submitButton.removeEventListener('click', this.handleSubmitClick);
-    }
+    if (this.form) this.form.removeEventListener('submit', this.handleSubmit as EventListener);
     super.destroy();
   }
 }

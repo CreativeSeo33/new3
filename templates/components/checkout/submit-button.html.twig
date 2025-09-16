@@ -1,5 +1,5 @@
 {# ai:component=checkout-submit-button map=@component_checkout_submit_button_map.mdc v=1 #}
-<button id="place-order" class="mt-4 w-full bg-black text-white rounded py-2 disabled:opacity-50" {{ disabled ? 'disabled' }}>
+<button id="place-order" form="checkout-form" type="submit" class="mt-4 w-full bg-black text-white rounded py-2 disabled:opacity-50" {{ disabled ? 'disabled' }}>
   Подтвердить заказ
 </button>
 
