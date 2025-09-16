@@ -1,20 +1,25 @@
 {# ai:component=cart-summary map=@component_cart_summary_map.mdc v=1 #}
 <div class="border-t mt-3 pt-3 text-sm">
+  {# Безопасная нормализация стоимости доставки: строки c запятой → точка; иначе 0 #}
+  {% set shippingCost = 0 %}
   {% if delivery.cost is defined and delivery.cost is not null %}
-    <div>Стоимость товаров: <span id="cart-subtotal" data-cart-subtotal data-testid="subtotal">{{ cart.subtotal|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
-    <div>Доставка: <span id="cart-shipping" data-cart-shipping data-testid="shipping">{{ delivery.cost|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
-    {% if delivery.term %}
-      <div class="text-sm text-gray-600" id="cart-shipping-term" data-cart-shipping-term data-testid="shipping-term">{{ delivery.term }}</div>
+    {% set costStr = (delivery.cost ~ '')|replace({',': '.'})|trim %}
+    {% if costStr matches '/^-?\\d+(?:\\.\\d+)?$/' %}
+      {% set shippingCost = costStr + 0 %}
     {% endif %}
-    <div class="border-t pt-2 font-semibold">
-      Итого: <span id="cart-total" data-cart-total data-testid="total">{{ (cart.subtotal + delivery.cost)|number_format(0, '.', ' ') ~ ' руб.' }}</span>
-    </div>
-  {% else %}
-    <div>Стоимость товаров: <span id="cart-subtotal" data-cart-subtotal data-testid="subtotal">{{ cart.subtotal|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
-    <div>Доставка: <span id="cart-shipping" data-cart-shipping data-testid="shipping">Расчет менеджером</span></div>
-    <div class="border-t pt-2 font-semibold">
-      Итого: <span id="cart-total" data-cart-total data-testid="total">{{ cart.subtotal|number_format(0, '.', ' ') ~ ' руб.' }}</span>
-    </div>
   {% endif %}
+
+  <div>Стоимость товаров: <span id="cart-subtotal" data-cart-subtotal data-testid="subtotal">{{ cart.subtotal|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
+  {% if delivery.cost is not defined or delivery.cost is null %}
+    <div>Доставка: <span id="cart-shipping" data-cart-shipping data-testid="shipping">Расчет менеджером</span></div>
+  {% else %}
+    <div>Доставка: <span id="cart-shipping" data-cart-shipping data-testid="shipping">{{ shippingCost|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
+  {% endif %}
+  {% if delivery.term is defined and delivery.term %}
+    <div class="text-sm text-gray-600" id="cart-shipping-term" data-cart-shipping-term data-testid="shipping-term">{{ delivery.term }}</div>
+  {% endif %}
+  <div class="border-t pt-2 font-semibold">
+    Итого: <span id="cart-total" data-cart-total data-testid="total">{{ (cart.subtotal + shippingCost)|number_format(0, '.', ' ') ~ ' руб.' }}</span>
+  </div>
 </div>
 

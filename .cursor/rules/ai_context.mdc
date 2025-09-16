@@ -133,6 +133,8 @@ alwaysApply: true
 
 ### Инструкция для агента
 
+- Не создавать новые файлы в `docs/` автоматически. Документацию добавлять только по явной просьбе пользователя; по умолчанию описывать изменения в ответе и через диффы.
+
 - При любом изменении в `src/Entity/**` или `src/Entity/Embeddable/**` обновляй `@doctrine_entities.mdc` (таблицы полей, связи, уникальные ограничения, индексы) в том же PR.
 - При любых значимых изменениях в `src/Service/**` (добавление/удаление/переименование сервисов или изменение их ответственности) обновляй `@services.mdc` в том же PR.
 - При любых изменениях логики оформления заказа (контроллер checkout, сервисы доставки, перенос Cart→Order) обновляй `@order_checkout_flow.mdc` в том же PR.
@@ -154,6 +156,8 @@ alwaysApply: true
 - Stimulus допускается как исключение для небольших UI‑паттернов; без inline‑скриптов и с targets/values.
 - Допустимо расширение pinned‑набора для глобальных политик: `@catalog_js_architecture.mdc`.
 - Связанные .mdc обновлены при правках: @doctrine_entities.mdc, @services.mdc, @order_checkout_flow.mdc
+ - Связанные .mdc обновлены при правках: @doctrine_entities.mdc, @services.mdc, @order_checkout_flow.mdc
+ - Не добавлять файлы в `docs/` без явного запроса пользователя.
 - Для каждой страницы/шаблона существует и поддерживается карта страницы в .cursor/rules/page_<id>_map.mdc (alwaysApply: false, один фронт‑маттер, H1)
 - В шаблоне есть короткий указатель на карту: {# ai:page=<id> map=@page_<id>_map.mdc v=1 #} (для HTML/Vue — <!-- ai:page=<id> map=@page_<id>_map.mdc v=1 -->)
 - DOM‑якоря реализованы через Stimulus targets (data-*-target); при отсутствии Stimulus — через data-testid. Атрибуты data-ai-* не используются
