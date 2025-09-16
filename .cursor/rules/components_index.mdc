@@ -1,0 +1,15 @@
+---
+alwaysApply: false
+---
+
+# Components Index
+
+## Catalog (Twig/UX + FSD)
+- @component_delivery-selector_map.mdc — выбор способа доставки; root: `#delivery`
+
+### Правила и примечания
+- Карты компонентов — обязательны для всех Twig‑компонентов и не pinned (`alwaysApply: false`). При добавлении/обновлении карты не изменяйте pinned‑набор.
+- В шаблонах компонентов используйте якоря: `{# ai:component=<kebab> map=@component_<kebab>_map.mdc v=1 #}` или `{# ai:module=<kebab> root="<selector>" #}`.
+- Добавляя новый компонент без карты — создайте `.cursor/rules/component_<kebab>_map.mdc` и добавьте запись в этот индекс.
+- Интерактив без inline `<script>`: Stimulus с "fetch": "lazy" или FSD‑модуль (см. `@catalog_js_architecture.mdc`).
+

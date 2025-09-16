@@ -1,3 +1,4 @@
+{# ai:module=delivery-selector root="#delivery" #}
 <div id="delivery" data-module="delivery-selector" data-testid="delivery-selector" class="p-4 border rounded mb-6">
   {% set _checkout = app.session.get('checkout') %}
   {% set _cityName = _checkout.delivery.city.cityName ?? null %}
@@ -33,3 +34,5 @@
 
   <div class="text-sm mt-3">Стоимость доставки: <span id="ship-cost" data-testid="delivery-ship-cost">{{ (delivery.cost is defined and delivery.cost is not null) ? (delivery.cost / 100) : 0 }}</span> ₽</div>
 </div>
+
+

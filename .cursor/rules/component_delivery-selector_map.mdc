@@ -1,0 +1,45 @@
+---
+alwaysApply: false
+---
+
+# Component: DeliverySelector (delivery-selector)
+
+Назначение: выбор способа доставки (ПВЗ/курьер), загрузка пунктов выдачи, ввод адреса курьера; отображение стоимости доставки и пересчёт итога заказа.
+
+Файлы
+- Twig: `templates/catalog/_delivery_selector.html.twig`
+- FSD Feature: `assets/catalog/src/features/delivery-selector`
+- API: `assets/catalog/src/features/delivery-selector/api/index.ts`
+- UI: `assets/catalog/src/features/delivery-selector/ui/component.ts`
+- Контроллеры Stimulus: нет (используется FSD‑модуль)
+
+Корневой селектор
+- `#delivery`
+
+Targets (если есть)
+- Нет Stimulus‑targets. Ключевые узлы по data-testid:
+  - `delivery-method-pvz`, `delivery-method-courier`
+  - `delivery-pvz-block`, `delivery-pvz-select`, `delivery-pvz-empty`
+  - `delivery-courier-block`, `delivery-courier-address`, `delivery-addr-error`
+  - `delivery-ship-cost`
+
+События (если есть)
+- Глобальные события явно не диспатчатся (на текущий момент). Обновление стоимости/итога происходит внутри компонента через API вызовы.
+
+Стабильные якоря (рекомендация)
+- На корне: `data-testid="delivery-selector"` (уже присутствует)
+- Дополнительно по смыслу: `delivery-pvz-*`, `delivery-courier-*`, `delivery-ship-cost` (уже присутствуют)
+
+API/значения
+- Используемые функции API: `getDeliveryContext`, `selectMethod`, `selectPvz`, `fetchPvzPoints`, `selectCity`
+- Маршруты (имена):
+  - `route('api_delivery_context')` → GET `/api/delivery/context`
+  - `route('api_delivery_select_method')` → POST `/api/delivery/select-method`
+  - `route('api_delivery_select_pvz')` → POST `/api/delivery/select-pvz`
+  - `route('api_delivery_pvz_points')` → GET `/api/delivery/pvz-points`
+  - `route('api_delivery_select_city')` → POST `/api/delivery/select-city`
+- data‑* значения: отсутствуют
+
+Примечания
+- Без inline `<script>`; логика реализована через FSD‑модуль `delivery-selector`.
+- Добавлены/присутствуют стабильные `data-testid` на ключевых узлах.

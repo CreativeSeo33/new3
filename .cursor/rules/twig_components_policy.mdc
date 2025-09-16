@@ -74,7 +74,7 @@ Twig:
 - Тексты — через `|trans`; числа/суммы/валюты — форматтерами
 
 ### Маркеры для ИИ и тестов
-- В начале шаблона допускается: `{# ai:component=<kebab-name> #}`
+- В начале шаблона обязательно: `{# ai:component=<kebab-name> map=@component_<kebab-name>_map.mdc v=1 #}`; использование одного `ai:module` без `map` для компонентов не допускается.
 - На ключевые узлы — стабильные якоря `data-testid` (kebab‑case); не использовать `data-ai-*`
 
 ### Правила именования
@@ -82,10 +82,19 @@ Twig:
 - Props — camelCase (`showTotal`, `currency`)
 - `data-*` и `data-testid` — kebab‑case (`data-testid="cart-counter"`)
 
+## Карты компонентов и индекс
+Обязательно для всех Twig‑компонентов:
+- Создавайте карту в `.cursor/rules/component_<kebab>_map.mdc` с `alwaysApply: false`. Шаблон разделов: Назначение, Файлы, Корневой селектор, Targets/События (если есть), стабильные `data-testid`, API/значения, Примечания.
+- В начале шаблона компонента размещайте якорь: `{# ai:component=<kebab> map=@component_<kebab>_map.mdc v=1 #}`.
+- При добавлении/обновлении компонента — добавляйте/обновляйте запись в индексе: `@components_index.mdc` (секция по зоне: Catalog / Layout/Shared / Admin / Uncategorized).
+
 ### Acceptance для агента
 - Создана пара файлов в фактических директориях: `src/Twig/Components/...` и `templates/components/...`
 - Класс помечен `#[AsTwigComponent]`; по необходимости применены `#[PreMount]`/`mount()`/`#[PostMount]`/`#[ExposeInTemplate]`
 - Нет inline `<script>`; интерактив — Stimulus (lazy) или FSD; Live Components используются по назначению
-- Добавлены `data-testid` и, по возможности, `{# ai:component=... #}`; для «тяжёлых» компонентов определена стратегия кэширования
+- На ключевых узлах есть `data-testid`
+- Первая строка шаблона — `ai:component` c `map=@component_<kebab>_map.mdc`
+- Существует `.cursor/rules/component_<kebab>_map.mdc` (`alwaysApply: false`) с актуальными путями/селекторами/targets/событиями
+- Компонент добавлен в `@components_index.mdc`
 - Соблюдены A11y/i18n требования
 

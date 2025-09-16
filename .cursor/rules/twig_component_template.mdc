@@ -2,6 +2,11 @@
 alwaysApply: false
 ---
 
+### Блок 0. Карта компонента и индекс (обязательно)
+- Создайте карту компонента: `.cursor/rules/component_<kebab-name>_map.mdc` с `alwaysApply: false` (разделы: Назначение, Файлы, Корневой селектор, Targets/События, `data-testid`, API/значения, Примечания).
+- Добавьте запись в индекс компонентов: `@components_index.mdc` (укажите секцию по зоне — Catalog / Layout/Shared / Admin / Uncategorized).
+- В начале Twig‑шаблона используйте якорь: `{# ai:component=<kebab-name> map=@component_<kebab-name>_map.mdc v=1 #}`.
+
 ### Блок 1. Базовый Twig‑компонент (PHP + Twig)
 
 ```php
@@ -53,7 +58,7 @@ final class ExampleBox
 
 ```twig
 {# templates/components/ExampleBox.html.twig #}
-{# ai:component=example-box #}
+{# ai:component=example-box map=@component_example-box_map.mdc v=1 #}
 <section class="example-box" data-testid="example-box" {{ highlight ? 'data-highlight' : '' }}>
   <h3 class="example-box__title">{{ toUpper(title) }}</h3>
   {% if subtitle %}

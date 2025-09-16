@@ -127,12 +127,18 @@ alwaysApply: true
 - Политика каталога (FSD, TS, без inline): `@catalog_js_architecture.mdc`
 - Политика производительности агента: `@agent_performance_policy.mdc`
 - Политика Twig‑компонентов (Symfony UX): `@twig_components_policy.mdc`
+- Индекс компонентов: `@components_index.mdc`
 
 ### Инструкция для агента
 
 - При любом изменении в `src/Entity/**` или `src/Entity/Embeddable/**` обновляй `@doctrine_entities.mdc` (таблицы полей, связи, уникальные ограничения, индексы) в том же PR.
 - При любых значимых изменениях в `src/Service/**` (добавление/удаление/переименование сервисов или изменение их ответственности) обновляй `@services.mdc` в том же PR.
 - При любых изменениях логики оформления заказа (контроллер checkout, сервисы доставки, перенос Cart→Order) обновляй `@order_checkout_flow.mdc` в том же PR.
+
+- При любых правках Twig‑компонентов (`templates/components/**` и другие шаблоны с якорями `ai:component`/`ai:module`):
+  - создай/обнови карту компонента: `.cursor/rules/component_<kebab>_map.mdc` (всегда `alwaysApply: false`);
+  - добавь/обнови запись в индексе компонентов: `@components_index.mdc` (в соответствующей секции);
+  - в шаблоне компонента первая строка — `{# ai:component=<kebab> map=@component_<kebab>_map.mdc v=1 #}` (использовать один `ai:module` без `map` для компонентов нельзя).
 
 ## Критерии приёмки изменений (для задач ИИ)
 
@@ -152,5 +158,12 @@ alwaysApply: true
 - При изменениях маршрутов/контроллеров/сервисов/шаблонов, связанных со страницей, обновлены соответствующий @page_<id>_map.mdc и индекс страниц @pages_index.mdc
 - Page maps обновлены при правках страниц/контроллеров/сервисов: @page_*_map.mdc
 - Новые/изменённые .mdc для карт страниц не увеличивают pinned‑набор (все alwaysApply: false); pinned‑файлы не меняются без необходимости
-- Twig‑компоненты: нет inline `<script>`; небольшой интерактив — через Stimulus с "fetch": "lazy"; для блоков ниже сгиба — lazy‑load контроллер (IntersectionObserver), Turbo не используется; по необходимости применяются `#[PreMount]/#[PostMount]/#[ExposeInTemplate]`; для реактивных сценариев — Live Components; ключевые узлы — с `data-testid`.
+- Twig‑компоненты:
+  - нет inline `<script>`;
+  - небольшой интерактив — через Stimulus с "fetch": "lazy"; для блоков ниже сгиба — lazy‑load (IntersectionObserver), Turbo не используется;
+  - по необходимости применяются `#[PreMount]`/`mount()`/`#[PostMount]`/`#[ExposeInTemplate]`; для реактивных сценариев — Live Components;
+  - ключевые узлы — с `data-testid`;
+  - для каждого компонента существует и поддерживается карта `.cursor/rules/component_<kebab>_map.mdc` (`alwaysApply: false`);
+  - в шаблоне компонента первая строка — `{# ai:component=<kebab> map=@component_<kebab>_map.mdc v=1 #}`;
+  - компонент перечислен в индексе `@components_index.mdc`.
 
