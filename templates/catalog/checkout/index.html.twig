@@ -4,7 +4,7 @@
 
 {% block catalog_body %}
 {# ai:page=checkout map=@page_checkout_map.mdc v=1 #}
-  <div class="container mx-auto px-4 py-6">
+  <div class="container mx-auto px-4 py-6" data-module="checkout-form" data-submit-url="{{ path('checkout_submit') }}" data-testid="checkout-root">
     <h1 class="text-2xl font-semibold mb-6">Оформление заказа</h1>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -119,64 +119,7 @@
     <p class="text-xs text-gray-500 mt-6">Нажимая кнопку, вы соглашаетесь с условиями оферты и политикой конфиденциальности.</p>
   </div>
 
-  <script type="module">
-  const form = document.getElementById('checkout-form');
-  const btn = document.getElementById('place-order');
-
-  const STORAGE_KEY = 'checkout_form';
-
-  const readCache = () => {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; }
-  };
-  const writeCache = (data) => {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch {}
-  };
-  const collectForm = () => {
-    if (!(form instanceof HTMLFormElement)) return {};
-    const fd = new FormData(form);
-    return Object.fromEntries(fd.entries());
-  };
-  const hydrateForm = () => {
-    if (!(form instanceof HTMLFormElement)) return;
-    const data = readCache();
-    ['firstName','phone','email','comment'].forEach((name) => {
-      const el = form.elements.namedItem(name);
-      if (el && typeof (el).value !== 'undefined' && data[name]) {
-        (el).value = data[name];
-      }
-    });
-  };
-
-  hydrateForm();
-  if (form instanceof HTMLFormElement) {
-    form.addEventListener('input', () => writeCache(collectForm()));
-    form.addEventListener('change', () => writeCache(collectForm()));
-  }
-  btn?.addEventListener('click', async () => {
-    if (!(form instanceof HTMLFormElement)) return;
-    const formData = new FormData(form);
-    const payload = Object.fromEntries(formData.entries());
-    btn.disabled = true;
-    try {
-      const res = await fetch('{{ path('checkout_submit') }}', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        alert(data.error || 'Не удалось оформить заказ');
-        return;
-      }
-      try { localStorage.removeItem(STORAGE_KEY); } catch {}
-      window.location.href = data.redirectUrl || '/';
-    } catch (e) {
-      alert('Ошибка сети');
-    } finally {
-      btn.disabled = false;
-    }
-  });
-  </script>
+  {# inline script removed: migrated to FSD feature checkout-form #}
 {% endblock %}
 
 

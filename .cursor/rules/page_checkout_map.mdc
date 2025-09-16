@@ -39,7 +39,7 @@ repositories:
   - App\Repository\OrderRepository
 
 jsModules:
-  # нет, логика формы инлайном (см. шаблон)
+  - assets/catalog/src/features/checkout-form/index.ts
 
 twig:
   functions:
@@ -67,6 +67,8 @@ dom:
       selector: '[data-testid="shipping-term"]'
     - name: total
       selector: '[data-testid="total"]'
+    - name: checkout-root
+      selector: '[data-testid="checkout-root"]'
 
 invariants:
   - Источник истины по суммам/позициям — серверные Cart/CartItem (без клиентских пересчётов)

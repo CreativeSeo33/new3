@@ -20,6 +20,8 @@ export const registry: Record<string, () => Promise<ModuleInitFunction>> = {
   'city-modal': () => import('../features/city-modal').then(m => m.init),
   'city-modal-trigger': () => import('../features/city-modal-trigger').then(m => m.init),
   'mobile-menu': () => import('../features/mobile-menu').then(m => m.init),
+  'checkout-form': () => import('../features/checkout-form').then(m => m.init),
+  'delivery-selector': () => import('../features/delivery-selector').then(m => m.init),
 
   // Виджеты
   'cart-counter': () => import('../widgets/cart-counter').then(m => m.init),

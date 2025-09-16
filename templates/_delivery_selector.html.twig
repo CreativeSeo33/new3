@@ -1,147 +1,35 @@
-<div id="delivery" class="p-4 border rounded mb-6">
+<div id="delivery" data-module="delivery-selector" data-testid="delivery-selector" class="p-4 border rounded mb-6">
+  {% set _checkout = app.session.get('checkout') %}
+  {% set _cityName = _checkout.delivery.city.cityName ?? null %}
   <div class="flex gap-2 items-end mb-3">
-    <div class="flex-1">
-      <label class="block text-sm mb-1">Город</label>
-      <div data-module="autocomplete" data-placeholder="Ваш город" data-input-selector="#city-input"></div>
-      <input id="city-input" class="w-full border rounded px-3 py-2" value="{{ app.session.get('checkout')['delivery']['city']['cityName'] ?? '' }}" placeholder="Ваш город">
+    <div class="flex items-center space-x-2 cursor-pointer" id="city-selector" data-city-modal-trigger data-module="city-modal-trigger" data-testid="city-modal-trigger">
+      <svg class="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.951-7.5 11.951s-7.5-4.809-7.5-11.951a7.5 7.5 0 1 1 15 0Z"/>
+      </svg>
+      <span class="text-sm text-gray-800 font-medium">Ваш город: {{ _cityName ?? 'Не определен' }}</span>
     </div>
-    <button id="set-city" class="px-3 py-2 border rounded">OK</button>
   </div>
 
   <section id="delivery-methods">
     <h3 class="text-sm font-medium mb-2">Способ доставки</h3>
     <div class="space-y-2 mb-3">
-      <label class="flex items-center gap-2"><input type="radio" name="deliveryMethod" value="pvz"> Пункт выдачи</label>
-      <label class="flex items-center gap-2"><input type="radio" name="deliveryMethod" value="courier"> Курьер</label>
+      <label class="flex items-center gap-2"><input type="radio" data-testid="delivery-method-pvz" name="deliveryMethod" value="pvz"> Пункт выдачи</label>
+      <label class="flex items-center gap-2"><input type="radio" data-testid="delivery-method-courier" name="deliveryMethod" value="courier"> Курьер</label>
     </div>
 
-    <div id="pvz-block" class="mt-2 hidden">
+    <div id="pvz-block" data-testid="delivery-pvz-block" class="mt-2 hidden">
       <div class="text-sm mb-2">Выберите пункт выдачи</div>
-      <select id="pvz-select" class="w-full border rounded px-3 py-2"></select>
-      <div id="pvz-empty" class="text-sm text-gray-500 mt-2 hidden">В вашем городе пункты выдачи отсутствуют</div>
+      <select id="pvz-select" data-testid="delivery-pvz-select" class="w-full border rounded px-3 py-2"></select>
+      <div id="pvz-empty" data-testid="delivery-pvz-empty" class="text-sm text-gray-500 mt-2 hidden">В вашем городе пункты выдачи отсутствуют</div>
     </div>
 
-    <div id="courier-block" class="mt-2 hidden">
+    <div id="courier-block" data-testid="delivery-courier-block" class="mt-2 hidden">
       <label class="block text-sm mb-1">Адрес доставки</label>
-      <input id="courier-address" class="w-full border rounded px-3 py-2" placeholder="Город, улица, дом, квартира" required />
-      <div id="addr-error" class="text-xs text-red-600 mt-1 hidden">Адрес обязателен</div>
+      <input id="courier-address" data-testid="delivery-courier-address" class="w-full border rounded px-3 py-2" placeholder="Город, улица, дом, квартира" required />
+      <div id="addr-error" data-testid="delivery-addr-error" class="text-xs text-red-600 mt-1 hidden">Адрес обязателен</div>
     </div>
   </section>
 
-  <div class="text-sm mt-3">Стоимость доставки: <span id="ship-cost">{{ (delivery.cost is defined and delivery.cost is not null) ? (delivery.cost / 100) : 0 }}</span> ₽</div>
+  <div class="text-sm mt-3">Стоимость доставки: <span id="ship-cost" data-testid="delivery-ship-cost">{{ (delivery.cost is defined and delivery.cost is not null) ? (delivery.cost / 100) : 0 }}</span> ₽</div>
 </div>
-
-<script type="module">
-const post = (url, body) => fetch(url, {
-  method: 'POST', headers: {'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},
-  body: JSON.stringify(body)
-});
-
-const methodInputs = Array.from(document.querySelectorAll('input[name="deliveryMethod"]'));
-const pvzBlock = document.getElementById('pvz-block');
-const pvzSelect = document.getElementById('pvz-select');
-const pvzEmpty = document.getElementById('pvz-empty');
-const courierBlock = document.getElementById('courier-block');
-const addrInput = document.getElementById('courier-address');
-
-// Подключаем fetcher FIAS глобально для автокомплита
-import('@features/autocomplete').then(m => {
-  const { fetchFiasCities } = m;
-  (window).__autocompleteFetcher = (q, opts) => fetchFiasCities(q, { limit: 10, ...opts });
-}).catch(() => {});
-
-const toggleBlocks = (m) => {
-  const isPvz = m === 'pvz';
-  pvzBlock?.classList.toggle('hidden', !isPvz);
-  courierBlock?.classList.toggle('hidden', isPvz);
-};
-
-async function loadContext() {
-  const res = await fetch('/api/delivery/context');
-  return await res.json().catch(() => ({}));
-}
-
-async function loadPvz(cityName) {
-  if (!pvzSelect || !pvzEmpty) return;
-  pvzSelect.innerHTML = '';
-  pvzEmpty.classList.add('hidden');
-  if (!cityName) { pvzEmpty.textContent = 'Город не выбран'; pvzEmpty.classList.remove('hidden'); return; }
-  const list = await fetch('/api/delivery/pvz-points?city=' + encodeURIComponent(cityName)).then(r=>r.json()).catch(()=>[]);
-  if (!Array.isArray(list) || list.length === 0) { pvzEmpty.classList.remove('hidden'); return; }
-  for (const p of list) {
-    const opt = document.createElement('option');
-    opt.value = p.code; opt.textContent = p.address || p.name || p.code;
-    pvzSelect.appendChild(opt);
-  }
-}
-
-// Init
-(async () => {
-  const ctx = await loadContext();
-  const initMethod = ctx.methodCode || 'pvz';
-  methodInputs.forEach(r => { r.checked = (r.value === initMethod); });
-  toggleBlocks(initMethod);
-  if (initMethod === 'pvz') { await loadPvz(ctx.cityName); }
-
-  // Set city
-  document.getElementById('set-city')?.addEventListener('click', async () => {
-    const cityName = (document.getElementById('city-input')?.value || '').trim();
-    if (!cityName) return;
-    const r = await post('/api/delivery/select-city', {cityName});
-    const data = await r.json().catch(() => ({}));
-    if (!r.ok) { alert(data.error || 'Ошибка'); return; }
-    document.getElementById('ship-cost').textContent = '0';
-    const total = document.getElementById('checkout-total');
-    if (total && typeof data.total === 'number') total.textContent = (data.total/100).toFixed(2) + ' ₽';
-    if (methodInputs.find(i => i.checked)?.value === 'pvz') {
-      await loadPvz(cityName);
-    }
-  });
-
-  // Change method
-  methodInputs.forEach(radio => radio.addEventListener('change', async (e) => {
-    const value = e.target.value;
-    const r = await post('/api/delivery/select-method', { methodCode: value });
-    const data = await r.json().catch(() => ({}));
-    toggleBlocks(value);
-    if (value === 'pvz') {
-      await loadPvz(ctx.cityName || (document.getElementById('city-input')?.value || '').trim());
-    }
-    if (r.ok) {
-      const cost = (data.shippingCost/100).toFixed(2);
-      document.getElementById('ship-cost').textContent = cost;
-      const total = document.getElementById('checkout-total');
-      if (total) total.textContent = (data.total/100).toFixed(2) + ' ₽';
-    }
-  }));
-
-  // Select PVZ
-  pvzSelect?.addEventListener('change', async () => {
-    const pvzCode = pvzSelect.value;
-    if (!pvzCode) return;
-    const r = await post('/api/delivery/select-pvz', { pvzCode });
-    const data = await r.json().catch(() => ({}));
-    if (!r.ok) { alert(data.error || 'Ошибка'); return; }
-    const cost = (data.shippingCost/100).toFixed(2);
-    document.getElementById('ship-cost').textContent = cost;
-    const total = document.getElementById('checkout-total');
-    if (total) total.textContent = (data.total/100).toFixed(2) + ' ₽';
-  });
-
-  // Courier address
-  addrInput?.addEventListener('blur', async () => {
-    const address = (addrInput.value || '').trim();
-    document.getElementById('addr-error')?.classList.toggle('hidden', !!address);
-    if (!address) return;
-    const r = await post('/api/delivery/select-method', { methodCode: 'courier', address });
-    const data = await r.json().catch(() => ({}));
-    if (!r.ok) { alert(data.error || 'Ошибка'); return; }
-    const cost = (data.shippingCost/100).toFixed(2);
-    document.getElementById('ship-cost').textContent = cost;
-    const total = document.getElementById('checkout-total');
-    if (total) total.textContent = (data.total/100).toFixed(2) + ' ₽';
-  });
-})();
-</script>
-
-
