@@ -1,0 +1,28 @@
+{# ai:component=checkout-contact-form map=@component_checkout_contact_form_map.mdc v=1 #}
+<section class="p-4 border rounded" data-testid="contact-form-section">
+  <h2 class="text-lg font-medium mb-4">Контактные данные</h2>
+  <form id="checkout-form" class="space-y-4">
+    <div class="grid grid-cols-1 gap-4">
+      <div>
+        <label class="block text-sm mb-1">Имя</label>
+        <input name="firstName" class="w-full border rounded px-3 py-2" required />
+      </div>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm mb-1">Телефон</label>
+        <input name="phone" class="w-full border rounded px-3 py-2" required />
+      </div>
+      <div>
+        <label class="block text-sm mb-1">E-mail</label>
+        <input name="email" type="email" class="w-full border rounded px-3 py-2" />
+      </div>
+    </div>
+    <div>
+      <label class="block text-sm mb-1">Комментарий к заказу</label>
+      <textarea name="comment" class="w-full border rounded px-3 py-2" rows="3" placeholder="Пожелания к заказу"></textarea>
+    </div>
+  </form>
+  
+</section>
+

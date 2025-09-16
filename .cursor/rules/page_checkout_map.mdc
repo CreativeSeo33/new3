@@ -46,6 +46,13 @@ twig:
     - src/Twig/PriceExtension.php (format_price)
   filters:
     - imagine_filter [LiipImagineBundle]
+  components:
+    - @component_delivery-selector_map.mdc
+    - @component_checkout_contact_form_map.mdc
+    - @component_cart_items_map.mdc
+    - @component_cart_item_map.mdc
+    - @component_cart_summary_map.mdc
+    - @component_checkout_submit_button_map.mdc
 
 dom:
   testids:
@@ -57,8 +64,8 @@ dom:
       selector: '[data-testid="row-total"]'
     - name: delivery-root
       selector: '#delivery-methods'
-    - name: delivery-method-code
-      selector: '#delivery-methods-list input[name="delivery-method"]'
+    - name: delivery-selector
+      selector: '#delivery'
     - name: subtotal
       selector: '[data-testid="subtotal"]'
     - name: shipping

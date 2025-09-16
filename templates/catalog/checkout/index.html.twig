@@ -10,31 +10,7 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <div class="md:col-span-2 space-y-6">
         {% include 'catalog/_delivery_selector.html.twig' ignore missing %}
-        <section class="p-4 border rounded">
-          <h2 class="text-lg font-medium mb-4">Контактные данные</h2>
-          <form id="checkout-form" class="space-y-4">
-            <div class="grid grid-cols-1 gap-4">
-              <div>
-                <label class="block text-sm mb-1">Имя</label>
-                <input name="firstName" class="w-full border rounded px-3 py-2" required />
-              </div>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm mb-1">Телефон</label>
-                <input name="phone" class="w-full border rounded px-3 py-2" required />
-              </div>
-              <div>
-                <label class="block text-sm mb-1">E-mail</label>
-                <input name="email" type="email" class="w-full border rounded px-3 py-2" />
-              </div>
-            </div>
-            <div>
-              <label class="block text-sm mb-1">Комментарий к заказу</label>
-              <textarea name="comment" class="w-full border rounded px-3 py-2" rows="3" placeholder="Пожелания к заказу"></textarea>
-            </div>
-          </form>
-        </section>
+        {% include 'components/checkout/contact-form.html.twig' %}
 
         {# Блок оплаты удалён по требованию #}
       </div>
@@ -42,77 +18,12 @@
       <aside class="md:col-span-1 p-4 border rounded h-fit">
         <h2 class="text-lg font-medium mb-4">Ваш заказ</h2>
         {% if cart.items|length > 0 %}
-          <div id="checkout-cart-items" class="space-y-3" data-testid="cart-items">
-            {% for item in cart.items %}
-              <div class="flex gap-3 items-start border-b pb-3" data-item-id="{{ item.id }}" data-testid="cart-item">
-                <div class="w-16 h-16 shrink-0">
-                  {% if item.product and item.product.image|length > 0 %}
-                    {% set firstImage = item.product.image|sort((a,b) => a.sortOrder <=> b.sortOrder)|first %}
-                    {% if firstImage %}
-                      {% set raw = firstImage.imageUrl %}
-                      {% if raw starts with '/media/cache/' %}
-                        {% set imgSrc = raw %}
-                      {% else %}
-                        {% set rel = raw|replace({'/img/':''})|trim('/') %}
-                        {% set imgSrc = asset('/img/' ~ rel) | imagine_filter('md2') %}
-                      {% endif %}
-                      <img src="{{ imgSrc }}" alt="{{ item.productName }}" class="w-16 h-16 object-cover rounded border">
-                    {% else %}
-                      <div class="w-16 h-16 bg-gray-200 rounded border flex items-center justify-center text-gray-500 text-xs">Нет фото</div>
-                    {% endif %}
-                  {% else %}
-                    <div class="w-16 h-16 bg-gray-200 rounded border flex items-center justify-center text-gray-500 text-xs">Нет фото</div>
-                  {% endif %}
-                </div>
-                <div class="flex-1 min-w-0">
-                  {% if item.product and item.product.slug %}
-                    <a href="{{ path('catalog_product_show', {'slug': item.product.slug}) }}" class="text-sm text-blue-600 hover:text-blue-800 hover:underline truncate block">{{ item.productName }}</a>
-                  {% else %}
-                    <div class="text-sm truncate">{{ item.productName }}</div>
-                  {% endif %}
-                  {% if item.optionAssignments is defined and item.optionAssignments|length > 0 %}
-                    {% set sortedAssignments = item.optionAssignments
-                      |sort((a,b) => (a.option.sortOrder <=> b.option.sortOrder) ?: ((a.sortOrder ?? 2147483647) <=> (b.sortOrder ?? 2147483647))) %}
-                    <div class="mt-1 text-xs text-gray-600">
-                      {% for assignment in sortedAssignments %}
-                        <span class="inline-block bg-gray-100 rounded px-2 py-0.5 mr-1 mb-1">{{ assignment.option.name }}: {{ assignment.value.value }}</span>
-                      {% endfor %}
-                    </div>
-                  {% endif %}
-                  <div class="text-sm text-gray-700 mt-1">
-                    {% set displayPrice = item.effectiveUnitPrice > 0 ? item.effectiveUnitPrice : item.unitPrice %}
-                    {{ format_price(displayPrice) }} × {{ item.qty }} = <span class="font-medium" data-testid="row-total">{{ format_price(item.rowTotal) }}</span>
-                  </div>
-                </div>
-              </div>
-            {% endfor %}
-          </div>
-
-          <div class="border-t mt-3 pt-3 text-sm">
-            {% if delivery.cost is defined and delivery.cost is not null %}
-              <div>Стоимость товаров: <span id="cart-subtotal" data-cart-subtotal data-testid="subtotal">{{ cart.subtotal|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
-              <div>Доставка: <span id="cart-shipping" data-cart-shipping data-testid="shipping">{{ delivery.cost|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
-              {% if delivery.term %}
-                <div class="text-sm text-gray-600" id="cart-shipping-term" data-cart-shipping-term data-testid="shipping-term">{{ delivery.term }}</div>
-              {% endif %}
-              <div class="border-t pt-2 font-semibold">
-                Итого: <span id="cart-total" data-cart-total data-testid="total">{{ (cart.subtotal + delivery.cost)|number_format(0, '.', ' ') ~ ' руб.' }}</span>
-              </div>
-            {% else %}
-              <div>Стоимость товаров: <span id="cart-subtotal" data-cart-subtotal data-testid="subtotal">{{ cart.subtotal|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
-              <div>Доставка: <span id="cart-shipping" data-cart-shipping data-testid="shipping">Расчет менеджером</span></div>
-              <div class="border-t pt-2 font-semibold">
-                Итого: <span id="cart-total" data-cart-total data-testid="total">{{ cart.subtotal|number_format(0, '.', ' ') ~ ' руб.' }}</span>
-              </div>
-            {% endif %}
-          </div>
+          {% include 'components/cart/items.html.twig' with { items: cart.items } %}
+          {% include 'components/cart/summary.html.twig' with { cart: cart, delivery: delivery } %}
         {% else %}
           <div class="text-gray-500 text-sm">Корзина пуста</div>
         {% endif %}
-
-        <button id="place-order" class="mt-4 w-full bg-black text-white rounded py-2 disabled:opacity-50" {% if cart.items|length == 0 %}disabled{% endif %}>
-          Подтвердить заказ
-        </button>
+        {% include 'components/checkout/submit-button.html.twig' with { disabled: cart.items|length == 0 } %}
       </aside>
     </div>
 

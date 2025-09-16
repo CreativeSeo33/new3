@@ -11,6 +11,13 @@ alwaysApply: false
 
 - @component_city-modal_map.mdc — выбор города; root: `#city-modal[data-testid="city-modal-root"]`
 
+### Checkout page components
+- @component_checkout_contact_form_map.mdc — контактная форма; root: `[data-testid="contact-form-section"]`
+- @component_checkout_submit_button_map.mdc — кнопка отправки; root: `#place-order`
+- @component_cart_items_map.mdc — список позиций корзины; root: `[data-testid="cart-items"]`
+- @component_cart_item_map.mdc — позиция корзины; root: `[data-testid="cart-item"]`
+- @component_cart_summary_map.mdc — итоги заказа; root: `#cart-total`
+
 ### Правила и примечания
 - Карты компонентов — обязательны для всех Twig‑компонентов и не pinned (`alwaysApply: false`). При добавлении/обновлении карты не изменяйте pinned‑набор.
 - В шаблонах компонентов используйте якорь: `{# ai:component=<kebab> map=@component_<kebab>_map.mdc v=1 #}` (использование одного `ai:module` без `map` для компонентов не допускается).

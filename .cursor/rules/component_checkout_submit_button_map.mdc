@@ -1,0 +1,10 @@
+---
+alwaysApply: false
+---
+
+# Component Map: checkout-submit-button
+
+file: templates/components/checkout/submit-button.html.twig
+root: '#place-order'
+notes:
+  - Кнопка сабмита заказа. Должна быть disabled при пустой корзине.

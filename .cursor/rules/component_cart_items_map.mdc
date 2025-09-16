@@ -1,0 +1,11 @@
+---
+alwaysApply: false
+---
+
+# Component Map: cart-items
+
+file: templates/components/cart/items.html.twig
+root: '[data-testid="cart-items"]'
+children:
+  - component: cart-item
+    selector: '[data-testid="cart-item"]'

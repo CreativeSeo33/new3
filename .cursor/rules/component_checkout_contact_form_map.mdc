@@ -1,0 +1,12 @@
+---
+alwaysApply: false
+---
+
+# Component Map: checkout-contact-form
+
+file: templates/components/checkout/contact-form.html.twig
+root: '[data-testid="contact-form-section"]'
+exports:
+  - form: '#checkout-form'
+notes:
+  - Контактная форма оформления заказа. Без inline-скриптов.

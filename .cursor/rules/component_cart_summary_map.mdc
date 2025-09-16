@@ -1,0 +1,15 @@
+---
+alwaysApply: false
+---
+
+# Component Map: cart-summary
+
+file: templates/components/cart/summary.html.twig
+root: '#cart-total'
+exports:
+  - subtotal: '[data-testid="subtotal"]'
+  - shipping: '[data-testid="shipping"]'
+  - shippingTerm: '[data-testid="shipping-term"]'
+  - total: '[data-testid="total"]'
+notes:
+  - Итоги корзины справа на чекауте. Источник значений — сервер.

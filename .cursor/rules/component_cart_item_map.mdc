@@ -1,0 +1,12 @@
+---
+alwaysApply: false
+---
+
+# Component Map: cart-item
+
+file: templates/components/cart/item.html.twig
+root: '[data-testid="cart-item"]'
+exports:
+  - rowTotal: '[data-testid="row-total"]'
+notes:
+  - Позиция корзины. Содержит превью товара, опции и сумму по строке.
