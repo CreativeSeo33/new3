@@ -95,6 +95,12 @@ final class DeliveryApiController extends AbstractController
 	{
 		$d = json_decode($r->getContent() ?: '[]', true) ?? [];
 		$code = (string)($d['methodCode'] ?? '');
+		// Ранний trim/лимит для адреса
+		if (isset($d['address'])) {
+			$addr = trim((string)$d['address']);
+			$addr = preg_replace('/[\x00-\x1F\x7F]/u', '', $addr) ?? '';
+			$d['address'] = mb_substr($addr, 0, 255);
+		}
 		if ($code === '') return $this->json(['error' => 'methodCode required'], 422);
 
 		$extra = array_intersect_key($d, array_flip(['pickupPointId','address','zip']));

@@ -116,6 +116,21 @@ final class CheckoutController extends AbstractController
 		$comment = trim((string)($payload['comment'] ?? ''));
 		$paymentMethod = isset($payload['paymentMethod']) ? trim((string)$payload['paymentMethod']) : null;
 
+		// Санитизация: убираем управляющие/невидимые символы и проверяем длины полей
+		$sanitize = static function (?string $s): string {
+			$s = (string)$s;
+			$s = preg_replace('/[\x00-\x1F\x7F]/u', '', $s) ?? '';
+			return trim($s);
+		};
+		$name = $sanitize($name);
+		$phone = $sanitize($phone);
+		$email = $sanitize($email);
+		$comment = $sanitize($comment);
+
+		if (mb_strlen($name) > 255 || mb_strlen($phone) > 255 || mb_strlen($email) > 255 || mb_strlen($comment) > 1000) {
+			return $this->json(['error' => 'Поля слишком длинные'], 400);
+		}
+
 		// Лёгкая серверная валидация телефона (РФ/Generic)
 		$digits = preg_replace('/\D+/', '', $phone) ?? '';
 		$validPhone = (strlen($digits) >= 10 && strlen($digits) <= 15);
