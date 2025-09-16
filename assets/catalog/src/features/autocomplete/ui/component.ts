@@ -1,4 +1,5 @@
 import { Component } from '@shared/ui/Component';
+import { post } from '@shared/api/http';
 import type { SuggestionItem } from '../api';
 
 export interface AutocompleteOptions {
@@ -135,10 +136,21 @@ export class Autocomplete extends Component {
       btn.type = 'button';
       btn.className = 'w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:bg-gray-100';
       btn.textContent = it.label;
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         this.inputEl.value = it.value;
         this.hideList();
         this.dispatchSelected(it);
+        // Optional commit behavior: save city and reload
+        if ((this.el.dataset.commit || '').toLowerCase() === 'select-city') {
+          try {
+            const cityName = it.value;
+            const cityId = typeof it.id === 'number' ? it.id : null;
+            await post('/api/delivery/select-city', { cityName, cityId }, { headers: { 'Accept': 'application/json' } });
+            window.location.reload();
+          } catch (e) {
+            // silent fail: keep input value
+          }
+        }
       });
       li.appendChild(btn);
       list.appendChild(li);
