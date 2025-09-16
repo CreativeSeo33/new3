@@ -23,11 +23,6 @@
      data-overlay="{{ spinner_overlay ? 'true' : 'false' }}"
      data-size="{{ spinner_size }}"
      data-color="{{ spinner_color }}">
-
-  {% if spinner_overlay %}
-    <div class="absolute inset-0 bg-white/70"></div>
-  {% endif %}
-
   <div class="flex items-center justify-center w-full h-full{% if spinner_overlay %} relative z-10{% endif %}">
     <!-- Spinner content will be inserted here by JavaScript -->
   </div>

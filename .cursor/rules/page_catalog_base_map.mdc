@@ -1,0 +1,38 @@
+---
+alwaysApply: false
+---
+
+# Page: Catalog Base (catalog_base)
+
+Назначение: базовый лэйаут каталога. Определяет каркас страницы и подключение assets для витрины.
+
+Файл
+- Twig: `templates/catalog/base.html.twig`
+
+Ключевые блоки Twig
+- `block title` — заголовок страницы
+- `block styles` — стили, включает `encore_entry_link_tags('catalog')`
+- `block body` — основной каркас:
+  - `catalog/layouts/header.html.twig`
+  - `catalog/layouts/navbar.html.twig`
+  - `catalog/layouts/breadcrumbs.html.twig`
+  - вложенный `block catalog_body`
+  - условный контейнер SPA каталога: `<div id="catalog-app"></div>` при маршруте `catalog_index`
+  - `catalog/layouts/footer.html.twig`
+- `block javascripts` — скрипты, включает `encore_entry_script_tags('catalog')`
+
+Интеграции и инварианты
+- Точки входа Webpack Encore: `catalog` (css/js)
+- Запрещены inline `<script>`; вся логика в TS‑модулях каталога
+- SPA‑контейнер `#catalog-app` используется только на `catalog_index`
+
+DOM‑якоря/тест‑селекторы
+- `#catalog-app` — корневой контейнер SPA каталога (условный)
+
+Связанные файлы
+- `assets/catalog/catalog.ts` — входная точка фронтенда каталога
+- `assets/catalog/src/app/registry.ts` — реестр FSD модулей
+- `templates/catalog/layouts/*` — составные части каркаса
+
+Примечания
+- При изменениях структуры блоков обновлять карту и связанные page maps.

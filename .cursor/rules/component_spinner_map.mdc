@@ -33,4 +33,5 @@ alwaysApply: false
 
 Примечания
 - Без inline `<script>`; вся логика — TypeScript.
+- Overlay рендерится и управляется в TS (`Spinner`); отдельный overlay DIV в Twig не используется.
 - `destroy()` очищает содержимое контейнера и отписывает слушатели через базовый `Component`.
