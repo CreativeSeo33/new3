@@ -5,7 +5,7 @@
     <div class="grid grid-cols-1 gap-4">
       <div>
         <label class="block text-sm mb-1">Имя</label>
-        <input name="firstName" placeholder="Имя Отчество" class="w-full border rounded px-3 py-2" required />
+        <input name="firstName" value="{{ (checkout.customer.name ?? '')|e }}" placeholder="Имя Отчество" class="w-full border rounded px-3 py-2" required />
       </div>
     </div>
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -19,17 +19,18 @@
           pattern="^\+?[0-9\s\-\(\)]{10,20}$"
           placeholder="+7 (___) ___-__-__"
           class="w-full border rounded px-3 py-2"
+          value="{{ (checkout.customer.phone ?? '')|e }}"
           required
         />
       </div>
       <div>
         <label class="block text-sm mb-1">E-mail</label>
-        <input name="email" placeholder="E-mail" type="email" class="w-full border rounded px-3 py-2" />
+        <input name="email" value="{{ (checkout.customer.email ?? '')|e }}" placeholder="E-mail" type="email" class="w-full border rounded px-3 py-2" />
       </div>
     </div>
     <div>
       <label class="block text-sm mb-1">Комментарий к заказу</label>
-      <textarea name="comment" class="w-full border rounded px-3 py-2" rows="3" placeholder="Пожелания к заказу"></textarea>
+      <textarea name="comment" class="w-full border rounded px-3 py-2" rows="3" placeholder="Пожелания к заказу">{{ (checkout.comment ?? checkout.customer.comment ?? '')|e }}</textarea>
     </div>
   </form>
   

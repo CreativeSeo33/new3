@@ -13,6 +13,17 @@ export interface CheckoutResponse {
   error?: string;
 }
 
+export interface DraftPayload {
+  firstName?: string;
+  phone?: string;
+  email?: string;
+  comment?: string;
+}
+
+export async function saveCheckoutDraft(data: DraftPayload): Promise<{ ok: boolean }> {
+  return post<{ ok: boolean }>('/api/checkout/draft', data, { headers: { Accept: 'application/json' } });
+}
+
 export async function submitCheckout(
   submitUrl: string,
   data: Record<string, any>

@@ -1,5 +1,5 @@
 import { Component } from '@shared/ui/Component';
-import { submitCheckout } from '../api';
+import { submitCheckout, saveCheckoutDraft } from '../api';
 import { validatePhone } from '@shared/lib/phone';
 
 export interface CheckoutFormOptions {
@@ -25,8 +25,19 @@ export class CheckoutFormComponent extends Component {
     this.hydrateForm();
 
     if (this.form) {
-      this.on('input', () => this.writeCache(this.collectForm()));
-      this.on('change', () => this.writeCache(this.collectForm()));
+      const debouncedSave = this.debounce(async () => {
+        const data = this.collectForm();
+        this.writeCache(data);
+        try { await saveCheckoutDraft({
+          firstName: String(data.firstName || ''),
+          phone: String(data.phone || ''),
+          email: String(data.email || ''),
+          comment: String(data.comment || ''),
+        }); } catch (_) {}
+      }, 400);
+
+      this.on('input', debouncedSave as EventListener);
+      this.on('change', debouncedSave as EventListener);
       // Перехватываем submit, чтобы сработала HTML5-валидация
       this.form.addEventListener('submit', this.handleSubmit as EventListener);
 
@@ -125,6 +136,14 @@ export class CheckoutFormComponent extends Component {
   destroy(): void {
     if (this.form) this.form.removeEventListener('submit', this.handleSubmit as EventListener);
     super.destroy();
+  }
+
+  private debounce<T extends (...args: any[]) => any>(fn: T, delayMs: number): (...args: Parameters<T>) => void {
+    let t: number | undefined;
+    return (...args: Parameters<T>) => {
+      if (t) window.clearTimeout(t);
+      t = window.setTimeout(() => { fn(...args); }, delayMs);
+    };
   }
 }
 
