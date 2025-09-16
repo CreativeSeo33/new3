@@ -1,5 +1,7 @@
 import { Component } from '@shared/ui/Component';
 import { fetchDeliveryTypes, fetchDeliveryContext, selectDeliveryMethod, type DeliveryTypeDto } from '../api';
+import { getCart as fetchFullCart } from '@features/add-to-cart/api';
+import { formatPrice } from '@shared/lib/formatPrice';
 
 export interface DeliveryMethodsOptions {}
 
@@ -87,18 +89,47 @@ export class DeliveryMethods extends Component {
     const code = target.value;
     if (!code || code === this.currentCode) return;
     try {
-      const data = await selectDeliveryMethod(code);
+      await selectDeliveryMethod(code);
       this.currentCode = code;
-      const shippingCents = (data as any)?.shipping?.cost ?? 0;
-      const totalCents = (data as any)?.total ?? (data as any)?.totals?.total ?? null;
 
-      const shippingEl = document.querySelector('#cart-shipping');
-      if (shippingEl) {
-        shippingEl.textContent = this.formatAmount(shippingCents);
+      // Всегда берем источник истины из полной корзины
+      const cart = await fetchFullCart();
+
+      // subtotal
+      const subtotalEl = document.getElementById('cart-subtotal');
+      if (subtotalEl && cart.subtotal !== undefined && cart.subtotal !== null && !isNaN(cart.subtotal)) {
+        subtotalEl.textContent = formatPrice(cart.subtotal);
       }
-      const totalEl = document.querySelector('#cart-total');
-      if (totalEl && totalCents !== null) {
-        totalEl.textContent = this.formatAmount(totalCents);
+
+      // shipping cost
+      const shippingEl = document.getElementById('cart-shipping');
+      if (shippingEl) {
+        if (cart.shipping && cart.shipping.cost !== undefined && cart.shipping.cost !== null && !isNaN(cart.shipping.cost)) {
+          shippingEl.textContent = formatPrice(cart.shipping.cost);
+        } else {
+          shippingEl.textContent = 'Расчет менеджером';
+        }
+      }
+
+      // shipping term
+      const termEl = document.getElementById('cart-shipping-term');
+      if (termEl) {
+        const term = (cart as any)?.shipping?.data?.term;
+        if (typeof term === 'string' && term.length > 0) {
+          termEl.textContent = term;
+          termEl.classList.remove('hidden');
+        } else {
+          termEl.textContent = '';
+          termEl.classList.add('hidden');
+        }
+      }
+
+      // total = subtotal + shipping (как на сервере)
+      const totalEl = document.getElementById('cart-total');
+      if (totalEl) {
+        const subtotal = cart.subtotal || 0;
+        const ship = (cart.shipping && cart.shipping.cost) || 0;
+        totalEl.textContent = formatPrice(subtotal + ship);
       }
     } catch (e) {
       this.renderError('Ошибка при выборе доставки');

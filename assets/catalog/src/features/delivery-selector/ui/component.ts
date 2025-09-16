@@ -36,8 +36,13 @@ export class DeliverySelector extends Component {
     this.courierBlock = this.$('#courier-block');
     this.addrInput = this.$('#courier-address') as HTMLInputElement | null;
     // Обновляем сайдбарные суммы, если доступны, иначе — локальные
-    this.shipCostEl = (document.querySelector('[data-cart-shipping]') as HTMLElement | null) || this.$('#ship-cost');
-    this.totalEl = (document.querySelector('[data-cart-total]') as HTMLElement | null) || document.getElementById('checkout-total');
+    // ВАЖНО: сначала ищем по ID, чтобы не зацепить header/widget с таким же data-атрибутом
+    this.shipCostEl = document.getElementById('cart-shipping')
+      || (document.querySelector('[data-cart-shipping]') as HTMLElement | null)
+      || this.$('#ship-cost');
+    this.totalEl = document.getElementById('cart-total')
+      || (document.querySelector('[data-cart-total]') as HTMLElement | null)
+      || this.$('#checkout-total');
 
     const spinnerEl = this.$('#delivery-spinner') as HTMLElement | null;
     if (spinnerEl) {
