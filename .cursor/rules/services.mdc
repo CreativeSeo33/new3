@@ -21,6 +21,9 @@ globs:
 - `App\Service\Idempotency\IdempotencyService`: Идемпотентность операций корзины/чекаута: begin/finish, обработка конфликтов/повторов/устаревших записей.
 - `App\Service\Idempotency\IdempotencyRequestHasher`: Канонизация запросов и вычисление хеша для идемпотентности.
 
+Связанные трассировки
+- docs/traces/cart_add_item.md — флоу добавления товара в корзину (POST /api/cart/items)
+
 ### Доставка (Delivery)
 
 - `App\Service\Delivery\DeliveryService`: Оркестратор расчета доставки. Выбор метода, кэш квот, интеграция с `DeliveryContext` и `PvzPriceRepository`.

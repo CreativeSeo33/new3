@@ -90,4 +90,4 @@ invariants:
   - Frontend только отображает данные, не пересчитывает значения
   - Пагинация/фильтрация/сортировка — на бэкенде через API Platform
 
-links: [@services.mdc, @doctrine_entities.mdc, @order_checkout_flow.mdc, @paginationapiplatformmapping.mdc]
+links: [@services.mdc, @doctrine_entities.mdc, @order_checkout_flow.mdc, @paginationapiplatformmapping.mdc, docs/traces/cart_add_item.md]
