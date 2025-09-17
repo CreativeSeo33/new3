@@ -107,7 +107,7 @@
       </TabsContent>
 
       <TabsContent value="options" class="pt-6">
-        <ProductOptionAssignments v-if="activeTab === 'options'" v-model:option-assignments="form.optionAssignments" :prefetched-options="prefetchedOptions" :product-id="String(id)" @toast="publishToast" />
+        <ProductOptionAssignments v-if="activeTab === 'options'" :option-assignments="form.optionAssignments" :option-values-map="{}" :option-names-map="{}" />
       </TabsContent>
 
       <TabsContent value="photos" class="pt-6">
@@ -423,7 +423,7 @@ watch(activeTab, async (val) => {
   }
   // attributes handled inside ProductAttributeAssignments
   if (val === 'options' && form?.type === 'variable') {
-    if (!optionsPrefetched.value) await loadOptionsBootstrap()
+    // bootstrap списка опций отключён по требованию
   }
 }, { immediate: false })
 

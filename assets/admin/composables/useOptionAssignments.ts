@@ -66,11 +66,14 @@ function makeSignature(rows: ProductOptionValueAssignment[] | null | undefined):
 }
 
 export function useOptionAssignments(opts: UseOptionAssignmentsOptions) {
+  // Глобальный переключатель: принудительно отключить сетевые запросы опций/значений
+  const DISABLE_OPTION_APIS = true
   const rows = ref<ProductOptionValueAssignment[]>([])
   const suppressRowsEmit = ref(false)
   const lastEmittedSignature = ref('')
   const baseSnapshot = ref<NormalizedRow[]>([])
   const baseSignature = ref('')
+  const applyingExternal = ref(false)
 
   const optionRepo = new OptionRepository()
   const optionValueRepo = new OptionValueRepository()
@@ -95,6 +98,7 @@ export function useOptionAssignments(opts: UseOptionAssignmentsOptions) {
   })
 
   async function loadOptions() {
+    if (DISABLE_OPTION_APIS) return
     if (optionsLoading.value) return
     optionsLoading.value = true
     try {
@@ -123,6 +127,7 @@ export function useOptionAssignments(opts: UseOptionAssignmentsOptions) {
     scheduleEmit()
   }
   const scheduleEmit = debounce(() => {
+    if (applyingExternal.value) return
     if (suppressRowsEmit.value) return
     const sig = makeSignature(rows.value as any)
     if (sig === lastEmittedSignature.value) return
@@ -203,8 +208,9 @@ export function useOptionAssignments(opts: UseOptionAssignmentsOptions) {
 
   function isOptionValuesLoading(optionIri: string): boolean { return optionValuesLoading.value.has(optionIri) }
   function optionValuesFor(optionIri: string): OptionValue[] { return optionIdToValues.get(optionIri) || [] }
-  function ensureOptionValuesLoaded(optionIri: string) { void loadOptionValues(optionIri) }
+  function ensureOptionValuesLoaded(optionIri: string) { if (!DISABLE_OPTION_APIS) void loadOptionValues(optionIri) }
   async function loadOptionValues(optionIri: string) {
+    if (DISABLE_OPTION_APIS) return
     if (!optionIri || optionIdToValues.has(optionIri) || optionValuesLoading.value.has(optionIri)) return
     const next = new Set(optionValuesLoading.value); next.add(optionIri); optionValuesLoading.value = next
     try {
@@ -217,6 +223,7 @@ export function useOptionAssignments(opts: UseOptionAssignmentsOptions) {
   }
 
   function prefetchUsedOptionValues() {
+    if (DISABLE_OPTION_APIS) return
     const MAX_PREFETCH = 5
     const set = new Set<string>()
     for (const r of rows.value) if (r.option) set.add(r.option)
@@ -324,11 +331,13 @@ export function useOptionAssignments(opts: UseOptionAssignmentsOptions) {
       const processed = newAssignments.map((row) => ({ ...row, setPrice: normalizeSetPrice((row as any)?.setPrice) }))
       const incomingSig = makeSignature(processed)
       const currentSig = makeSignature(rows.value)
-      if (incomingSig !== currentSig) {
+      if (incomingSig !== currentSig && incomingSig !== lastEmittedSignature.value) {
         suppressRowsEmit.value = true
+        applyingExternal.value = true
         rows.value = processed
         void nextTick(() => {
           suppressRowsEmit.value = false
+          applyingExternal.value = false
           lastEmittedSignature.value = incomingSig
           // если базовый снимок ещё пуст — зафиксируем
           if (!baseSignature.value) {
