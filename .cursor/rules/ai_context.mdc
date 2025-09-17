@@ -1,5 +1,8 @@
 ---
 alwaysApply: true
+description: Глобальный якорный контекст проекта (архитектура, инварианты, артефакты)
+globs:
+  - "**/*"
 ---
 
 # AI_CONTEXT v1
@@ -128,6 +131,7 @@ alwaysApply: true
 - Политика производительности агента: `@agent_performance_policy.mdc`
 - Политика Twig‑компонентов (Symfony UX): `@twig_components_policy.mdc`
 - Индекс компонентов: `@components_index.mdc`
+ - Политика создания правил (Cursor Rules Authoring): `@rules_authoring_policy.mdc`
  
 Документация по потоку сабмита: см. docs/TRACE.md
 

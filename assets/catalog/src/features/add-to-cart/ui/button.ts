@@ -137,7 +137,8 @@ export class AddToCartButton extends Component {
       // Отправляем событие обновления корзины с count для совместимости
       const eventDetail = {
         ...cartData,
-        count: cartData.totalItemQuantity || (cartData.items || []).reduce((sum, item) => sum + (item.qty || 0), 0)
+        count: cartData.totalItemQuantity || (cartData.items || []).reduce((sum, item) => sum + (item.qty || 0), 0),
+        preventRefresh: true
       };
       window.dispatchEvent(new CustomEvent('cart:updated', { detail: eventDetail }));
 

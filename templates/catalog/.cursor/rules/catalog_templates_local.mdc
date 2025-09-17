@@ -1,0 +1,17 @@
+---
+alwaysApply: false
+description: Локальные правила для Twig шаблонов витрины — auto-attach по nested директории
+---
+
+# Catalog Templates (local)
+
+Опираться на глобальные правила:
+- @catalog_js_architecture.mdc — FSD/TS/без inline для интерактива
+- @twig_components_policy.mdc — политика Twig-компонентов
+- @components_index.mdc — индекс карт компонентов
+- @pages_index.mdc — индекс карт страниц
+
+Примечания
+- В шаблонах не допускаются inline `<script>`.
+- Интерактив: Stimulus (lazy) для мелких паттернов или FSD‑модули.
+

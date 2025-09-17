@@ -1,5 +1,8 @@
 ---
 alwaysApply: false
+description: Маяки для каталога (registry/bootstrap/http-client/base-component) — точечные якоря
+globs:
+  - assets/catalog/**
 ---
 
 # AI‑маяки для каталога (FSD)
@@ -28,6 +31,7 @@ alwaysApply: false
 - Не выполнять повторные широкие поиска после нахождения маяка.
 
 ## Связанные документы
+- `@ai_context.mdc`
 - `@catalog_js_architecture.mdc`
 - `@agent_performance_policy.mdc`
 

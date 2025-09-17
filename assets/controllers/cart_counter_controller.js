@@ -69,9 +69,13 @@ export default class extends Controller {
       this.setTotal(total);
     }
     // обновляем доставку/итого, если данные есть в detail; иначе подтянем через refresh
-    if (detail && (detail.shipping || typeof detail.subtotal === 'number')) {
+    const hasTotals = detail && (detail.shipping || typeof detail.subtotal === 'number');
+    const shouldPrevent = detail && detail.preventRefresh === true;
+    if (hasTotals) {
       this.updateShippingAndGrandTotal(detail);
-    } else {
+    }
+    // Не дергаем /api/cart если пришли полные данные или явно запрещено
+    if (!hasTotals && !shouldPrevent) {
       this.refresh().catch(() => {});
     }
     // если пришёл полный список товаров — обновляем немедленно

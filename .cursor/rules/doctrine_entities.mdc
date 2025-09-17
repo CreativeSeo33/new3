@@ -1,5 +1,9 @@
 ---
 alwaysApply: false
+description: Справочник Doctrine сущностей; авто-подключение для src/Entity/** и src/Repository/**
+globs:
+  - src/Entity/**
+  - src/Repository/**
 ---
 
 # Сущности Doctrine
@@ -63,3 +67,6 @@ alwaysApply: false
 - Уникальные ограничения: `Product.slug`, `Product.code` (Ulid), `Manufacturer.name`, `Option.code`, `ProductToCategory(product,category)`, `OptionValue(code within option)`, `CartItem(uniq_cart_product_options)`.
 - Индексы и фильтры настроены под API Platform (по ценам/атрибутам/опциям/сортировкам).
 - Источник истины по корзине/ценам — серверные `Cart`/`CartItem`/`Product*Assignment` (без клиентских пересчётов).
+
+## Связанные правила
+- @ai_context.mdc

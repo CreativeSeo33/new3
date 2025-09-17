@@ -1,5 +1,8 @@
 ---
 alwaysApply: true
+description: Политика конфигурации и запрета хардкодов (ENV, параметры, DI)
+globs:
+  - "**/*"
 ---
 # Configuration Management Rules
 
@@ -153,3 +156,6 @@ HTTP status codes (200, 404, etc.)
 Standard format patterns (email regex, etc.)
 Mathematical constants (π, e, etc.)
 Framework-specific constants
+
+## Связанные правила
+- @ai_context.mdc

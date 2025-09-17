@@ -9,6 +9,29 @@ interface CsrfResponse {
 let csrfToken: string | null = null;
 let tokenPromise: Promise<string> | null = null;
 
+function readTokenFromDom(): string | null {
+  try {
+    const meta = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null;
+    return meta?.content?.trim() || null;
+  } catch {
+    return null;
+  }
+}
+
+function readTokenFromStorage(): string | null {
+  try {
+    return sessionStorage.getItem('csrf:api');
+  } catch {
+    return null;
+  }
+}
+
+function writeTokenToStorage(token: string): void {
+  try {
+    sessionStorage.setItem('csrf:api', token);
+  } catch {}
+}
+
 /**
  * Получает CSRF токен с сервера
  */
@@ -38,6 +61,21 @@ export async function getCsrfToken(): Promise<string> {
     return csrfToken;
   }
 
+  // Пробуем sessionStorage
+  const stored = readTokenFromStorage();
+  if (stored) {
+    csrfToken = stored;
+    return csrfToken;
+  }
+
+  // Пробуем meta-тег, вставленный Twig
+  const dom = readTokenFromDom();
+  if (dom) {
+    csrfToken = dom;
+    writeTokenToStorage(dom);
+    return csrfToken;
+  }
+
   // Если запрос уже в процессе, ждем его
   if (tokenPromise) {
     return tokenPromise;
@@ -47,6 +85,7 @@ export async function getCsrfToken(): Promise<string> {
   tokenPromise = fetchCsrfToken()
     .then(token => {
       csrfToken = token;
+      writeTokenToStorage(token);
       tokenPromise = null;
       return token;
     })
@@ -64,6 +103,7 @@ export async function getCsrfToken(): Promise<string> {
 export function clearCsrfToken(): void {
   csrfToken = null;
   tokenPromise = null;
+  try { sessionStorage.removeItem('csrf:api'); } catch {}
 }
 
 /**

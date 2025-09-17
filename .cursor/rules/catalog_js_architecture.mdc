@@ -1,5 +1,9 @@
 ---
-alwaysApply: true
+alwaysApply: false
+description: Каталог (витрина) — правила FSD, TypeScript, запрет inline-скриптов
+globs:
+  - templates/catalog/**
+  - assets/catalog/**
 ---
 
 # Catalog JS Architecture Policy (FSD, TypeScript, no inline scripts)

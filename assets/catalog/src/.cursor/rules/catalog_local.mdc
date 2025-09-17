@@ -1,0 +1,16 @@
+---
+alwaysApply: false
+description: Локальные правила для витрины (Catalog) — auto-attach по nested директории
+---
+
+# Catalog (local)
+
+Используй глобальные правила для каталога:
+- @catalog_js_architecture.mdc — основная политика FSD/TS/без inline
+- @ai_beacons_catalog.mdc — маяки (registry/bootstrap/http-client/base-component)
+- @agent_performance_policy.mdc — узкие поиски и стоп-условия
+
+Примечания
+- В этой папке создаются/живут FSD‑модули (`features`, `entities`, `widgets`, `pages`, `shared`).
+- Правила auto-attach сработают благодаря nested `.cursor/rules/` каталогу.
+

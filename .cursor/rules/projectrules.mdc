@@ -1,5 +1,8 @@
 ---
 alwaysApply: true
+description: Архитектурные инварианты фронт/бэк, обязанности и коммуникация с API
+globs:
+  - "**/*"
 ---
 # Правила архитектуры проекта
 
@@ -21,3 +24,8 @@ alwaysApply: true
 - Во Vue — только отображение и реактивная обработка ответов
 
 Для Twig/UX интерактива см. @stimulus_policy.mdc (Stimulus‑first).
+
+## Связанные правила
+- @ai_context.mdc
+- @catalog_js_architecture.mdc
+- @stimulus_policy.mdc

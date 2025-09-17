@@ -1,5 +1,9 @@
 ---
 alwaysApply: true
+description: Политика производительности агента (узкие поиски, маяки, лимиты)
+globs:
+  - assets/catalog/**
+  - templates/catalog/**
 ---
 
 # Политика производительности агента (Catalog/FSD)
@@ -54,6 +58,7 @@ alwaysApply: true
 - Соблюдать политику FSD: TypeScript, разделение API/UI, запрет inline `<script>` (см. `@catalog_js_architecture.mdc`).
 
 ## Связанные правила
+- `@ai_context.mdc`
 - `@catalog_js_architecture.mdc`
 - `@stimulus_policy.mdc`
 

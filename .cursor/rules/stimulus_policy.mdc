@@ -1,5 +1,9 @@
 ---
 alwaysApply: false
+description: Политика использования Stimulus для Twig/UX; авто-подключение для templates/** и assets/controllers/**
+globs:
+  - templates/**
+  - assets/controllers/**
 ---
 
 # Stimulus‑first (UX)
@@ -48,6 +52,11 @@ export default class extends Controller {
   }
 }
 ```
+
+## Связанные правила
+- @ai_context.mdc
+- @agent_performance_policy.mdc
+- @catalog_js_architecture.mdc
 
 ## Пример Twig‑разметки
 ```twig

@@ -1,5 +1,8 @@
 ---
 alwaysApply: false
+description: Индекс карт Twig-компонентов каталога; авто-подключение для templates/components/**
+globs:
+  - templates/components/**
 ---
 
 # Components Index
@@ -31,3 +34,5 @@ alwaysApply: false
 - Добавляя новый компонент без карты — создайте `.cursor/rules/component_<kebab>_map.mdc` и добавьте запись в этот индекс.
 - Интерактив без inline `<script>`: Stimulus с `"fetch": "lazy"` или FSD‑модуль (см. `@catalog_js_architecture.mdc`).
 
+## Связанные правила
+- @ai_context.mdc

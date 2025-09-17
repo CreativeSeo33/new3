@@ -1,0 +1,16 @@
+---
+alwaysApply: false
+description: Локальные правила для Admin SPA (Vue/Tailwind) — auto-attach по nested директории
+---
+
+# Admin SPA (local)
+
+Опираться на глобальные правила:
+- @paginationapiplatformmapping.mdc — чек-лист пагинации API Platform для админки
+- @projectrules.mdc — обязанности фронта/бэка, коммуникация через API
+- @hardcoderules.mdc — запрет хардкодов/конфигурация
+
+Примечания
+- Новые admin‑страницы добавляются только через Vue Router.
+- TailwindCSS, строгий TypeScript, сборка через Webpack Encore.
+

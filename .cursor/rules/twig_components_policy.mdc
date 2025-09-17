@@ -1,5 +1,9 @@
 ---
 alwaysApply: false
+description: Политика для Twig-компонентов Symfony UX; используется при работе в templates/components/** и src/Twig/Components/**
+globs:
+  - templates/components/**
+  - src/Twig/Components/**
 ---
 
 ### Назначение и область
@@ -97,4 +101,9 @@ Twig:
 - Существует `.cursor/rules/component_<kebab>_map.mdc` (`alwaysApply: false`) с актуальными путями/селекторами/targets/событиями
 - Компонент добавлен в `@components_index.mdc`
 - Соблюдены A11y/i18n требования
+
+## Связанные правила
+- @ai_context.mdc
+- @agent_performance_policy.mdc
+- @catalog_js_architecture.mdc
 

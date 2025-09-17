@@ -1,5 +1,8 @@
 ---
 alwaysApply: false
+description: Шаблон FSD-модуля каталога; авто-подключение для assets/catalog/**
+globs:
+  - assets/catalog/**
 ---
 
 # Шаблон FSD‑модуля каталога (TypeScript)
@@ -75,4 +78,7 @@ export * from './api';
 - Оберните блок в контейнер с data-module="<feature-name>".
 - Передайте параметры через data-* атрибуты (kebab-case).
 - Добавьте data-testid для якорей автотестов (если нет targets).
+
+## Связанные правила
+- @ai_context.mdc
 

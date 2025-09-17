@@ -1,5 +1,9 @@
 ---
 alwaysApply: false
+description: Чек-лист пагинации для API Platform; авто-подключение при работе с config/packages/api_platform.yaml и admin SPA
+globs:
+  - config/packages/api_platform.yaml
+  - assets/admin/**
 ---
 
 # Admin: чек‑лист пагинации (API Platform)
@@ -13,4 +17,6 @@ alwaysApply: false
 5) Ограничены лимиты (`pagination_items_per_page`, максимум и client_* параметры)
 
 Вся логика пагинации — на бэкенде; Vue только отображает и синхронизирует `page`/`itemsPerPage` в URL. См. также: @projectrules.mdc
- 
+
+## Связанные правила
+- @ai_context.mdc

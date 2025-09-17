@@ -1,5 +1,9 @@
 ---
 alwaysApply: false
+description: Индекс карт страниц (page maps); авто-подключение для templates/catalog/** и контроллеров страниц
+globs:
+  - templates/catalog/**
+  - src/Controller/Catalog/**
 ---
 
 # Pages Index
@@ -7,3 +11,6 @@ alwaysApply: false
 - @page_cart_map.mdc
 - @page_checkout_map.mdc
 - @page_product_map.mdc
+
+## Связанные правила
+- @ai_context.mdc
