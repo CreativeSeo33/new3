@@ -71,6 +71,7 @@
 import Input from '@admin/ui/components/Input.vue'
 import type { ProductFormModel, ProductFormErrors } from '@admin/types/product'
 import { computed } from 'vue'
+import { toInt } from '@admin/utils/num'
 
 interface Props {
   form: ProductFormModel
@@ -105,34 +106,22 @@ const sortOrderLabel = computed(() => 'Сортировка')
 // локальные computed-обертки, работают и без внешних пропсов
 const priceModel = computed<string>({
   get: () => (props.form.price != null ? String(props.form.price) : ''),
-  set: (v: string) => {
-    if (v === '') props.form.price = null
-    else if (!Number.isNaN(Number(v))) props.form.price = Math.trunc(Number(String(v).replace(',', '.')))
-  },
+  set: (v: string) => { props.form.price = toInt(v) },
 })
 
 const salePriceModel = computed<string>({
   get: () => (props.form.salePrice != null ? String(props.form.salePrice) : ''),
-  set: (v: string) => {
-    if (v === '') props.form.salePrice = null
-    else if (!Number.isNaN(Number(v))) props.form.salePrice = Math.trunc(Number(String(v).replace(',', '.')))
-  },
+  set: (v: string) => { props.form.salePrice = toInt(v) },
 })
 
 const quantityModel = computed<string>({
   get: () => (props.form.quantity != null ? String(props.form.quantity) : ''),
-  set: (v: string) => {
-    if (v === '') props.form.quantity = null
-    else if (!Number.isNaN(Number(v))) props.form.quantity = Math.trunc(Number(String(v).replace(',', '.')))
-  },
+  set: (v: string) => { props.form.quantity = toInt(v) },
 })
 
 const sortOrderModel = computed<string>({
   get: () => (props.form.sortOrder != null ? String(props.form.sortOrder) : ''),
-  set: (v: string) => {
-    if (v === '') props.form.sortOrder = null
-    else if (!Number.isNaN(Number(v))) props.form.sortOrder = Math.trunc(Number(String(v).replace(',', '.')))
-  },
+  set: (v: string) => { props.form.sortOrder = toInt(v) },
 })
 </script>
 

@@ -107,7 +107,7 @@
       </TabsContent>
 
       <TabsContent value="options" class="pt-6">
-        <ProductOptionAssignments v-if="activeTab === 'options'" v-model:option-assignments="form.optionAssignments" @toast="publishToast" />
+        <ProductOptionAssignments v-if="activeTab === 'options'" v-model:option-assignments="form.optionAssignments" :prefetched-options="prefetchedOptions" :product-id="String(id)" @toast="publishToast" />
       </TabsContent>
 
       <TabsContent value="photos" class="pt-6">
@@ -134,14 +134,14 @@ import ProductAttributeAssignments from '@admin/components/forms/ProductAttribut
 import ProductOptionAssignments from '@admin/components/forms/ProductOptionAssignments.vue'
 import { useProductForm } from '@admin/composables/useProductForm'
 import { useProductSave } from '@admin/composables/useProductSave'
-import type { ProductTab } from '@admin/types/product'
+import type { ProductTab, ProductFormModel } from '@admin/types/product'
 import { ProductRepository, type ProductDto } from '@admin/repositories/ProductRepository'
 // (options UI moved to ProductOptions)
 import { uiLoading } from '@admin/shared/uiLoading'
 import { CategoryRepository, type CategoryDto } from '@admin/repositories/CategoryRepository'
 import { ProductCategoryRepository } from '@admin/repositories/ProductCategoryRepository'
 import { OptionRepository } from '@admin/repositories/OptionRepository'
-import { OptionValueRepository } from '@admin/repositories/OptionValueRepository'
+import { toNum } from '@admin/utils/num'
 
 const tabs = computed<ProductTab[]>(() => {
   const baseTabs: ProductTab[] = [
@@ -163,7 +163,8 @@ const route = useRoute()
 const router = useRouter()
 const id = computed(() => route.params.id as string)
 const isCreating = computed(() => !id.value || id.value === 'new')
-const activeTab = ref<string>('description')
+type ProductTabValue = 'description' | 'categories' | 'attributes' | 'options' | 'photos'
+const activeTab = ref<ProductTabValue>('description')
 const tabParamKey = 'tab'
 const validTabs = computed(() => new Set(tabs.value.map(t => t.value)))
 
@@ -180,9 +181,6 @@ const canSave = computed(() => {
 const {
   form,
   errors,
-  priceInput,
-  quantityInput,
-  sortOrderInput,
   validateField,
   validateForm,
 } = useProductForm()
@@ -198,29 +196,16 @@ if (!form) {
 const repo = new ProductRepository()
 const categoryRepo = new CategoryRepository()
 const productCategoryRepo = new ProductCategoryRepository()
-// Options bootstrap state
+// Options bootstrap state (lightweight)
 const optionsPrefetched = ref(false)
 const optionRepo = new OptionRepository()
-const optionValueRepo = new OptionValueRepository()
+const prefetchedOptions = ref<any[]>([])
 async function loadOptionsBootstrap() {
   if (optionsPrefetched.value) return
-  await optionRepo.findAll({ itemsPerPage: 500, sort: { sortOrder: 'asc', name: 'asc' } })
-  await optionValueRepo.findAll({ itemsPerPage: 1000, sort: { sortOrder: 'asc', value: 'asc' } })
-  const optionIris = new Set<string>()
-  for (const r of (form as any).optionAssignments ?? []) {
-    if (r?.option && typeof r.option === 'string') optionIris.add(r.option)
-  }
-  if (optionIris.size > 0) {
-    await Promise.all(Array.from(optionIris.values()).map((iri) =>
-      optionValueRepo.findAll({ itemsPerPage: 500, sort: { sortOrder: 'asc', value: 'asc' }, filters: { optionType: iri } })
-    ))
-  }
+  // Загружаем только список опций (легковесно). Значения — по требованию в дочернем компоненте.
+  const data = await optionRepo.findAll({ itemsPerPage: 500, sort: { sortOrder: 'asc', name: 'asc' } }) as any
+  prefetchedOptions.value = (data['hydra:member'] ?? data.member ?? []) as any[]
   optionsPrefetched.value = true
-}
-const toNum = (v: unknown): number | null => {
-  if (v === null || v === undefined || v === '') return null
-  const n = Number(String(v).trim())
-  return Number.isFinite(n) ? n : null
 }
 const hydrateForm = (dto: ProductDto) => {
   Object.assign(form, {
@@ -267,7 +252,7 @@ onMounted(() => {
   // sync tab from URL on load
   const q = route.query?.[tabParamKey]
   if (typeof q === 'string' && validTabs.value.has(q)) {
-    activeTab.value = q
+    activeTab.value = q as ProductTabValue
   }
   loadIfEditing()
 })
@@ -297,7 +282,15 @@ watch(activeTab, (val) => {
 // react to external URL tab changes
 watch(() => route.query[tabParamKey], (val) => {
   if (typeof val === 'string' && validTabs.value.has(val) && val !== activeTab.value) {
-    activeTab.value = val
+    activeTab.value = val as ProductTabValue
+  }
+})
+
+// when available tabs change (e.g., after product type loads), re-apply URL tab if it becomes valid
+watch(tabs, () => {
+  const q = route.query?.[tabParamKey]
+  if (typeof q === 'string' && validTabs.value.has(q) && q !== activeTab.value) {
+    activeTab.value = q as ProductTabValue
   }
 })
 
@@ -399,14 +392,13 @@ async function loadCategoriesBootstrap() {
     selectedCategoryIds.value = new Set(ids)
     mainCategoryId.value = (data.mainCategoryId != null && Number.isFinite(Number(data.mainCategoryId))) ? Number(data.mainCategoryId) : null
     categoriesInitialized.value = true
-    // Успех: скрываем глобальный спиннер
-    uiLoading.stopGlobalLoading()
   } catch {
     // fallback to legacy loaders
     if (!categoriesLoaded.value) await loadCategoriesTree()
     if (!categoriesInitialized.value) await loadProductCategories()
   } finally {
     categoryLoading.value = false
+    uiLoading.stopGlobalLoading()
   }
 }
 
@@ -456,45 +448,9 @@ async function setMainCategory(idNum: number) {
 
 async function saveProductCategories(productNumericId: number | string) {
   const productIri = `/api/products/${productNumericId}`
-  const desiredIds = new Set<number>(selectedCategoryIds.value)
+  const desiredIds = Array.from(new Set<number>(selectedCategoryIds.value))
   const desiredMainId = mainCategoryId.value
-
-  const all = await productCategoryRepo.findAll({ itemsPerPage: 1000, filters: { product: productIri } }) as any
-  const rels = (all['hydra:member'] ?? all.member ?? []) as any[]
-  const byCategory = new Map<number, any>()
-  for (const r of rels) {
-    const cid = Number(r.category?.split('/').pop() || (r as any).categoryId || 0)
-    if (cid) byCategory.set(cid, r)
-  }
-
-  // delete removed
-  for (const [cid, r] of byCategory.entries()) {
-    if (!desiredIds.has(cid) && r?.id) {
-      await productCategoryRepo.delete(r.id)
-    }
-  }
-
-  // update existing isParent
-  for (const [cid, r] of byCategory.entries()) {
-    if (desiredIds.has(cid) && r?.id) {
-      const shouldBeParent = desiredMainId != null && cid === desiredMainId
-      if ((r.isParent ?? false) !== shouldBeParent) {
-        await productCategoryRepo.partialUpdate(r.id, { isParent: shouldBeParent })
-      }
-    }
-  }
-
-  // create new
-  for (const cid of desiredIds.values()) {
-    if (!byCategory.has(cid)) {
-      await productCategoryRepo.create({
-        product: productIri,
-        category: `/api/categories/${cid}`,
-        visibility: true,
-        isParent: desiredMainId != null && cid === desiredMainId,
-      })
-    }
-  }
+  await productCategoryRepo.syncForProduct(productIri, desiredIds, desiredMainId)
 }
 
 const handleSave = async () => {
@@ -509,7 +465,9 @@ const handleSave = async () => {
     activeTab.value = 'description'
     return
   }
-  const result = await saveProduct(id.value, form)
+  const result = await saveProduct(id.value, form, {
+    onValidationError: (violations) => mapViolationsToErrors(violations as any),
+  })
   if (result.success) {
     const newId = (result.result as any)?.id ?? id.value
     // Сохраняем категории, только если они были загружены (чтобы не снести связи без открытия вкладки)
@@ -529,6 +487,15 @@ function publishToast(message: string) {
   toastCount.value++
 }
 const lastToastMessage = ref('')
+
+function mapViolationsToErrors(list: Array<{ propertyPath?: string; message?: string }>) {
+  if (!Array.isArray(list)) return
+  for (const v of list) {
+    const path = String(v?.propertyPath || '').split('.')[0] as keyof ProductFormModel
+    if (!path) continue
+    ;(errors as any)[path] = v?.message || 'Ошибка'
+  }
+}
 </script>
 
 <style scoped></style>

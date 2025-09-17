@@ -1,23 +1,22 @@
 import { ref } from 'vue'
 import type { ProductFormModel } from '@admin/types/product'
 import { ProductRepository, type ProductDto } from '@admin/repositories/ProductRepository'
+import { toInt } from '@admin/utils/num'
+
+type Violation = { propertyPath?: string; message?: string }
+interface SaveOpts {
+  onValidationError?: (violations: Violation[]) => void
+}
 
 export function useProductSave() {
   const saving = ref(false)
   const error = ref<string | null>(null)
   const repo = new ProductRepository()
 
-  const saveProduct = async (id: string, data: ProductFormModel) => {
+  const saveProduct = async (id: string, data: ProductFormModel, opts: SaveOpts = {}) => {
     saving.value = true
     error.value = null
     try {
-      const toInt = (v: unknown): number | null => {
-        if (v === null || v === undefined || v === '') return null
-        const s = String(v).trim().replace(',', '.')
-        const n = Number(s)
-        return Number.isFinite(n) ? Math.trunc(n) : null
-      }
-
       const payload: Partial<ProductDto> = {
         name: data.name || null,
         slug: data.slug || null,
@@ -59,6 +58,11 @@ export function useProductSave() {
       }
       return { success: true, result }
     } catch (err: any) {
+      const status = err?.response?.status
+      const violations = err?.response?.data?.violations || err?.response?.data?.detail?.violations || []
+      if ((status === 400 || status === 422) && Array.isArray(violations) && violations.length && opts.onValidationError) {
+        opts.onValidationError(violations as Violation[])
+      }
       error.value = err instanceof Error ? err.message : 'Ошибка сохранения'
       return { success: false, error: error.value }
     } finally {

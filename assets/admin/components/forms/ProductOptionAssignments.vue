@@ -10,18 +10,27 @@
 		</div>
 
 		<div v-else class="space-y-6">
+            <div v-if="!hasBasePrice && optionCodes.length" class="px-3 py-2 text-xs text-amber-700 bg-amber-50 border rounded">
+                Не выбрана базовая цена вариации — выберите одну запись «Базовая цена»
+            </div>
 			<div v-for="opt in optionCodes" :key="opt" class="rounded-md border">
-				<div class="border-b px-3 py-2 flex items-center justify-between">
-					<div class="text-sm font-medium">{{ optionTitle(opt) }}</div>
+            <div class="border-b px-3 py-2 flex items-center justify-between">
+                    <button type="button" class="text-sm font-medium text-left" @click="toggleCollapsed(opt)">
+                        {{ optionTitle(opt) }} ({{ rowsByOption(opt).length }})
+                        <span class="ml-1 text-xs text-neutral-500">{{ collapsed.has(opt) ? '— раскрыть' : '— свернуть' }}</span>
+                    </button>
 					<button type="button" class="h-8 rounded-md bg-red-600 px-2 text-xs font-medium text-white hover:bg-red-700" @click="removeOption(opt)">Удалить</button>
 				</div>
-				<div class="p-3 space-y-3 text-sm">
+                <div v-if="!collapsed.has(opt)" class="p-3 space-y-3 text-sm will-change-transform">
 					<div class="flex items-center justify-between">
-						<div class="text-xs text-neutral-600">Записи</div>
-						<Button size="sm" @click="addRow(opt)">Добавить</Button>
+                        <div class="text-xs text-neutral-600">Записи</div>
+                        <div class="flex items-center gap-2">
+                            <Button size="sm" @click="addRow(opt)">Добавить</Button>
+                            <Button size="sm" variant="secondary" :disabled="!hasDelta || savingOptions" @click="handleSaveOptions">Сохранить опции</Button>
+                        </div>
 					</div>
 					<div>
-						<div v-if="isOptionValuesLoading(opt)" class="text-neutral-500">Загрузка…</div>
+                        <div v-if="isOptionValuesLoading(opt)" class="text-neutral-500">Загрузка…</div>
 						<table v-else class="w-full text-sm">
 							<thead class="bg-neutral-50 text-neutral-600 dark:bg-neutral-900/40 dark:text-neutral-300">
 								<tr>
@@ -40,9 +49,9 @@
 								</tr>
 							</thead>
 							<tbody>
-								<tr v-for="(row, idx) in rowsByOption(opt)" :key="`${opt}-${idx}`" class="border-t">
+                                <tr v-for="(row, idx) in rowsByOptionWithProxy(opt)" :key="`${opt}-${idx}`" class="border-t">
 									<td class="px-3 py-2">
-										<select v-model="row.value" class="h-9 w-full rounded-md border px-2 text-sm dark:border-neutral-800 dark:bg-neutral-900">
+							<select v-model="row.value" @focus="ensureOptionValuesLoaded(opt)" @mousedown="ensureOptionValuesLoaded(opt)" class="h-9 w-full rounded-md border px-2 text-sm dark:border-neutral-800 dark:bg-neutral-900">
 											<option :value="null">—</option>
 											<option v-for="ov in optionValuesFor(opt)" :key="ov.id" :value="ov['@id']">{{ ov.value }}</option>
 										</select>
@@ -136,39 +145,81 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import Button from '@admin/ui/components/Button.vue'
 import { DialogContent, DialogOverlay, DialogPortal, DialogRoot, DialogTitle } from 'reka-ui'
-import { OptionRepository, type Option } from '@admin/repositories/OptionRepository'
-import { OptionValueRepository, type OptionValue } from '@admin/repositories/OptionValueRepository'
 import type { ProductOptionValueAssignment } from '@admin/types/product'
+import type { Option } from '@admin/repositories/OptionRepository'
+import { useOptionAssignments } from '@admin/composables/useOptionAssignments'
 
-const props = defineProps<{ optionAssignments: ProductOptionValueAssignment[] | null }>()
+const props = defineProps<{ optionAssignments: ProductOptionValueAssignment[] | null; prefetchedOptions?: Option[] | null; productId?: string }>()
 const emit = defineEmits<{ 'update:optionAssignments': [val: ProductOptionValueAssignment[] | null], toast: [message: string] }>()
 
 // Используем ref для локального состояния
-const rows = ref<ProductOptionValueAssignment[]>([])
+const addOptionOpen = ref(false)
+const selectedOptionIri = ref<string>('')
 
-// Синхронизируем с props при изменении
-watch(() => props.optionAssignments, (newAssignments) => {
+const {
+  rows,
+  optionCodes,
+  optionsSorted,
+  optionsLoading,
+  collapsed,
+  hasBasePrice,
+  hasDelta,
+  optionTitle,
+  optionValuesFor,
+  isOptionValuesLoading,
+  ensureOptionValuesLoaded,
+  ensureOption,
+  addRow,
+  removeRow,
+  rowsByOption,
+  toggleCollapsed,
+  setBasePriceForRow,
+  emitRowsUpdate,
+  loadOptions,
+  saveDelta,
+} = useOptionAssignments({
+  initial: computed(() => props.optionAssignments),
+  prefetchedOptions: computed(() => props.prefetchedOptions || null),
+  onUpdate: (val) => emit('update:optionAssignments', val),
+})
 
-    if (newAssignments) {
-        const processedRows = newAssignments.map((row, index) => {
-            const normalized = normalizeSetPrice(row.setPrice)
-            return {
-                ...row,
-                setPrice: normalized
-            }
-        })
+function openAddOption() { addOptionOpen.value = true; void loadOptions() }
+
+// Инициализация из пропсов, если список передан
+// инициализация списка опций по требованию
+function confirmAddOption() {
+    addOptionOpen.value = false
+    if (selectedOptionIri.value) { ensureOption(selectedOptionIri.value); emit('toast', 'Опция добавлена') }
+    selectedOptionIri.value = ''
+}
+function removeOption(optionIri: string) {
+  rows.value = rows.value.filter(r => r.option !== optionIri)
+  emitRowsUpdate()
+}
+function rowsByOptionWithProxy(optionIri: string) {
+    return rowsByOption(optionIri).map(r => withProxies(r))
+}
+// используем removeRow/addRow из composable напрямую в шаблоне
+
+const savingOptions = ref(false)
+async function handleSaveOptions() {
+  if (!props.productId || props.productId === 'new') {
+    emit('toast', 'Сначала сохраните товар')
+    return
+  }
+  if (!hasDelta) return
+  savingOptions.value = true
+  const res = await saveDelta(props.productId)
+  savingOptions.value = false
+  emit('toast', res.success ? 'Опции сохранены' : (res.message || 'Ошибка сохранения опций'))
+}
 
 
-        rows.value = processedRows
-    } else {
-        rows.value = []
-    }
-}, { immediate: true })
-
-// Функция для надежной нормализации setPrice
+type RowProxy = ProductOptionValueAssignment & { heightStr: string; bulbsCountStr: string; priceStr: string; setPrice: boolean | null; salePriceStr: string; lightingAreaStr: string; quantityStr: string; sortOrderStr: string }
+const proxyCache = new WeakMap<ProductOptionValueAssignment, RowProxy>()
 function normalizeSetPrice(value: any): boolean {
     if (value === null || value === undefined) return false
     if (typeof value === 'boolean') return value
@@ -176,241 +227,77 @@ function normalizeSetPrice(value: any): boolean {
     if (typeof value === 'string') return value === '1' || value.toLowerCase() === 'true'
     return Boolean(value)
 }
-
-// Эмитим изменения при обновлении rows
-watch(rows, (newRows) => {
-    emit('update:optionAssignments', newRows)
-}, { deep: true })
-
-const optionCodes = computed<string[]>(() => {
-    const set = new Set<string>()
-    for (const r of rows.value) if (r.option) set.add(r.option)
-    const arr = Array.from(set.values())
-    const getOrder = (iri: string): number => {
-        const found = optionsSorted.value.find(o => (o as any)['@id'] === iri) as any
-        const so = found?.sortOrder
-        return typeof so === 'number' ? so : Number.POSITIVE_INFINITY
-    }
-    const getName = (iri: string): string => {
-        const found = optionsSorted.value.find(o => (o as any)['@id'] === iri) as any
-        return String(found?.name || optionNameByIri.get(iri) || iri.split('/').pop() || '')
-    }
-    arr.sort((a, b) => {
-        const ao = getOrder(a), bo = getOrder(b)
-        if (ao !== bo) return ao - bo
-        return getName(a).localeCompare(getName(b))
-    })
-    return arr
-})
-
-const addOptionOpen = ref(false)
-const selectedOptionIri = ref<string>('')
-const optionRepo = new OptionRepository()
-const optionValueRepo = new OptionValueRepository()
-const optionsList = ref<Option[]>([] as any)
-const optionsLoading = ref(false)
-const optionsSorted = computed(() => {
-    const list = (optionsList.value || ([] as any)).slice()
-    list.sort((a: any, b: any) => {
-        const ao = (a as any).sortOrder ?? null
-        const bo = (b as any).sortOrder ?? null
-        if (ao != null && bo != null) return ao - bo
-        if (ao != null) return -1
-        if (bo != null) return 1
-        return String(a.name || '').localeCompare(String(b.name || ''))
-    })
-    return list
-})
-
-// Cache для заголовков по IRI
-const optionNameByIri = new Map<string, string>()
-const optionMetaLoading = ref<Set<string>>(new Set())
-async function ensureOptionMeta(optionIri: string) {
-    if (!optionIri || optionNameByIri.has(optionIri) || optionMetaLoading.value.has(optionIri)) return
-    const next = new Set(optionMetaLoading.value); next.add(optionIri); optionMetaLoading.value = next
-    try {
-        const inList = optionsSorted.value.find(o => (o as any)['@id'] === optionIri)
-        if (inList && (inList as any).name) {
-            optionNameByIri.set(optionIri, String((inList as any).name))
-            return
-        }
-        const id = Number(String(optionIri).split('/').pop())
-        if (Number.isFinite(id) && id > 0) {
-            const dto: any = await optionRepo.findById(id)
-            const name = (dto?.name ?? null) as any
-            if (name) optionNameByIri.set(optionIri, String(name))
-        }
-    } finally {
-        const n2 = new Set(optionMetaLoading.value); n2.delete(optionIri); optionMetaLoading.value = n2
-    }
-}
-
-function openAddOption() {
-    addOptionOpen.value = true
-    if (optionsList.value.length === 0) void loadOptions()
-}
-async function loadOptions() {
-    optionsLoading.value = true
-    try {
-        const data = await optionRepo.findAll({ itemsPerPage: 500, sort: { sortOrder: 'asc', name: 'asc' } }) as any
-        const collection = (data['hydra:member'] ?? data.member ?? []) as any
-        optionsList.value = collection as any
-    } finally {
-        optionsLoading.value = false
-    }
-}
-function confirmAddOption() {
-    addOptionOpen.value = false
-    if (selectedOptionIri.value) {
-        ensureOption(selectedOptionIri.value)
-        emit('toast', 'Опция добавлена')
-    }
-    selectedOptionIri.value = ''
-}
-
-// Values cache per option
-const optionIdToValues = new Map<string, OptionValue[]>()
-const optionValuesLoading = ref<Set<string>>(new Set())
-function isOptionValuesLoading(optionIri: string): boolean { return optionValuesLoading.value.has(optionIri) }
-function optionTitle(optionIri: string): string {
-    const cached = optionNameByIri.get(optionIri)
-    if (cached) return cached
-    const found = optionsSorted.value.find(o => (o as any)['@id'] === optionIri)
-    if (found?.name) {
-        const name = String(found.name)
-        optionNameByIri.set(optionIri, name)
-        return name
-    }
-    // лениво подтянем имя
-    void ensureOptionMeta(optionIri)
-    return `Опция ${optionIri?.split('/').pop()}`
-}
-function optionValuesFor(optionIri: string): OptionValue[] {
-    if (!optionIdToValues.has(optionIri)) {
-        void loadOptionValues(optionIri)
-        return []
-    }
-    return optionIdToValues.get(optionIri) || []
-}
-async function loadOptionValues(optionIri: string) {
-    if (!optionIri || optionIdToValues.has(optionIri) || optionValuesLoading.value.has(optionIri)) return
-    const next = new Set(optionValuesLoading.value); next.add(optionIri); optionValuesLoading.value = next
-    try {
-        const all = await optionValueRepo.findAll({ itemsPerPage: 500, sort: { sortOrder: 'asc', value: 'asc' }, filters: { optionType: optionIri } }) as any
-        const list = (all['hydra:member'] ?? all.member ?? []) as any
-        optionIdToValues.set(optionIri, list as any)
-    } finally {
-        const next2 = new Set(optionValuesLoading.value); next2.delete(optionIri); optionValuesLoading.value = next2
-    }
-}
-
-function ensureOption(optionIri: string) {
-    void loadOptionValues(optionIri)
-    if (!rows.value.some(r => r.option === optionIri)) {
-        rows.value = [...rows.value, { option: optionIri, value: null, height: null, bulbsCount: null, sku: null, originalSku: null, price: null, setPrice: false, salePrice: null, lightingArea: null, sortOrder: null }]
-    }
-    void ensureOptionMeta(optionIri)
-}
-function removeOption(optionIri: string) {
-    rows.value = rows.value.filter(r => r.option !== optionIri)
-}
-function rowsByOption(optionIri: string) {
-    return rows.value.filter(r => r.option === optionIri).map(r => withProxies(r))
-}
-function addRow(optionIri: string) {
-    const next = rows.value.slice()
-    next.push({ option: optionIri, value: null, height: null, bulbsCount: null, sku: null, originalSku: null, price: null, setPrice: false, salePrice: null, lightingArea: null, sortOrder: null })
-    rows.value = next
-}
-function removeRow(optionIri: string, idx: number) {
-    let seen = -1
-    rows.value = rows.value.filter(r => {
-        if (r.option !== optionIri) return true
-        seen++
-        return seen !== idx
-    })
-}
-
-
-type RowProxy = ProductOptionValueAssignment & { heightStr: string; bulbsCountStr: string; priceStr: string; setPrice: boolean | null; salePriceStr: string; lightingAreaStr: string; quantityStr: string; sortOrderStr: string }
 function withProxies(row: ProductOptionValueAssignment): RowProxy {
+    const cached = proxyCache.get(row)
+    if (cached) return cached
     const normalize = (n: number | null | undefined): string => (n == null ? '' : String(n))
     const proxy: any = {}
     // pass-through fields used in template with v-model
     Object.defineProperties(proxy, {
         value: {
             get() { return row.value },
-            set(v: string | null) { row.value = v },
+            set(v: string | null) { row.value = v; emitRowsUpdate() },
             enumerable: true,
         },
         sku: {
             get() { return row.sku as any },
-            set(v: string | null) { row.sku = v },
+            set(v: string | null) { row.sku = v; emitRowsUpdate() },
             enumerable: true,
         },
         originalSku: {
             get() { return (row as any).originalSku as any },
-            set(v: string | null) { (row as any).originalSku = v },
+            set(v: string | null) { (row as any).originalSku = v; emitRowsUpdate() },
             enumerable: true,
         },
         option: {
             get() { return row.option },
-            set(v: string) { row.option = v },
+            set(v: string) { row.option = v; emitRowsUpdate() },
             enumerable: true,
         },
         heightStr: {
             get() { return normalize(row.height as any) },
-            set(v: string) { row.height = v === '' ? null : Number(v) },
+            set(v: string) { row.height = v === '' ? null : Number(v); emitRowsUpdate() },
             enumerable: true,
         },
         bulbsCountStr: {
             get() { return normalize(row.bulbsCount as any) },
-            set(v: string) { row.bulbsCount = v === '' ? null : Number(v) },
+            set(v: string) { row.bulbsCount = v === '' ? null : Number(v); emitRowsUpdate() },
             enumerable: true,
         },
         priceStr: {
             get() { return normalize(row.price as any) },
-            set(v: string) { row.price = v === '' ? null : Number(v) },
+            set(v: string) { row.price = v === '' ? null : Number(v); emitRowsUpdate() },
             enumerable: true,
         },
         setPrice: {
             get() { return normalizeSetPrice((row as any).setPrice) },
-            set(v: boolean | null) {
-                (row as any).setPrice = v
-
-                // Если устанавливаем true, снимаем setPrice со всех остальных записей товара
-                if (v === true) {
-                    rows.value.forEach(r => {
-                        if (r !== row) {
-                            (r as any).setPrice = false
-                        }
-                    })
-                }
-            },
+            set(v: boolean | null) { setBasePriceForRow(row, v) },
             enumerable: true,
         },
         salePriceStr: {
             get() { return normalize((row as any).salePrice as any) },
-            set(v: string) { (row as any).salePrice = v === '' ? null : Number(v) },
+            set(v: string) { (row as any).salePrice = v === '' ? null : Number(v); emitRowsUpdate() },
             enumerable: true,
         },
         lightingAreaStr: {
             get() { return normalize(row.lightingArea as any) },
-            set(v: string) { row.lightingArea = v === '' ? null : Number(v) },
+            set(v: string) { row.lightingArea = v === '' ? null : Number(v); emitRowsUpdate() },
             enumerable: true,
         },
         quantityStr: {
             get() { return normalize(row.quantity as any) },
-            set(v: string) { row.quantity = v === '' ? null : Number(v) },
+            set(v: string) { row.quantity = v === '' ? null : Number(v); emitRowsUpdate() },
             enumerable: true,
         },
         sortOrderStr: {
             get() { return normalize((row as any).sortOrder as any) },
-            set(v: string) { (row as any).sortOrder = v === '' ? null : Number(v) },
+            set(v: string) { (row as any).sortOrder = v === '' ? null : Number(v); emitRowsUpdate() },
             enumerable: true,
         },
     })
-    return proxy as RowProxy
+    const proxied = proxy as RowProxy
+    proxyCache.set(row, proxied)
+    return proxied
 }
 </script>
 
