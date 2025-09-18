@@ -107,7 +107,15 @@
       </TabsContent>
 
       <TabsContent value="options" class="pt-6">
-        <ProductOptionAssignments v-if="activeTab === 'options'" :option-assignments="form.optionAssignments" :option-values-map="{}" :option-names-map="{}" />
+        <ProductOptionAssignments
+          v-if="activeTab === 'options'"
+          :option-assignments="form.optionAssignments"
+          :option-values-map="{}"
+          :option-names-map="{}"
+          @remove-option="handleRemoveOption"
+          @add-option="handleAddOption"
+          @remove-assignment="handleRemoveAssignment"
+        />
       </TabsContent>
 
       <TabsContent value="photos" class="pt-6">
@@ -487,6 +495,94 @@ function publishToast(message: string) {
   toastCount.value++
 }
 const lastToastMessage = ref('')
+
+async function handleRemoveOption(optionIri: string) {
+  // Обновляем локальную форму (UI моментально)
+  if (Array.isArray(form.optionAssignments)) {
+    form.optionAssignments = form.optionAssignments.filter(a => a.option !== optionIri)
+  }
+
+  // Отправляем PATCH на /v2/products/{id} с обновленным optionAssignments
+  try {
+    const productId = id.value
+    if (!productId) return
+    const payloadRows = Array.isArray(form.optionAssignments)
+      ? (form.optionAssignments as any[]).filter(r => r && typeof r.option === 'string' && typeof r.value === 'string' && r.option && r.value)
+      : []
+    const res = await repo.partialUpdate(String(productId), { optionAssignments: payloadRows as any })
+    if ((res as any)?.optionAssignments) {
+      ;(form as any).optionAssignments = (res as any).optionAssignments
+    }
+    publishToast('Опция удалена у товара')
+  } catch (e) {
+    publishToast('Ошибка удаления опции')
+  }
+}
+
+async function handleAddOption(payload: any) {
+  // payload может быть как IRI опции, так и объект новой строки
+  const row = typeof payload === 'string'
+    ? {
+        option: payload,
+        value: null,
+        height: null,
+        bulbsCount: null,
+        sku: null,
+        originalSku: null,
+        price: null,
+        setPrice: false,
+        salePrice: null,
+        lightingArea: null,
+        sortOrder: null,
+        quantity: null,
+        attributes: null,
+      }
+    : payload
+
+  if (!Array.isArray(form.optionAssignments)) {
+    ;(form as any).optionAssignments = []
+  }
+  if ((row as any).__editOf) {
+    const target = (row as any).__editOf
+    const idx = (form.optionAssignments as any[]).indexOf(target)
+    if (idx >= 0) (form.optionAssignments as any[])[idx] = { ...target, ...row }
+    delete (row as any).__editOf
+  } else {
+    ;(form.optionAssignments as any[]).push(row)
+  }
+
+  try {
+    const productId = id.value
+    if (!productId) return
+    const payloadRows = (form.optionAssignments as any[]).filter(r => r && typeof r.option === 'string' && typeof r.value === 'string' && r.option && r.value)
+    const res = await repo.partialUpdate(String(productId), { optionAssignments: payloadRows as any })
+    if ((res as any)?.optionAssignments) {
+      ;(form as any).optionAssignments = (res as any).optionAssignments
+    }
+    publishToast('Опция/значение сохранены')
+  } catch (e) {
+    publishToast('Ошибка добавления опции')
+  }
+}
+
+async function handleRemoveAssignment(row: any) {
+  if (!Array.isArray(form.optionAssignments)) return
+  const idx = (form.optionAssignments as any[]).indexOf(row)
+  if (idx >= 0) (form.optionAssignments as any[]).splice(idx, 1)
+
+  try {
+    const productId = id.value
+    if (!productId) return
+    const payloadRows = (form.optionAssignments as any[]).filter(r => r && typeof r.option === 'string' && typeof r.value === 'string' && r.option && r.value)
+    const res = await repo.partialUpdate(String(productId), { optionAssignments: payloadRows as any })
+    if ((res as any)?.optionAssignments) {
+      ;(form as any).optionAssignments = (res as any).optionAssignments
+    }
+    publishToast('Значение опции удалено')
+  } catch (e) {
+    publishToast('Ошибка удаления значения опции')
+  }
+}
 
 function mapViolationsToErrors(list: Array<{ propertyPath?: string; message?: string }>) {
   if (!Array.isArray(list)) return
