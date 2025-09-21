@@ -170,8 +170,6 @@ php bin/console app:images:cache:warmup --batch-size=3 --parallel=2
 find public/media/cache -name "*.jpg" | wc -l
 ```
 
-**Happy coding! 🚀**
-
 ---
 
 *Создано для оптимизации работы с изображениями в Symfony проектах*
