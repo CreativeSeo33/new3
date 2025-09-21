@@ -26,6 +26,10 @@ export class OptionRepository extends BaseRepository<Option> {
     adminCache.set(key, version, data);
     return data;
   }
+
+  invalidatePersistentCache(): void {
+    adminCache.clear('options:');
+  }
 }
 
 

@@ -1,5 +1,5 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios';
-import { uiLoading } from '@admin/shared/uiLoading'
+import { uiLoading } from '../shared/uiLoading'
 
 function isStreamRequest(cfg: AxiosRequestConfig): boolean {
   const headers: any = cfg.headers as any
@@ -112,6 +112,36 @@ export class HttpClient {
 
   async delete<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
     return this.instance.delete(url, config);
+  }
+
+  // Convenience helpers for endpoints returning plain JSON (non-Hydra)
+  private withAccept(config: AxiosRequestConfig | undefined, accept: string): AxiosRequestConfig {
+    const headers: any = (config?.headers && typeof (config.headers as any).set !== 'function')
+      ? { ...(config?.headers as any) }
+      : {} as any
+    headers['Accept'] = accept
+    const next: AxiosRequestConfig = { ...(config || {}), headers }
+    return next
+  }
+
+  async getJson<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    return this.instance.get(url, this.withAccept(config, 'application/json'))
+  }
+
+  async postJson<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    return this.instance.post(url, data, this.withAccept(config, 'application/json'))
+  }
+
+  async putJson<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    return this.instance.put(url, data, this.withAccept(config, 'application/json'))
+  }
+
+  async patchJson<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    return this.instance.patch(url, data, this.withAccept(config, 'application/json'))
+  }
+
+  async deleteJson<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    return this.instance.delete(url, this.withAccept(config, 'application/json'))
   }
 }
 

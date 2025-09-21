@@ -43,6 +43,12 @@ export abstract class BaseRepository<T extends ApiResource> {
     }
   }
 
+  // Hook for subclasses to invalidate persistent caches (e.g., localStorage-based caches)
+  // Default is no-op; repositories using adminCache should override this.
+  // Called after any mutation (create/update/patch/delete/bulkDelete).
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  protected invalidatePersistentCache(): void {}
+
   protected buildQueryString(options: CrudOptions = {}): string {
     const params = new URLSearchParams();
 
@@ -89,7 +95,7 @@ export abstract class BaseRepository<T extends ApiResource> {
     if (cached) return cached;
     const abs = this.buildAbsoluteUrl(relativeUrl);
     const promise = this.http
-      .get<R>(relativeUrl)
+      .getJson<R>(relativeUrl)
       .then((r) => r.data as R)
       .catch((e) => {
         GET_CACHE.delete(abs);
@@ -117,12 +123,14 @@ export abstract class BaseRepository<T extends ApiResource> {
   async create(data: Partial<T>): Promise<T> {
     const response = await this.http.post<T>(this.resourcePath, data);
     this.invalidateCache();
+    this.invalidatePersistentCache();
     return response.data;
   }
 
   async update(id: string | number, data: Partial<T>): Promise<T> {
     const response = await this.http.put<T>(`${this.resourcePath}/${id}`, data);
     this.invalidateCache();
+    this.invalidatePersistentCache();
     return response.data;
   }
 
@@ -131,17 +139,20 @@ export abstract class BaseRepository<T extends ApiResource> {
       headers: { 'Content-Type': 'application/merge-patch+json' },
     } as any);
     this.invalidateCache();
+    this.invalidatePersistentCache();
     return response.data;
   }
 
   async delete(id: string | number): Promise<void> {
     await this.http.delete(`${this.resourcePath}/${id}`);
     this.invalidateCache();
+    this.invalidatePersistentCache();
   }
 
   async bulkDelete(ids: Array<string | number>): Promise<void> {
     await Promise.all(ids.map((id) => this.delete(id)));
     this.invalidateCache();
+    this.invalidatePersistentCache();
   }
 }
 

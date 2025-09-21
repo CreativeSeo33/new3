@@ -35,6 +35,10 @@ export class CategoryRepository extends BaseRepository<CategoryDto> {
     adminCache.set(key, version, data);
     return data;
   }
+
+  invalidatePersistentCache(): void {
+    adminCache.clear('categories:');
+  }
 }
 
 

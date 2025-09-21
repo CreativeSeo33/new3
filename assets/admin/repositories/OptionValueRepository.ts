@@ -44,6 +44,10 @@ export class OptionValueRepository extends BaseRepository<OptionValue> {
     adminCache.set(key, version, data)
     return data
   }
+
+  invalidatePersistentCache(): void {
+    adminCache.clear('option_values:');
+  }
 }
 
 

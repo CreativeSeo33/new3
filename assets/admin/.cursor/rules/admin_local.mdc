@@ -10,7 +10,121 @@ description: Локальные правила для Admin SPA (Vue/Tailwind) �
 - @projectrules.mdc — обязанности фронта/бэка, коммуникация через API
 - @hardcoderules.mdc — запрет хардкодов/конфигурация
 
-Примечания
-- Новые admin‑страницы добавляются только через Vue Router.
-- TailwindCSS, строгий TypeScript, сборка через Webpack Encore.
+## Назначение
+Жесткие локальные правила для разработки в Admin SPA (`assets/admin/**`): создание новых страниц (views), сущностей (DTO/типы), репозиториев и обращений к API. Авто‑подключаются в папке админки. Следовать без отступлений.
+
+## Инварианты
+- Все HTTP‑запросы только через `@admin/services/http` (Axios, `HttpClient`). В компонентах не использовать `fetch` напрямую.
+- Для каждого ресурса — свой `Repository extends BaseRepository<T>` в `assets/admin/repositories/**`. Мутации обязаны вызывать инвалидацию кэша.
+- Списки и детали ресурса — через `useCrud<T>(repository)` с Hydra‑распаковкой (`hydra:member`, `hydra:totalItems`).
+- Пагинация/сортировки/фильтры — только параметрами запроса к API Platform. Размеры страниц — из `getPaginationConfig(scope)`.
+- Кэширование: GET in‑memory TTL (60s) — в `BaseRepository`; для справочников — persistent‑кэш (`adminCache`, 24h, versioned). После create/update/delete — инвалидация соответствующего кэша.
+- Авторизация: `Authorization: Bearer <token>` — автоматически в `HttpClient`. 401 — сброс токена. Не дублировать в коде страниц.
+- Глобальный лоадер: включается перехватчиками `HttpClient`. Не вводить локальные спиннеры поверх глобального для стандартных запросов.
+
+## Шаблон: новая страница (View)
+1) Файл: `assets/admin/views/<Name>.vue`.
+2) Маршрут: добавить в `assets/admin/router/modules/admin.ts` под корневой layout:
+   - `name` в стиле `admin-<kebab>`,
+   - `meta: { requiresAuth: true }`,
+   - при необходимости добавить пункт в `adminSidebarItems`.
+3) Страница‑список:
+   - Использовать `useCrud(repository)`; вызывать `fetchAll({ page, itemsPerPage, sort, filters })`.
+   - Опции пагинации — из `getPaginationConfig('<scope>')`. Значения выводить через `Pagination.vue`.
+   - Ошибки/лоадинг — из `crud.state`.
+4) Страница‑форма:
+   - Нормализация числовых полей (см. `@admin/utils/num`), валидации на уровне UX.
+   - Сохранение через `repository.partialUpdate(id, payload)` или `repository.create(payload)`.
+   - Для валидаций 400/422 — читать `violations` и отображать поля.
+
+Мини‑скелет View (пример списка):
+```vue
+<script setup lang="ts">
+import { onMounted } from 'vue'
+import Card from '@admin/ui/components/Card.vue'
+import Pagination from '@admin/ui/components/Pagination.vue'
+import { useCrud } from '@admin/composables/useCrud'
+import { ExampleRepository, type ExampleDto } from '@admin/repositories/ExampleRepository'
+import { getPaginationConfig } from '@admin/services/config'
+
+const repo = new ExampleRepository()
+const crud = useCrud<ExampleDto>(repo)
+const state = crud.state
+
+onMounted(async () => {
+  const cfg = await getPaginationConfig('admin-examples')
+  await crud.fetchAll({ itemsPerPage: cfg.defaultItemsPerPage })
+})
+</script>
+```
+
+## Шаблон: новый ресурс/API (Repository)
+1) Файл: `assets/admin/repositories/<Entity>Repository.ts`.
+2) Интерфейс DTO: `export interface <Entity>Dto extends ApiResource { ... }`.
+3) Базовый класс:
+   - `export class <Entity>Repository extends BaseRepository<<Entity>Dto> { constructor() { super('/<api_path>') } }`.
+   - Для админских URI, начинающихся с `/admin/...`, указывать полный путь (HttpClient добавит `/api`).
+4) Справочники/длинные коллекции — добавить `findAllCached()` с `adminCache` (24h) и метод `invalidatePersistentCache()`.
+5) Не переопределять `GET`‑кэш без необходимости; мутации (create/update/patch/delete) должны вызывать `this.invalidateCache()` (это уже делается в `BaseRepository`).
+
+Мини‑скелет Repository:
+```ts
+import type { ApiResource, HydraCollection } from '@admin/types/api'
+import { BaseRepository } from './BaseRepository'
+import { adminCache } from '@admin/utils/persistentCache'
+
+export interface ExampleDto extends ApiResource {
+  id: number
+  name: string | null
+}
+
+export class ExampleRepository extends BaseRepository<ExampleDto> {
+  constructor() { super('/examples') }
+
+  async findAllCached(): Promise<HydraCollection<ExampleDto>> {
+    const key = 'examples:all', version = 'v1', ttl = 24 * 60 * 60 * 1000
+    const cached = adminCache.get<HydraCollection<ExampleDto>>(key, version, ttl)
+    if (cached) return cached
+    const data = await this.findAll({ itemsPerPage: 1000, sort: { name: 'asc' } })
+    adminCache.set(key, version, data)
+    return data
+  }
+
+  invalidatePersistentCache(): void { adminCache.clear('examples:') }
+}
+```
+
+## Правила для типов/DTO
+- Типы сущностей — в файлах репозиториев либо в `assets/admin/types/**`, если используется в нескольких местах.
+- Все типы строго типизированы; `any` запрещен без обоснования.
+- Имена: интерфейсы `<Entity>Dto`, формы `<Entity>Form`, перечисления — PascalCase.
+
+## Пагинация/фильтры/сортировки
+- Источник истинных значений — ответы API Platform (`hydra:view`, `hydra:totalItems`).
+- На фронте синхронизировать только UI‑состояние; лимиты — из `getPaginationConfig(scope)`.
+- В репозиториях сортировки передавать как `order[field]=asc|desc` (реализовано в `BaseRepository`).
+
+## Ошибки и UX
+- Ошибки нормализует `HttpClient` (Hydra `hydra:description` → `Error.message`). Не парсить тело ответа вручную.
+- Для 400/422 — прокидывать `violations` в форму и подсветку полей.
+- Тосты/уведомления — локально на странице; глобальный оверлей показывает перехватчик.
+
+## Запрещено
+- Использовать `fetch` в компонентах/композаблах для ресурсных операций (кроме редких служебных, которые нужно обернуть в Repository).
+- Хардкодить URL/лимиты/таймауты/бизнес‑константы (см. @hardcoderules.mdc). Значения — из ENV/конфига/сервера.
+- Дублировать логику кэширования, уже реализованную в `BaseRepository`/`adminCache`.
+
+## Чек‑лист при добавлении ресурса
+- Создан `Repository` и `Dto`; путь API проверен.
+- Список — через `useCrud`, форма — через `create/partialUpdate`.
+- Пагинация — через `getPaginationConfig`; UI — `Pagination.vue`.
+- Инвалидация кэша — для мутаций; для справочников — метод `invalidatePersistentCache()`.
+- Маршруты и пункты сайдбара добавлены при необходимости.
+
+## Связанные правила/ссылки
+- @ai_context.mdc
+- @rules_authoring_policy.mdc
+- @hardcoderules.mdc
+- @paginationapiplatformmapping.mdc
+- @projectrules.mdc
 
