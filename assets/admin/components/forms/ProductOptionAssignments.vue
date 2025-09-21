@@ -15,19 +15,19 @@
 		</div>
 
 		<div v-else class="space-y-6">
-			<div v-for="(rows, optIri) in grouped" :key="optIri as string" class="rounded-md border">
+			<div v-for="g in groupedSorted" :key="g.optIri" class="rounded-md border">
 				<div class="border-b px-3 py-2 text-sm font-medium flex items-center justify-between">
-					<span>{{ optionNameLabel(optIri as string) }}</span>
+					<span>{{ optionNameLabel(g.optIri) }}</span>
 					<div class="flex items-center gap-2">
 						<button
-							@click="openAddValueModal(optIri as string)"
+							@click="openAddValueModal(g.optIri)"
 							class="text-xs px-2 py-1 rounded border bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800"
 							title="Добавить значение"
 						>
 							Добавить значение
 						</button>
 						<button
-							@click="emit('removeOption', optIri as string)"
+							@click="emit('removeOption', g.optIri)"
 							class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 text-xs px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
 							title="Удалить опцию"
 						>
@@ -54,7 +54,7 @@
 							</tr>
 						</thead>
 						<tbody>
-							<tr v-for="(r, idx) in rows" :key="idx" class="border-t">
+							<tr v-for="(r, idx) in g.rows" :key="idx" class="border-t">
 								<td class="px-3 py-2">{{ iriLabel(r.value) || '—' }}</td>
 								<td class="px-3 py-2">{{ fmtNum(r.height) }}</td>
 								<td class="px-3 py-2">{{ fmtNum(r.bulbsCount) }}</td>
@@ -69,7 +69,7 @@
 								<td class="px-3 py-2">
 									<button
 										class="mr-2 text-xs px-2 py-1 rounded border bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800"
-										@click="openEditValueModal(optIri as string, r)"
+										@click="openEditValueModal(g.optIri, r)"
 										title="Редактировать"
 									>
 										Редактировать
@@ -239,7 +239,18 @@ const addModalOpen = ref(false)
 const modalLoading = ref(false)
 const selectedOptionIri = ref<string>('')
 const selectedValueIri = ref<string>('')
-const modalOptions = computed<Option[]>(() => options.value)
+const modalOptions = computed<Option[]>(() => {
+	const list = (options.value || ([] as Option[])).slice()
+	list.sort((a: any, b: any) => {
+		const ao = (a as any).sortOrder ?? null
+		const bo = (b as any).sortOrder ?? null
+		if (ao != null && bo != null) return ao - bo
+		if (ao != null) return -1
+		if (bo != null) return 1
+		return String(a?.name || '').localeCompare(String(b?.name || ''))
+	})
+	return list as Option[]
+})
 
 // Локальный кеш (reactive) для быстрого поиска названий опций
 const optionsNameCache = reactive(new Map<string, string>())
@@ -513,6 +524,26 @@ const grouped = computed<Record<string, OptionRow[]>>(() => {
 	}
 	return map
 })
+
+// Сортировка групп опций по Option.sortOrder (падение к имени)
+const groupedSorted = computed<Array<{ optIri: string; rows: OptionRow[] }>>(() => {
+	const entries = Object.entries(grouped.value).map(([optIri, rows]) => ({ optIri, rows }))
+	entries.sort((a, b) => {
+		const ao = getOptionSortOrder(a.optIri)
+		const bo = getOptionSortOrder(b.optIri)
+		if (Number.isFinite(ao) && Number.isFinite(bo)) return ao - bo
+		if (Number.isFinite(ao)) return -1
+		if (Number.isFinite(bo)) return 1
+		return optionNameLabel(a.optIri).localeCompare(optionNameLabel(b.optIri))
+	})
+	return entries
+})
+
+function getOptionSortOrder(optionIri: string): number {
+	const found = (options.value || ([] as Option[])).find(o => (o as any)['@id'] === optionIri) as any
+	const so = found?.sortOrder
+	return typeof so === 'number' ? so : Number.POSITIVE_INFINITY
+}
 
 function optionNameLabel(iri?: string | null): string {
 	if (!iri) return ''

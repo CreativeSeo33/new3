@@ -2,7 +2,14 @@
   <div class="space-y-6">
     <div class="flex items-center justify-between">
       <h1 class="text-xl font-semibold">
-        {{ isCreating ? 'Новый товар' : `Товар #${id}` }}
+        {{ isCreating ? 'Новый товар' : (form.name || `Товар #${id}`) }}
+        <a
+          v-if="!isCreating && form.slug"
+          :href="'/product/' + form.slug"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="ml-3 text-sm font-normal text-blue-600 hover:underline"
+        >Открыть в каталоге</a>
       </h1>
       <div class="flex gap-2">
         <Button variant="secondary" :disabled="!canSave" @click="handleSave">Сохранить</Button>

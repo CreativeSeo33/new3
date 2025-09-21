@@ -53,7 +53,40 @@
       </DialogRoot>
     </div>
 
-    <div class="mb-2 text-sm font-medium">Текущие фото товара</div>
+    <div class="mb-2 flex items-center justify-between">
+      <div class="text-sm font-medium">Текущие фото товара</div>
+      <div v-if="!isCreating && productImages.length">
+        <AlertDialogRoot v-model:open="bulkDeleteDialogOpen">
+          <AlertDialogTrigger as-child>
+            <button
+              class="px-3 py-1.5 text-xs rounded border border-red-300 text-red-600 hover:bg-red-50 disabled:opacity-50"
+              :disabled="productImagesLoading || bulkDeleting || !productImages.length"
+            >Удалить все фото</button>
+          </AlertDialogTrigger>
+          <AlertDialogOverlay class="fixed inset-0 bg-black/40 z-[9998]" />
+          <AlertDialogContent class="fixed left-1/2 top-1/2 w-[90vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-md bg-white p-0 shadow-lg focus:outline-none z-[9999]">
+            <div class="px-4 py-3 border-b">
+              <AlertDialogTitle class="text-base font-medium">Удалить все фото?</AlertDialogTitle>
+            </div>
+            <div class="p-4 text-sm text-neutral-700">
+              Будут удалены {{ productImages.length }} фото. Действие необратимо.
+            </div>
+            <div class="flex items-center justify-end gap-2 px-4 py-3 border-t">
+              <AlertDialogCancel as-child>
+                <button class="px-3 py-1.5 text-sm rounded border">Отмена</button>
+              </AlertDialogCancel>
+              <AlertDialogAction as-child>
+                <button
+                  class="px-3 py-1.5 text-sm rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                  :disabled="bulkDeleting"
+                  @click="performBulkDelete"
+                >Удалить</button>
+              </AlertDialogAction>
+            </div>
+          </AlertDialogContent>
+        </AlertDialogRoot>
+      </div>
+    </div>
     <div v-if="isCreating">
       <div class="text-sm text-neutral-600">
         Вы можете выбрать изображения сейчас — они будут автоматически добавлены после первого сохранения товара.
@@ -111,6 +144,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import Button from '@admin/ui/components/Button.vue'
 import Spinner from '@admin/ui/components/Spinner.vue'
 import { DialogClose, DialogContent, DialogOverlay, DialogRoot, DialogTitle, DialogTrigger } from 'reka-ui'
+import { AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogOverlay, AlertDialogRoot, AlertDialogTitle, AlertDialogTrigger } from 'reka-ui'
 
 const props = defineProps<{ productId: string; isCreating: boolean }>()
 const emit = defineEmits<{ (e: 'toast', message: string): void }>()
@@ -228,6 +262,8 @@ const deletingImageIds = ref<Set<number>>(new Set())
 const dragFromIndex = ref<number | null>(null)
 const dragOverIndex = ref<number | null>(null)
 const savingOrder = ref(false)
+const bulkDeleteDialogOpen = ref(false)
+const bulkDeleting = ref(false)
 const hasDuplicateSortOrders = computed(() => {
   const seen = new Set<number>()
   for (const it of productImages.value) {
@@ -434,6 +470,42 @@ async function normalizeOrder() {
   sortedByCurrent.forEach((it, i) => (it.sortOrder = i + 1))
   productImages.value = sortedByCurrent
   await saveImagesOrder(sortedByCurrent.map(it => it.id))
+}
+
+async function deleteAllProductImages() {
+  if (props.isCreating) return
+  const ids = productImages.value.map(it => it.id)
+  if (!ids.length) return
+  bulkDeleting.value = true
+  const set = new Set(deletingImageIds.value)
+  for (const id of ids) set.add(id)
+  deletingImageIds.value = set
+  try {
+    const results = await Promise.allSettled(ids.map(async (id) => {
+      const res = await fetch(`/api/admin/media/product-image/${id}`, { method: 'DELETE', credentials: 'same-origin' })
+      if (!res.ok) throw new Error('Failed')
+    }))
+    const failed = results.filter(r => r.status === 'rejected').length
+    await fetchProductImages()
+    if (failed === 0) {
+      publishToast(`Удалены все изображения (${ids.length})`)
+    } else if (failed === ids.length) {
+      publishToast('Не удалось удалить изображения')
+    } else {
+      publishToast(`Удалены не все изображения: ошибок ${failed}`)
+    }
+  } catch (e: any) {
+    publishToast(e?.message || 'Ошибка пакетного удаления')
+    await fetchProductImages()
+  } finally {
+    deletingImageIds.value = new Set()
+    bulkDeleting.value = false
+  }
+}
+
+async function performBulkDelete() {
+  bulkDeleteDialogOpen.value = false
+  await deleteAllProductImages()
 }
 </script>
 
