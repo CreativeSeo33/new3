@@ -183,9 +183,12 @@ const activeTab = ref<ProductTabValue>('description')
 const tabParamKey = 'tab'
 const validTabs = computed(() => new Set(tabs.value.map(t => t.value)))
 
-// Проверка, является ли товар вариативным без вариаций
+// Проверка, является ли товар вариативным без валидных вариаций (опция+значение)
 const isVariableWithoutVariations = computed(() => {
-  return form?.type === 'variable' && (!form?.optionAssignments || form?.optionAssignments.length === 0)
+  if (form?.type !== 'variable') return false
+  const rows = Array.isArray(form?.optionAssignments) ? (form.optionAssignments as any[]) : []
+  const valid = rows.filter(r => r && typeof r.option === 'string' && r.option && typeof r.value === 'string' && r.value)
+  return valid.length === 0
 })
 
 // Проверка, можно ли сохранить товар
@@ -317,11 +320,14 @@ watch(() => form?.type, (newType, oldType) => {
   }
 })
 
-// watch для управления статусом вариативных товаров без вариаций
+// watch для управления статусом вариативных товаров без валидных вариаций
 watch([() => form?.type, () => form?.optionAssignments], ([newType, newOptionAssignments]) => {
-  // Если товар вариативный без вариаций, автоматически устанавливаем статус в false
-  if (newType === 'variable' && (!newOptionAssignments || newOptionAssignments.length === 0)) {
-    form.status = false
+  if (newType === 'variable') {
+    const rows = Array.isArray(newOptionAssignments) ? (newOptionAssignments as any[]) : []
+    const valid = rows.filter(r => r && typeof r.option === 'string' && r.option && typeof r.value === 'string' && r.value)
+    if (valid.length === 0) {
+      form.status = false
+    }
   }
 }, { deep: true })
 
@@ -469,7 +475,7 @@ async function saveProductCategories(productNumericId: number | string) {
 }
 
 const handleSave = async () => {
-  // Проверяем, что вариативный товар имеет вариации
+  // Проверяем, что вариативный товар имеет хотя бы одну валидную вариацию (опция+значение)
   if (isVariableWithoutVariations.value) {
     publishToast('Невозможно сохранить: вариативный товар должен иметь хотя бы одну вариацию')
     activeTab.value = 'options'
@@ -504,15 +510,15 @@ function publishToast(message: string) {
 const lastToastMessage = ref('')
 
 async function handleRemoveOption(optionIri: string) {
-  // Новые товары (id='new') не могут отправлять PATCH опций до сохранения основного товара
-  if (isCreating.value) {
-    publishToast('Сначала сохраните товар, затем редактируйте опции')
-    return
-  }
-
   // Обновляем локальную форму (UI моментально)
   if (Array.isArray(form.optionAssignments)) {
     form.optionAssignments = form.optionAssignments.filter(a => a.option !== optionIri)
+  }
+
+  // Для нового товара не отправляем PATCH — опции сохранятся вместе с товаром
+  if (isCreating.value) {
+    publishToast('Опция удалена (изменение будет сохранено вместе с товаром)')
+    return
   }
 
   // Отправляем PATCH на /v2/products/{id} с обновленным optionAssignments
@@ -533,12 +539,6 @@ async function handleRemoveOption(optionIri: string) {
 }
 
 async function handleAddOption(payload: any) {
-  // Новые товары (id='new') не могут отправлять PATCH опций до сохранения основного товара
-  if (isCreating.value) {
-    publishToast('Сначала сохраните товар, затем добавляйте опции')
-    return
-  }
-
   // payload может быть как IRI опции, так и объект новой строки
   const row = typeof payload === 'string'
     ? {
@@ -570,6 +570,12 @@ async function handleAddOption(payload: any) {
     ;(form.optionAssignments as any[]).push(row)
   }
 
+  // Для нового товара не отправляем PATCH — опции сохранятся вместе с товаром
+  if (isCreating.value) {
+    publishToast('Опция добавлена (будет сохранена вместе с товаром)')
+    return
+  }
+
   try {
     const productId = id.value
     if (!productId) return
@@ -585,15 +591,15 @@ async function handleAddOption(payload: any) {
 }
 
 async function handleRemoveAssignment(row: any) {
-  // Новые товары (id='new') не могут отправлять PATCH опций до сохранения основного товара
-  if (isCreating.value) {
-    publishToast('Сначала сохраните товар, затем удаляйте вариации')
-    return
-  }
-
   if (!Array.isArray(form.optionAssignments)) return
   const idx = (form.optionAssignments as any[]).indexOf(row)
   if (idx >= 0) (form.optionAssignments as any[]).splice(idx, 1)
+
+  // Для нового товара не отправляем PATCH — опции сохранятся вместе с товаром
+  if (isCreating.value) {
+    publishToast('Вариация удалена (изменение будет сохранено вместе с товаром)')
+    return
+  }
 
   try {
     const productId = id.value
