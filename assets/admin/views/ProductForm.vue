@@ -504,6 +504,12 @@ function publishToast(message: string) {
 const lastToastMessage = ref('')
 
 async function handleRemoveOption(optionIri: string) {
+  // Новые товары (id='new') не могут отправлять PATCH опций до сохранения основного товара
+  if (isCreating.value) {
+    publishToast('Сначала сохраните товар, затем редактируйте опции')
+    return
+  }
+
   // Обновляем локальную форму (UI моментально)
   if (Array.isArray(form.optionAssignments)) {
     form.optionAssignments = form.optionAssignments.filter(a => a.option !== optionIri)
@@ -527,6 +533,12 @@ async function handleRemoveOption(optionIri: string) {
 }
 
 async function handleAddOption(payload: any) {
+  // Новые товары (id='new') не могут отправлять PATCH опций до сохранения основного товара
+  if (isCreating.value) {
+    publishToast('Сначала сохраните товар, затем добавляйте опции')
+    return
+  }
+
   // payload может быть как IRI опции, так и объект новой строки
   const row = typeof payload === 'string'
     ? {
@@ -573,6 +585,12 @@ async function handleAddOption(payload: any) {
 }
 
 async function handleRemoveAssignment(row: any) {
+  // Новые товары (id='new') не могут отправлять PATCH опций до сохранения основного товара
+  if (isCreating.value) {
+    publishToast('Сначала сохраните товар, затем удаляйте вариации')
+    return
+  }
+
   if (!Array.isArray(form.optionAssignments)) return
   const idx = (form.optionAssignments as any[]).indexOf(row)
   if (idx >= 0) (form.optionAssignments as any[]).splice(idx, 1)
