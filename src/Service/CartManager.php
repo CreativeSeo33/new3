@@ -312,7 +312,7 @@ final class CartManager
 			throw new \DomainException('Product not found');
 		}
 
-		$this->inventory->assertAvailable($product, $qty);
+		$this->inventory->assertAvailable($product, $qty, $optionAssignmentIds);
 		$optionsHash = $this->generateOptionsHash($optionAssignmentIds);
 		$existingItem = $this->findExistingCartItem($cart, $product, $optionsHash);
 
