@@ -52,7 +52,7 @@
                       <div class="text-sm font-medium">{{ p.productName }}</div>
                       {% if p.options is defined and p.options|length > 0 %}
                         <div class="mt-1 text-xs text-gray-600">
-                          {% for o in p.options %}
+                          {% for o in p.options|sort((a,b) => (a.value.optionSortOrder ?? 9999) <=> (b.value.optionSortOrder ?? 9999) ?: ((a.value.valueSortOrder ?? 9999) <=> (b.value.valueSortOrder ?? 9999))) %}
                             {% set val = o.value ?? {} %}
                             <span class="inline-block bg-gray-100 rounded px-2 py-0.5 mr-1 mb-1">{{ o.optionName }}: {{ val.valueName ?? '-' }}</span>
                           {% endfor %}

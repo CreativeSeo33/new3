@@ -24,6 +24,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use App\Entity\Fias;
 use App\Entity\PvzPoints;
+use App\Entity\ProductOptionValueAssignment;
 
 /**
  * AI-META v1
@@ -254,7 +255,9 @@ final class CheckoutController extends AbstractController
 					$op = new OrderProducts();
 					$op->setProductId($it->getProduct()->getId());
 					$op->setProductName($it->getProductName());
-					$op->setPrice($it->getUnitPrice());
+					// Сохраняем в заказ фактическую цену единицы с учетом опций
+					$finalUnitPrice = $it->getEffectiveUnitPrice();
+					$op->setPrice($finalUnitPrice);
 					$op->setQuantity($it->getQty());
 					$order->addProduct($op);
 					$em->persist($op);
@@ -266,11 +269,23 @@ final class CheckoutController extends AbstractController
 						$opo->setProduct($op);
 						$opo->setProductId($it->getProduct()->getId());
 						$opo->setOptionName(isset($opt['optionName']) ? (string)$opt['optionName'] : null);
+						// Определяем sortOrder опции и значения для корректного отображения
+						$optionSortOrder = null;
+						$valueSortOrder = null;
+						if (isset($opt['assignmentId'])) {
+							$assignment = $em->getRepository(ProductOptionValueAssignment::class)->find((int)$opt['assignmentId']);
+							if ($assignment) {
+								$optionSortOrder = $assignment->getOption()?->getSortOrder();
+								$valueSortOrder = $assignment->getValue()?->getSortOrder();
+							}
+						}
 						$opo->setValue([
 							'optionCode' => $opt['optionCode'] ?? null,
 							'valueCode' => $opt['valueCode'] ?? null,
 							'valueName' => $opt['valueName'] ?? null,
 							'sku' => $opt['sku'] ?? null,
+							'optionSortOrder' => $optionSortOrder,
+							'valueSortOrder' => $valueSortOrder,
 						]);
 						$opo->setPrice(isset($opt['price']) ? (int)$opt['price'] : null);
 						$em->persist($opo);
