@@ -79,6 +79,12 @@ export const adminRoutes: RouteRecordRaw[] = [
         meta: { requiresAuth: true }
       },
       {
+        path: 'orders',
+        name: 'admin-orders',
+        component: () => import(/* webpackChunkName: "admin-orders" */ '@admin/views/Orders.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
         path: 'order-statuses',
         name: 'admin-order-statuses',
         component: () => import(/* webpackChunkName: "admin-order-statuses" */ '@admin/views/OrderStatuses.vue'),
@@ -170,6 +176,7 @@ export const adminSidebarItems: AdminSidebarItem[] = [
   {
     label: 'Система',
     children: [
+      { to: { name: 'admin-orders' }, label: 'Заказы', colorClass: 'bg-purple-500' },
       { to: { name: 'admin-settings' }, label: 'Настройки', colorClass: 'bg-emerald-700' },
       { to: { name: 'admin-order-statuses' }, label: 'Статусы заказов', colorClass: 'bg-indigo-500' },
       { to: { name: 'admin-design-system' }, label: 'Design System', colorClass: 'bg-amber-500' },
