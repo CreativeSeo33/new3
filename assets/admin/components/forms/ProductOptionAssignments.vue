@@ -185,6 +185,10 @@
 							<span class="mb-1 block">Сортировка</span>
 							<input v-model="addValueForm.sortOrder" type="number" class="w-full rounded border p-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" />
 						</label>
+					<label class="block text-sm">
+						<span class="mb-1 block">Базовая</span>
+						<input v-model="addValueForm.setPrice" type="checkbox" class="h-4 w-4" />
+					</label>
 					</div>
 				</div>
 				<div class="mt-4 flex items-center justify-end gap-2">
@@ -276,6 +280,7 @@ const addValueForm = ref<{
 	lightingArea: number | null
 	quantity: number | null
 	sortOrder: number | null
+	setPrice: boolean
 }>({
 	valueIri: '',
 	height: null,
@@ -287,14 +292,16 @@ const addValueForm = ref<{
 	lightingArea: null,
 	quantity: null,
 	sortOrder: null,
+	setPrice: false,
 })
 const savingAddValue = ref(false)
 
 function openAddValueModal(optionIri: string) {
 	addValueModal.value = { open: true, optionIri, editRow: null }
 	addValueForm.value = {
-		valueIri: '', height: null, bulbsCount: null, sku: null, originalSku: null,
-		price: null, salePrice: null, lightingArea: null, quantity: null, sortOrder: null,
+        valueIri: '', height: null, bulbsCount: null, sku: null, originalSku: null,
+        price: null, salePrice: null, lightingArea: null, quantity: null, sortOrder: null,
+        setPrice: false,
 	}
 	// Ленивая подгрузка значений для конкретной опции, если они не загружены
 	ensureOptionValuesLoaded(optionIri)
@@ -314,7 +321,8 @@ function openEditValueModal(optionIri: string, row: OptionRow) {
 		salePrice: row.salePrice ?? null,
 		lightingArea: row.lightingArea ?? null,
 		quantity: row.quantity ?? null,
-		sortOrder: row.sortOrder ?? null,
+        sortOrder: row.sortOrder ?? null,
+        setPrice: Boolean(row.setPrice ?? false),
 	}
 	ensureOptionValuesLoaded(optionIri)
 }
@@ -334,6 +342,7 @@ function confirmAddValue() {
 		lightingArea: addValueForm.value.lightingArea,
 		quantity: addValueForm.value.quantity,
 		sortOrder: addValueForm.value.sortOrder,
+        setPrice: addValueForm.value.setPrice,
 	}
 	if (addValueModal.value.editRow) {
 		(payload as any).__editOf = addValueModal.value.editRow
