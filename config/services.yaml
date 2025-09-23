@@ -25,6 +25,8 @@ parameters:
     # Delivery configuration (defaults via env)
     env(DELIVERY_FREE_THRESHOLD_DEFAULT): '3000'
     env(DELIVERY_TYPES): 'pvz,courier'
+    # Default sender email if not provided via real environment
+    env(ADMIN_FROM_EMAIL): 'no-reply@example.com'
     app.delivery.free_threshold_default: '%env(int:DELIVERY_FREE_THRESHOLD_DEFAULT)%'
     app.delivery.types: '%env(csv:DELIVERY_TYPES)%'
 
@@ -35,6 +37,9 @@ parameters:
     cart.cookie.ttl_days: 180
     cart.cookie.domain: null
     cart.cookie.same_site: 'lax'
+
+    # Notification settings
+    app.notification.from_email: '%env(ADMIN_FROM_EMAIL)%'
 
 services:
     # default configuration for services in *this* file

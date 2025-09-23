@@ -25,6 +25,8 @@ use Symfony\Component\Routing\Attribute\Route;
 use App\Entity\Fias;
 use App\Entity\PvzPoints;
 use App\Entity\ProductOptionValueAssignment;
+use Psr\Log\LoggerInterface;
+use App\Service\OrderMailer;
 
 /**
  * AI-META v1
@@ -98,7 +100,9 @@ final class CheckoutController extends AbstractController
 		OrderRepository $orders,
 		EntityManagerInterface $em,
 		DeliveryService $deliveryService,
-		DeliveryContext $deliveryContext
+		DeliveryContext $deliveryContext,
+		OrderMailer $orderMailer,
+		LoggerInterface $logger
 	): Response {
 		$user = $this->getUser();
 		$userId = $user instanceof AppUser ? $user->getId() : null;
@@ -310,7 +314,19 @@ final class CheckoutController extends AbstractController
 		// Очистка checkout-контекста после успешной транзакции
 		$checkout->clear();
 
-        // Сохраняем orderId в сессию для одноразового показа деталей заказа
+		// Отправляем письмо-подтверждение покупки синхронно (после фиксации транзакции)
+		if ($createdOrder && $createdOrder->getCustomer()?->getEmail()) {
+			try {
+				$orderMailer->sendConfirmation($createdOrder);
+			} catch (\Throwable $e) {
+				$logger->error('Order confirmation email failed', [
+					'orderId' => $createdOrder->getOrderId(),
+					'error' => $e->getMessage(),
+				]);
+			}
+		}
+
+		// Сохраняем orderId в сессию для одноразового показа деталей заказа
         if ($createdOrder) {
             $request->getSession()?->set('order.success.id', $createdOrder->getOrderId());
         }
