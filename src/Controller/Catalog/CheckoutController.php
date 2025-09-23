@@ -12,6 +12,7 @@ use App\Entity\OrderDelivery;
 use App\Repository\OrderRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use App\Service\CartManager;
 use App\Service\CheckoutContext;
 use App\Service\DeliveryContext;
@@ -187,8 +188,8 @@ final class CheckoutController extends AbstractController
 
 				$calc = $deliveryService->calculateForCart($cart);
 
-				$orderDelivery = new OrderDelivery();
-				$orderDelivery->setType($method);
+                $orderDelivery = new OrderDelivery();
+                $orderDelivery->setType($method);
 				if ($cityName) {
 					$orderDelivery->setCity($cityName);
 				}
@@ -209,20 +210,31 @@ final class CheckoutController extends AbstractController
 					$orderDelivery->setPricingTrace($calc->traceData);
 				}
 
-				if ($method === 'pvz' && !empty($ctx['pickupPointId'])) {
-					$pvzCode = (string)$ctx['pickupPointId'];
-					$point = $em->getRepository(PvzPoints::class)->findOneBy(['code' => $pvzCode]);
-					if ($point && strcasecmp((string)$point->getCity(), (string)$cityName) === 0) {
-						$orderDelivery->setPvz($pvzCode);
-						$orderDelivery->setPvzCode($pvzCode);
-					} else {
-						$orderDelivery->setIsCustomCalculate(true);
-					}
-				}
+                if ($method === 'pvz') {
+                    if (!empty($ctx['pickupPointId'])) {
+                        $pvzCode = (string)$ctx['pickupPointId'];
+                        $point = $em->getRepository(PvzPoints::class)->findOneBy(['code' => $pvzCode]);
+                        if ($point && strcasecmp((string)$point->getCity(), (string)$cityName) === 0) {
+                            $orderDelivery->setPvz($pvzCode);
+                            $orderDelivery->setPvzCode($pvzCode);
+                        } else {
+                            // Некорректный ПВЗ/город — расчет менеджером
+                            $orderDelivery->setIsCustomCalculate(true);
+                        }
+                    } else {
+                        // ПВЗ не выбран — расчет менеджером
+                        $orderDelivery->setIsCustomCalculate(true);
+                    }
+                }
 
-				if ($method === 'courier' && !empty($ctx['address'])) {
-					$orderDelivery->setAddress(substr(trim((string)$ctx['address']), 0, 255));
-				}
+                if ($method === 'courier') {
+                    if (!empty($ctx['address'])) {
+                        $orderDelivery->setAddress(substr(trim((string)$ctx['address']), 0, 255));
+                    } else {
+                        // Адрес не указан — расчет менеджером
+                        $orderDelivery->setIsCustomCalculate(true);
+                    }
+                }
 
 				$cityId = isset($payload['cityId']) ? (int)$payload['cityId'] : null;
 				if ($cityId && $cityId > 0) {
@@ -230,10 +242,10 @@ final class CheckoutController extends AbstractController
 					$orderDelivery->setCityFias($cityRef);
 				}
 
-				$deliveryProvider = $this->deliveryProviderRegistry->get($method);
-				if ($deliveryProvider) {
-					$deliveryProvider->validate($orderDelivery);
-				}
+                $deliveryProvider = $this->deliveryProviderRegistry->get($method);
+                if ($deliveryProvider && !$orderDelivery->getIsCustomCalculate()) {
+                    $deliveryProvider->validate($orderDelivery);
+                }
 
 				$order->setDelivery($orderDelivery);
 				$em->persist($orderDelivery);
@@ -283,20 +295,67 @@ final class CheckoutController extends AbstractController
 		// Очистка checkout-контекста после успешной транзакции
 		$checkout->clear();
 
+        // Сохраняем orderId в сессию для одноразового показа деталей заказа
+        if ($createdOrder) {
+            $request->getSession()?->set('order.success.id', $createdOrder->getOrderId());
+        }
+
 		return $this->json([
 			'id' => $createdOrder?->getId(),
 			'orderId' => $createdOrder?->getOrderId(),
-			'redirectUrl' => $createdOrder ? $this->generateUrl('checkout_success', ['orderId' => $createdOrder->getOrderId()]) : null,
+			'redirectUrl' => $createdOrder ? $this->generateUrl('checkout_success') : null,
 		]);
 	}
 
-	#[Route('/checkout/success/{orderId}', name: 'checkout_success', methods: ['GET'])]
-	public function success(int $orderId): Response
-	{
-		return $this->render('catalog/checkout/success.html.twig', [
-			'orderId' => $orderId,
-		]);
-	}
+    #[Route('/checkout/success', name: 'checkout_success', methods: ['GET'])]
+    public function success(SessionInterface $session, OrderRepository $orders, EntityManagerInterface $em): Response
+    {
+        // Читаем и удаляем одноразовый ключ orderId из сессии
+        $orderId = $session->get('order.success.id');
+        if ($orderId !== null) {
+            $session->remove('order.success.id');
+        }
+
+        $order = null;
+        $productMap = [];
+
+        // Загружаем данные заказа только если есть orderId из flash
+        if ($orderId) {
+            $order = $orders->findOneBy(['orderId' => $orderId]);
+            
+            if ($order) {
+                // Готовим карту продуктов для изображений (id => Product)
+                $productIds = [];
+                foreach ($order->getProducts() as $op) {
+                    if ($op->getProductId()) {
+                        $productIds[] = (int)$op->getProductId();
+                    }
+                }
+                $productIds = array_values(array_unique($productIds));
+                
+                if (count($productIds) > 0) {
+                    $qb = $em->createQueryBuilder()
+                        ->select('p', 'img')
+                        ->from(\App\Entity\Product::class, 'p')
+                        ->leftJoin('p.image', 'img')
+                        ->where('p.id IN (:ids)')
+                        ->setParameter('ids', $productIds)
+                        ->addOrderBy('img.sortOrder', 'ASC');
+                    /** @var array<int, \App\Entity\Product> $products */
+                    $products = $qb->getQuery()->getResult();
+                    foreach ($products as $p) {
+                        $productMap[$p->getId()] = $p;
+                    }
+                }
+            }
+        }
+
+        return $this->render('catalog/checkout/success.html.twig', [
+            'orderId' => $orderId,
+            'order' => $order,
+            'productMap' => $productMap,
+        ]);
+    }
 }
 
 

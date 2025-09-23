@@ -6,13 +6,127 @@
   <div class="container mx-auto px-4 py-10">
     <div class="max-w-xl mx-auto text-center">
       <div class="text-3xl font-semibold mb-4">Спасибо за заказ!</div>
-      <div class="text-gray-700 mb-6">Ваш номер заказа: <span class="font-mono">#{{ orderId }}</span></div>
+      {% if orderId %}
+        <div class="text-gray-700 mb-6">Ваш номер заказа: <span class="font-mono">#{{ orderId }}</span></div>
+      {% endif %}
       <div class="space-x-3">
         <a href="{{ path('catalog_index') }}" class="inline-flex items-center px-4 py-2 rounded bg-black text-white hover:bg-gray-900">Вернуться в каталог</a>
         <a href="{{ path('cart_page') }}" class="inline-flex items-center px-4 py-2 rounded border">Посмотреть корзину</a>
       </div>
     </div>
+
+    {% if order is defined and order %}
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
+        <div class="md:col-span-2 space-y-6">
+          <div class="p-4 border rounded">
+            <h2 class="text-lg font-medium mb-4">Состав заказа</h2>
+            {% if order.products|length > 0 %}
+              <div class="space-y-3" data-testid="order-items">
+                {% set goodsSubtotal = 0 %}
+                {% for p in order.products %}
+                  {% set unit = (p.salePrice is not null and p.salePrice > 0) ? p.salePrice : (p.price ?? 0) %}
+                  {% set row = unit * (p.quantity ?? 0) %}
+                  {% set goodsSubtotal = goodsSubtotal + row %}
+                  <div class="flex gap-3 items-start border-b pb-3" data-testid="order-item">
+                    <div class="w-16 h-16 shrink-0">
+                      {% set prod = (productMap[p.productId] ?? null) %}
+                      {% if prod and prod.image|length > 0 %}
+                        {% set firstImage = prod.image|sort((a,b) => a.sortOrder <=> b.sortOrder)|first %}
+                        {% if firstImage %}
+                          {% set raw = firstImage.imageUrl %}
+                          {% if raw starts with '/media/cache/' %}
+                            {% set imgSrc = raw %}
+                          {% else %}
+                            {% set rel = raw|replace({'/img/':''})|trim('/') %}
+                            {% set imgSrc = asset('/img/' ~ rel) | imagine_filter('md2') %}
+                          {% endif %}
+                          <img src="{{ imgSrc }}" alt="{{ p.productName }}" class="w-16 h-16 object-cover rounded border">
+                        {% else %}
+                          <div class="w-16 h-16 bg-gray-200 rounded border flex items-center justify-center text-gray-500 text-xs">Нет фото</div>
+                        {% endif %}
+                      {% else %}
+                        <div class="w-16 h-16 bg-gray-200 rounded border flex items-center justify-center text-gray-500 text-xs">Нет фото</div>
+                      {% endif %}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <div class="text-sm font-medium">{{ p.productName }}</div>
+                      {% if p.options is defined and p.options|length > 0 %}
+                        <div class="mt-1 text-xs text-gray-600">
+                          {% for o in p.options %}
+                            {% set val = o.value ?? {} %}
+                            <span class="inline-block bg-gray-100 rounded px-2 py-0.5 mr-1 mb-1">{{ o.optionName }}: {{ val.valueName ?? '-' }}</span>
+                          {% endfor %}
+                        </div>
+                      {% endif %}
+                      <div class="text-sm text-gray-700 mt-1">{{ format_price(unit) }} × {{ p.quantity }} = <span class="font-medium">{{ format_price(row) }}</span></div>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+
+              {% set d = order.delivery %}
+              {% set showManager = d and d.isCustomCalculate %}
+              {% set shippingCost = 0 %}
+              {% if d and d.cost is not null and not d.isFree and not showManager %}
+                {% set shippingCost = d.cost %}
+              {% endif %}
+
+              <div class="border-t mt-3 pt-3 text-sm">
+                <div>Стоимость товаров: <span data-testid="subtotal">{{ goodsSubtotal|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
+                {% if showManager or (d and d.cost is null) %}
+                  <div>Доставка: <span data-testid="shipping">Расчет менеджером</span></div>
+                  <div class="border-t pt-2 font-semibold">Итого: <span data-testid="total">{{ goodsSubtotal|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
+                {% elseif d and d.isFree %}
+                  <div>Доставка: <span data-testid="shipping">Бесплатно</span></div>
+                  <div class="border-t pt-2 font-semibold">Итого: <span data-testid="total">{{ goodsSubtotal|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
+                {% else %}
+                  <div>Доставка: <span data-testid="shipping">{{ shippingCost|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
+                  <div class="border-t pt-2 font-semibold">Итого: <span data-testid="total">{{ (goodsSubtotal + shippingCost)|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
+                {% endif %}
+              </div>
+            {% else %}
+              <div class="text-gray-500 text-sm">Позиции заказа отсутствуют</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <aside class="md:col-span-1 p-4 border rounded h-fit">
+          <h2 class="text-lg font-medium mb-3">Детали доставки</h2>
+          {% set d = order.delivery %}
+          {% if d %}
+            <div class="space-y-1 text-sm">
+              <div><span class="text-gray-600">Способ:</span> {{ d.type ?? '—' }}</div>
+              {% if d.city %}
+                <div><span class="text-gray-600">Город:</span> {{ d.city }}</div>
+              {% endif %}
+              {% if d.address %}
+                <div><span class="text-gray-600">Адрес:</span> {{ d.address }}</div>
+              {% endif %}
+              {% if d.pvz %}
+                <div><span class="text-gray-600">ПВЗ:</span> {{ d.pvz }}</div>
+              {% endif %}
+              {% if d.deliveryDate %}
+                <div><span class="text-gray-600">Дата доставки:</span> {{ d.deliveryDate|date('d.m.Y') }}</div>
+              {% endif %}
+              {% if d.deliveryTime %}
+                <div><span class="text-gray-600">Время доставки:</span> {{ d.deliveryTime|date('H:i') }}</div>
+              {% endif %}
+              {% if d.isCustomCalculate %}
+                <div class="text-xs text-gray-500">Стоимость доставки будет рассчитана менеджером</div>
+              {% elseif d.isFree %}
+                <div class="text-xs text-gray-500">Доставка бесплатная</div>
+              {% endif %}
+            </div>
+          {% else %}
+            <div class="text-sm text-gray-500">Детали доставки недоступны</div>
+          {% endif %}
+        </aside>
+      </div>
+    {% endif %}
   </div>
 {% endblock %}
+
+
+{% block catalog_footer %}{% endblock %}
 
 
