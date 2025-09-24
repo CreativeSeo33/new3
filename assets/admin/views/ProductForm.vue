@@ -61,7 +61,8 @@
           v-for="tab in tabs"
           :key="tab.value"
           :value="tab.value"
-          class="px-3 py-2 text-sm data-[state=active]:text-brand-600"
+          :disabled="isCreating && tab.value === 'attributes'"
+          class="px-3 py-2 text-sm data-[state=active]:text-brand-600 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {{ tab.label }}
         </TabsTrigger>
@@ -105,7 +106,7 @@
 
       <TabsContent value="attributes" class="pt-6">
         <ProductAttributeAssignments 
-          v-if="activeTab === 'attributes'" 
+          v-if="activeTab === 'attributes' && !isCreating" 
           :key="String(id)" 
           :product-id="String(id)" 
           :is-creating="isCreating" 
@@ -245,7 +246,6 @@ const hydrateForm = (dto: ProductDto) => {
     h1: dto.h1 ?? '',
     sortOrder: (dto as any).sortOrder ?? 0,
     type: (dto as any).type || 'simple',
-    optionAssignments: (dto as any).optionAssignments || [],
   })
   // map optionAssignments if present
   ;(form as any).optionAssignments = Array.isArray((dto as any).optionAssignments)
@@ -264,7 +264,7 @@ const hydrateForm = (dto: ProductDto) => {
         quantity: toNum(r.quantity),
         attributes: r.attributes ?? null,
       }))
-    : []
+    : (form as any).optionAssignments
 }
 const optionNamesMap = computed<Record<string, string>>(() => {
   try {
@@ -575,6 +575,20 @@ const handleSave = async () => {
       const stagedBefore = Array.isArray((form as any).optionAssignments) ? (form as any).optionAssignments.slice() : []
       const boot = await formRepo.sync(newId, buildPayload())
       hydrateForm(boot.product as any)
+      // Обновим словари опций из ответа (для меток)
+      try {
+        ;(form as any).__bootOptionsList = Array.isArray(boot?.options?.list) ? boot.options.list : []
+        ;(form as any).__bootOptionValuesByOption = (boot?.options?.valuesByOption && typeof boot.options.valuesByOption === 'object') ? boot.options.valuesByOption : {}
+      } catch {}
+      // Фоллбек: если сервер внезапно вернул пустые вариации, восстановим валидные из отправленных
+      try {
+        const serverRows = Array.isArray((boot as any)?.product?.optionAssignments) ? (boot as any).product.optionAssignments : []
+        const validServer = serverRows.filter((r: any) => r && typeof r.option === 'string' && r.option && typeof r.value === 'string' && r.value)
+        if (validServer.length === 0) {
+          const stagedValid = Array.isArray(stagedBefore) ? stagedBefore.filter((r: any) => r && typeof r.option === 'string' && r.option && typeof r.value === 'string' && r.value) : []
+          ;(form as any).optionAssignments = stagedValid
+        }
+      } catch {}
       if (boot?.categories?.tree) {
         categoryTree.value = Array.isArray(boot.categories.tree) ? boot.categories.tree : []
         categoriesLoaded.value = true
@@ -601,8 +615,8 @@ const handleSave = async () => {
       } catch {}
     } catch {}
     publishToast('Товар сохранён')
-    skipBootstrapOnce.value = true
-    router.push({ name: 'admin-product-form', params: { id: newId }, query: { ...route.query } })
+    // Редирект на форму созданного товара после завершения всех запросов
+    await router.push({ name: 'admin-product-form', params: { id: newId }, query: { ...route.query } })
     return
   }
 
@@ -611,6 +625,20 @@ const handleSave = async () => {
     const stagedBefore = Array.isArray((form as any).optionAssignments) ? (form as any).optionAssignments.slice() : []
     const boot = await formRepo.sync(id.value, buildPayload())
     hydrateForm(boot.product as any)
+    // Обновим словари опций из ответа (для меток)
+    try {
+      ;(form as any).__bootOptionsList = Array.isArray(boot?.options?.list) ? boot.options.list : []
+      ;(form as any).__bootOptionValuesByOption = (boot?.options?.valuesByOption && typeof boot.options.valuesByOption === 'object') ? boot.options.valuesByOption : {}
+    } catch {}
+    // Фоллбек: если сервер внезапно вернул пустые вариации, восстановим валидные из отправленных
+    try {
+      const serverRows = Array.isArray((boot as any)?.product?.optionAssignments) ? (boot as any).product.optionAssignments : []
+      const validServer = serverRows.filter((r: any) => r && typeof r.option === 'string' && r.option && typeof r.value === 'string' && r.value)
+      if (validServer.length === 0) {
+        const stagedValid = Array.isArray(stagedBefore) ? stagedBefore.filter((r: any) => r && typeof r.option === 'string' && r.option && typeof r.value === 'string' && r.value) : []
+        ;(form as any).optionAssignments = stagedValid
+      }
+    } catch {}
     if (boot?.categories?.tree) {
       categoryTree.value = Array.isArray(boot.categories.tree) ? boot.categories.tree : []
       categoriesLoaded.value = true
@@ -656,6 +684,15 @@ async function handleRemoveOption(optionIri: string) {
   publishToast('Опция удалена (сохранится при «Сохранить»)')
 }
 
+// Приводим возможные значения к IRI вида /api/options/{id} и /api/option_values/{id}
+function ensureIri(value: any, kind: 'option' | 'value'): string | null {
+  if (!value) return null
+  const s = String(value)
+  if (s.startsWith('/api/')) return s
+  const id = s.split('/').pop() || s
+  return kind === 'option' ? `/api/options/${id}` : `/api/option_values/${id}`
+}
+
 async function handleAddOption(payload: any) {
   // payload может быть как IRI опции, так и объект новой строки
   const row = typeof payload === 'string'
@@ -675,6 +712,12 @@ async function handleAddOption(payload: any) {
         attributes: null,
       }
     : payload
+
+  // Нормализуем IRI на случай, если пришли id или относительные пути
+  ;(row as any).option = ensureIri((row as any).option, 'option') || (row as any).option
+  if ((row as any).value) {
+    (row as any).value = ensureIri((row as any).value, 'value') || (row as any).value
+  }
 
   if (!Array.isArray(form.optionAssignments)) {
     ;(form as any).optionAssignments = []

@@ -165,6 +165,9 @@ final class ProductSyncController extends AbstractController
             $em->flush();
         });
 
+        // Сбросим 1-го уровня кэш Doctrine, чтобы форвард вернул свежие данные (включая новые вариации)
+        $em->clear();
+
         // Return fresh bootstrap in response to avoid separate GET
         return $this->forward(ProductFormController::class . '::formEdit', ['id' => $product->getId()]);
     }
