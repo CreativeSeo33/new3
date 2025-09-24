@@ -32,8 +32,8 @@
       </div>
     </div>
 
-    <!-- Предупреждение для вариативного товара без вариаций -->
-    <div v-if="isVariableWithoutVariations" class="p-6 rounded-lg border-2 border-red-500 bg-red-50 dark:bg-red-900/20 dark:border-red-400">
+    <!-- Предупреждение для вариативного товара без вариаций (скрыто по требованию) -->
+    <div v-if="false" class="p-6 rounded-lg border-2 border-red-500 bg-red-50 dark:bg-red-900/20 dark:border-red-400">
       <div class="flex items-start gap-3">
         <div class="text-2xl">⚠️</div>
         <div class="flex-1">
@@ -183,13 +183,16 @@ type ProductTabValue = 'description' | 'categories' | 'attributes' | 'options' |
 const activeTab = ref<ProductTabValue>('description')
 const tabParamKey = 'tab'
 const validTabs = computed(() => new Set(tabs.value.map(t => t.value)))
+const skipBootstrapOnce = ref(false)
 
 // Проверка, является ли товар вариативным без валидных вариаций (опция+значение)
 const isVariableWithoutVariations = computed(() => {
-  if (form?.type !== 'variable') return false
-  const rows = Array.isArray(form?.optionAssignments) ? (form.optionAssignments as any[]) : []
-  const valid = rows.filter(r => r && typeof r.option === 'string' && r.option && typeof r.value === 'string' && r.value)
-  return valid.length === 0
+  try {
+    const type = (form as any)?.type
+    if (type !== 'variable') return false
+    const rows = Array.isArray((form as any)?.optionAssignments) ? ((form as any).optionAssignments as any[]) : []
+    return rows.some(r => r && typeof r.option === 'string' && r.option && typeof r.value === 'string' && r.value) ? false : true
+  } catch { return false }
 })
 
 // Проверка, можно ли сохранить товар
@@ -234,7 +237,7 @@ const hydrateForm = (dto: ProductDto) => {
     slug: dto.slug ?? '',
     price: toNum(dto.price),
     salePrice: toNum((dto as any).salePrice),
-    status: dto.status ?? true,
+    status: (dto as any).status === true || (dto as any).status === 1 || (dto as any).status === '1',
     quantity: toNum(dto.quantity),
     description: dto.description ?? '',
     metaTitle: dto.metaTitle ?? '',
@@ -327,6 +330,10 @@ watch(id, async () => {
   selectedCategoryIds.value = new Set()
   mainCategoryId.value = null
   categoriesInitialized.value = false
+  if (skipBootstrapOnce.value) {
+    skipBootstrapOnce.value = false
+    return
+  }
   if (isCreating.value) {
     // При переходе на новый товар очищаем ожидающие изображения
     try { localStorage.removeItem('new-product-pending-images') } catch {}
@@ -476,11 +483,17 @@ async function saveProductCategories(productNumericId: number | string) {
 }
 
 const handleSave = async () => {
-  // Если вариативный товар без вариаций — предупредим и принудительно выключим товар, но дадим сохранить прочие поля
-  if (isVariableWithoutVariations.value) {
-    publishToast('Вариативный товар без вариаций: товар будет выключен')
-    form.status = false
-  }
+  // Если вариативный товар и нет валидных пар опция+значение — не даём активировать
+  try {
+    const validCount = Array.isArray((form as any).optionAssignments)
+      ? ((form as any).optionAssignments as any[]).filter(r => r && typeof r.option === 'string' && r.option && typeof r.value === 'string' && r.value).length
+      : 0
+    // блокируем только попытку включения (true). Выключение (false) допускаем всегда
+    if ((form as any).type === 'variable' && validCount === 0 && form.status === true) {
+      publishToast('Нельзя активировать товар без вариаций')
+      form.status = false
+    }
+  } catch {}
 
   if (!validateForm()) {
     activeTab.value = 'description'
@@ -509,7 +522,29 @@ const handleSave = async () => {
         mainCategoryId: mainCategoryId.value,
       }
     }
-    payload.optionAssignments = Array.isArray((form as any).optionAssignments) ? (form as any).optionAssignments : []
+    // Санитизация optionAssignments: отправляем только валидные пары, без служебных полей
+    try {
+      const rows = Array.isArray((form as any).optionAssignments) ? ((form as any).optionAssignments as any[]) : []
+      payload.optionAssignments = rows
+        .filter(r => r && typeof r.option === 'string' && r.option && typeof r.value === 'string' && r.value)
+        .map(r => ({
+          option: r.option,
+          value: r.value,
+          height: toNum(r.height),
+          bulbsCount: toNum(r.bulbsCount),
+          sku: r.sku ?? null,
+          originalSku: r.originalSku ?? null,
+          price: toNum(r.price),
+          setPrice: r.setPrice ?? false,
+          salePrice: toNum(r.salePrice),
+          lightingArea: toNum(r.lightingArea),
+          sortOrder: toNum(r.sortOrder),
+          quantity: toNum(r.quantity),
+          attributes: Array.isArray(r.attributes) || (r.attributes && typeof r.attributes === 'object') ? r.attributes : null,
+        }))
+    } catch {
+      payload.optionAssignments = []
+    }
     return payload
   }
 
@@ -537,6 +572,7 @@ const handleSave = async () => {
     }
     const newId = (result.result as any)?.id ?? id.value
     try {
+      const stagedBefore = Array.isArray((form as any).optionAssignments) ? (form as any).optionAssignments.slice() : []
       const boot = await formRepo.sync(newId, buildPayload())
       hydrateForm(boot.product as any)
       if (boot?.categories?.tree) {
@@ -548,14 +584,31 @@ const handleSave = async () => {
         categoriesInitialized.value = true
       }
       if (Array.isArray((boot as any).photos)) initialPhotos.value = (boot as any).photos as any[]
+      // Вернём незаполненные (черновые) строки опций в UI, если сервер их не сохранил
+      try {
+        const existingKeys = new Set(
+          (Array.isArray((form as any).optionAssignments) ? (form as any).optionAssignments : [])
+            .filter((r: any) => r && r.option && r.value)
+            .map((r: any) => `${r.option}|${r.value}`)
+        )
+        for (const row of stagedBefore) {
+          if (!row || !row.option || row.value) continue
+          // незаполненная вариация — оставим в форме, если нет дубля
+          if (!(form as any).optionAssignments) (form as any).optionAssignments = []
+          const dup = (form as any).optionAssignments.find((r: any) => r && r.option === row.option && r.value === row.value)
+          if (!dup) (form as any).optionAssignments.push(row)
+        }
+      } catch {}
     } catch {}
     publishToast('Товар сохранён')
+    skipBootstrapOnce.value = true
     router.push({ name: 'admin-product-form', params: { id: newId }, query: { ...route.query } })
     return
   }
 
   // Редактирование: 1 sync POST
   try {
+    const stagedBefore = Array.isArray((form as any).optionAssignments) ? (form as any).optionAssignments.slice() : []
     const boot = await formRepo.sync(id.value, buildPayload())
     hydrateForm(boot.product as any)
     if (boot?.categories?.tree) {
@@ -567,6 +620,20 @@ const handleSave = async () => {
       categoriesInitialized.value = true
     }
     if (Array.isArray((boot as any).photos)) initialPhotos.value = (boot as any).photos as any[]
+    // Вернём незаполненные (черновые) строки опций в UI, если сервер их не сохранил
+    try {
+      const existingKeys = new Set(
+        (Array.isArray((form as any).optionAssignments) ? (form as any).optionAssignments : [])
+          .filter((r: any) => r && r.option && r.value)
+          .map((r: any) => `${r.option}|${r.value}`)
+      )
+      for (const row of stagedBefore) {
+        if (!row || !row.option || row.value) continue
+        if (!(form as any).optionAssignments) (form as any).optionAssignments = []
+        const dup = (form as any).optionAssignments.find((r: any) => r && r.option === row.option && r.value === row.value)
+        if (!dup) (form as any).optionAssignments.push(row)
+      }
+    } catch {}
     publishToast('Товар сохранён')
   } catch (e) {
     publishToast('Ошибка сохранения')

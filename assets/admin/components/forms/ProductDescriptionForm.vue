@@ -87,7 +87,8 @@ const props = defineProps<Props>()
 const isPriceFieldsDisabled = computed(() => props.productType === 'variable')
 
 // Определяем, заблокировано ли поле статуса
-const isStatusDisabled = computed(() => props.isVariableWithoutVariations || false)
+// Блокируем только попытку включить статус при отсутствии вариаций
+const isStatusDisabled = computed(() => Boolean(props.isVariableWithoutVariations && props.form.status === true))
 
 // Динамические лейблы для полей цены
 const priceLabel = computed(() => props.productType === 'simple' ? 'Цена *' : 'Цена')

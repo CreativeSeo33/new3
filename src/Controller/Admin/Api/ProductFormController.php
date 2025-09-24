@@ -76,7 +76,44 @@ final class ProductFormController extends AbstractController
             'isVariableWithoutVariations' => ($dto->type === Product::TYPE_VARIABLE) && empty($dto->optionAssignments ?? []),
         ];
 
-        return $this->json([
+        $dictVersions = [
+            'categories' => $treePayload['treeVersion'],
+            'options' => $optionsPayload['version'],
+        ];
+
+        // Build product-aware ETag: include product state + relation snapshots + dict versions
+        try {
+            $updatedAt = $product->getDateEdited()?->getTimestamp() ?? 0;
+            $statusBit = $product->getStatus() ? 1 : 0;
+
+            $oa = $product->getOptionAssignments();
+            $oaCount = $oa->count();
+            $oaMax = 0; foreach ($oa as $a) { $oaMax = max($oaMax, (int) $a->getId()); }
+
+            $pc = $product->getCategory();
+            $pcCount = $pc->count();
+            $pcMax = 0; foreach ($pc as $r) { $pcMax = max($pcMax, (int) $r->getId()); }
+
+            $imgs = $product->getImage();
+            $imgCount = $imgs->count();
+            $imgMax = 0; foreach ($imgs as $i) { $imgMax = max($imgMax, (int) $i->getId()); }
+
+            $sig = implode('|', [
+                'p'.$product->getId(),
+                'u'.$updatedAt,
+                's'.$statusBit,
+                'oa'.$oaCount.'-'.$oaMax,
+                'pc'.$pcCount.'-'.$pcMax,
+                'im'.$imgCount.'-'.$imgMax,
+                'dc'.($dictVersions['categories'] ?? ''),
+                'do'.($dictVersions['options'] ?? ''),
+            ]);
+            $etag = sha1($sig);
+        } catch (\Throwable) {
+            $etag = null;
+        }
+
+        $response = $this->json([
             'product' => $dto,
             'categories' => $categoriesPayload,
             'options' => [
@@ -88,6 +125,12 @@ final class ProductFormController extends AbstractController
             'dictVersions' => $dictVersions,
             'flags' => $flags,
         ]);
+        if ($etag) {
+            $request = $this->container->get('request_stack')->getCurrentRequest();
+            $response->setEtag($etag);
+            $response->isNotModified($request);
+        }
+        return $response;
     }
 
     #[Route('/api/admin/products/form', name: 'admin_api_product_form_new', methods: ['GET'])]
@@ -132,7 +175,9 @@ final class ProductFormController extends AbstractController
             'options' => $optionsPayload['version'],
         ];
 
-        return $this->json([
+        // ETag для bootstrap (на основе версий словарей)
+        $etag = sha1((string) ($dictVersions['categories'] ?? '') . '|' . (string) ($dictVersions['options'] ?? ''));
+        $response = $this->json([
             'product' => $product,
             'categories' => $categoriesPayload,
             'options' => [
@@ -146,6 +191,10 @@ final class ProductFormController extends AbstractController
                 'isVariableWithoutVariations' => false,
             ],
         ]);
+        $request = $this->container->get('request_stack')->getCurrentRequest();
+        $response->setEtag($etag);
+        $response->isNotModified($request);
+        return $response;
     }
 
     private function mapProductToResource(Product $product): ProductResource

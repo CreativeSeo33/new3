@@ -267,9 +267,7 @@ async function fetchProductImages() {
   productImagesLoading.value = true
   productImagesError.value = ''
   try {
-    // Предпочитаем initialPhotos, но если их нет, можно добавить лёгкий эндпоинт только для фото.
-    const { data } = await httpClient.getJson<any>(`/admin/products/${props.productId}/form`)
-    const imgs = Array.isArray((data as any)?.photos) ? (data as any).photos : []
+    const imgs = await mediaRepo.fetchProductImages(props.productId)
     const normalized: ProductImageDto[] = imgs
       .map((it: any): ProductImageDto => ({ id: Number(it.id), imageUrl: String(it.imageUrl), sortOrder: Number(it.sortOrder ?? 0) }))
       .sort((a: ProductImageDto, b: ProductImageDto) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.id - b.id)
@@ -314,10 +312,13 @@ onMounted(async () => {
     // Инициализируемся данными из родителя, если есть
     if (Array.isArray(props.initialPhotos) && props.initialPhotos.length) {
       productImages.value = props.initialPhotos.slice().sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.id - b.id)
-    } else {
+    }
+    // Если есть отложенные изображения — сначала прикрепим их, затем при необходимости подтянем список
+    if (pendingRelatives.value.length) {
+      await attachPendingIfAny()
+    } else if (!(Array.isArray(props.initialPhotos) && props.initialPhotos.length)) {
       await fetchProductImages()
     }
-    await attachPendingIfAny()
   }
 })
 // Реакция на приход initialPhotos после монтирования
@@ -333,10 +334,12 @@ watch(() => props.productId, async () => {
   if (!props.isCreating) {
     if (Array.isArray(props.initialPhotos) && props.initialPhotos.length) {
       productImages.value = props.initialPhotos.slice().sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.id - b.id)
-    } else {
+    }
+    if (pendingRelatives.value.length) {
+      await attachPendingIfAny()
+    } else if (!(Array.isArray(props.initialPhotos) && props.initialPhotos.length)) {
       await fetchProductImages()
     }
-    await attachPendingIfAny()
   }
 })
 

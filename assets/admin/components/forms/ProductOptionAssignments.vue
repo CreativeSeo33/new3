@@ -416,19 +416,19 @@ async function ensureModalOptions() {
 function confirmAddOption() {
 	if (!selectedOptionIri.value || !selectedValueIri.value) return
 	// Отправляем сразу пару option/value, чтобы PATCH прошёл
-	emit('addOption', {
+  emit('addOption', {
 		option: selectedOptionIri.value,
 		value: selectedValueIri.value,
-		height: null,
-		bulbsCount: null,
-		sku: null,
-		originalSku: null,
-		price: null,
-		salePrice: null,
-		lightingArea: null,
-		quantity: null,
-		sortOrder: null,
-		attributes: null,
+    height: null,
+    bulbsCount: null,
+    sku: null,
+    originalSku: null,
+    price: null,
+    salePrice: null,
+    lightingArea: null,
+    quantity: null,
+    sortOrder: null,
+    attributes: [],
 	})
 	closeAddOptionModal()
 }

@@ -24,6 +24,11 @@ export class MediaRepository {
     const { data } = await httpClient.postJson<{ items?: Array<{ id: number; sortOrder: number }> }>(`/admin/media/product/${productId}/images/reorder`, { order: orderIds })
     return data || {}
   }
+
+  async fetchProductImages(productId: string | number): Promise<Array<{ id: number; imageUrl: string; sortOrder: number }>> {
+    const { data } = await httpClient.getJson<{ items: Array<{ id: number; imageUrl: string; sortOrder: number }> }>(`/admin/media/product/${productId}/images`)
+    return Array.isArray(data?.items) ? data.items : []
+  }
 }
 
 

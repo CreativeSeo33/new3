@@ -284,6 +284,28 @@ class MediaAdminController
         return new JsonResponse(['items' => $result]);
     }
 
+    #[Route(path: '/api/admin/media/product/{id}/images', name: 'admin_media_product_images', methods: ['GET'])]
+    public function listProductImagesForProduct(int $id): JsonResponse
+    {
+        /** @var Product|null $product */
+        $product = $this->em->getRepository(Product::class)->find($id);
+        if (!$product) {
+            return new JsonResponse(['items' => []]);
+        }
+        /** @var ProductImage[] $images */
+        $images = $this->em->getRepository(ProductImage::class)
+            ->findBy(['product' => $product], ['sortOrder' => 'ASC', 'id' => 'ASC']);
+        $items = [];
+        foreach ($images as $img) {
+            $items[] = [
+                'id' => (int) $img->getId(),
+                'imageUrl' => (string) $img->getImageUrl(),
+                'sortOrder' => (int) ($img->getSortOrder() ?? 0),
+            ];
+        }
+        return new JsonResponse(['items' => $items]);
+    }
+
     /**
      * Ensures unique, sequential sortOrder for all images of a product.
      * Returns array of ['id' => int, 'sortOrder' => int]
