@@ -7,9 +7,8 @@ export class MediaRepository {
   }
 
   async fetchImages(dir: string): Promise<{ items: Array<{ name: string; relative: string; url: string }>; dir: string }> {
-    const url = new URL('/api/admin/media/list', window.location.origin)
-    if (dir) url.searchParams.set('dir', dir)
-    const { data } = await httpClient.getJson<{ items: any[]; dir: string }>(url.pathname + url.search)
+    const qs = dir ? `?dir=${encodeURIComponent(dir)}` : ''
+    const { data } = await httpClient.getJson<{ items: any[]; dir: string }>(`/admin/media/list${qs}`)
     return { items: Array.isArray(data?.items) ? data.items : [], dir: data?.dir || '' }
   }
 

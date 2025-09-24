@@ -223,9 +223,9 @@ interface OptionRow {
 }
 
 const props = defineProps<{
-	optionAssignments: OptionRow[] | null
-	optionValuesMap?: Record<string, string>
-	optionNamesMap?: Record<string, string>
+  optionAssignments: OptionRow[] | null
+  optionValuesMap?: Record<string, string>
+  optionNamesMap?: Record<string, string>
 }>()
 
 const emit = defineEmits<{
@@ -556,6 +556,10 @@ function getOptionSortOrder(optionIri: string): number {
 
 function optionNameLabel(iri?: string | null): string {
 	if (!iri) return ''
+  // Используем карту из props, если есть
+  if (props.optionNamesMap && props.optionNamesMap[iri]) {
+    return props.optionNamesMap[iri]
+  }
 	// Быстрый поиск в локальном кеше
 	const cached = optionsNameCache.get(iri)
 	if (cached) {
@@ -576,6 +580,10 @@ function optionNameLabel(iri?: string | null): string {
 
 function iriLabel(iri?: string | null): string {
 	if (!iri) return ''
+  // Используем карту из props, если есть
+  if (props.optionValuesMap && props.optionValuesMap[iri]) {
+    return props.optionValuesMap[iri]
+  }
 	// Быстрый поиск в локальном кеше значений опций
 	const cached = optionValuesCache.get(iri)
 	if (cached) {

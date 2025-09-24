@@ -117,8 +117,8 @@
         <ProductOptionAssignments
           v-if="activeTab === 'options'"
           :option-assignments="form.optionAssignments"
-          :option-values-map="{}"
-          :option-names-map="{}"
+          :option-values-map="optionValuesMap"
+          :option-names-map="optionNamesMap"
           @remove-option="handleRemoveOption"
           @add-option="handleAddOption"
           @remove-assignment="handleRemoveAssignment"
@@ -126,7 +126,7 @@
       </TabsContent>
 
       <TabsContent value="photos" class="pt-6">
-        <ProductPhotos v-if="activeTab === 'photos'" :product-id="String(id)" :is-creating="isCreating" @toast="publishToast" />
+        <ProductPhotos v-if="activeTab === 'photos'" :product-id="String(id)" :is-creating="isCreating" :initial-photos="initialPhotos" @toast="publishToast" />
       </TabsContent>
     </TabsRoot>
 
@@ -194,7 +194,7 @@ const isVariableWithoutVariations = computed(() => {
 
 // Проверка, можно ли сохранить товар
 const canSave = computed(() => {
-  return !isVariableWithoutVariations.value && !saving.value
+  return !saving.value
 })
 
 const {
@@ -220,6 +220,7 @@ const productCategoryRepo = new ProductCategoryRepository()
 const optionsPrefetched = ref(false)
 const optionRepo = new OptionRepository()
 const prefetchedOptions = ref<any[]>([])
+const initialPhotos = ref<Array<{ id: number; imageUrl: string; sortOrder: number }>>([])
 async function loadOptionsBootstrap() {
   if (optionsPrefetched.value) return
   // Загружаем только список опций (легковесно). Значения — по требованию в дочернем компоненте.
@@ -262,6 +263,32 @@ const hydrateForm = (dto: ProductDto) => {
       }))
     : []
 }
+const optionNamesMap = computed<Record<string, string>>(() => {
+  try {
+    const boot: any = (form as any)
+    const list: Array<{ id: number; name: string }> = boot?.__bootOptionsList || []
+    const map: Record<string, string> = {}
+    for (const o of list) {
+      const iri = `/api/options/${o.id}`
+      map[iri] = o.name || iri
+    }
+    return map
+  } catch { return {} }
+})
+const optionValuesMap = computed<Record<string, string>>(() => {
+  try {
+    const boot: any = (form as any)
+    const byOpt: Record<string, Array<{ id: number; value: string }>> = boot?.__bootOptionValuesByOption || {}
+    const map: Record<string, string> = {}
+    for (const key of Object.keys(byOpt)) {
+      for (const v of byOpt[key] || []) {
+        const iri = `/api/option_values/${v.id}`
+        map[iri] = v.value || iri
+      }
+    }
+    return map
+  } catch { return {} }
+})
 const loadIfEditing = async () => {
   if (isCreating.value) return
   const boot = await formRepo.fetchForm(id.value)
@@ -275,6 +302,11 @@ const loadIfEditing = async () => {
       mainCategoryId.value = (boot.categories.mainCategoryId != null && Number.isFinite(Number(boot.categories.mainCategoryId))) ? Number(boot.categories.mainCategoryId) : null
       categoriesInitialized.value = true
     }
+    // Сохраним справочники опций для карт меток
+    ;(form as any).__bootOptionsList = Array.isArray(boot?.options?.list) ? boot.options.list : []
+    ;(form as any).__bootOptionValuesByOption = (boot?.options?.valuesByOption && typeof boot.options.valuesByOption === 'object') ? boot.options.valuesByOption : {}
+    // Фото для инициализации
+    initialPhotos.value = Array.isArray((boot as any).photos) ? (boot as any).photos : []
   } catch {}
 }
 
@@ -301,7 +333,7 @@ watch(id, async () => {
   } else if (activeTab.value === 'attributes') {
     // handled inside ProductAttributeAssignments
   } else if (activeTab.value === 'options' && form?.type === 'variable') {
-    if (!optionsPrefetched.value) await loadOptionsBootstrap()
+    // отключено: предзагрузка опций только по запросу в модалке
   }
 })
 // reflect activeTab to URL
@@ -435,29 +467,84 @@ async function saveProductCategories(productNumericId: number | string) {
 }
 
 const handleSave = async () => {
-  // Проверяем, что вариативный товар имеет хотя бы одну валидную вариацию (опция+значение)
+  // Если вариативный товар без вариаций — предупредим и принудительно выключим товар, но дадим сохранить прочие поля
   if (isVariableWithoutVariations.value) {
-    publishToast('Невозможно сохранить: вариативный товар должен иметь хотя бы одну вариацию')
-    activeTab.value = 'options'
-    return
+    publishToast('Вариативный товар без вариаций: товар будет выключен')
+    form.status = false
   }
 
   if (!validateForm()) {
     activeTab.value = 'description'
     return
   }
-  const result = await saveProduct(id.value, form, {
-    onValidationError: (violations) => mapViolationsToErrors(violations as any),
-  })
-  if (result.success) {
-    const newId = (result.result as any)?.id ?? id.value
-    // Сохраняем категории, только если они были загружены (чтобы не снести связи без открытия вкладки)
-    if (categoriesInitialized.value) {
-      await saveProductCategories(newId)
+
+  const buildPayload = () => {
+    const product = {
+      name: form.name || '',
+      slug: form.slug || '',
+      price: toNum(form.price) || null,
+      salePrice: toNum((form as any).salePrice) || null,
+      status: Boolean(form.status),
+      quantity: toNum(form.quantity) || null,
+      sortOrder: toNum((form as any).sortOrder) || null,
+      type: (form as any).type || 'simple',
+      description: form.description || '',
+      metaTitle: form.metaTitle || '',
+      metaDescription: form.metaDescription || '',
+      h1: form.h1 || '',
     }
-    // показать toast + редирект
+    const payload: any = { product }
+    if (categoriesInitialized.value) {
+      payload.categories = {
+        selectedCategoryIds: Array.from(selectedCategoryIds.value.values()),
+        mainCategoryId: mainCategoryId.value,
+      }
+    }
+    payload.optionAssignments = Array.isArray((form as any).optionAssignments) ? (form as any).optionAssignments : []
+    return payload
+  }
+
+  // Новый товар: сначала create (как сейчас), затем sync для зависимостей
+  if (isCreating.value) {
+    const result = await saveProduct(id.value, form, {
+      onValidationError: (violations) => mapViolationsToErrors(violations as any),
+    })
+    if (!result.success) return
+    const newId = (result.result as any)?.id ?? id.value
+    try {
+      const boot = await formRepo.sync(newId, buildPayload())
+      hydrateForm(boot.product as any)
+      if (boot?.categories?.tree) {
+        categoryTree.value = Array.isArray(boot.categories.tree) ? boot.categories.tree : []
+        categoriesLoaded.value = true
+        const ids: number[] = Array.isArray(boot.categories.selectedCategoryIds) ? boot.categories.selectedCategoryIds.map((x: any) => Number(x)).filter((n: any) => Number.isFinite(n)) : []
+        selectedCategoryIds.value = new Set(ids)
+        mainCategoryId.value = (boot.categories.mainCategoryId != null && Number.isFinite(Number(boot.categories.mainCategoryId))) ? Number(boot.categories.mainCategoryId) : null
+        categoriesInitialized.value = true
+      }
+      if (Array.isArray((boot as any).photos)) initialPhotos.value = (boot as any).photos as any[]
+    } catch {}
     publishToast('Товар сохранён')
     router.push({ name: 'admin-product-form', params: { id: newId }, query: { ...route.query } })
+    return
+  }
+
+  // Редактирование: 1 sync POST
+  try {
+    const boot = await formRepo.sync(id.value, buildPayload())
+    hydrateForm(boot.product as any)
+    if (boot?.categories?.tree) {
+      categoryTree.value = Array.isArray(boot.categories.tree) ? boot.categories.tree : []
+      categoriesLoaded.value = true
+      const ids: number[] = Array.isArray(boot.categories.selectedCategoryIds) ? boot.categories.selectedCategoryIds.map((x: any) => Number(x)).filter((n: any) => Number.isFinite(n)) : []
+      selectedCategoryIds.value = new Set(ids)
+      mainCategoryId.value = (boot.categories.mainCategoryId != null && Number.isFinite(Number(boot.categories.mainCategoryId))) ? Number(boot.categories.mainCategoryId) : null
+      categoriesInitialized.value = true
+    }
+    if (Array.isArray((boot as any).photos)) initialPhotos.value = (boot as any).photos as any[]
+    publishToast('Товар сохранён')
+  } catch (e) {
+    publishToast('Ошибка сохранения')
   }
 }
 
@@ -474,28 +561,7 @@ async function handleRemoveOption(optionIri: string) {
   if (Array.isArray(form.optionAssignments)) {
     form.optionAssignments = form.optionAssignments.filter(a => a.option !== optionIri)
   }
-
-  // Для нового товара не отправляем PATCH — опции сохранятся вместе с товаром
-  if (isCreating.value) {
-    publishToast('Опция удалена (изменение будет сохранено вместе с товаром)')
-    return
-  }
-
-  // Отправляем PATCH на /v2/products/{id} с обновленным optionAssignments
-  try {
-    const productId = id.value
-    if (!productId) return
-    const payloadRows = Array.isArray(form.optionAssignments)
-      ? (form.optionAssignments as any[]).filter(r => r && typeof r.option === 'string' && typeof r.value === 'string' && r.option && r.value)
-      : []
-    const res = await repo.partialUpdate(String(productId), { optionAssignments: payloadRows as any })
-    if ((res as any)?.optionAssignments) {
-      ;(form as any).optionAssignments = (res as any).optionAssignments
-    }
-    publishToast('Опция удалена у товара')
-  } catch (e) {
-    publishToast('Ошибка удаления опции')
-  }
+  publishToast('Опция удалена (сохранится при «Сохранить»)')
 }
 
 async function handleAddOption(payload: any) {
@@ -530,49 +596,14 @@ async function handleAddOption(payload: any) {
     ;(form.optionAssignments as any[]).push(row)
   }
 
-  // Для нового товара не отправляем PATCH — опции сохранятся вместе с товаром
-  if (isCreating.value) {
-    publishToast('Опция добавлена (будет сохранена вместе с товаром)')
-    return
-  }
-
-  try {
-    const productId = id.value
-    if (!productId) return
-    const payloadRows = (form.optionAssignments as any[]).filter(r => r && typeof r.option === 'string' && typeof r.value === 'string' && r.option && r.value)
-    const res = await repo.partialUpdate(String(productId), { optionAssignments: payloadRows as any })
-    if ((res as any)?.optionAssignments) {
-      ;(form as any).optionAssignments = (res as any).optionAssignments
-    }
-    publishToast('Опция/значение сохранены')
-  } catch (e) {
-    publishToast('Ошибка добавления опции')
-  }
+  publishToast('Опция/значение добавлены (сохранится при «Сохранить»)')
 }
 
 async function handleRemoveAssignment(row: any) {
   if (!Array.isArray(form.optionAssignments)) return
   const idx = (form.optionAssignments as any[]).indexOf(row)
   if (idx >= 0) (form.optionAssignments as any[]).splice(idx, 1)
-
-  // Для нового товара не отправляем PATCH — опции сохранятся вместе с товаром
-  if (isCreating.value) {
-    publishToast('Вариация удалена (изменение будет сохранено вместе с товаром)')
-    return
-  }
-
-  try {
-    const productId = id.value
-    if (!productId) return
-    const payloadRows = (form.optionAssignments as any[]).filter(r => r && typeof r.option === 'string' && typeof r.value === 'string' && r.option && r.value)
-    const res = await repo.partialUpdate(String(productId), { optionAssignments: payloadRows as any })
-    if ((res as any)?.optionAssignments) {
-      ;(form as any).optionAssignments = (res as any).optionAssignments
-    }
-    publishToast('Значение опции удалено')
-  } catch (e) {
-    publishToast('Ошибка удаления значения опции')
-  }
+  publishToast('Вариация удалена (сохранится при «Сохранить»)')
 }
 
 function mapViolationsToErrors(list: Array<{ propertyPath?: string; message?: string }>) {

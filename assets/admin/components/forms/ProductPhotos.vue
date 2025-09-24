@@ -146,9 +146,10 @@ import Spinner from '@admin/ui/components/Spinner.vue'
 import { DialogClose, DialogContent, DialogOverlay, DialogRoot, DialogTitle, DialogTrigger } from 'reka-ui'
 import { AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogOverlay, AlertDialogRoot, AlertDialogTitle, AlertDialogTrigger } from 'reka-ui'
 import { MediaRepository } from '@admin/repositories/MediaRepository'
+import { httpClient } from '@admin/services/http'
 const mediaRepo = new MediaRepository()
 
-const props = defineProps<{ productId: string; isCreating: boolean }>()
+const props = defineProps<{ productId: string; isCreating: boolean; initialPhotos?: Array<{ id: number; imageUrl: string; sortOrder: number }> }>()
 const emit = defineEmits<{ (e: 'toast', message: string): void }>()
 const publishToast = (m: string) => emit('toast', m)
 
@@ -266,10 +267,8 @@ async function fetchProductImages() {
   productImagesLoading.value = true
   productImagesError.value = ''
   try {
-    const res = await fetch(`/api/v2/products/${props.productId}`, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
-    if (!res.ok) throw new Error('Не удалось загрузить товар')
-    const data = await res.json()
-    const imgs = Array.isArray(data.image) ? data.image : (Array.isArray(data.images) ? data.images : [])
+    const { data } = await httpClient.getJson<any>(`/v2/products/${props.productId}`)
+    const imgs = Array.isArray((data as any)?.image) ? (data as any).image : (Array.isArray((data as any)?.images) ? (data as any).images : [])
     const normalized: ProductImageDto[] = imgs
       .map((it: any): ProductImageDto => ({ id: Number(it.id), imageUrl: String(it.imageUrl), sortOrder: Number(it.sortOrder ?? 0) }))
       .sort((a: ProductImageDto, b: ProductImageDto) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.id - b.id)
@@ -309,14 +308,32 @@ async function attachPendingIfAny() {
 
 onMounted(async () => {
   if (!props.isCreating) {
+    // Инициализируемся данными из родителя, если есть
+    if (Array.isArray(props.initialPhotos) && props.initialPhotos.length) {
+      productImages.value = props.initialPhotos.slice().sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.id - b.id)
+    } else {
+      await fetchProductImages()
+    }
     await attachPendingIfAny()
-    await fetchProductImages()
+  }
+})
+// Реакция на приход initialPhotos после монтирования
+watch(() => props.initialPhotos, (list) => {
+  if (!props.isCreating) {
+    const arr = Array.isArray(list) ? list : []
+    if (arr.length) {
+      productImages.value = arr.slice().sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.id - b.id)
+    }
   }
 })
 watch(() => props.productId, async () => {
   if (!props.isCreating) {
+    if (Array.isArray(props.initialPhotos) && props.initialPhotos.length) {
+      productImages.value = props.initialPhotos.slice().sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.id - b.id)
+    } else {
+      await fetchProductImages()
+    }
     await attachPendingIfAny()
-    await fetchProductImages()
   }
 })
 
@@ -353,7 +370,10 @@ async function deleteProductImage(imageId: number) {
   const set = new Set(deletingImageIds.value); set.add(imageId); deletingImageIds.value = set
   try {
     await mediaRepo.deleteProductImage(imageId)
-    await fetchProductImages()
+    // Локально обновим список без лишнего GET
+    const next = productImages.value.filter(it => it.id !== imageId)
+    next.forEach((it, i) => (it.sortOrder = i + 1))
+    productImages.value = next
     publishToast('Изображение удалено')
   } catch (e: any) {
     publishToast(e?.message || 'Ошибка удаления')
