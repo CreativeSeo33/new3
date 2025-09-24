@@ -67,14 +67,26 @@ export function useProductSave() {
 				result = await repo.create(payload)
 			}
 			return { success: true, result }
-		} catch (err: any) {
-			const status = err?.response?.status
-			const violations = err?.response?.data?.violations || err?.response?.data?.detail?.violations || []
-			if ((status === 400 || status === 422) && Array.isArray(violations) && violations.length && opts.onValidationError) {
-				opts.onValidationError(violations as Violation[])
-			}
-			error.value = err instanceof Error ? err.message : 'Ошибка сохранения'
-			return { success: false, error: error.value }
+    } catch (err: any) {
+      const status = err?.response?.status
+      const data = err?.data || err?.response?.data
+      const violations = data?.violations || data?.detail?.violations || []
+      if ((status === 400 || status === 422) && Array.isArray(violations) && violations.length && opts.onValidationError) {
+        opts.onValidationError(violations as Violation[])
+      }
+
+      // Специальная обработка: неуникальный slug (Duplicate entry ... for key ...)
+      const rawMessage: string = (data && (data['hydra:description'] || data['detail'] || data['message'])) || (err?.message || '')
+      const isDuplicate = typeof rawMessage === 'string' && /Duplicate entry/i.test(rawMessage)
+      if (isDuplicate && opts.onValidationError) {
+        const slugMsg = 'Slug уже используется. Укажите уникальное значение.'
+        opts.onValidationError([{ propertyPath: 'slug', message: slugMsg }])
+        error.value = slugMsg
+        return { success: false, error: slugMsg }
+      }
+
+      error.value = err instanceof Error ? err.message : 'Ошибка сохранения'
+      return { success: false, error: error.value }
 		} finally {
 			saving.value = false
 		}

@@ -96,23 +96,24 @@ final class ProductFormController extends AbstractController
         OptionRepo $optionRepository,
         OptionValueRepo $optionValueRepository,
     ): JsonResponse {
-        // Default empty product DTO
-        $dto = new ProductResource();
-        $dto->id = null;
-        $dto->type = Product::TYPE_SIMPLE;
-        $dto->name = '';
-        $dto->slug = '';
-        $dto->price = null;
-        $dto->salePrice = null;
-        $dto->status = true;
-        $dto->quantity = null;
-        $dto->description = '';
-        $dto->metaTitle = '';
-        $dto->metaDescription = '';
-        $dto->h1 = '';
-        $dto->sortOrder = 0;
-        $dto->optionAssignments = [];
-        $dto->image = [];
+        // Default empty product payload (plain array to avoid IRI generation for a non-persisted ApiResource)
+        $product = [
+            'id' => null,
+            'type' => Product::TYPE_SIMPLE,
+            'name' => '',
+            'slug' => '',
+            'price' => null,
+            'salePrice' => null,
+            'status' => true,
+            'quantity' => null,
+            'description' => '',
+            'metaTitle' => '',
+            'metaDescription' => '',
+            'h1' => '',
+            'sortOrder' => 0,
+            'optionAssignments' => [],
+            'image' => [],
+        ];
 
         // Categories tree
         $treePayload = $this->buildCategoriesTreePayload($categoryRepository);
@@ -132,7 +133,7 @@ final class ProductFormController extends AbstractController
         ];
 
         return $this->json([
-            'product' => $dto,
+            'product' => $product,
             'categories' => $categoriesPayload,
             'options' => [
                 'version' => $optionsPayload['version'],

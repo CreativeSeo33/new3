@@ -65,10 +65,8 @@ export class HttpClient {
       },
       (error) => {
         if (error?.config && !isStreamRequest(error.config)) {
-          // По умолчанию при ошибке спиннер оставляем видимым, но для 409 — скрываем
-          if (error?.response?.status === 409) {
-            uiLoading.stopGlobalLoading()
-          }
+          // Всегда завершаем глобальный лоадер на ошибках, чтобы не залипала индикация
+          uiLoading.stopGlobalLoading()
         }
         if (error.response?.status === 401) {
           this.handleUnauthorized();
@@ -85,13 +83,24 @@ export class HttpClient {
   }
 
   private normalizeError(error: any): Error {
-    if (error.response?.data?.['hydra:description']) {
-      return new Error(error.response.data['hydra:description']);
+    let message = error?.message || 'Network error'
+    const data = error?.response?.data
+    if (data?.['hydra:description']) {
+      message = String(data['hydra:description'])
+    } else if (typeof data === 'string') {
+      message = String(data)
+    } else if (data?.detail) {
+      message = String(data.detail)
+    } else if (data?.message) {
+      message = String(data.message)
     }
-    if (typeof error.response?.data === 'string') {
-      return new Error(error.response.data);
-    }
-    return new Error(error.message || 'Network error');
+    const e = new Error(message)
+    try {
+      ;(e as any).status = error?.response?.status
+      ;(e as any).response = error?.response
+      ;(e as any).data = error?.response?.data
+    } catch {}
+    return e
   }
 
   async get<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {

@@ -289,11 +289,15 @@ const optionValuesMap = computed<Record<string, string>>(() => {
     return map
   } catch { return {} }
 })
-const loadIfEditing = async () => {
-  if (isCreating.value) return
-  const boot = await formRepo.fetchForm(id.value)
+const loadBootstrap = async () => {
+  const boot = await formRepo.fetchForm(isCreating.value ? undefined : id.value)
   hydrateForm(boot.product as any)
   try {
+    if (isCreating.value) {
+      // Новый товар: сбрасываем фото и очищаем отложенные изображения из прошлых сессий
+      initialPhotos.value = []
+      try { localStorage.removeItem('new-product-pending-images') } catch {}
+    }
     if (boot?.categories?.tree) {
       categoryTree.value = Array.isArray(boot.categories.tree) ? boot.categories.tree : []
       categoriesLoaded.value = true
@@ -316,16 +320,21 @@ onMounted(() => {
   if (typeof q === 'string' && validTabs.value.has(q)) {
     activeTab.value = q as ProductTabValue
   }
-  loadIfEditing()
+  loadBootstrap()
 })
 watch(id, async () => {
   // reset per-product lazy flags and state
   selectedCategoryIds.value = new Set()
   mainCategoryId.value = null
   categoriesInitialized.value = false
+  if (isCreating.value) {
+    // При переходе на новый товар очищаем ожидающие изображения
+    try { localStorage.removeItem('new-product-pending-images') } catch {}
+    initialPhotos.value = []
+  }
   // keep categoryTree and categoriesLoaded; they'll refetch on demand if product differs
   optionsPrefetched.value = false
-  await loadIfEditing()
+  await loadBootstrap()
   // если пользователь находится на вкладке, подтянем данные сразу
   if (activeTab.value === 'categories') {
     if (!categoriesLoaded.value) await loadCategoriesTree()
@@ -507,9 +516,25 @@ const handleSave = async () => {
   // Новый товар: сначала create (как сейчас), затем sync для зависимостей
   if (isCreating.value) {
     const result = await saveProduct(id.value, form, {
-      onValidationError: (violations) => mapViolationsToErrors(violations as any),
+      onValidationError: (violations) => {
+        mapViolationsToErrors(violations as any)
+        // если slug неуникален — открыть описание, чтобы подсветка была видна
+        if (Array.isArray(violations) && violations.some(v => String(v?.propertyPath || '').split('.')[0] === 'slug')) {
+          activeTab.value = 'description'
+          publishToast('Slug уже используется. Укажите уникальное значение.')
+        }
+      },
     })
-    if (!result.success) return
+    if (!result.success) {
+      // В случае ошибки (например, дубль slug) переключим на вкладку описания
+      activeTab.value = 'description'
+      // Явно подсветим slug, если сообщение про дубликат пришло текстом
+      const msg = String(result.error || '')
+      if (/Slug уже используется/i.test(msg)) {
+        ;(errors as any).slug = 'Slug уже используется. Укажите уникальное значение.'
+      }
+      return
+    }
     const newId = (result.result as any)?.id ?? id.value
     try {
       const boot = await formRepo.sync(newId, buildPayload())

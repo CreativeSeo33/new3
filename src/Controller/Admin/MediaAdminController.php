@@ -160,19 +160,12 @@ class MediaAdminController
             ->getQuery()->getSingleScalarResult());
 
         $created = [];
-        $warmedRelatives = [];
         foreach ($items as $rel) {
             if (!is_string($rel) || $rel === '') {
                 continue;
             }
             $relative = $normalize($rel);
-            // ensure cache md2 and compute cached URL
-            try {
-                $this->imageCacheService->ensureCachedByFilter($relative, 'md2');
-            } catch (\Throwable $e) {
-                // skip invalid source silently
-                continue;
-            }
+            // compute URL via resolver path; прогрев произойдет лениво при первом запросе
             $cachedUrl = '/media/cache/md2/img/' . $relative;
 
             $pi = new ProductImage();
@@ -184,19 +177,11 @@ class MediaAdminController
                 'imageUrl' => $cachedUrl,
                 'sortOrder' => $maxSort,
             ];
-            $warmedRelatives[] = $relative;
         }
         $this->em->flush();
 
-        // Синхронный прогрев всех пресетов для добавленных изображений
-        foreach (array_unique($warmedRelatives) as $relPath) {
-            try {
-                $this->imageWarmup->warm($relPath, $this->imagineFilters);
-            } catch (\Throwable) {
-                // игнорируем ошибки прогрева, т.к. md2 уже прогрели выше
-            }
-        }
-
+        // Ускорение ответа: не выполняем синхронный прогрев пресетов в рамках этого запроса.
+        // Пресеты будут построены лениво при первом обращении или отдельной фоновой задачей.
         return new JsonResponse(['created' => count($created), 'items' => $created]);
     }
 

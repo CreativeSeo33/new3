@@ -179,9 +179,9 @@ const attachLoading = ref(false)
 // Построение URL LiipImagine resolver для предпросмотра (md2)
 function liipResolve(relative: string, filter: string = 'md2'): string {
   const clean = String(relative || '')
-    .replace(/\\\\/g, '/')
-    .replace(/\.+/g, '')
-    .replace(/^\/+|\/+$/g, '')
+    .replace(/\\+/g, '/')              // windows path → unix
+    .replace(/\.{2,}(?:[\\/]|$)/g, '') // убрать только '..' сегменты
+    .replace(/^\/+|\/+$/g, '')          // обрезать ведущие/хвостовые '/'
   return `/media/cache/resolve/${filter}/img/${clean}`
 }
 
@@ -267,8 +267,9 @@ async function fetchProductImages() {
   productImagesLoading.value = true
   productImagesError.value = ''
   try {
-    const { data } = await httpClient.getJson<any>(`/v2/products/${props.productId}`)
-    const imgs = Array.isArray((data as any)?.image) ? (data as any).image : (Array.isArray((data as any)?.images) ? (data as any).images : [])
+    // Предпочитаем initialPhotos, но если их нет, можно добавить лёгкий эндпоинт только для фото.
+    const { data } = await httpClient.getJson<any>(`/admin/products/${props.productId}/form`)
+    const imgs = Array.isArray((data as any)?.photos) ? (data as any).photos : []
     const normalized: ProductImageDto[] = imgs
       .map((it: any): ProductImageDto => ({ id: Number(it.id), imageUrl: String(it.imageUrl), sortOrder: Number(it.sortOrder ?? 0) }))
       .sort((a: ProductImageDto, b: ProductImageDto) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.id - b.id)
@@ -302,6 +303,8 @@ async function attachPendingIfAny() {
     await mediaRepo.attachProductImages(props.productId, pendingRelatives.value)
     try { localStorage.removeItem(PENDING_KEY) } catch {}
     pendingRelatives.value = []
+    // сразу обновим список фото товара
+    await fetchProductImages()
     publishToast('Изображения добавлены')
   } catch {}
 }
@@ -336,6 +339,14 @@ watch(() => props.productId, async () => {
     await attachPendingIfAny()
   }
 })
+
+// При открытии компонента для нового товара — убедимся, что отложенный список чист
+watch(() => props.isCreating, (creating) => {
+  if (creating) {
+    try { localStorage.removeItem(PENDING_KEY) } catch {}
+    pendingRelatives.value = []
+  }
+}, { immediate: true })
 
 async function attachSelected() {
   if (selectedImages.value.size === 0) return
