@@ -1,0 +1,104 @@
+---
+alwaysApply: false
+---
+
+# Product: поток создания/сохранения (v2)
+
+Назначение: быстрый ориентир для агента по полной цепочке создания/обновления/удаления товара, маппингу полей, валидациям и кешированию. Фокус — админский v2-слой (`/api/v2/products`).
+
+## Где смотреть
+- `App\ApiResource\ProductResource` — DTO ресурса (маршруты v2)
+- `App\State\ProductStateProcessor` — запись (create/update/delete)
+- `App\State\ProductStateProvider` — чтение (item/collection, пагинация/фильтры)
+- `App\Entity\Product` — сущность + валидации + индексы
+- `App\Doctrine\Listener\ProductEntityListener` → `App\Service\ProductLifecycleService` — slug/code/timestamps/effectivePrice
+- `App\Controller\Admin\Api\ProductFormController` — ETag админ-форм
+- Кеш остатков/вариантов: `App\Service\InventoryService`, `App\Service\ProductVariantService`
+
+## Маяки поиска (быстрый старт)
+- «processor»: поиск по `class ProductStateProcessor` или `implements ProcessorInterface`
+- «provider»: `class ProductStateProvider` или `implements ProviderInterface`
+- «lifecycle»: `ProductEntityListener` и `ProductLifecycleService`
+- «dto v2»: `namespace App\\ApiResource; class ProductResource`
+- «etag формы»: `ProductFormController` строки с `setEtag`/`isNotModified`
+- «кэш вариантов»: ключи `variant_by_sku_`, `product_combinations_`, `inventory_assignments_`
+
+Стоп-условия: найден `ProductStateProcessor::process()` и `ProductStateProvider::provide()` — широкие сканы остановить.
+
+## Эндпоинты (v2)
+- POST `/api/v2/products` — создать (processor)
+- PATCH `/api/v2/products/{id}` — частичное обновление (read:false, processor)
+- DELETE `/api/v2/products/{id}` — удаление (output:false, processor)
+- GET `/api/v2/products/{id}` — item (provider)
+- GET `/api/v2/products` — collection (provider, пагинация/фильтры)
+
+## Быстрый чек-лист (создание/обновление)
+- На входе DTO поля: name, slug, price, salePrice, status, quantity, sortOrder, type, description, metaTitle/metaDescription/metaKeywords/h1, manufacturerId, optionsJson, optionAssignments[]
+- Processor мапит только присланные ключи (PATCH — partial)
+- Цены: через `setPricingValues()` + дублирующие `setPrice/setSalePrice` (embeddable change-tracking)
+- `optionAssignments`: старые очищаются, новые создаются по IRI (option/value) + цифр. поля; допустим ровно один `setPrice=true`
+- `manufacturerId` → `manufacturerRef`
+- flush(), затем provider возвращает свежий DTO
+- Listener + Lifecycle: генерирует `code`, `createdAt/updatedAt`, гарантирует `slug`, вычисляет `effectivePrice`
+
+## Валидации/инварианты
+- Уникальность: `code` (ULID), `slug`
+- `salePrice <= price` (если оба заданы)
+- simple: нет вариаций; price > 0 (если задана)
+- variable: минимум одна вариация
+- Ровно один `setPrice=true` в наборе вариаций
+- Удаление запрещено, если товар используется в корзинах (409)
+
+## Маппинг DTO → Entity (ключевое)
+- Базовые поля: прямые сеттеры (`name/slug/status/quantity/sortOrder/type/description`)
+- SEO: `metaTitle/metaDescription/metaKeywords/h1` → прокси в `ProductSeo`
+- Цена: `setPricingValues(price, salePrice)` + дублирующие сеттеры
+- Производитель: `manufacturerId` → `manufacturerRef`
+- `optionsJson`/`attributeJson`: сохраняются как JSON
+- Вариации: пересоздание `ProductOptionValueAssignment` по IRI (`/api/options/{id}`, `/api/option_values/{id}`)
+
+## Кеширование
+- HTTP (ETag) админ-форм:
+  - GET `/api/admin/products/{id}/form` — ETag учитывает состояние товара, связи и версии словарей; `304` по If-None-Match
+  - GET `/api/admin/products/form` — ETag от версий словарей (категории/опции)
+  - Глобально: `api_platform.defaults.cache_headers.vary: [Content-Type, Authorization, Origin]`
+- Приложенческий (CacheInterface):
+  - `InventoryService`: `inventory_assignments_{md5(ids)}` TTL 300; `invalidateCache(ids)`
+  - `ProductVariantService`: `variant_by_sku_{md5(sku)}` TTL 3600; `variant_assignments_{md5(ids)}` TTL 300; `product_combinations_{productId}` TTL 600; `invalidateSkuCache`, `invalidateCombinationCache`, `invalidateProductCache`
+- Doctrine result/2nd level cache — не используется (на 2025‑09‑24)
+
+## Типовые изменения — чек-лист
+- Добавление поля товара:
+  - Entity: поле + валидации + группы сериализации
+  - Processor: маппинг in/out (учесть PATCH partial)
+  - Provider: трансформация в DTO
+  - Документация: обновить примеры/описания в этом правиле и в `docs/product_save_and_create_flow.md`
+- Изменение вариативности/цен:
+  - Lifecycle: пересчёт `effectivePrice`
+  - Processor: корректный маппинг pricing/embed
+  - Инвалидировать кэши вариантов при необходимости
+- Изменение ETag форм: пересчёт сигнатур, обновить описание
+
+## Приёмка изменений
+- PATCH обрабатывает только присланные ключи
+- Вариативный товар: `effectivePrice` = минимум по вариациям; у simple — `salePrice ?? price`
+- Ровно один `setPrice=true` среди вариаций
+- Удаление товара: 409, если есть ссылки в корзинах
+
+## Отладка/диагностика (быстро)
+- Последние ошибки: `Get-Content var/log/dev.log -Tail 20`
+- HTTP: `Get-Content var/log/request_dev.log -Tail 10`
+- Doctrine: `Get-Content var/log/doctrine_dev.log -Tail 15`
+
+## Поддержка/обновления
+При любых изменениях процессов создания/сохранения товара ОБЯЗАТЕЛЬНО обновить этот документ в том же PR:
+- Менялись: `ProductStateProcessor`, `ProductStateProvider`, `Product` (поля/валидации/индексы), `ProductEntityListener`, `ProductLifecycleService`
+- Менялись ETag/формы: `ProductFormController` или словари/версии
+- Менялись кэши: `InventoryService`, `ProductVariantService` (ключи/TLL/инвалидаторы)
+- Менялись настройки API Platform, маршруты, группы сериализации
+Добавьте краткое «Что изменилось / Что проверять» + обновите примеры запросов.
+
+## Связанные правила
+- @ai_context.mdc
+- @doctrine_entities.mdc
+- @services.mdc

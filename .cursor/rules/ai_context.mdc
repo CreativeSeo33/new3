@@ -1,180 +1,23 @@
 ---
 alwaysApply: true
-description: Глобальный якорный контекст проекта (архитектура, инварианты, артефакты)
-globs:
-  - "**/*"
 ---
 
-# AI_CONTEXT v1
-Последнее обновление: 2025-09-15
+# AI_CONTEXT v1 (локальный)
 
-Назначение: краткий “якорный” контекст для ИИ (архитектура, инварианты, артефакты). Используется в каждой задаче вместе с ссылками на `docs/runtime/*` и минимальными диффами.
+Назначение: якорный контекст проекта (архитектура, инварианты, артефакты) + ссылки на ключевые правила. Использовать вместе с `docs/runtime/*`.
 
-## Обзор проекта
+## Ссылки на ключевые правила
+- @product_save_and_create_flow.mdc — Поток создания/сохранения товара (v2), кеширование, чек-листы
+- @agent_performance_policy.mdc
+- @catalog_js_architecture.mdc
+- @stimulus_policy.mdc
+- @doctrine_entities.mdc
+- @services.mdc
+- @order_checkout_flow.mdc
+- @paginationapiplatformmapping.mdc
+- @components_index.mdc
+- @pages_index.mdc
 
-- Symfony 7 (7.3.*) + API Platform ^4.1 для REST API и бэкенд‑бизнес‑логики
-- Doctrine ORM ^3.5/DBAL ^3, миграции Doctrine
-- Frontend: Vue 3 (SPA для админки) + TailwindCSS + TypeScript (strict)
-- Сборка: Webpack Encore (production/dev); Storybook 8 для UI
-- Каталог (витрина) — модульная архитектура FSD (`assets/catalog/src`)
-- Админка — SPA на Vue 3, роутинг только через Vue Router (`/admin`)
-
-## Технологический стек и версии
-
-- Symfony 7.3 + API Platform 4.1; Doctrine ORM/DBAL 3
-- Admin (SPA): Vue 3, TypeScript strict, TailwindCSS; сборка — Webpack Encore
-- Catalog: FSD в `assets/catalog/src`
-- Auth/CORS/Media/UX: LexikJWT, NelmioCors, LiipImagine, Symfony UX (Stimulus/Twig/Live)
-
-## Приоритет правил
-
-1) Архитектурные инварианты → @projectrules.mdc
-2) Запрет хардкодов → @hardcoderules.mdc
-3) Checkout/бизнес‑флоу → @order_checkout_flow.mdc
-4) Пагинация (API Platform) → @paginationapiplatformmapping.mdc
-5) Справочники → @services.mdc, @doctrine_entities.mdc
-6) Диагностика → @logs.mdc
-7) Catalog JS Architecture (каталог/FSD) → @catalog_js_architecture.mdc
-8) Stimulus‑policy → @stimulus_policy.mdc
-9) Политика производительности агента → @agent_performance_policy.mdc
-
-
-## Сборка и артефакты
-
-- Точки входа: `admin` → `assets/admin/admin.ts`; `catalog` → `assets/catalog/catalog.ts`
-- Сборка: `npm run build` | `npm run build:admin` | `npm run build:catalog`; dev: `npm run dev:*`
-- Storybook: `public/storybook-admin`, `public/storybook-catalog`
-
-## Twig/UX для каталога
-
-- Каталог (Twig/UX): FSD через `data-module` и реестр; код — только TypeScript, разделение API/UI соблюдается. Stimulus — исключение для малых UI‑паттернов. Inline `<script>` запрещены. См. @catalog_js_architecture.mdc.
-
-## Архитектура фронтенда
-
-### Admin (SPA)
-- Роутер: `createWebHistory('/admin')` в `assets/admin/router/index.ts`
-- Новые admin‑страницы добавлять только через Vue Router (не через Symfony маршруты)
-- Стейт/сервисы/репозитории в `assets/admin/*` (components, composables, repositories, services, stores, views)
-
-### Catalog (FSD)
-- Базовая структура: `assets/catalog/src/{shared,features,widgets,entities,pages}`
-- Алиасы (TS/Webpack): `@` → `assets/catalog/src`, `@shared`, `@features`, `@entities`, `@widgets`, `@pages`, `@admin`
-- Шаблоны и генератор модулей: `docs/templates/*`, `docs/generate-module.js`
-
-### TailwindCSS
-- `darkMode: 'class'`
-- Сканирование контента: `templates/**/*.html.twig`, `assets/admin/**/*.{js,vue,ts}`, `assets/catalog/**/*.{js,vue,ts}`
-- Расширенная тема (семантические токены, палитры, safelist для статусов и col-span)
-
-## Архитектура бэкенда
-
-- Bundles: Framework, WebpackEncore, Twig, Security, Doctrine, Migrations, NelmioCors, ApiPlatform, Monolog, Debug/WebProfiler, LexikJWT, LiipImagine, UX (Stimulus, TwigComponent, LiveComponent)
-- Роутинг: контроллеры по атрибутам (`config/routes.yaml`); `api_login: /api/login`
-- Security (`config/packages/security.yaml`):
-  - `^/api` — `security: false` (публичный слой API Platform)
-  - `^/admin` — доступ `ROLE_ADMIN`
-  - `form_login` (`/login`), `logout` → редирект на `app_login`
-- CORS (`config/packages/nelmio_cors.yaml`): `allow_origin: ['%env(CORS_ALLOW_ORIGIN)%']`, методы GET/OPTIONS/POST/PUT/PATCH/DELETE
-- Конфигурация через ENV/параметры в `config/services.yaml`; запрещено хардкодить URL, пути, бизнес‑константы
-
-## API Platform и пагинация
-
-- Глобальные defaults (`config/packages/api_platform.yaml`):
-  - `pagination_items_per_page: %pagination.default_items_per_page%`
-  - `pagination_maximum_items_per_page: %pagination.max_items_per_page%`
-  - `pagination_client_items_per_page: true`, `pagination_client_page: true`
-- Параметры (`config/packages/pagination.yaml`):
-  - Общие: `pagination.items_per_page_options: [5,10,30]`, `pagination.default_items_per_page: 5`
-  - City (admin): опции `[30,60,100]`, дефолт `30`
-  - Pvz (admin): опции `[30,60,100]`, дефолт `30`
-  - Глобальный максимум: `pagination.max_items_per_page: 100`
-- Требования для admin‑ресурсов:
-  - `#[ApiResource]` на Entity
-  - Настройка пагинации в `GetCollection`
-  - Корректные группы сериализации для admin‑контекста
-  - При необходимости — `uriTemplate` под `/admin/{resource}`
-
-## Инварианты и обязательные правила
-
-- Конфиг‑менеджмент: только ENV + параметры + DI (`config/packages/*.yaml`, `config/services.yaml`, `ParameterBagInterface`); никаких хардкодов
-- Вся бизнес‑логика, фильтрация, сортировка, пагинация — на бэкенде (API Platform)
-- Frontend (Vue): только представление, UI‑состояние, загрузки, обработка ошибок; синхронизация пагинации через URL query (`page`, `itemsPerPage`)
-- Корзина: источник истины — серверные `Cart/CartItem`; фронтенд не пересчитывает значения, а читает их из API
-- Новые admin‑страницы — только через Vue Router (SPA), без Symfony‑роутов
-
-## Логи и диагностика (Windows PowerShell)
-
-- Основные файлы: `var/log/dev.log`, `var/log/doctrine_dev.log`, `var/log/request_dev.log`, `var/log/deprecation_dev.log`, `var/log/security_dev.log`
-- Диагностика:
-  - Последние ошибки: `Get-Content var/log/dev.log -Tail 20`
-  - HTTP/роутинг: `Get-Content var/log/request_dev.log -Tail 10`
-  - Doctrine: `Get-Content var/log/doctrine_dev.log -Tail 15`
-- Подробнее: @logs.mdc
-
-## Ключевые пути репозитория
-
-- Backend: `src/{Controller,Entity,Repository,Service,Api,State,Event*,Validator,Exception}`
-- Конфиги: `config/{packages, routes, services.yaml, bundles.php}`
-- Admin (SPA): `assets/admin/{router,views,components,stores,services,...}`
-- Catalog (FSD): `assets/catalog/src/{shared,features,widgets,entities,pages}`
-- Сборка: `webpack.config.js`, `postcss.config.js`, `tailwind.config.js`, `tsconfig*.json`
-- Артефакты: `public/build/`, `public/storybook-*`
-- Документация: `docs/*`
-
-## Связанные правила Cursor
-
-- Справочник сущностей Doctrine: `@doctrine_entities.mdc`
-- Ключевые сервисы (назначение/зоны ответственности): `@services.mdc`
-- Сценарий оформления заказа: `@order_checkout_flow.mdc`
-- Пагинация API Platform: `@paginationapiplatformmapping.mdc`
-- Политика каталога (FSD, TS, без inline): `@catalog_js_architecture.mdc`
-- Политика производительности агента: `@agent_performance_policy.mdc`
-- Политика Twig‑компонентов (Symfony UX): `@twig_components_policy.mdc`
-- Индекс компонентов: `@components_index.mdc`
- - Политика создания правил (Cursor Rules Authoring): `@rules_authoring_policy.mdc`
- - Локальные правила Admin SPA: `@admin_local.mdc`
- 
-Документация по потоку сабмита: см. docs/TRACE.md
-
-### Инструкция для агента
-
-- Не создавать новые файлы в `docs/` автоматически. Документацию добавлять только по явной просьбе пользователя; по умолчанию описывать изменения в ответе и через диффы.
-
-- При любом изменении в `src/Entity/**` или `src/Entity/Embeddable/**` обновляй `@doctrine_entities.mdc` (таблицы полей, связи, уникальные ограничения, индексы) в том же PR.
-- При любых значимых изменениях в `src/Service/**` (добавление/удаление/переименование сервисов или изменение их ответственности) обновляй `@services.mdc` в том же PR.
-- При любых изменениях логики оформления заказа (контроллер checkout, сервисы доставки, перенос Cart→Order) обновляй `@order_checkout_flow.mdc` в том же PR.
-
-- При любых правках Twig‑компонентов (`templates/components/**` и другие шаблоны с якорями `ai:component`/`ai:module`):
-  - создай/обнови карту компонента: `.cursor/rules/component_<kebab>_map.mdc` (всегда `alwaysApply: false`);
-  - добавь/обнови запись в индексе компонентов: `@components_index.mdc` (в соответствующей секции);
-  - в шаблоне компонента первая строка — `{# ai:component=<kebab> map=@component_<kebab>_map.mdc v=1 #}` (использовать один `ai:module` без `map` для компонентов нельзя).
-
-## Критерии приёмки изменений (для задач ИИ)
-
-- Соответствие инвариантам конфигурации и архитектуры (без хардкодов, DI, ENV)
-- Пагинация/фильтры/сортировка делаются на бэкенде; во Vue только запросы и отображение
-- Admin‑страницы регистрируются в Vue Router; URL‑синхронизация `page`/`itemsPerPage`
-- Корзинные значения читаются из API; нет клиентских пересчётов
-- Код собирается из корня командами npm; артефакты не коммитятся
-- Отсутствуют логи/секреты в VCS; логи — в `var/log/*`
-- Каталог: интерактив реализован как FSD‑модули (TypeScript, `data-module`, раздельные API/UI, `destroy()`, `data-testid` на ключевых узлах); нет inline `<script>`.
-- Stimulus допускается как исключение для небольших UI‑паттернов; без inline‑скриптов и с targets/values.
-- Допустимо расширение pinned‑набора для глобальных политик: `@catalog_js_architecture.mdc`.
-- Связанные .mdc обновлены при правках: @doctrine_entities.mdc, @services.mdc, @order_checkout_flow.mdc
- - Связанные .mdc обновлены при правках: @doctrine_entities.mdc, @services.mdc, @order_checkout_flow.mdc
- - Не добавлять файлы в `docs/` без явного запроса пользователя.
-- Для каждой страницы/шаблона существует и поддерживается карта страницы в .cursor/rules/page_<id>_map.mdc (alwaysApply: false, один фронт‑маттер, H1)
-- В шаблоне есть короткий указатель на карту: {# ai:page=<id> map=@page_<id>_map.mdc v=1 #} (для HTML/Vue — <!-- ai:page=<id> map=@page_<id>_map.mdc v=1 -->)
-- DOM‑якоря реализованы через Stimulus targets (data-*-target); при отсутствии Stimulus — через data-testid. Атрибуты data-ai-* не используются
-- При изменениях маршрутов/контроллеров/сервисов/шаблонов, связанных со страницей, обновлены соответствующий @page_<id>_map.mdc и индекс страниц @pages_index.mdc
-- Page maps обновлены при правках страниц/контроллеров/сервисов: @page_*_map.mdc
-- Новые/изменённые .mdc для карт страниц не увеличивают pinned‑набор (все alwaysApply: false); pinned‑файлы не меняются без необходимости
-- Twig‑компоненты:
-  - нет inline `<script>`;
-  - небольшой интерактив — через Stimulus с `"fetch": "lazy"`; для блоков ниже сгиба — lazy‑load (IntersectionObserver), Turbo не используется;
-  - по необходимости применяются `#[PreMount]`/`mount()`/`#[PostMount]`/`#[ExposeInTemplate]`; для реактивных сценариев — Live Components;
-  - ключевые узлы — с `data-testid`;
-  - для каждого компонента существует и поддерживается карта `.cursor/rules/component_<kebab>_map.mdc` (`alwaysApply: false`);
-  - в шаблоне компонента первая строка — `{# ai:component=<kebab> map=@component_<kebab>_map.mdc v=1 #}`;
-  - компонент перечислен в индексе `@components_index.mdc`.
+## Примечание
+Этот файл создан для быстрого связывания правил внутри репозитория. При добавлении новых глобальных правил — дополняйте раздел ссылок.
 
