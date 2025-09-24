@@ -1,6 +1,7 @@
 import type { ApiResource, HydraCollection } from '@admin/types/api';
 import { BaseRepository } from './BaseRepository';
 import { adminCache } from '@admin/utils/persistentCache';
+import { httpClient } from '@admin/services/http'
 
 export interface CategoryDto extends ApiResource {
   id?: number;
@@ -38,6 +39,16 @@ export class CategoryRepository extends BaseRepository<CategoryDto> {
 
   invalidatePersistentCache(): void {
     adminCache.clear('categories:');
+  }
+
+  async fetchTreeCached(): Promise<{ treeVersion: string; tree: Array<{ id: number; label: string; children?: any[] }> }> {
+    const { data } = await httpClient.getJson<{ treeVersion: string; tree: any[] }>('/admin/categories/tree')
+    const version = data?.treeVersion || 'v0'
+    const cached = adminCache.get<{ treeVersion: string; tree: any[] }>('categories:tree', version, 24 * 60 * 60 * 1000)
+    if (cached) return cached
+    const payload = { treeVersion: version, tree: Array.isArray(data?.tree) ? data.tree : [] }
+    adminCache.set('categories:tree', version, payload)
+    return payload
   }
 }
 

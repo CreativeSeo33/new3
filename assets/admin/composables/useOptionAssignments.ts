@@ -306,17 +306,7 @@ export function useOptionAssignments(opts: UseOptionAssignmentsOptions) {
     if (!productId || productId === 'new') return { success: false, message: 'Сначала сохраните товар' }
     const { removed, upsert } = getDelta()
     try {
-      const res = await fetch(`/api/v2/products/${productId}/options`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        credentials: 'same-origin',
-        body: JSON.stringify({
-          upsert,
-          remove: removed.map(r => ({ option: r.option, value: r.value, sku: r.sku })),
-        }),
-      })
-      if (!res.ok) throw new Error('Эндпоинт сохранения опций недоступен')
-      // Обновим базу
+      // отключено в рамках перехода на batch sync; оставлено как no-op
       baseSnapshot.value = rows.value.map(normalizeAssignment)
       baseSignature.value = makeSignature(rows.value)
       return { success: true }

@@ -145,6 +145,8 @@ import Button from '@admin/ui/components/Button.vue'
 import Spinner from '@admin/ui/components/Spinner.vue'
 import { DialogClose, DialogContent, DialogOverlay, DialogRoot, DialogTitle, DialogTrigger } from 'reka-ui'
 import { AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogOverlay, AlertDialogRoot, AlertDialogTitle, AlertDialogTrigger } from 'reka-ui'
+import { MediaRepository } from '@admin/repositories/MediaRepository'
+const mediaRepo = new MediaRepository()
 
 const props = defineProps<{ productId: string; isCreating: boolean }>()
 const emit = defineEmits<{ (e: 'toast', message: string): void }>()
@@ -197,32 +199,16 @@ function readPendingFromStorage() {
 readPendingFromStorage()
 
 async function fetchFolderTree() {
-  const res = await fetch('/api/admin/media/tree', { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
-  if (!res.ok) throw new Error('Не удалось получить дерево каталогов')
-  const ct = res.headers.get('content-type') || ''
-  if (!ct.includes('application/json')) {
-    const txt = await res.text()
-    throw new Error('Получен не-JSON ответ. Возможно, требуется авторизация или произошла ошибка. ' + txt.slice(0, 120))
-  }
-  const data = await res.json()
-  folderTree.value = Array.isArray(data.tree) ? data.tree : []
+  const data = await mediaRepo.fetchFolderTree()
+  folderTree.value = Array.isArray((data as any).tree) ? (data as any).tree : []
 }
 
 async function fetchImages(dir: string) {
   imagesLoading.value = true
   imagesError.value = ''
   try {
-    const url = new URL('/api/admin/media/list', window.location.origin)
-    if (dir) url.searchParams.set('dir', dir)
-    const res = await fetch(url.toString(), { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
-    if (!res.ok) throw new Error('Не удалось загрузить изображения')
-    const ct = res.headers.get('content-type') || ''
-    if (!ct.includes('application/json')) {
-      const txt = await res.text()
-      throw new Error('Получен не-JSON ответ. Возможно, редирект или HTML ошибка. ' + txt.slice(0, 120))
-    }
-    const data = await res.json()
-    folderImages.value = Array.isArray(data.items) ? data.items : []
+    const data = await mediaRepo.fetchImages(dir)
+    folderImages.value = Array.isArray((data as any).items) ? (data as any).items : []
   } catch (e: any) {
     imagesError.value = e?.message || 'Ошибка'
   } finally {
@@ -314,17 +300,10 @@ async function attachPendingIfAny() {
   readPendingFromStorage()
   if (!pendingRelatives.value.length) return
   try {
-    const res = await fetch(`/api/admin/media/product/${props.productId}/images`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      credentials: 'same-origin',
-      body: JSON.stringify({ items: pendingRelatives.value })
-    })
-    if (res.ok) {
-      try { localStorage.removeItem(PENDING_KEY) } catch {}
-      pendingRelatives.value = []
-      publishToast('Изображения добавлены')
-    }
+    await mediaRepo.attachProductImages(props.productId, pendingRelatives.value)
+    try { localStorage.removeItem(PENDING_KEY) } catch {}
+    pendingRelatives.value = []
+    publishToast('Изображения добавлены')
   } catch {}
 }
 
@@ -357,16 +336,7 @@ async function attachSelected() {
   }
   attachLoading.value = true
   try {
-    const res = await fetch(`/api/admin/media/product/${props.productId}/images`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      credentials: 'same-origin',
-      body: JSON.stringify({ items: Array.from(selectedImages.value) })
-    })
-    if (!res.ok) throw new Error('Не удалось сохранить изображения')
-    const ct = res.headers.get('content-type') || ''
-    if (!ct.includes('application/json')) throw new Error('Неожиданный ответ сервера')
-    await res.json()
+    await mediaRepo.attachProductImages(props.productId, Array.from(selectedImages.value))
     await fetchProductImages()
     publishToast('Изображения добавлены')
     selectedImages.value = new Set()
@@ -382,8 +352,7 @@ async function deleteProductImage(imageId: number) {
   if (!imageId) return
   const set = new Set(deletingImageIds.value); set.add(imageId); deletingImageIds.value = set
   try {
-    const res = await fetch(`/api/admin/media/product-image/${imageId}`, { method: 'DELETE', credentials: 'same-origin' })
-    if (!res.ok) throw new Error('Не удалось удалить изображение')
+    await mediaRepo.deleteProductImage(imageId)
     await fetchProductImages()
     publishToast('Изображение удалено')
   } catch (e: any) {
@@ -435,20 +404,11 @@ async function saveImagesOrder(orderIds: number[]) {
   if (savingOrder.value) return
   savingOrder.value = true
   try {
-    const res = await fetch(`/api/admin/media/product/${props.productId}/images/reorder`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      credentials: 'same-origin',
-      body: JSON.stringify({ order: orderIds })
-    })
-    if (!res.ok) throw new Error('Не удалось сохранить порядок изображений')
-    const ct = res.headers.get('content-type') || ''
-    if (!ct.includes('application/json')) throw new Error('Неожиданный ответ сервера')
-    const data = await res.json()
-    if (Array.isArray(data.items)) {
+    const data = await mediaRepo.reorderProductImages(props.productId, orderIds)
+    if (Array.isArray((data as any).items)) {
       // синхронизируем sortOrder из ответа, если пришло
       const byId = new Map<number, number>()
-      for (const it of data.items) {
+      for (const it of (data as any).items) {
         const id = Number(it.id)
         const so = Number(it.sortOrder)
         if (!Number.isNaN(id) && !Number.isNaN(so)) byId.set(id, so)
@@ -481,10 +441,7 @@ async function deleteAllProductImages() {
   for (const id of ids) set.add(id)
   deletingImageIds.value = set
   try {
-    const results = await Promise.allSettled(ids.map(async (id) => {
-      const res = await fetch(`/api/admin/media/product-image/${id}`, { method: 'DELETE', credentials: 'same-origin' })
-      if (!res.ok) throw new Error('Failed')
-    }))
+    const results = await Promise.allSettled(ids.map(async (id) => mediaRepo.deleteProductImage(id)))
     const failed = results.filter(r => r.status === 'rejected').length
     await fetchProductImages()
     if (failed === 0) {

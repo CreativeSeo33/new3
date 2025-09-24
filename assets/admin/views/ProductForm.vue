@@ -151,6 +151,7 @@ import { useProductForm } from '@admin/composables/useProductForm'
 import { useProductSave } from '@admin/composables/useProductSave'
 import type { ProductTab, ProductFormModel } from '@admin/types/product'
 import { ProductRepository, type ProductDto } from '@admin/repositories/ProductRepository'
+import { ProductFormRepository } from '@admin/repositories/ProductFormRepository'
 // (options UI moved to ProductOptions)
 import { uiLoading } from '@admin/shared/uiLoading'
 import { CategoryRepository, type CategoryDto } from '@admin/repositories/CategoryRepository'
@@ -212,6 +213,7 @@ if (!form) {
 
 // Load existing product for edit
 const repo = new ProductRepository()
+const formRepo = new ProductFormRepository()
 const categoryRepo = new CategoryRepository()
 const productCategoryRepo = new ProductCategoryRepository()
 // Options bootstrap state (lightweight)
@@ -262,8 +264,18 @@ const hydrateForm = (dto: ProductDto) => {
 }
 const loadIfEditing = async () => {
   if (isCreating.value) return
-  const dto = await repo.findById(id.value)
-  hydrateForm(dto)
+  const boot = await formRepo.fetchForm(id.value)
+  hydrateForm(boot.product as any)
+  try {
+    if (boot?.categories?.tree) {
+      categoryTree.value = Array.isArray(boot.categories.tree) ? boot.categories.tree : []
+      categoriesLoaded.value = true
+      const ids: number[] = Array.isArray(boot.categories.selectedCategoryIds) ? boot.categories.selectedCategoryIds.map((x: any) => Number(x)).filter((n: any) => Number.isFinite(n)) : []
+      selectedCategoryIds.value = new Set(ids)
+      mainCategoryId.value = (boot.categories.mainCategoryId != null && Number.isFinite(Number(boot.categories.mainCategoryId))) ? Number(boot.categories.mainCategoryId) : null
+      categoriesInitialized.value = true
+    }
+  } catch {}
 }
 
 onMounted(() => {
@@ -351,18 +363,8 @@ const selectedCategoryOptions = computed(() => {
 })
 
 async function loadCategoriesTree() {
-  const res = await categoryRepo.findAllCached({ itemsPerPage: 1000 }) as any
-  const list = (res['hydra:member'] ?? res.member ?? res ?? []) as CategoryDto[]
-  const byId = new Map<number, any>()
-  const roots: any[] = []
-  for (const c of list) byId.set(Number(c.id), { id: Number(c.id), label: c.name || `Без названия (#${c.id})`, parentId: (c as any).parentCategoryId ?? null, children: [] })
-  for (const n of byId.values()) {
-    if (n.parentId && byId.has(n.parentId)) byId.get(n.parentId).children.push(n)
-    else roots.push(n)
-  }
-  const sortRec = (nodes: any[]) => { nodes.sort((a,b)=> String(a.label).localeCompare(String(b.label))); nodes.forEach((n)=> n.children && sortRec(n.children)) }
-  sortRec(roots)
-  categoryTree.value = roots
+  const payload = await categoryRepo.fetchTreeCached()
+  categoryTree.value = Array.isArray((payload as any).tree) ? (payload as any).tree : []
   categoriesLoaded.value = true
 }
 
@@ -388,57 +390,15 @@ async function loadProductCategories() {
   categoriesInitialized.value = true
 }
 
-async function loadCategoriesBootstrap() {
-  categoryLoading.value = true
-  uiLoading.startGlobalLoading()
-  try {
-    const res = await fetch(`/api/admin/products/${id.value}/bootstrap`, { headers: { Accept: 'application/json' } })
-    if (!res.ok) throw new Error('bootstrap failed')
-    const data = await res.json()
-    const list = Array.isArray(data.categories) ? data.categories : []
-    // build tree
-    const byId = new Map<number, any>()
-    const roots: any[] = []
-    for (const c of list) byId.set(Number(c.id), { id: Number(c.id), label: c.name || `Без названия (#${c.id})`, parentId: (c as any).parentCategoryId ?? null, children: [] })
-    for (const n of byId.values()) {
-      if (n.parentId && byId.has(n.parentId)) byId.get(n.parentId).children.push(n)
-      else roots.push(n)
-    }
-    const sortRec = (nodes: any[]) => { nodes.sort((a,b)=> String(a.label).localeCompare(String(b.label))); nodes.forEach((n)=> n.children && sortRec(n.children)) }
-    sortRec(roots)
-    categoryTree.value = roots
-    categoriesLoaded.value = true
-    // selection
-    const ids: number[] = Array.isArray(data.selectedCategoryIds) ? data.selectedCategoryIds.map((x: any) => Number(x)).filter((n: any) => Number.isFinite(n)) : []
-    selectedCategoryIds.value = new Set(ids)
-    mainCategoryId.value = (data.mainCategoryId != null && Number.isFinite(Number(data.mainCategoryId))) ? Number(data.mainCategoryId) : null
-    categoriesInitialized.value = true
-  } catch {
-    // fallback to legacy loaders
-    if (!categoriesLoaded.value) await loadCategoriesTree()
-    if (!categoriesInitialized.value) await loadProductCategories()
-  } finally {
-    categoryLoading.value = false
-    uiLoading.stopGlobalLoading()
-  }
-}
+// removed legacy bootstrap loader
 
 // Ленивые загрузки по вкладкам
 watch(activeTab, async (val) => {
   if (val === 'categories') {
-    // сразу сбросим выбранные, чтобы не мигали значения от предыдущего товара
-    if (!categoriesInitialized.value) {
-      selectedCategoryIds.value = new Set()
-      mainCategoryId.value = null
-    }
-    if (!isCreating.value) {
-      await loadCategoriesBootstrap()
-    } else {
-      // для нового товара достаточно дерева
+    if (isCreating.value) {
       categoryLoading.value = true
       if (!categoriesLoaded.value) await loadCategoriesTree()
       categoryLoading.value = false
-      // разрешаем сохранение выбранных категорий после первого сохранения товара
       categoriesInitialized.value = true
     }
   }
