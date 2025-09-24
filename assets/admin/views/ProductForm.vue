@@ -615,6 +615,8 @@ const handleSave = async () => {
       } catch {}
     } catch {}
     publishToast('Товар сохранён')
+    // Маркер для страницы списка: принудительно обновить список один раз
+    try { sessionStorage.setItem('products:shouldReload', '1') } catch {}
     // Редирект на форму созданного товара после завершения всех запросов
     await router.push({ name: 'admin-product-form', params: { id: newId }, query: { ...route.query } })
     return
@@ -663,6 +665,8 @@ const handleSave = async () => {
       }
     } catch {}
     publishToast('Товар сохранён')
+    // Маркер для страницы списка: принудительно обновить список один раз
+    try { sessionStorage.setItem('products:shouldReload', '1') } catch {}
   } catch (e) {
     publishToast('Ошибка сохранения')
   }

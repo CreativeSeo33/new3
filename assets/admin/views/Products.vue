@@ -363,6 +363,14 @@ const hasActiveFilters = computed<boolean>(() => {
 })
 
 onMounted(async () => {
+  // Если форма товара попросила обновить список — сбросим кэш и сделаем свежий fetch
+  try {
+    const flag = sessionStorage.getItem('products:shouldReload')
+    if (flag === '1') {
+      sessionStorage.removeItem('products:shouldReload')
+      ;(ProductRepository as any).invalidateCachePrefix?.('/v2/products')
+    }
+  } catch {}
   // 1) Load pagination options (cached)
   let defaultIpp: number | null = null
   try {
@@ -407,24 +415,7 @@ onMounted(async () => {
   })
 })
 
-// При возврате из формы товара после сохранения принудительно инвалидируем кеш списка
-watch(
-  () => route.fullPath,
-  (to, from) => {
-    try {
-      const fromName = (from as any)?.name
-      const toName = (to as any)?.name
-      // Возврат на список
-      if (toName === 'admin-products') {
-        // Сброс GET-кеша по ресурсу списков продуктов
-        ;(ProductRepository as any).invalidateCachePrefix?.('/v2/products')
-        // И перезагрузим список
-        crud.refresh?.()
-      }
-    } catch {}
-  },
-  { immediate: false }
-)
+// Watcher больше не нужен: используем одноразовый флажок из sessionStorage
 
 // Sync URL only when user triggers actions (avoid initial redirects / loops)
 let initialized = false
