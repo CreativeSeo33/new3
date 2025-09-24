@@ -407,6 +407,25 @@ onMounted(async () => {
   })
 })
 
+// При возврате из формы товара после сохранения принудительно инвалидируем кеш списка
+watch(
+  () => route.fullPath,
+  (to, from) => {
+    try {
+      const fromName = (from as any)?.name
+      const toName = (to as any)?.name
+      // Возврат на список
+      if (toName === 'admin-products') {
+        // Сброс GET-кеша по ресурсу списков продуктов
+        ;(ProductRepository as any).invalidateCachePrefix?.('/v2/products')
+        // И перезагрузим список
+        crud.refresh?.()
+      }
+    } catch {}
+  },
+  { immediate: false }
+)
+
 // Sync URL only when user triggers actions (avoid initial redirects / loops)
 let initialized = false
 watch([page, itemsPerPage], ([p, ipp], [prevP, prevIpp]) => {

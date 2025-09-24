@@ -15,6 +15,14 @@ export abstract class BaseRepository<T extends ApiResource> {
     this.resourcePath = resourcePath;
   }
 
+  // Global cache invalidation helper for external mutations
+  static invalidateCachePrefix(prefix: string): void {
+    const absPrefix = prefix.startsWith('/') ? prefix : `/${prefix}`;
+    for (const key of GET_CACHE.keys()) {
+      if (key.startsWith(absPrefix)) GET_CACHE.delete(key);
+    }
+  }
+
   protected buildAbsoluteUrl(relative: string): string {
     // Ensures consistent cache keys
     return relative.startsWith('/') ? relative : `/${relative}`;
