@@ -115,6 +115,12 @@ export const adminRoutes: RouteRecordRaw[] = [
         meta: { requiresAuth: true }
       },
       {
+        path: 'yandex-delivery',
+        name: 'admin-yandex-delivery',
+        component: () => import(/* webpackChunkName: "admin-yandex-delivery" */ '@admin/views/YandexDelivery.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
         path: ':pathMatch(.*)*',
         name: 'AdminNotFound',
         component: () => import(/* webpackChunkName: "not-found" */ '@admin/views/NotFound.vue')
@@ -170,7 +176,8 @@ export const adminSidebarItems: AdminSidebarItem[] = [
       { to: { name: 'admin-cities' }, label: 'Города', colorClass: 'bg-lime-500' },
       { to: { name: 'admin-pvz-points' }, label: 'PVZ точки', colorClass: 'bg-orange-500' },
       { to: { name: 'admin-pvz-prices' }, label: 'PVZ цены', colorClass: 'bg-orange-400' },
-      { to: { name: 'admin-delivery-types' }, label: 'Типы доставок', colorClass: 'bg-teal-500' }
+      { to: { name: 'admin-delivery-types' }, label: 'Типы доставок', colorClass: 'bg-teal-500' },
+      { to: { name: 'admin-yandex-delivery' }, label: 'Яндекс Доставка', colorClass: 'bg-yellow-500' }
     ]
   },
   {

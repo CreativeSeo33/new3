@@ -41,6 +41,12 @@ parameters:
     # Notification settings
     app.notification.from_email: '%env(ADMIN_FROM_EMAIL)%'
 
+    # Yandex Delivery API configuration (env-driven)
+    env(YANDEX_DELIVERY_BASE_URL): 'https://b2b-authproxy.taxi.yandex.net'
+    env(YANDEX_DELIVERY_TOKEN): ''
+    app.yandex_delivery.base_url: '%env(string:YANDEX_DELIVERY_BASE_URL)%'
+    app.yandex_delivery.token: '%env(string:YANDEX_DELIVERY_TOKEN)%'
+
 services:
     # default configuration for services in *this* file
     _defaults:
@@ -188,3 +194,10 @@ services:
         factory: ['@monolog.logger', 'getLogger']
         arguments:
             - idempotency
+
+    # Yandex Delivery API client
+    App\Service\Yandex\YandexDeliveryApi:
+        arguments:
+            $baseUrl: '%app.yandex_delivery.base_url%'
+            $token: '%app.yandex_delivery.token%'
+            $timeoutSeconds: 15

@@ -39,6 +39,7 @@ const LABELS: Record<string, string> = {
   'admin-category-form': 'Категория',
   'admin-attributes': 'Атрибуты',
   'admin-attribute-groups': 'Группы атрибутов',
+  'admin-yandex-delivery': 'Яндекс Доставка',
   'admin-design-system': 'Дизайн-система',
   'AdminNotFound': 'Не найдено'
 }
