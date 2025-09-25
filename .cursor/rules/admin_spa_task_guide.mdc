@@ -86,6 +86,42 @@ onMounted(async () => {
 - Репозиторий создан/обновлён по шаблону; HTTP — только через `httpClient`.
 - Нет хардкодов; код на TypeScript; глобальный лоадер работает.
 
+## Внешние API (паттерн)
+- Принцип: фронтенд никогда не обращается к внешним доменам напрямую. Всегда через Symfony‑прокси `/api/integrations/<provider>/*`.
+- Секреты/ключи и базовые URL внешних API хранятся в конфигурации сервера (ENV/parameters), не в SPA.
+- Кэширование допускается: in‑memory (GET TTL) и `adminCache` (для справочников, 24h) на фронте; сервер — по политике проекта.
+- Ошибки/429/таймауты обрабатываются на сервере; на фронте используется нормализованное `Error.message` из `httpClient`.
+
+Шаги на фронте:
+1) Создать репозиторий: `assets/admin/repositories/External<Prov>Repository.ts` (можно от `BaseRepository`):
+   - Базовый путь: `super('/integrations/<provider>')`.
+   - Методы: чтение коллекций/деталей; возвращать типизированные DTO.
+2) Для списков — использовать `useCrud` (желательно, если прокси отдаёт Hydra‑коллекции). Иначе — вручную нормализовать ответ к массиву DTO.
+3) Никаких прямых `fetch`/Axios и никаких абсолютных URL.
+
+
+Мини‑пример:
+```ts
+// assets/admin/repositories/ExternalFooRepository.ts
+import type { ApiResource, HydraCollection } from '@admin/types/api'
+import { BaseRepository } from './BaseRepository'
+
+export interface FooItem extends ApiResource { id?: number; title: string | null }
+
+export class ExternalFooRepository extends BaseRepository<FooItem> {
+  constructor() { super('/integrations/foo') }
+
+  async findAllFoo(): Promise<HydraCollection<FooItem>> {
+    return this.findAll({ itemsPerPage: 50 }) as any
+  }
+}
+```
+
+Acceptance:
+- Все внешние запросы идут на `/api/integrations/...`.
+- Нет секретов/URL в SPA; нет отправки Bearer‑токена на внешние домены.
+- Типы DTO объявлены; ошибки показываются дружелюбно.
+
 ## Связанные правила
 - @admin_js_architecture.mdc
 - @admin_auth_policy.mdc
