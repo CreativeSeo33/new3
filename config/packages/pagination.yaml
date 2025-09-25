@@ -1,7 +1,7 @@
 parameters:
     # Общие настройки (используются для товаров и по умолчанию)
-    pagination.items_per_page_options: [5, 10, 30]
-    pagination.default_items_per_page: 5
+    pagination.items_per_page_options: [10, 20, 40]
+    pagination.default_items_per_page: 10
 
     # Настройки для City
     pagination.city.items_per_page_options: [30, 60, 100]
