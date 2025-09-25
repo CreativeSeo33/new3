@@ -1,0 +1,36 @@
+---
+alwaysApply: false
+description: Маяки для Admin SPA (router/http/bootstrap/store) — точечные якоря
+globs:
+  - assets/admin/**
+---
+
+# AI‑маяки для Admin SPA (Vue 3)
+
+Назначение: точные якоря в файлах админки, чтобы агент не делал широкие сканы. Используются совместно с `@agent_performance_policy.mdc`.
+
+## Форматы маяков (первая строка файла)
+- HTTP‑клиент (`assets/admin/services/http.ts`):
+  - `// ai:http-client area=admin exports=HttpClient,httpClient`
+- Роутер (`assets/admin/router/index.ts`):
+  - `// ai:router area=admin uses=auth,guards`
+- Точка входа SPA (`assets/admin/admin.ts`):
+  - `// ai:bootstrap area=admin uses=router,store`
+- Сторы (например, `assets/admin/stores/auth.ts`):
+  - `// ai:store area=admin name=auth exports=useAuthStore`
+- Базовый репозиторий (`assets/admin/repositories/BaseRepository.ts`):
+  - `// ai:repository-base area=admin`
+
+## Где вставлять
+- Только в файлы админки под `assets/admin/**`.
+- Комментарий‑маяк должен быть первой строкой файла, без отступов.
+
+## Поведение агента
+- Найден маяк → ограничить область действий текущим файлом/папкой админки, прекратить широкие поиски.
+- Для навигации по SPA: начинать с `ai:bootstrap` → `ai:router` → `ai:http-client`/`ai:store`.
+
+## Связанные документы
+- `@agent_performance_policy.mdc`
+- `@admin_js_architecture.mdc`
+- `@admin_auth_policy.mdc`
+

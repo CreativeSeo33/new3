@@ -12,15 +12,22 @@ globs:
 
 ## Scope
 - Каталог: `assets/catalog/**`, Twig каталога: `templates/catalog/**`.
-- Исключить: `assets/admin/**`, `vendor/**`, `node_modules/**`, `public/**`, `public/build/**`, `var/**`.
-- Приоритет FSD: см. `@catalog_js_architecture.mdc`.
+- Admin SPA: `assets/admin/**` (включать, если задача касается админки; приоритетно использовать маяки из `@ai_beacons_admin.mdc`).
+- Исключить: `vendor/**`, `node_modules/**`, `public/**`, `public/build/**`, `var/**`.
+- Приоритет FSD: см. `@catalog_js_architecture.mdc` и `@admin_js_architecture.mdc`.
 
 ## Маяки (anchor‑комментарии)
 Используй их в первую очередь. Если маяк найден — не делать широких сканов.
-- Реестр модулей: первая строка файла — `// ai:registry area=catalog key=data-module export=init root=@features`
-- Бутстрап каталога (входная точка): первая строка — `// ai:bootstrap area=catalog uses=registry`
-- HTTP‑клиент: первая строка — `// ai:http-client exports=<список>`
-- Базовый компонент: первая строка — `// ai:base-component name=Component purpose=DOM/events`
+- Catalog
+  - Реестр модулей: первая строка файла — `// ai:registry area=catalog key=data-module export=init root=@features`
+  - Бутстрап каталога (входная точка): первая строка — `// ai:bootstrap area=catalog uses=registry`
+  - HTTP‑клиент: первая строка — `// ai:http-client exports=<список>`
+  - Базовый компонент: первая строка — `// ai:base-component name=Component purpose=DOM/events`
+- Admin SPA
+  - Точка входа: `// ai:bootstrap area=admin uses=router,store`
+  - Роутер: `// ai:router area=admin uses=auth,guards`
+  - HTTP: `// ai:http-client area=admin exports=HttpClient,httpClient`
+  - Store: `// ai:store area=admin name=auth exports=useAuthStore`
 
 ## Константы путей (detected)
 - REGISTRY_PATH: `assets/catalog/src/app/registry.ts`
@@ -39,23 +46,21 @@ globs:
 ## Порядок действий (быстрый)
 1) Попробуй найти целевой файл по маяку (grep по `^// ai:` в ограниченных путях из Scope).
 2) Если маяк отсутствует — делай узкий поиск:
-   - Реестр: `assets/catalog/src/**` по токенам `registry`, `data-module`, `then(m => m.init)`.
-   - Бутстрап/вход: `assets/catalog/**` по токенам `bootstrap`, `DOMContentLoaded`.
-   - HTTP: `export function (get|post|patch|del)` или `requiresCsrfToken`.
-   - Component: `export abstract class Component` или `@shared/ui/Component`.
+   - Catalog: как раньше (registry/bootstrap/http/component).
+   - Admin: `assets/admin/**` по токенам `createRouter`, `createApp(App)`, `new Axios`, `interceptors`, `BaseRepository`.
 3) Нашёл файл — останови широкие поиски и работай точечно.
 
 ## Лимиты и стоп‑условия
 - max файлов в одном поиске: 200; max строк предпросмотра: 300.
 - Остановиться, если:
-  - найден маяк или точная сигнатура экспорта (`export const registry`, `export function get`, `export abstract class Component`).
-  - найден `document.addEventListener('DOMContentLoaded'...)` в `assets/catalog/catalog.ts`.
+  - найден маяк или точная сигнатура экспорта (`export const registry`, `export function get`, `export abstract class Component`, `createWebHistory('/admin')`, `new Axios` в `http.ts`).
+  - найден `document.addEventListener('DOMContentLoaded'...)` в `assets/catalog/catalog.ts` или `createApp(App)` в `assets/admin/admin.ts`.
 - Повторные сканы делать только при изменении требований.
 
 ## Редактирование
 - Вносить маяки только первыми строками файлов.
 - Не менять бизнес‑логику.
-- Соблюдать политику FSD: TypeScript, разделение API/UI, запрет inline `<script>` (см. `@catalog_js_architecture.mdc`).
+- Соблюдать политику: FSD для каталога (`@catalog_js_architecture.mdc`), архитектуру админки (`@admin_js_architecture.mdc`), запрет хардкодов (`@hardcoderules.mdc`).
 
 ## Связанные правила
 - `@ai_context.mdc`

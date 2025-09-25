@@ -1,0 +1,74 @@
+---
+alwaysApply: false
+description: Архитектура Admin SPA (Vue 3/TS) — структура, роутинг, HTTP, ошибки
+globs:
+  - assets/admin/**
+---
+
+# Admin SPA Architecture (Vue 3 + TypeScript)
+
+Область: `assets/admin/**`. Цель: единообразная архитектура для автономной работы ИИ‑агента.
+
+## Структура каталогов
+- `admin.ts` — входная точка (bootstrap)
+- `App.vue` — корневой компонент + глобальный лоадер
+- `router/` — роутер, модули маршрутов
+- `stores/` — Pinia сторы (например, `auth.ts`)
+- `services/` — `http.ts`, `auth.ts`, `config.ts`
+- `repositories/` — `BaseRepository` + ресурсы
+- `composables/` — `useCrud` и пр.
+- `ui/` — уни UI‑компоненты
+- `views/` — страницы
+
+## Bootstrap
+- Инициализация: `createApp(App).use(pinia).use(router).mount('#admin-app')`
+- Маяк: первая строка `admin.ts` — `// ai:bootstrap area=admin uses=router,store`
+
+## Роутинг
+- `createWebHistory('/admin')`
+- Гварды:
+  - `requiresAuth: true` в `meta` → проверка токена в `beforeEach`
+  - `roles?: string[]` в `meta` → проверка ролей пользователя
+- Страницы лениво грузятся (`() => import('...')`)
+- Маяк: `router/index.ts` — `// ai:router area=admin uses=auth,guards`
+
+## Сторы (Pinia)
+- Минимум `auth` стор: токен, пользователь, методы `login/logout`, вычисляемые `isAuthenticated`, `hasRole(role)`
+- Экспорт `useAuthStore` (для гвардов и UI)
+- Маяк: `stores/auth.ts` — `// ai:store area=admin name=auth exports=useAuthStore`
+
+## HTTP слой
+- `services/http.ts`: Axios instance, перехватчики, глобальный лоадер, нормализация ошибок Hydra
+- Заголовок `Authorization: Bearer <token>` — автоматически, токен берётся из store/localStorage
+- На 401 — триггер события/коллбек для логаута и редиректа на `/login`
+- Маяк: `// ai:http-client area=admin exports=HttpClient,httpClient`
+
+## Ошибки и UX
+- Глобальный лоадер управляется перехватчиками `http.ts` (через `uiLoading`)
+- Ошибки 400/422 — прокидывать `violations` в формы
+- Error boundary на уровне layout при необходимости
+
+## Репозитории
+- `BaseRepository<T>`: кэш GET, invalidate на мутациях, `partialUpdate` с `merge-patch+json`
+- Для справочников: persistent‑кэш (`adminCache`) и `invalidatePersistentCache()`
+
+## Конфигурация и ENV
+- Базовый URL API — из `window.APP_CONFIG.api.baseUrl` (если задан) → иначе `/api`; допускается `VITE_API_URL`
+- Пагинация (лимиты) — из `window.APP_CONFIG.pagination`
+
+## Тесты и качество (минимум)
+- Линт: ESLint + Prettier (не описывается здесь; см. общий CI)
+- Тесты: Vitest + Vue Test Utils для UI, e2e (Cypress) опционально
+
+## Acceptance для агента
+- Наличие маяков в точках входа/роутере/HTTP/сторе
+- Роутер имеет guard для `requiresAuth` и поддерживает `meta.roles`
+- `http.ts` подаёт событие на 401, лоадер не залипает
+- Репозитории не хардкодят бизнес‑константы/лимиты
+
+## Связанные правила
+- @ai_beacons_admin.mdc
+- @agent_performance_policy.mdc
+- @admin_auth_policy.mdc
+- @hardcoderules.mdc
+

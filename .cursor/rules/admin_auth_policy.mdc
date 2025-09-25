@@ -1,0 +1,42 @@
+---
+alwaysApply: false
+description: Политика аутентификации/авторизации для Admin SPA (JWT, 401, роли)
+globs:
+  - assets/admin/**
+  - config/packages/security.yaml
+---
+
+# Admin Auth Policy (JWT + Roles)
+
+Цель: единая модель входа/выхода и проверки доступа для Admin SPA.
+
+## Клиент (SPA)
+- Хранение токена: предпочтительно HttpOnly cookie; допустимо `localStorage` (в проектах без XSS‑рисков). Если используется `localStorage` — очищать на 401/403 и при логауте.
+- HTTP‑перехватчики:
+  - В запросах добавлять `Authorization: Bearer <token>` автоматически.
+  - На 401 — эмитировать событие/коллбек `auth:unauthorized` → стор `auth.logout()` → редирект на `/admin/login`.
+  - Избегать циклов 401 (глушить повторные попытки для защищённых роутов).
+- Роут‑гварды:
+  - `meta.requiresAuth === true` → требовать `isAuthenticated`.
+  - `meta.roles?: string[]` → проверять `hasRole(role)` (ролевая модель бэкенда).
+- Страница логина: POST `/api/login` → `{ token }`; после успеха — `router.replace({ name: 'admin-dashboard' })`.
+
+## Сервер (Symfony)
+- Маршрут логина (JWT): `/api/login` (или `/api/auth/login`). Возвращает `{ token }`.
+- CORS/CSRF:
+  - Для JWT‑API — отключить CSRF, настроить CORS для домена админки.
+  - Для не‑JWT форм — включить CSRF.
+- Роли/доступ:
+  - Админские ресурсы защищены `is_granted('ROLE_ADMIN')`.
+  - Рекомендуется страница `/admin` отдавать `templates/admin/base.html.twig` без данных пользователя; SPA сама запросит информацию профиля.
+
+## Acceptance
+- При истечении JWT SPA корректно перенаправляет на логин без залипания лоадера.
+- Гварды не допускают доступ к защищённым страницам без токена/ролей.
+- Токен не хардкодится и берётся из конфигов/ответов сервера.
+
+## Связанные правила
+- @admin_js_architecture.mdc
+- @ai_beacons_admin.mdc
+- @hardcoderules.mdc
+
