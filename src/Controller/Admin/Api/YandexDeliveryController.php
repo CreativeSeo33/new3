@@ -26,11 +26,34 @@ final class YandexDeliveryController extends AbstractController
     #[Route('/api/admin/yandex-delivery/offers/create', name: 'admin_yandex_delivery_offers_create', methods: ['POST'])]
     public function offersCreate(Request $request): JsonResponse
     {
-        $payload = json_decode((string) $request->getContent(), true) ?: [];
-        if (!is_array($payload)) { $payload = []; }
+        $decoded = json_decode((string) $request->getContent(), true);
+        $payload = is_array($decoded) ? $decoded : [];
 
         try {
             $result = $this->client->createOffer($payload);
+            return $this->json($result, 200);
+        } catch (\Throwable $e) {
+            $code = $e->getCode();
+            $status = is_int($code) && $code >= 400 && $code < 600 ? $code : 502;
+            return $this->json([
+                'error' => 'yandex_delivery_error',
+                'message' => $e->getMessage(),
+            ], $status);
+        }
+    }
+
+    /**
+     * Получение списка точек самопривоза и ПВЗ. Пустое тело → все доступные способы доставки.
+     * POST /api/admin/yandex-delivery/pickup-points/list
+     * Док: https://yandex.com/support/delivery-profile/ru/api/other-day/ref/2.-Tochki-samoprivoza-i-PVZ/apib2bplatformpickup-pointslist-post
+     */
+    #[Route('/api/admin/yandex-delivery/pickup-points/list', name: 'admin_yandex_delivery_pickup_points_list', methods: ['POST'])]
+    public function pickupPointsList(Request $request): JsonResponse
+    {
+        $decoded = json_decode((string) $request->getContent(), true);
+        $payload = is_array($decoded) ? $decoded : [];
+        try {
+            $result = $this->client->listPickupPoints($payload);
             return $this->json($result, 200);
         } catch (\Throwable $e) {
             $code = $e->getCode();

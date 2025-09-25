@@ -10,6 +10,7 @@ final class YandexDeliveryApi
 		private string $token,
 		private int $timeoutSeconds = 10,
 		private ?string $offersCreatePath = '/api/b2b/platform/offers/create',
+		private ?string $pickupPointsListPath = '/api/b2b/platform/pickup-points/list',
 	) {}
 
 	/**
@@ -25,17 +26,32 @@ final class YandexDeliveryApi
 	}
 
 	/**
+	 * Получение списка точек самопривоза и ПВЗ/способов доставки.
+	 * Пустое тело запроса вернёт все доступные способы доставки.
+	 * @see https://yandex.com/support/delivery-profile/ru/api/other-day/ref/2.-Tochki-samoprivoza-i-PVZ/apib2bplatformpickup-pointslist-post
 	 * @param array<string,mixed> $payload
 	 * @return array<string,mixed>
 	 */
-	private function request(string $method, string $path, array $payload): array
+	public function listPickupPoints(array $payload = []): array
+	{
+		$path = $this->pickupPointsListPath ?? '/api/b2b/platform/pickup-points/list';
+		return $this->request('POST', $path, $payload);
+	}
+
+	/**
+	 * @param array<string,mixed> $payload
+	 * @return array<string,mixed>
+	 */
+    private function request(string $method, string $path, array $payload): array
 	{
 		if ($this->token === '') {
 			throw new \RuntimeException('YANDEX_DELIVERY_TOKEN is not configured');
 		}
 
 		$url = rtrim($this->baseUrl, '/') . $path;
-		$body = json_encode($payload, JSON_UNESCAPED_UNICODE);
+        // Яндекс ожидает JSON-объект на входе; пустой массив [] приведёт к ошибке парсинга.
+        $bodyData = ($payload === []) ? (object)[] : $payload;
+        $body = json_encode($bodyData, JSON_UNESCAPED_UNICODE);
 		if ($body === false) { $body = '{}'; }
 
 		$respBody = null; $status = 0;
