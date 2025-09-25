@@ -1,3 +1,4 @@
+// ai:repository-base area=admin
 import { httpClient, type HttpClient } from '@admin/services/http';
 import type { ApiResource, CrudOptions, HydraCollection } from '@admin/types/api';
 

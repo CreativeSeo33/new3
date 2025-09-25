@@ -1,3 +1,4 @@
+// ai:bootstrap area=admin uses=router,store
 import { createApp } from 'vue';
 import App from './App.vue';
 import { router } from '@admin/router/index';

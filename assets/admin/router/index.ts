@@ -1,3 +1,4 @@
+// ai:router area=admin uses=auth,guards
 import { createRouter, createWebHistory } from 'vue-router';
 import type { RouteRecordRaw } from 'vue-router';
 import { adminRoutes } from './modules/admin';

@@ -1,3 +1,4 @@
+// ai:http-client area=admin exports=HttpClient,httpClient
 import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios';
 import { uiLoading } from '../shared/uiLoading'
 
