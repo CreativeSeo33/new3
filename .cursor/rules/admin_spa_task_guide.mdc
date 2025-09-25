@@ -1,0 +1,96 @@
+---
+alwaysApply: false
+description: Гайд для задач Admin SPA (Vue 3/TS): инструкции, чек-листы, запреты
+globs:
+  - assets/admin/**
+---
+
+# Admin SPA Task Guide (Vue 3 + TypeScript)
+
+Назначение: чёткие инструкции и чек-листы для агента при задачах в `assets/admin/**`. Следовать без отступлений, чтобы минимизировать рассуждения и время на принятие решений.
+
+## Когда применять
+- Любые задачи по страницам в `assets/admin/views/**`
+- Создание/изменение репозиториев в `assets/admin/repositories/**`
+- CRUD-списки, формы, пагинация, сайдбар, роутинг Admin SPA
+
+## Маяки (якоря) — точка входа
+- Использовать `@ai_beacons_admin.mdc` и маяки в коде:
+  - Входная точка: `assets/admin/admin.ts` — `ai:bootstrap`
+  - Роутер: `assets/admin/router/index.ts` — `ai:router`
+  - HTTP: `assets/admin/services/http.ts` — `ai:http-client`
+  - Базовый репозиторий: `assets/admin/repositories/BaseRepository.ts` — `ai:repository-base`
+- Найден маяк → прекратить широкие сканы и работать точечно (см. `@agent_performance_policy.mdc`).
+
+## Обязательные паттерны
+- **HTTP**: только через `@admin/services/http` (`httpClient`, перехватчики, глобальный лоадер). Никаких прямых `fetch` в компонентах/composables.
+- **Repository**: на каждый ресурс — `Repository extends BaseRepository<T>`; GET-кэш (in-memory TTL), мутации инвалидируют кэш; для справочников использовать persistent‑кэш `adminCache`.
+- **CRUD-страницы**: списки через `useCrud<T>(repo)` с Hydra‑распаковкой; формы — через `create`/`partialUpdate`.
+- **Пагинация**: параметры запроса к API Platform; лимиты — из `getPaginationConfig(scope)`; UI — `@admin/ui/components/Pagination.vue`.
+- **Ошибки/401**: нормализует `HttpClient`; 401 — сброс токена и редирект согласно `@admin_auth_policy.mdc`.
+- **Конфигурация**: запрет хардкодов URL/лимитов/таймаутов (см. `@hardcoderules.mdc`).
+
+## Инструкция: новая страница (View)
+1) Создать `assets/admin/views/<Name>.vue` (PascalCase, `<script setup lang="ts">`).
+2) Добавить роут в `assets/admin/router/modules/admin.ts`:
+   - `path: '<kebab>'`, `name: 'admin-<kebab>'`, `component: () => import('@admin/views/<Name>.vue')`, `meta: { requiresAuth: true }`.
+   - При необходимости — пункт в `adminSidebarItems`.
+3) Если это список:
+   - `const repo = new <Entity>Repository()`; `const crud = useCrud<<Entity>Dto>(repo)`.
+   - В `onMounted` загрузить `const cfg = await getPaginationConfig('admin-<scope>')`; затем `crud.fetchAll({ itemsPerPage: cfg.defaultItemsPerPage })`.
+   - Пагинация через компонент `Pagination.vue` и методы `crud.goToPage`, `crud.setItemsPerPage`.
+4) Если это форма:
+   - Чтение item: `crud.fetchById(id)`.
+   - Сохранение: `repository.create(payload)` или `repository.partialUpdate(id, payload)`.
+   - На 400/422 — разобрать `violations` из ответа и показать ошибки полей.
+5) Числовые поля нормализовать через `@admin/utils/num` (`toInt`/`toNum`).
+6) Не добавлять локальные спиннеры поверх глобального — стандартные запросы покрывает глобальный лоадер из `http.ts`.
+
+### Мини‑скелет списка
+```ts
+import { onMounted } from 'vue'
+import Card from '@admin/ui/components/Card.vue'
+import Pagination from '@admin/ui/components/Pagination.vue'
+import { useCrud } from '@admin/composables/useCrud'
+import { ExampleRepository, type ExampleDto } from '@admin/repositories/ExampleRepository'
+import { getPaginationConfig } from '@admin/services/config'
+
+const repo = new ExampleRepository()
+const crud = useCrud<ExampleDto>(repo)
+const state = crud.state
+
+onMounted(async () => {
+  const cfg = await getPaginationConfig('admin-examples')
+  await crud.fetchAll({ itemsPerPage: cfg.defaultItemsPerPage })
+})
+```
+
+## Инструкция: новый ресурс/API (Repository)
+1) Файл `assets/admin/repositories/<Entity>Repository.ts`.
+2) Интерфейс: `export interface <Entity>Dto extends ApiResource { ... }`.
+3) Класс: `export class <Entity>Repository extends BaseRepository<<Entity>Dto> { constructor() { super('/<api_path>') } }`.
+4) Для справочников: добавить `findAllCached()` с `adminCache` (24h) и `invalidatePersistentCache()`.
+5) Мутации (`create/update/patch/delete`) должны вызывать инвалидацию кэша (делает `BaseRepository`).
+
+## Запреты
+- Прямой `fetch`/Axios вне `services/http.ts`.
+- Хардкод URL/лимитов/таймаутов/бизнес‑констант.
+- Клиентская бизнес‑логика, фильтры/сортировки/пагинация (они на бэкенде).
+- Дублирование кэширования, реализованного в `BaseRepository`/`adminCache`.
+
+## Acceptance‑чек‑лист (агент обязан)
+- Файл страницы находится в `assets/admin/views/**`.
+- Роут `admin-<kebab>` добавлен с `meta.requiresAuth: true`; при необходимости — пункт сайдбара.
+- Для списков: `useCrud + Pagination.vue + getPaginationConfig('<scope>')`.
+- Для форм: корректные `create/partialUpdate`, 400/422 → ошибки полей из `violations`.
+- Репозиторий создан/обновлён по шаблону; HTTP — только через `httpClient`.
+- Нет хардкодов; код на TypeScript; глобальный лоадер работает.
+
+## Связанные правила
+- @admin_js_architecture.mdc
+- @admin_auth_policy.mdc
+- @ai_beacons_admin.mdc
+- @paginationapiplatformmapping.mdc
+- @projectrules.mdc
+- @hardcoderules.mdc
+- @ai_context.mdc
