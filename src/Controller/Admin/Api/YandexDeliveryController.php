@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace App\Controller\Admin\Api;
 
 use App\Service\Yandex\YandexDeliveryApi;
+use App\Dto\PickupPointDto;
+use App\Service\PickupPointProcessor;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -55,6 +57,31 @@ final class YandexDeliveryController extends AbstractController
         try {
             $result = $this->client->listPickupPoints($payload);
             return $this->json($result, 200);
+        } catch (\Throwable $e) {
+            $code = $e->getCode();
+            $status = is_int($code) && $code >= 400 && $code < 600 ? $code : 502;
+            return $this->json([
+                'error' => 'yandex_delivery_error',
+                'message' => $e->getMessage(),
+            ], $status);
+        }
+    }
+
+    /**
+     * Синхронизировать ПВЗ из Яндекса в таблицу PvzPoints (полная перезапись).
+     * POST /api/admin/yandex-delivery/pickup-points/sync
+     */
+    #[Route('/api/admin/yandex-delivery/pickup-points/sync', name: 'admin_yandex_delivery_pickup_points_sync', methods: ['POST'])]
+    public function pickupPointsSync(Request $request, PickupPointProcessor $processor): JsonResponse
+    {
+        $decoded = json_decode((string) $request->getContent(), true);
+        $payload = is_array($decoded) ? $decoded : [];
+        try {
+            $data = $this->client->listPickupPoints($payload);
+            $pointsArr = is_array($data['points'] ?? null) ? (array) $data['points'] : [];
+            $dtos = array_map(static fn(array $row) => PickupPointDto::fromYandex($row), $pointsArr);
+            $processor->savePickupPoints($dtos);
+            return $this->json(['ok' => true, 'saved' => count($dtos)]);
         } catch (\Throwable $e) {
             $code = $e->getCode();
             $status = is_int($code) && $code >= 400 && $code < 600 ? $code : 502;
