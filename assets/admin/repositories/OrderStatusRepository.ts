@@ -9,7 +9,7 @@ export interface OrderStatusDto extends ApiResource {
 
 export class OrderStatusRepository extends BaseRepository<OrderStatusDto> {
 	constructor() {
-		super('/admin/order-statuses')
+		super('/order_statuses')
 	}
 }
 

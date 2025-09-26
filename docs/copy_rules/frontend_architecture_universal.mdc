@@ -1,0 +1,66 @@
+---
+alwaysApply: false
+---
+
+# Frontend Architecture Policy (универсальная)
+
+Область: фронтенд‑код проектов на TypeScript. Цель: модульная архитектура, разделение ответственности, типобезопасность.
+
+## Рекомендованная структура (FSD)
+```
+assets/src/
+├── shared/           # Общие компоненты и утилиты
+│   ├── api/          # HTTP‑клиент и API‑функции
+│   ├── lib/          # Утилиты (форматтеры и т.п.)
+│   ├── types/        # Типы и интерфейсы
+│   └── utils/        # Хелперы
+├── entities/         # Сущности домена
+├── features/         # Фичи с бизнес‑смыслом
+├── widgets/          # UI‑виджеты
+└── pages/            # Компоненты страниц
+```
+
+## Новые модули
+- Feature: содержит UI и API‑слой, влияет на состояние данных.
+- Widget: UI‑представление без изменения состояния.
+- Shared: переиспользуемые компоненты и утилиты.
+
+## Базовый компонент
+```ts
+export abstract class Component {
+  protected root: HTMLElement;
+  private unsubs: Array<() => void> = [];
+  constructor(root: HTMLElement) { this.root = root; }
+  protected on(el: Element|Document|Window, ev: string, cb: EventListener, opts?: AddEventListenerOptions) {
+    el.addEventListener(ev, cb, opts);
+    const off = () => el.removeEventListener(ev, cb, opts);
+    this.unsubs.push(off);
+    return off;
+  }
+  destroy(): void { this.unsubs.forEach(fn => fn()); this.unsubs = []; }
+}
+```
+
+## API‑слой (шаблон)
+```ts
+import { get, post, patch, del } from '@shared/api/http';
+export async function listItems<T>(path: string): Promise<T[]> { return get<T[]>(path); }
+export async function createItem<T>(path: string, data: unknown): Promise<T> { return post<T>(path, data); }
+```
+
+## Правила
+- Только TypeScript; строгие типы; запрет `any` без необходимости.
+- HTTP — централизованно через `@shared/api/http`.
+- UI не содержит прямых строковых URL; все эндпоинты — в API‑слое фичи.
+- Очистка ресурсов в `destroy()` (слушатели/AbortController/таймеры).
+- Без inline `<script>`; DOM‑операции через методы компонентов.
+
+## Приёмка
+- Новые файлы соответствуют структуре и типизированы.
+- `destroy()` снимает все ресурсы.
+- Нет прямых `fetch` и жёстко прописанных URL.
+
+## Связанные правила
+- @performance_policy_universal.mdc
+- @stimulus_policy_universal.mdc
+

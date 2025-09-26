@@ -50,10 +50,13 @@
     </div>
 
     <div class="rounded-md border overflow-x-auto">
-      <table class="w-full text-sm min-w-[720px]">
+      <table class="w-full text-sm min-w-[860px]">
         <thead class="bg-neutral-50 text-neutral-600 dark:bg-neutral-900/40 dark:text-neutral-300">
           <tr>
-            <th class="px-4 py-2 text-left w-32">Номер</th>
+            <th class="px-4 py-2 text-left w-28">Номер</th>
+            <th class="px-4 py-2 text-left w-64">Клиент / Город</th>
+            <th class="px-4 py-2 text-left">Товары</th>
+            <th class="px-4 py-2 text-left w-32">Статус</th>
             <th class="px-4 py-2 text-left w-56">
               <button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleDateSort">
                 Дата
@@ -61,18 +64,28 @@
                 <span v-else-if="dateSort === 'asc'">↑</span>
               </button>
             </th>
-            <th class="px-4 py-2 text-left">Клиент</th>
-            <th class="px-4 py-2 text-left w-28">Статус</th>
-            <th class="px-4 py-2 text-left w-28">Сумма</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="o in orders" :key="o.id" class="border-t">
-            <td class="px-4 py-2">{{ o.orderId }}</td>
+          <tr v-for="o in orders" :key="o.id" class="border-t align-top">
+            <td class="px-4 py-2 whitespace-nowrap">{{ o.orderId }}</td>
+            <td class="px-4 py-2">
+              <div class="flex flex-col leading-tight">
+                <span class="font-medium">{{ [o.customer?.name, o.customer?.surname].filter(Boolean).join(' ') || '—' }}</span>
+                <span class="text-neutral-500">{{ o.customer?.phone || '—' }}</span>
+                <span class="text-neutral-500">{{ o.delivery?.city || '—' }}</span>
+              </div>
+            </td>
+            <td class="px-4 py-2">
+              <div class="flex flex-col gap-0.5">
+                <div v-for="p in (o.products || [])" :key="p.id" class="truncate">
+                  {{ p.product_name }} × {{ p.quantity }}
+                </div>
+                <div v-if="!o.products || o.products.length === 0" class="text-neutral-500">—</div>
+              </div>
+            </td>
+            <td class="px-4 py-2 whitespace-nowrap">{{ o.status ?? '—' }}</td>
             <td class="px-4 py-2 whitespace-nowrap">{{ formatDate(o.dateAdded) }}</td>
-            <td class="px-4 py-2">{{ formatCustomer(o) }}</td>
-            <td class="px-4 py-2">{{ o.status ?? '—' }}</td>
-            <td class="px-4 py-2">{{ formatMoney(o.total) }}</td>
           </tr>
           <tr v-if="!loading && orders.length === 0">
             <td colspan="5" class="px-4 py-6 text-center text-neutral-500">Нет заказов</td>

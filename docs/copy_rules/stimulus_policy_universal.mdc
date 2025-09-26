@@ -1,0 +1,49 @@
+---
+alwaysApply: false
+---
+
+# Политика использования Stimulus (универсальная)
+
+Применимость: Twig/HTML‑блоки с небольшим интерактивом. Для сложных фич — предпочтительно модульная архитектура на TypeScript (FSD).
+
+## Где писать код
+- Контроллеры: `assets/controllers/<name>_controller.ts`
+- Регистрация: `assets/controllers.json` и `startStimulusApp()` в `assets/bootstrap.js|ts`
+
+## Разметка
+- Использовать `data-controller`, `data-action`, targets/values/classes.
+- Без inline `<script>`; избегать глобальных слушателей, если можно ограничить область.
+
+## Пример контроллера
+```ts
+import { Controller } from '@hotwired/stimulus';
+export default class extends Controller<HTMLElement> {
+  static targets = ['panel', 'button'];
+  static values = { open: Boolean, url: String };
+  declare readonly openValue: boolean; declare readonly urlValue: string;
+  connect() { this.update(this.openValue ?? false); }
+  toggle() { this.update(!this.openValue); }
+  async load(event: Event) {
+    event.preventDefault();
+    if (!this.urlValue) return;
+    const ctrl = new AbortController(); const timer = setTimeout(() => ctrl.abort(), 15000);
+    try { const res = await fetch(this.urlValue, { headers: { 'X-Requested-With': 'XMLHttpRequest' }, signal: ctrl.signal });
+      this.panelTarget.innerHTML = await res.text(); } finally { clearTimeout(timer); }
+  }
+  update(open: boolean) { this.element.classList.toggle('is-open', open); }
+}
+```
+
+## Производительность
+- В `assets/controllers.json` для новых контроллеров — `"fetch": "lazy"`.
+- Тяжёлые зависимости — динамическим `import()` внутри контроллера.
+
+## Приёмка
+- Нет inline‑скриптов.
+- Контроллеры подключаются лениво.
+- Сетевые запросы используют Abort/таймаут по месту.
+
+## Связанные правила
+- @frontend_architecture_universal.mdc
+- @performance_policy_universal.mdc
+

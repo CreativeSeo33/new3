@@ -1,0 +1,34 @@
+---
+alwaysApply: false
+---
+
+# Политика для Twig‑компонентов (универсальная)
+
+Назначение: единые правила для Twig‑компонентов Symfony UX в любых проектах.
+
+## Структура компонента
+- PHP‑класс: `src/Twig/Components/<Domain?>/<Name>.php` (`App\Twig\Components`)
+  - `#[AsTwigComponent('<Name>')]`, финальный класс, строгие типы
+  - Опционально: `#[PreMount]`, `mount()`, `#[PostMount]`, `#[ExposeInTemplate]`
+- Шаблон: `templates/components/<Domain?>/<Name>.html.twig`
+- Вызов: `<twig:<Name> ... />` или `{{ component('<Name>', { ... }) }}`
+
+## Интерактив
+- Inline `<script>` запрещён. Малый интерактив — через Stimulus (lazy), сложный — через TS‑модули.
+- Добавляйте стабильные `data-testid` для автотестов.
+
+## Кэширование и производительность
+- Использовать HTTP‑кэш (ETag/Last‑Modified) при необходимости
+- Избегать тяжёлой логики в шаблоне; выносить в сервисы
+
+## Маркеры
+- В начале шаблона допускается якорь: `{# ai:component=<kebab> map=@component_<kebab>_map.mdc v=1 #}` (если применяется система карт)
+
+## Приёмка
+- Компонент строго типизирован, без inline‑скриптов, поддерживает a11y/i18n при необходимости
+- Подключение Stimulus — через `assets/controllers.json` с `fetch: "lazy"`
+
+## Связанные правила
+- @stimulus_policy_universal.mdc
+- @rules_authoring_policy.mdc
+

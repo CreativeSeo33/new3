@@ -1,0 +1,27 @@
+---
+alwaysApply: false
+---
+
+# AI‑маяки (универсальные)
+
+Назначение: точные якоря в коде для быстрого поиска и навигации агентом.
+
+## Форматы маяков (первая строка файла)
+- HTTP‑клиент: `// ai:http-client area=<app> exports=HttpClient,httpClient`
+- Роутер: `// ai:router area=<app> uses=auth,guards`
+- Точка входа SPA: `// ai:bootstrap area=<app> uses=router,store`
+- Store: `// ai:store area=<app> name=<storeName> exports=<exports>`
+- Базовый репозиторий: `// ai:repository-base area=<app>`
+- Базовый UI‑компонент: `// ai:base-component name=Component purpose=DOM/events`
+
+## Где вставлять
+- В соответствующие файлы фронтенда под `assets/**`.
+- Комментарий‑маяк — первая строка без отступов.
+
+## Поведение
+- Найден маяк → ограничить область действий текущим файлом/папкой, прекратить широкие поиски.
+
+## Связанные правила
+- @performance_policy_universal.mdc
+- @spa_architecture_universal.mdc
+

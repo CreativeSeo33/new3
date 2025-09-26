@@ -1,0 +1,59 @@
+---
+alwaysApply: false
+---
+
+# SPA Architecture (Vue 3/TS, универсальная)
+
+Область: `assets/admin/**` или любая SPA‑зона. Цель: единообразная архитектура, гварды, HTTP‑слой, репозитории.
+
+## Структура
+- `admin.ts` — входная точка (bootstrap)
+- `App.vue` — корневой компонент
+- `router/` — роутер и модули маршрутов
+- `stores/` — Pinia сторы (например, `auth.ts`)
+- `services/` — `http.ts`, `config.ts`
+- `repositories/` — `BaseRepository` + ресурсы
+- `views/` — страницы
+- `ui/` — общие UI‑компоненты
+
+## Bootstrap
+- `createApp(App).use(pinia).use(router).mount('#app')`
+- Маяк: первая строка `// ai:bootstrap area=spa uses=router,store`
+
+## Роутинг
+- `createWebHistory(<base>)`
+- Гварды:
+  - `meta.requiresAuth === true` → требовать `isAuthenticated`
+  - `meta.roles?: string[]` → проверять `hasRole(role)`
+- Страницы загружать лениво: `() => import('...')`
+- Маяк: `// ai:router area=spa uses=auth,guards`
+
+## Сторы
+- Минимум `auth` стор: токен, пользователь, `login/logout`, `isAuthenticated`, `hasRole`
+- Экспорт `useAuthStore`
+- Маяк: `// ai:store area=spa name=auth exports=useAuthStore`
+
+## HTTP‑слой
+- `services/http.ts`: экземпляр клиента (Axios или fetch‑обёртка), перехватчики, нормализация ошибок
+- Заголовок `Authorization: Bearer <token>` добавляется автоматически при наличии токена
+- На 401 — триггер события/коллбек для логаута и редиректа на `/login`
+- Маяк: `// ai:http-client area=spa exports=HttpClient,httpClient`
+
+## Репозитории
+- `BaseRepository<T>`: кэш GET, `partialUpdate` с `merge-patch+json`, инвалидация кэша на мутациях
+- Для справочников: persistent‑кэш (например, localStorage/IndexedDB) и `invalidatePersistentCache()`
+
+## Конфигурация
+- Базовый URL API — из конфигурации окружения/глобального объекта (без хардкодов)
+- Пагинация (лимиты) — из конфигурации приложения
+
+## Приёмка
+- Маяки присутствуют в bootstrap/роутер/http/store
+- Гварды не пускают на защищённые страницы без токена/ролей
+- HTTP‑слой централизован; нет прямого `fetch` в компонентах
+
+## Связанные правила
+- @auth_policy_universal.mdc
+- @ai_beacons_universal.mdc
+- @performance_policy_universal.mdc
+

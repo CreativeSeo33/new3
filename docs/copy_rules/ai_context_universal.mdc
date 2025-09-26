@@ -1,0 +1,22 @@
+---
+alwaysApply: false
+---
+
+# AI_CONTEXT (универсальный)
+
+Назначение: якорный контекст проекта и список связанных универсальных правил для копирования в `.cursor/rules/` в любых проектах.
+
+## Связанные универсальные правила Cursor
+- @performance_policy_universal.mdc
+- @frontend_architecture_universal.mdc
+- @stimulus_policy_universal.mdc
+- @spa_architecture_universal.mdc
+- @auth_policy_universal.mdc
+- @ai_beacons_universal.mdc
+- @api_pagination_checklist_universal.mdc
+- @twig_components_policy_universal.mdc
+- @rules_authoring_policy.mdc
+
+## Примечание
+Эти файлы предназначены как «копируемые» шаблоны. При интеграции в конкретный проект при необходимости переименуйте и установите `alwaysApply: true` у ключевых политик.
+

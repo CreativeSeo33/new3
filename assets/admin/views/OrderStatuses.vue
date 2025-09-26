@@ -13,6 +13,11 @@
 			</div>
 		</div>
 
+		<!-- Error -->
+		<div v-if="state.error" class="mb-3 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300">
+			{{ state.error }}
+		</div>
+
 		<!-- Table -->
 		<div class="overflow-x-auto rounded-md border border-neutral-200 dark:border-neutral-800">
 			<table class="min-w-full divide-y divide-neutral-200 text-sm dark:divide-neutral-800">
@@ -20,16 +25,25 @@
 					<tr>
 						<th class="px-3 py-2 text-left font-medium text-neutral-600 dark:text-neutral-300">Название</th>
 						<th class="px-3 py-2 text-left font-medium text-neutral-600 dark:text-neutral-300">Сортировка</th>
+						<th class="px-3 py-2 text-right font-medium text-neutral-600 dark:text-neutral-300">Действия</th>
 					</tr>
 				</thead>
 				<tbody>
 					<tr v-for="row in rows" :key="row.id" class="hover:bg-neutral-50 dark:hover:bg-white/5">
 						<td class="px-3 py-2">{{ row.name }}</td>
 						<td class="px-3 py-2">{{ row.sort }}</td>
+						<td class="px-3 py-2">
+							<div class="flex justify-end gap-2">
+								<button type="button" class="h-8 rounded-md px-2 text-xs hover:bg-neutral-100 dark:hover:bg-white/10" @click="openEditRow(row)">Изменить</button>
+								<button type="button" class="h-8 rounded-md px-2 text-xs text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30" @click="askDelete(row)">Удалить</button>
+							</div>
+						</td>
 					</tr>
 				</tbody>
 			</table>
 		</div>
+
+
 
 
 
@@ -49,13 +63,57 @@
 						</label>
 						<label class="block text-sm">
 							<span class="mb-1 block text-neutral-600 dark:text-neutral-300">Сортировка</span>
-							<input v-model.number="form.sort" type="number" class="h-9 w-full rounded-md border px-2 text-sm dark:border-neutral-800 dark:bg-neutral-900" required />
+						<input v-model="sortModel" inputmode="numeric" class="h-9 w-full rounded-md border px-2 text-sm dark:border-neutral-800 dark:bg-neutral-900" required />
 						</label>
 						<div class="flex justify-end gap-2 pt-2">
 							<button type="button" class="h-9 rounded-md px-3 text-sm hover:bg-neutral-100 dark:hover:bg-white/10" @click="openCreate = false">Отмена</button>
 							<button type="submit" class="inline-flex h-9 items-center rounded-md bg-neutral-900 px-3 text-sm font-medium text-white shadow hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100">Сохранить</button>
 						</div>
 					</form>
+				</DialogContent>
+			</DialogPortal>
+		</DialogRoot>
+
+		<!-- Edit modal -->
+		<DialogRoot v-model:open="openEdit">
+			<DialogPortal>
+				<DialogOverlay class="fixed inset-0 bg-black/50 backdrop-blur-[1px]" />
+				<DialogContent class="fixed left-1/2 top-1/2 w-[92vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-md border bg-white p-4 shadow-lg focus:outline-none dark:border-neutral-800 dark:bg-neutral-900">
+					<div class="mb-2">
+						<DialogTitle class="text-base font-semibold text-neutral-900 dark:text-neutral-100">Изменить статус</DialogTitle>
+						<DialogDescription class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">Обновите название и сортировку</DialogDescription>
+					</div>
+					<form class="space-y-4" @submit.prevent="submitUpdate">
+						<label class="block text-sm">
+							<span class="mb-1 block text-neutral-600 dark:text-neutral-300">Название</span>
+							<input v-model="editForm.name" class="h-9 w-full rounded-md border px-2 text-sm dark:border-neutral-800 dark:bg-neutral-900" required maxlength="20" />
+						</label>
+						<label class="block text-sm">
+							<span class="mb-1 block text-neutral-600 dark:text-neutral-300">Сортировка</span>
+							<input v-model="editSortModel" inputmode="numeric" class="h-9 w-full rounded-md border px-2 text-sm dark:border-neutral-800 dark:bg-neutral-900" required />
+						</label>
+						<div class="flex justify-end gap-2 pt-2">
+							<button type="button" class="h-9 rounded-md px-3 text-sm hover:bg-neutral-100 dark:hover:bg-white/10" @click="openEdit = false">Отмена</button>
+							<button type="submit" class="inline-flex h-9 items-center rounded-md bg-neutral-900 px-3 text-sm font-medium text-white shadow hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100">Сохранить</button>
+						</div>
+					</form>
+				</DialogContent>
+			</DialogPortal>
+		</DialogRoot>
+
+		<!-- Delete confirm modal -->
+		<DialogRoot v-model:open="openDelete">
+			<DialogPortal>
+				<DialogOverlay class="fixed inset-0 bg-black/50 backdrop-blur-[1px]" />
+				<DialogContent class="fixed left-1/2 top-1/2 w-[92vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-md border bg-white p-4 shadow-lg focus:outline-none dark:border-neutral-800 dark:bg-neutral-900">
+					<div class="mb-2">
+						<DialogTitle class="text-base font-semibold text-neutral-900 dark:text-neutral-100">Удалить статус</DialogTitle>
+						<DialogDescription class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">Вы уверены, что хотите удалить статус "{{ rowToDelete?.name }}"?</DialogDescription>
+					</div>
+					<div class="flex justify-end gap-2 pt-2">
+						<button type="button" class="h-9 rounded-md px-3 text-sm hover:bg-neutral-100 dark:hover:bg-white/10" @click="openDelete = false">Отмена</button>
+						<button type="button" class="inline-flex h-9 items-center rounded-md bg-red-600 px-3 text-sm font-medium text-white shadow hover:bg-red-700" @click="confirmDelete">Удалить</button>
+					</div>
 				</DialogContent>
 			</DialogPortal>
 		</DialogRoot>
@@ -72,16 +130,37 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { DialogContent, DialogDescription, DialogOverlay, DialogPortal, DialogRoot, DialogTitle, ToastDescription, ToastRoot } from 'reka-ui'
 import { useCrud } from '@admin/composables/useCrud'
 import { OrderStatusRepository, type OrderStatusDto } from '@admin/repositories/OrderStatusRepository'
+import { toInt } from '@admin/utils/num'
 
 const repo = new OrderStatusRepository()
 const crud = useCrud<OrderStatusDto>(repo)
 const state = crud.state
 
 const rows = computed(() => (state.items ?? []) as OrderStatusDto[])
-// Без пагинации
+
+// Без пагинации: коллекция статусов <= 10, используем дефолт
 
 const openCreate = ref(false)
-const form = reactive({ name: '', sort: 0 })
+const form = reactive<{ name: string; sort: number | null }>({ name: '', sort: 0 })
+const sortModel = computed<string>({
+	get: () => (form.sort != null ? String(form.sort) : ''),
+	set: (v: string) => { form.sort = toInt(v) ?? 0 },
+})
+
+// Edit state
+const openEdit = ref(false)
+const currentEditId = ref<number | null>(null)
+const editForm = reactive<{ name: string; sort: number | null }>({ name: '', sort: 0 })
+const editSortModel = computed<string>({
+	get: () => (editForm.sort != null ? String(editForm.sort) : ''),
+	set: (v: string) => { editForm.sort = toInt(v) ?? 0 },
+})
+function openEditRow(row: OrderStatusDto) {
+	currentEditId.value = Number(row.id)
+	editForm.name = row.name ?? ''
+	editForm.sort = toInt(row.sort) ?? 0
+	openEdit.value = true
+}
 
 const toastCount = ref(0)
 const lastToastMessage = ref('')
@@ -98,14 +177,61 @@ onMounted(async () => {
 
 async function submitCreate() {
 	try {
-		const payload = { name: (form.name || '').trim(), sort: Number(form.sort) || 0 }
+		const payload = { name: (form.name || '').trim(), sort: Number(form.sort ?? 0) || 0 }
 		await crud.create(payload)
+		// Перезагрузим список для соблюдения сортировки
+		await crud.fetchAll({ page: 1, sort: { sort: 'asc', name: 'asc' } })
 		openCreate.value = false
 		form.name = ''
 		form.sort = 0
 		toast('Статус создан')
 	} catch (e: any) {
-		toast(e?.message || 'Ошибка сохранения')
+		const violations = (e as any)?.data?.violations
+		if (Array.isArray(violations) && violations.length) {
+			toast(String(violations[0]?.message || 'Ошибка валидации'))
+		} else {
+			toast(e?.message || 'Ошибка сохранения')
+		}
+	}
+}
+
+async function submitUpdate() {
+	try {
+		const id = currentEditId.value
+		if (id == null) return
+		const payload = { name: (editForm.name || '').trim(), sort: Number(editForm.sort ?? 0) || 0 }
+		await crud.update(id, payload)
+		await crud.fetchAll({ page: 1, sort: { sort: 'asc', name: 'asc' } })
+		openEdit.value = false
+		toast('Статус обновлён')
+	} catch (e: any) {
+		const violations = (e as any)?.data?.violations
+		if (Array.isArray(violations) && violations.length) {
+			toast(String(violations[0]?.message || 'Ошибка валидации'))
+		} else {
+			toast(e?.message || 'Ошибка сохранения')
+		}
+	}
+}
+
+// Delete state
+const openDelete = ref(false)
+const rowToDelete = ref<OrderStatusDto | null>(null)
+function askDelete(row: OrderStatusDto) {
+	rowToDelete.value = row
+	openDelete.value = true
+}
+async function confirmDelete() {
+	try {
+		const id = Number(rowToDelete.value?.id)
+		if (!id) return
+		await crud.remove(id)
+		await crud.fetchAll({ page: 1, sort: { sort: 'asc', name: 'asc' } })
+		openDelete.value = false
+		rowToDelete.value = null
+		toast('Статус удалён')
+	} catch (e: any) {
+		toast(e?.message || 'Ошибка удаления')
 	}
 }
 </script>
