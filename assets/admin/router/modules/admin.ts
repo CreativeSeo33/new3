@@ -85,6 +85,12 @@ export const adminRoutes: RouteRecordRaw[] = [
         meta: { requiresAuth: true }
       },
       {
+        path: 'orders/:id',
+        name: 'admin-order',
+        component: () => import(/* webpackChunkName: "admin-order" */ '@admin/views/OrderDetails.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
         path: 'order-statuses',
         name: 'admin-order-statuses',
         component: () => import(/* webpackChunkName: "admin-order-statuses" */ '@admin/views/OrderStatuses.vue'),

@@ -33,6 +33,7 @@ const route = useRoute()
 
 const LABELS: Record<string, string> = {
   'admin-dashboard': 'Главная',
+  'admin-orders': 'Заказы',
   'admin-products': 'Товары',
   'admin-product-form': 'Товар',
   'admin-categories': 'Категории',
@@ -66,6 +67,16 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => {
     // Unknown route, just mark home as current
     list[0].to = null
     list[0].current = true
+    return list
+  }
+
+  // Спец-случай: страница заказа — показываем «Заказы» + номер заказа
+  if (currentName === 'admin-order') {
+    const parentTo = resolveToByName('admin-orders')
+    list.push({ label: LABELS['admin-orders'] ?? 'Заказы', to: parentTo, current: false })
+    const rawId = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
+    const idLabel = String(rawId ?? '').trim() || 'Заказ'
+    list.push({ label: idLabel, to: null, current: true })
     return list
   }
 

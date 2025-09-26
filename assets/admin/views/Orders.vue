@@ -68,7 +68,11 @@
         </thead>
         <tbody>
           <tr v-for="o in orders" :key="o.id" class="border-t align-top">
-            <td class="px-4 py-2 whitespace-nowrap">{{ o.orderId }}</td>
+            <td class="px-4 py-2 whitespace-nowrap">
+              <router-link :to="{ name: 'admin-order', params: { id: o.id } }" class="hover:underline">
+                {{ o.orderId }}
+              </router-link>
+            </td>
             <td class="px-4 py-2">
               <div class="flex flex-col leading-tight">
                 <span class="font-medium">{{ [o.customer?.name, o.customer?.surname].filter(Boolean).join(' ') || '—' }}</span>
@@ -84,7 +88,7 @@
                 <div v-if="!o.products || o.products.length === 0" class="text-neutral-500">—</div>
               </div>
             </td>
-            <td class="px-4 py-2 whitespace-nowrap">{{ o.status ?? '—' }}</td>
+            <td class="px-4 py-2 whitespace-nowrap">{{ formatStatus(o.status) }}</td>
             <td class="px-4 py-2 whitespace-nowrap">{{ formatDate(o.dateAdded) }}</td>
           </tr>
           <tr v-if="!loading && orders.length === 0">
@@ -122,6 +126,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useCrud } from '@admin/composables/useCrud'
 import { OrderRepository, type OrderDto } from '@admin/repositories/OrderRepository'
 import { getPaginationConfig } from '@admin/services/config'
+import { OrderStatusRepository, type OrderStatusDto } from '@admin/repositories/OrderStatusRepository'
 
 const repo = new OrderRepository()
 const crud = useCrud<OrderDto>(repo)
@@ -164,6 +169,13 @@ const itemsPerPageModel = computed<number>({
 })
 const ippOptions = ref<number[]>([])
 
+// Кэш статусов (id -> name)
+const statusRepo = new OrderStatusRepository()
+const statusNameById = ref<Record<string, string>>({})
+const statusFetchInProgress = new Set<string>()
+const statusLoading = ref<boolean>(false)
+const statusInitialized = ref<boolean>(false)
+
 const dateSort = ref<'asc' | 'desc'>('desc')
 const searchModel = ref<string>('')
 const appliedSearch = ref<string>('')
@@ -194,6 +206,29 @@ onMounted(async () => {
   const routeOrderId = typeof route.query.orderId === 'string' ? route.query.orderId : Array.isArray(route.query.orderId) ? String(route.query.orderId[0] || '') : ''
   searchModel.value = routeOrderId
   appliedSearch.value = (routeOrderId || '').trim()
+
+  // Ранний прогрев справочника статусов (1 запрос, далее из persistent‑кэша)
+  try {
+    statusLoading.value = true
+    const statuses = await statusRepo.findAllCached() as any
+    const list: any[] = Array.isArray(statuses) ? statuses : (statuses['hydra:member'] || statuses['member'] || [])
+    const map: Record<string, string> = {}
+    for (const s of list as OrderStatusDto[]) {
+      const name = (s as any).name
+      const idProp = (s as any)['@id'] ?? s.id
+      const idStr = typeof idProp === 'string' ? idProp.replace(/^.*\//, '') : String(idProp)
+      const idNum = Number(idStr)
+      if (typeof name === 'string') {
+        if (idStr) map[idStr] = name
+        if (Number.isFinite(idNum)) map[String(idNum)] = name
+      }
+    }
+    statusNameById.value = map
+  } catch (_) {}
+  finally {
+    statusInitialized.value = true
+    statusLoading.value = false
+  }
 
   await crud.fetchAll({
     itemsPerPage: typeof desiredIpp === 'number' ? desiredIpp : undefined,
@@ -318,6 +353,17 @@ function formatCustomer(o: OrderDto): string {
   const name = [c?.name, c?.surname].filter(Boolean).join(' ')
   const phone = c?.phone ? `, ${c.phone}` : ''
   return (name || '').trim() ? `${name}${phone}` : (phone ? phone.slice(2) : '—')
+}
+function formatStatus(id: number | string | null | undefined): string {
+  if (id == null || id === '') return '—'
+  const byStr = statusNameById.value[String(id)]
+  if (byStr) return byStr
+  const idNum = Number(id)
+  if (Number.isFinite(idNum)) {
+    const byNum = statusNameById.value[String(idNum)]
+    if (byNum) return byNum
+  }
+  return String(id)
 }
 </script>
 
