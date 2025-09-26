@@ -43,6 +43,15 @@
       >
         Сбросить
       </button>
+      <div class="flex-1"></div>
+      <button
+        v-if="hasSelectedOrders"
+        type="button"
+        class="inline-flex h-9 items-center rounded-md border px-3 text-sm text-white bg-red-600 hover:bg-red-700 disabled:opacity-60 dark:border-neutral-800"
+        @click="confirmBulkDelete"
+      >
+        Удалить
+      </button>
     </div>
 
     <div v-if="state.error" class="mb-2 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -53,6 +62,14 @@
       <table class="w-full text-sm min-w-[860px]">
         <thead class="bg-neutral-50 text-neutral-600 dark:bg-neutral-900/40 dark:text-neutral-300">
           <tr>
+            <th class="px-4 py-2 text-left w-8">
+              <input
+                type="checkbox"
+                :checked="selectAll"
+                @change="toggleSelectAll"
+                class="rounded border-neutral-300 text-neutral-600 focus:ring-neutral-500 dark:border-neutral-600 dark:bg-neutral-700"
+              />
+            </th>
             <th class="px-4 py-2 text-left w-28">Номер</th>
             <th class="px-4 py-2 text-left w-64">Клиент / Город</th>
             <th class="px-4 py-2 text-left">Товары</th>
@@ -68,6 +85,14 @@
         </thead>
         <tbody>
           <tr v-for="o in orders" :key="o.id" class="border-t align-top">
+            <td class="px-4 py-2">
+              <input
+                type="checkbox"
+                :checked="isOrderSelected(Number(o.id))"
+                @change="toggleOrderSelection(Number(o.id))"
+                class="rounded border-neutral-300 text-neutral-600 focus:ring-neutral-500 dark:border-neutral-600 dark:bg-neutral-700"
+              />
+            </td>
             <td class="px-4 py-2 whitespace-nowrap">
               <router-link :to="{ name: 'admin-order', params: { id: o.id } }" class="hover:underline">
                 {{ o.orderId }}
@@ -92,7 +117,7 @@
             <td class="px-4 py-2 whitespace-nowrap">{{ formatDate(o.dateAdded) }}</td>
           </tr>
           <tr v-if="!loading && orders.length === 0">
-            <td colspan="5" class="px-4 py-6 text-center text-neutral-500">Нет заказов</td>
+            <td colspan="6" class="px-4 py-6 text-center text-neutral-500">Нет заказов</td>
           </tr>
         </tbody>
       </table>
@@ -116,6 +141,16 @@
         <Pagination v-model="pageModel" :total-pages="totalPages" />
       </div>
     </div>
+    
+    <!-- Bulk delete confirmation -->
+    <ConfirmDialog
+      v-model="bulkDeleteDialogOpen"
+      title="Удалить заказы?"
+      :description="`Вы уверены, что хотите удалить ${selectedOrders.size} заказ(ов)? Это действие необратимо.`"
+      confirm-text="Удалить"
+      :danger="true"
+      @confirm="performBulkDelete"
+    />
   </div>
   </template>
 
@@ -127,6 +162,7 @@ import { useCrud } from '@admin/composables/useCrud'
 import { OrderRepository, type OrderDto } from '@admin/repositories/OrderRepository'
 import { getPaginationConfig } from '@admin/services/config'
 import { OrderStatusRepository, type OrderStatusDto } from '@admin/repositories/OrderStatusRepository'
+import ConfirmDialog from '@admin/components/ConfirmDialog.vue'
 
 const repo = new OrderRepository()
 const crud = useCrud<OrderDto>(repo)
@@ -183,6 +219,36 @@ const searchNameModel = ref<string>('')
 const appliedName = ref<string>('')
 const searchPhoneModel = ref<string>('')
 const appliedPhone = ref<string>('')
+
+// Bulk selection state
+const selectedOrders = ref<Set<number>>(new Set())
+const selectAll = ref<boolean>(false)
+const hasSelectedOrders = computed(() => selectedOrders.value.size > 0)
+
+function isOrderSelected(id: number): boolean {
+  return selectedOrders.value.has(id)
+}
+function toggleOrderSelection(id: number): void {
+  if (selectedOrders.value.has(id)) selectedOrders.value.delete(id)
+  else selectedOrders.value.add(id)
+  updateSelectAllState()
+}
+function toggleSelectAll(): void {
+  const currentIds = orders.value.map(o => Number(o.id)).filter((n) => Number.isFinite(n)) as number[]
+  if (selectAll.value) {
+    // Unselect only current page ids
+    for (const id of currentIds) selectedOrders.value.delete(id)
+  } else {
+    for (const id of currentIds) selectedOrders.value.add(id)
+  }
+  updateSelectAllState()
+}
+function updateSelectAllState(): void {
+  const currentIds = orders.value.map(o => Number(o.id)).filter((n) => Number.isFinite(n)) as number[]
+  const allSelected = currentIds.length > 0 && currentIds.every((id) => selectedOrders.value.has(id))
+  selectAll.value = allSelected
+}
+watch(orders, () => updateSelectAllState())
 
 onMounted(async () => {
   let defaultIpp: number | null = null
@@ -327,6 +393,34 @@ function resetSearch() {
   delete nextQuery['customer.name']
   delete nextQuery['customer.phone']
   router.replace({ query: nextQuery })
+}
+
+// Bulk delete logic
+const bulkDeleteDialogOpen = ref<boolean>(false)
+function confirmBulkDelete(): void {
+  if (selectedOrders.value.size === 0) return
+  bulkDeleteDialogOpen.value = true
+}
+async function performBulkDelete(): Promise<void> {
+  if (selectedOrders.value.size === 0) return
+  try {
+    const ids = Array.from(selectedOrders.value)
+    await repo.bulkDelete(ids)
+    selectedOrders.value.clear()
+    selectAll.value = false
+    await crud.fetchAll({
+      page: page.value,
+      itemsPerPage: itemsPerPage.value,
+      sort: { dateAdded: dateSort.value },
+      filters: {
+        ...(appliedSearch.value ? { orderId: appliedSearch.value } : {}),
+        ...(appliedName.value ? { ['customer.name']: appliedName.value } : {}),
+        ...(appliedPhone.value ? { ['customer.phone']: appliedPhone.value } : {}),
+      },
+    })
+  } finally {
+    bulkDeleteDialogOpen.value = false
+  }
 }
 
 function pad2(n: number): string { return n < 10 ? `0${n}` : String(n) }

@@ -144,8 +144,7 @@ export class Autocomplete extends Component {
         if ((this.el.dataset.commit || '').toLowerCase() === 'select-city') {
           try {
             const cityName = it.value;
-            const cityId = typeof it.id === 'number' ? it.id : null;
-            await post('/api/delivery/select-city', { cityName, cityId }, { headers: { 'Accept': 'application/json' } });
+            await post('/api/delivery/select-city', { cityName }, { headers: { 'Accept': 'application/json' } });
             window.location.reload();
           } catch (e) {
             // silent fail: keep input value

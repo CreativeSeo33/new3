@@ -158,10 +158,7 @@ export class CheckoutFormComponent extends Component {
     if (!submitUrl) return;
 
     const payload = this.collectForm();
-    // Пробросим cityId, если он есть в контексте
-    if (typeof (ctx as any).cityId === 'number' && (ctx as any).cityId > 0) {
-      (payload as any).cityId = (ctx as any).cityId;
-    }
+    // Упрощаем: ничего не пробрасываем про ID, сервер использует только cityName
 
     if (this.submitButton) this.submitButton.disabled = true;
     try {

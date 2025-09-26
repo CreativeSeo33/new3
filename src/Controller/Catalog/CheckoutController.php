@@ -159,20 +159,21 @@ final class CheckoutController extends AbstractController
 		// Оформление заказа в транзакции: создание Order/связанных сущностей, закрытие корзины, очистка CheckoutContext
 		$createdOrder = null;
 		try {
-			$em->wrapInTransaction(function() use (
-				$em,
-				$orders,
-				$deliveryService,
-				$deliveryContext,
-				$cart,
-				$name,
-				$phone,
-				$email,
-				$comment,
-				$request,
-				$payload,
-				&$createdOrder
-			) {
+            $em->wrapInTransaction(function() use (
+                $em,
+                $orders,
+                $deliveryService,
+                $deliveryContext,
+                $cart,
+                $name,
+                $phone,
+                $email,
+                $comment,
+                $request,
+                $payload,
+                $sanitize,
+                &$createdOrder
+            ) {
 				$order = new Order();
 				$order->setOrderId($orders->getNextOrderId());
 				$order->setComment($comment ?: null);
@@ -241,21 +242,17 @@ final class CheckoutController extends AbstractController
                     }
                 }
 
-				$cityId = isset($payload['cityId']) ? (int)$payload['cityId'] : null;
-				if ($cityId && $cityId > 0) {
-					$cityRef = $em->getReference(Fias::class, $cityId);
-					$orderDelivery->setCityFias($cityRef);
-				}
+				// Упрощение: больше не привязываем к FIAS, сохраняем только строковое название
 
                 $deliveryProvider = $this->deliveryProviderRegistry->get($method);
                 if ($deliveryProvider && !$orderDelivery->getIsCustomCalculate()) {
                     $deliveryProvider->validate($orderDelivery);
                 }
 
-				$order->setDelivery($orderDelivery);
+                $order->setDelivery($orderDelivery);
 				$em->persist($orderDelivery);
 
-				foreach ($cart->getItems() as $it) {
+                foreach ($cart->getItems() as $it) {
 					$op = new OrderProducts();
 					$op->setProductId($it->getProduct()->getId());
 					$op->setProductName($it->getProductName());

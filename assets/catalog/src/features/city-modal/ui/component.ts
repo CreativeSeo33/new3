@@ -109,6 +109,18 @@ export class CityModalComponent extends Component {
       if (spinner && this.list) this.list.appendChild(spinner);
       li.classList.add('opacity-60');
 
+      // Сохраним KLADR в sessionStorage для последующего сабмита checkout
+      try {
+        const kladr = (item as any).fiasId || '';
+        if (typeof kladr === 'string' && kladr.length > 0) {
+          const key = 'checkout_form';
+          const raw = sessionStorage.getItem(key) || '{}';
+          const data = JSON.parse(raw);
+          data.cityKladr = kladr;
+          sessionStorage.setItem(key, JSON.stringify(data));
+        }
+      } catch {}
+
       await selectCity(item);
 
       const labelEl = document.querySelector('[data-city-modal-trigger] span');

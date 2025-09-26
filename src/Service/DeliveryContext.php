@@ -18,8 +18,9 @@ final class DeliveryContext
 	 * Возвращает контекст доставки из сессии.
 	 *
 	 * @return array{
-	 *     cityName?: string,
-	 *     cityId?: int,
+     *     cityName?: string,
+     *     cityId?: int,
+     *     cityKladr?: string,
 	 *     methodCode?: string,
 	 *     pickupPointId?: int|string,
 	 *     address?: string,
@@ -38,8 +39,9 @@ final class DeliveryContext
 		$city = is_array($delivery) ? ($delivery['city'] ?? []) : [];
 
 		$ctx = [];
-		if (isset($city['cityName'])) $ctx['cityName'] = $city['cityName'];
-		if (isset($city['cityId'])) $ctx['cityId'] = $city['cityId'];
+        if (isset($city['cityName'])) $ctx['cityName'] = $city['cityName'];
+        if (isset($city['cityId'])) $ctx['cityId'] = $city['cityId'];
+        if (isset($city['cityKladr'])) $ctx['cityKladr'] = $city['cityKladr'];
 		foreach (['methodCode','pickupPointId','address','zip','etaDays'] as $k) {
 			if (isset($delivery[$k])) $ctx[$k] = $delivery[$k];
 		}
@@ -48,7 +50,7 @@ final class DeliveryContext
 		if ($ctx === []) {
 			$legacy = $session->get(self::LEGACY_DELIVERY_SESSION_KEY, []);
 			if (is_array($legacy)) {
-				foreach (['cityName','cityId','methodCode','pickupPointId','address','zip','etaDays'] as $k) {
+                foreach (['cityName','cityId','cityKladr','methodCode','pickupPointId','address','zip','etaDays'] as $k) {
 					if (isset($legacy[$k])) $ctx[$k] = $legacy[$k];
 				}
 			}
@@ -62,8 +64,9 @@ final class DeliveryContext
 	 * Если города нет, пытается определить по IP, сохраняет в сессии и помечает установку cookie на RESPONSE.
 	 *
 	 * @return array{
-	 *     cityName?: string,
-	 *     cityId?: int,
+     *     cityName?: string,
+     *     cityId?: int,
+     *     cityKladr?: string,
 	 *     methodCode?: string,
 	 *     pickupPointId?: int|string,
 	 *     address?: string,
@@ -92,7 +95,7 @@ final class DeliveryContext
 		return $this->get();
 	}
 
-	public function setCity(string $name, ?int $id = null): void
+    public function setCity(string $name, ?int $id = null, ?string $kladr = null): void
 	{
 		$session = $this->rs->getSession();
 		if ($session === null) return;
@@ -101,6 +104,7 @@ final class DeliveryContext
 		$city = is_array($delivery) ? ($delivery['city'] ?? []) : [];
 		$city['cityName'] = $name;
 		if ($id) $city['cityId'] = $id;
+        if ($kladr !== null && $kladr !== '') $city['cityKladr'] = substr($kladr, 0, 13);
 		unset($delivery['methodCode'], $delivery['pickupPointId']);
 		$delivery['city'] = $city;
 		$checkout['delivery'] = $delivery;

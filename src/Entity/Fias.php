@@ -83,6 +83,10 @@ class Fias
     #[Groups(['fias:admin:get'])]
     private int $level;
 
+    #[ORM\Column(name: 'kladr_code', type: Types::STRING, length: 13, nullable: true)]
+    #[Groups(['fias:get', 'fias:admin:get'])]
+    private ?string $kladrCode = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -140,6 +144,17 @@ class Fias
     public function setLevel(int $level): self
     {
         $this->level = $level;
+        return $this;
+    }
+
+    public function getKladrCode(): ?string
+    {
+        return $this->kladrCode;
+    }
+
+    public function setKladrCode(?string $kladrCode): self
+    {
+        $this->kladrCode = $kladrCode !== null ? substr($kladrCode, 0, 13) : null;
         return $this;
     }
 

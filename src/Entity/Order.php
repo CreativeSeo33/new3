@@ -45,6 +45,7 @@ use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 
 class Order
 {
+    public const STATUS_SUCCESS = 1;
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -116,6 +117,14 @@ class Order
     public function setDateAdded()
     {
         $this->dateAdded = new \DateTime();
+    }
+
+    #[ORM\PrePersist]
+    public function setDefaultStatus()
+    {
+        if ($this->status === null) {
+            $this->status = self::STATUS_SUCCESS;
+        }
     }
 
     public function getComment(): ?string

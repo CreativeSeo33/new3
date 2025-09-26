@@ -42,10 +42,10 @@ export async function fetchPvzPoints(cityName: string): Promise<PvzPointDto[]> {
   });
 }
 
-export async function selectCity(cityName: string, cityId?: number | null): Promise<SelectCityResponseDto> {
+export async function selectCity(cityName: string, cityId?: number | null, cityKladr?: string | null): Promise<SelectCityResponseDto> {
   return post<SelectCityResponseDto>(
     '/api/delivery/select-city',
-    { cityName, cityId },
+    { cityName, cityId, cityKladr },
     { headers: { Accept: 'application/json' } }
   );
 }

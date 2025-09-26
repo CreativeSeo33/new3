@@ -60,11 +60,20 @@ final class DeliveryApiController extends AbstractController
 	#[Route('/select-city', name: 'api_delivery_select_city', methods: ['POST'])]
 	public function selectCity(Request $r): JsonResponse
 	{
-		$d = json_decode($r->getContent() ?: '[]', true) ?? [];
-		$name = trim((string)($d['cityName'] ?? ''));
+        $d = json_decode($r->getContent() ?: '[]', true) ?? [];
+        $name = trim((string)($d['cityName'] ?? ''));
 		if ($name === '') return $this->json(['error' => 'cityName required'], 422);
 
-		$this->ctx->setCity($name, isset($d['cityId']) ? (int)$d['cityId'] : null);
+        // Нормализуем KLADR-код (строка до 13 символов)
+        $kladr = null;
+        if (isset($d['cityKladr'])) {
+            $kladr = (string)$d['cityKladr'];
+            $kladr = preg_replace('/\D+/', '', $kladr) ?? '';
+            $kladr = $kladr !== '' ? substr($kladr, 0, 13) : null;
+        }
+
+        // Упрощаем: сохраняем только название (id/kladr игнорируются)
+        $this->ctx->setCity($name, null, null);
 
 		$user = $this->getUser();
 		$userId = $user instanceof AppUser ? $user->getId() : null;

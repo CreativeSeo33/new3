@@ -38,12 +38,7 @@ class OrderDelivery
     #[Groups(['order:get'])]
     private ?Fias $cityFias = null;
 
-    #[SerializedName('cityId')]
-    #[Groups(['order:get'])]
-    public function getCityId(): ?int
-    {
-        return $this->cityFias?->getId();
-    }
+    // Упрощено: не сериализуем cityId, работаем только с названием города
 
     #[ORM\Column(type: 'integer', nullable: true)]
     #[Groups(['order:get'])]
