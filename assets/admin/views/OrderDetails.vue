@@ -59,6 +59,7 @@
         <table class="w-full text-sm">
           <thead class="bg-neutral-50 text-neutral-600 dark:bg-neutral-900/40 dark:text-neutral-300">
             <tr>
+              <th class="px-3 py-2 text-left w-16">Фото</th>
               <th class="px-3 py-2 text-left">Товар</th>
               <th class="px-3 py-2 text-left w-24">Кол-во</th>
               <th class="px-3 py-2 text-left w-32">Цена</th>
@@ -67,6 +68,11 @@
           </thead>
           <tbody>
             <tr v-for="p in products" :key="p.id" class="border-t">
+              <td class="px-3 py-2">
+                <div class="h-12 w-12 overflow-hidden rounded bg-neutral-100">
+                  <img v-if="getProductImage(p)" :src="getProductImage(p) || undefined" class="h-full w-full object-cover" alt="" />
+                </div>
+              </td>
               <td class="px-3 py-2">
                 <router-link
                   v-if="getProductId(p)"
@@ -164,6 +170,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { OrderRepository, type OrderDto } from '@admin/repositories/OrderRepository'
 import { OrderStatusRepository, type OrderStatusDto } from '@admin/repositories/OrderStatusRepository'
 import { ProductRepository } from '@admin/repositories/ProductRepository'
+import { MediaRepository } from '@admin/repositories/MediaRepository'
 import Modal from '@admin/ui/components/Modal.vue'
 import { DeliveryTypeRepository, type DeliveryType } from '@admin/repositories/DeliveryTypeRepository'
 
@@ -172,6 +179,7 @@ const router = useRouter()
 const repo = new OrderRepository()
 const statusRepo = new OrderStatusRepository()
 const productRepo = new ProductRepository()
+const mediaRepo = new MediaRepository()
 const deliveryTypeRepo = new DeliveryTypeRepository()
 
 const order = ref<OrderDto | null>(null)
@@ -184,6 +192,7 @@ const selectedStatusId = ref<string>('')
 const statusChanging = ref<boolean>(false)
 const statusError = ref<string>('')
 const productSlugById = ref<Record<string, string>>({})
+const productImageById = ref<Record<string, string>>({})
 const deliveryTypeNameByCode = ref<Record<string, string>>({})
 
 const products = computed(() => order.value?.products || [])
@@ -266,7 +275,7 @@ onMounted(async () => {
     order.value = await repo.findById(String(id))
     selectedStatusId.value = order.value?.status != null ? String(order.value.status) : ''
 
-    // Загрузим slug для продуктов заказа, чтобы формировать ссылку витрины
+    // Загрузим slug и первую картинку для продуктов заказа
     try {
       const ids = Array.from(new Set((order.value?.products || []).map((p: any) => getProductId(p)).filter(Boolean))) as string[]
       await Promise.all(ids.map(async (pid) => {
@@ -274,8 +283,21 @@ onMounted(async () => {
           const product = await productRepo.findById(pid)
           const slug = (product as any)?.slug
           if (slug) productSlugById.value[String(pid)] = String(slug)
+          const firstImageUrl = (product as any)?.firstImageUrl || (Array.isArray((product as any)?.image) && (product as any).image[0]?.imageUrl)
+          if (firstImageUrl) productImageById.value[String(pid)] = String(firstImageUrl)
         } catch (_) { /* ignore individual errors */ }
       }))
+      // Доп. попытка: для тех, у кого нет картинки, возьмём первое фото через MediaRepository
+      const missing = ids.filter((pid) => !productImageById.value[pid])
+      if (missing.length > 0) {
+        await Promise.all(missing.map(async (pid) => {
+          try {
+            const items = await mediaRepo.fetchProductImages(pid)
+            const first = (items || []).sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))[0]
+            if (first?.imageUrl) productImageById.value[String(pid)] = String(first.imageUrl)
+          } catch (_) {}
+        }))
+      }
     } catch (_) {}
 
     // Загрузим и раскешируем типы доставки: code -> name
@@ -344,6 +366,15 @@ function resolveDeliveryTypeName(code: string | null | undefined): string {
   const c = (code ?? '').toString().trim()
   if (!c) return '—'
   return deliveryTypeNameByCode.value[c] || c
+}
+
+function getProductImage(p: any): string | null {
+  const id = getProductId(p)
+  if (!id) return null
+  const inline = (p?.firstImageUrl ?? p?.imageUrl ?? null)
+  if (inline) return String(inline)
+  const byCache = productImageById.value[id]
+  return byCache || null
 }
 
 async function onStatusChange() {
