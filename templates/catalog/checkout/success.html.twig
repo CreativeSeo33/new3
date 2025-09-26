@@ -95,7 +95,7 @@
           {% set d = order.delivery %}
           {% if d %}
             <div class="space-y-1 text-sm">
-              <div><span class="text-gray-600">Способ:</span> {{ d.type ?? '—' }}</div>
+              <div><span class="text-gray-600">Способ:</span> {{ delivery_type_name(d.type|default(null)) }}</div>
               {% if d.city %}
                 <div><span class="text-gray-600">Город:</span> {{ d.city }}</div>
               {% endif %}

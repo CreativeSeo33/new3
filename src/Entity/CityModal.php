@@ -25,7 +25,7 @@ class CityModal
     #[Groups(['cityModal:get'])]
     private $id;
 
-    #[ORM\Column(type: 'string', length: 13, nullable: true)]
+    #[ORM\Column(type: 'bigint', nullable: true)]
     #[Groups(['cityModal:get'])]
     private $fiasId;
 

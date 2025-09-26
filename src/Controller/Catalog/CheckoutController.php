@@ -221,7 +221,9 @@ final class CheckoutController extends AbstractController
                         $pvzCode = (string)$ctx['pickupPointId'];
                         $point = $em->getRepository(PvzPoints::class)->findOneBy(['code' => $pvzCode]);
                         if ($point && strcasecmp((string)$point->getCity(), (string)$cityName) === 0) {
-                            $orderDelivery->setPvz($pvzCode);
+                            $addr = (string)($point->getAddress() ?? '');
+                            $addr = substr(trim($addr), 0, 255);
+                            $orderDelivery->setPvz($addr !== '' ? $addr : $pvzCode);
                             $orderDelivery->setPvzCode($pvzCode);
                         } else {
                             // Некорректный ПВЗ/город — расчет менеджером
