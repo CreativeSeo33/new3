@@ -1,4 +1,4 @@
-<template>
+  <template>
   <div class="space-y-6">
     
 
@@ -560,6 +560,7 @@ async function performBulkDelete() {
   if (selectedProducts.value.size === 0) return
 
   try {
+    const originalSelectedCount = selectedProducts.value.size
     let successCount = 0
     let failedProducts: string[] = []
 
@@ -598,9 +599,9 @@ async function performBulkDelete() {
     selectAll.value = false
 
     if (successCount > 0) {
-      const successMessage = successCount === selectedProducts.value.size
+      const successMessage = successCount === originalSelectedCount
         ? `✅ Успешно удалено ${successCount} товар(ов)`
-        : `✅ Успешно удалено ${successCount} из ${selectedProducts.value.size} товар(ов)`
+        : `✅ Успешно удалено ${successCount} из ${originalSelectedCount} товар(ов)`
       publishToast(successMessage)
     }
 
