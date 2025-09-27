@@ -218,15 +218,20 @@
                       {# Определяем, какую опцию выбрать по умолчанию #}
                       {% set defaultOption = null %}
                       {% for a in optionValues %}
-                        {% if a.getSetPrice() %}
+                        {% if a.getSetPrice() and (a.getQuantity() is not null and a.getQuantity() > 0) %}
                           {% set defaultOption = a %}
                         {% endif %}
                       {% endfor %}
                       {% if defaultOption is null %}
-                        {% set defaultOption = optionValues|first %}
+                        {% for a in optionValues %}
+                          {% if defaultOption is null and (a.getQuantity() is not null and a.getQuantity() > 0) %}
+                            {% set defaultOption = a %}
+                          {% endif %}
+                        {% endfor %}
                       {% endif %}
 
                       {% for a in optionValues %}
+                        {% set isOut = a.getQuantity() is null or a.getQuantity() == 0 %}
                         <div class="relative">
                           <input
                             type="radio"
@@ -239,9 +244,10 @@
                             data-option-value="{{ a.value.value ?? ('Значение #' ~ a.value.id) }}"
                             data-set-price="{{ a.getSetPrice() ? 'true' : 'false' }}"
                             data-sale-price="{{ a.salePrice is not null ? a.salePrice : 0 }}"
-                            {% if a.id == defaultOption.id %}checked{% endif %}
+                            {% if isOut %}disabled{% endif %}
+                            {% if not isOut and defaultOption and a.id == defaultOption.id %}checked{% endif %}
                           >
-                          <label for="option-{{ a.id }}" class="flex items-center justify-between p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-400 peer-checked:border-blue-500 peer-checked:bg-blue-50 transition-all">
+                          <label for="option-{{ a.id }}" class="flex items-center justify-between p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-400 peer-checked:border-blue-500 peer-checked:bg-blue-50 transition-all{% if isOut %} opacity-60 cursor-not-allowed{% endif %}">
                             <div class="flex items-center">
                               <div class="w-4 h-4 border-2 border-gray-300 rounded-full mr-3 peer-checked:border-blue-500 peer-checked:bg-blue-500">
                                 <div class="w-2 h-2 bg-white rounded-full m-0.5 peer-checked:bg-white"></div>
@@ -250,7 +256,9 @@
                                 {{ a.value.value ?? ('Значение #' ~ a.value.id) }}
                               </span>
                             </div>
-                            {% if a.price is not null and a.price > 0 %}
+                            {% if isOut %}
+                              <span class="text-sm font-medium text-red-600">Нет в наличии.</span>
+                            {% elseif a.price is not null and a.price > 0 %}
                               {% if a.salePrice is not null and a.salePrice > 0 %}
                                 <div class="flex items-center gap-2">
                                   <span class="text-sm text-gray-500 line-through">{{ a.price }} руб.</span>

@@ -25,9 +25,12 @@ export interface ProductDto extends ApiResource {
   createdAt?: string | null;
   categoryNames?: string[];
   optionsJson?: any[] | null;
+  optionsCount?: number | null;
   optionAssignments?: Array<{
     option: string;
+    optionLabel?: string | null;
     value: string | null;
+    valueLabel?: string | null;
     height: number | null;
     bulbsCount: number | null;
     sku: string | null;

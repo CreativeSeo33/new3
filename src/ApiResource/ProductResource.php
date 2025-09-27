@@ -105,6 +105,10 @@ class ProductResource
     // Option assignments (admin editing)
     #[Groups(['product:read', 'product:write'])]
     public ?array $optionAssignments = null;
+
+    // Lightweight counter for list views (computed on collection)
+    #[Groups(['product:read'])]
+    public ?int $optionsCount = null;
 }
 
 

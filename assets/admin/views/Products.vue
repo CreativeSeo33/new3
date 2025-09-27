@@ -7,7 +7,7 @@
       <table class="w-full text-sm">
         <tbody>
           <tr class=" text-neutral-600 dark:bg-neutral-900/40 dark:text-neutral-300">
-            <td colspan="9" class="px-4 py-3">
+            <td colspan="10" class="px-4 py-3">
               <div class="space-y-3">
                 <!-- Header / Actions -->
                 
@@ -63,6 +63,7 @@
             <th class="px-4 py-2 text-left">Изображение</th>
             <th class="px-4 py-2 text-left">Категории</th>
             <th class="px-4 py-2 text-left">Цена</th>
+            <th class="px-4 py-2 text-left">Опции</th>
             <th
               class="px-4 py-2 text-left cursor-pointer select-none"
               :class="sortStatusDir ? 'text-neutral-900 dark:text-neutral-100' : ''"
@@ -112,6 +113,8 @@
                   <ArrowUpRightIcon class="w-4 h-4" />
                 </a>
               </div>
+              <div v-if="p.type === 'variable'" class="text-xs text-neutral-500">Вариативный товар</div>
+              <div v-else-if="p.type === 'simple'" class="text-xs text-neutral-500">Простой товар</div>
               <div v-if="p.slug" class="text-xs text-neutral-500">/{{ p.slug }}</div>
             </td>
             <td class="px-4 py-2">
@@ -140,6 +143,59 @@
                 <span class="font-medium">{{ p.salePrice ?? p.price ?? 0 }}</span>
                 <span v-if="p.salePrice && p.price" class="text-xs text-neutral-500 line-through">{{ p.price }}</span>
               </div>
+            </td>
+            <td class="px-4 py-2">
+              <template v-if="p.type === 'variable'">
+                <PopoverRoot :open="isOptionsPopoverOpen(p.id as number)">
+                  <PopoverTrigger as-child>
+                    <button
+                      type="button"
+                      class="underline underline-offset-2 text-neutral-700 hover:text-neutral-900 dark:text-neutral-200 dark:hover:text-neutral-100"
+                      @mouseenter="openOptionsPopover(p.id as number)"
+                      @mouseleave="closeOptionsPopover(p.id as number)"
+                    >
+                      <span v-if="typeof p.optionsCount === 'number'">{{ p.optionsCount }}</span>
+                      <span v-else>—</span>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverPortal>
+                    <PopoverContent
+                      class="rounded-md border bg-white p-3 text-xs shadow-md dark:border-neutral-800 dark:bg-neutral-900/95 dark:text-neutral-200"
+                      :side-offset="6"
+                      @mouseenter="setOptionsPopoverOpen(p.id as number, true)"
+                      @mouseleave="closeOptionsPopover(p.id as number)"
+                    >
+                      <div v-if="optionAssignmentsLoading.has(Number(p.id))">Загрузка опций…</div>
+                      <div v-else>
+                        <div v-if="(optionAssignmentsByProduct[String(p.id)] ?? []).length === 0">Опции не заданы</div>
+                        <div v-else class="space-y-2 max-w-xs max-h-64 overflow-auto">
+                          <div v-for="(grp, gIdx) in groupAssignmentsByOption(optionAssignmentsByProduct[String(p.id)])" :key="gIdx">
+                            <div class="font-medium text-neutral-800 dark:text-neutral-100 mb-1">{{ grp.label }}</div>
+                            <table class="w-full border-collapse text-[11px]">
+                              <thead>
+                                <tr class="text-neutral-500">
+                                  <th class="text-left pr-2">Значение</th>
+                                  <th class="text-left pr-2">Кол-во</th>
+                                  <th class="text-left">Цена</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr v-for="(row, idx) in grp.rows" :key="idx" class="align-top">
+                                  <td class="pr-2">{{ row.valueLabel ?? row.value ?? '—' }}</td>
+                                  <td class="pr-2">{{ row.quantity ?? '—' }}</td>
+                                  <td>{{ row.salePrice ?? row.price ?? '—' }}</td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+                      <PopoverArrow class="fill-white dark:fill-neutral-900/95" />
+                    </PopoverContent>
+                  </PopoverPortal>
+                </PopoverRoot>
+              </template>
+              <span v-else>—</span>
             </td>
             <td class="px-4 py-2">
               <span
@@ -179,10 +235,10 @@
             </td>
           </tr>
           <tr v-if="!loading && products.length === 0">
-            <td colspan="9" class="px-4 py-8 text-center text-neutral-500">Пока нет товаров</td>
+            <td colspan="10" class="px-4 py-8 text-center text-neutral-500">Пока нет товаров</td>
           </tr>
           <tr v-if="loading">
-            <td colspan="9" class="px-4 py-8 text-center text-neutral-500">Загрузка…</td>
+            <td colspan="10" class="px-4 py-8 text-center text-neutral-500">Загрузка…</td>
           </tr>
         </tbody>
       </table>
@@ -262,7 +318,7 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { ref as vueRef } from 'vue'
 import { httpClient } from '@admin/services/http'
 import { getPaginationConfig } from '@admin/services/config'
-import { ToastDescription, ToastRoot, ScrollAreaRoot, ScrollAreaScrollbar, ScrollAreaThumb, ScrollAreaViewport, ScrollAreaCorner } from 'reka-ui'
+import { ToastDescription, ToastRoot, ScrollAreaRoot, ScrollAreaScrollbar, ScrollAreaThumb, ScrollAreaViewport, ScrollAreaCorner, PopoverRoot, PopoverTrigger, PopoverContent, PopoverPortal, PopoverArrow } from 'reka-ui'
 import ConfirmDialog from '@admin/components/ConfirmDialog.vue'
 import Pagination from '@admin/ui/components/Pagination.vue'
 import Button from '@admin/ui/components/Button.vue'
@@ -306,6 +362,58 @@ const selectedCategoryId = vueRef<number | null>(null)
 const categoryTree = vueRef<any[]>([])
 const categoriesLoaded = vueRef(false)
 const categoryRepo = new CategoryRepository()
+// Popover state and lazy-loading for product options
+const optionPopoverOpen = vueRef<Record<number, boolean>>({})
+const optionAssignmentsByProduct = vueRef<Record<number, Array<NonNullable<ProductDto['optionAssignments']>[number]>>>({})
+const optionAssignmentsLoading = vueRef<Set<number>>(new Set())
+
+function isOptionsPopoverOpen(productId: number | undefined | null): boolean {
+  if (!productId) return false
+  return !!optionPopoverOpen.value[Number(productId)]
+}
+
+function setOptionsPopoverOpen(productId: number | undefined | null, open: boolean): void {
+  if (!productId) return
+  optionPopoverOpen.value = { ...optionPopoverOpen.value, [Number(productId)]: open }
+}
+
+async function ensureProductOptionsLoaded(productId: number): Promise<void> {
+  if (!productId) return
+  if (optionAssignmentsByProduct.value[productId]) return
+  if (optionAssignmentsLoading.value.has(productId)) return
+  optionAssignmentsLoading.value.add(productId)
+  try {
+    const dto = await productRepository.findById(productId)
+    const rows = Array.isArray((dto as any)?.optionAssignments) ? ((dto as any).optionAssignments as any[]) : []
+    optionAssignmentsByProduct.value = { ...optionAssignmentsByProduct.value, [productId]: rows }
+  } catch (_) {
+    optionAssignmentsByProduct.value = { ...optionAssignmentsByProduct.value, [productId]: [] }
+  } finally {
+    optionAssignmentsLoading.value.delete(productId)
+  }
+}
+
+async function openOptionsPopover(productId: number | undefined | null): Promise<void> {
+  if (!productId) return
+  setOptionsPopoverOpen(productId, true)
+  await ensureProductOptionsLoaded(Number(productId))
+}
+
+function closeOptionsPopover(productId: number | undefined | null): void {
+  if (!productId) return
+  setOptionsPopoverOpen(productId, false)
+}
+
+type OptionAssignmentRow = NonNullable<ProductDto['optionAssignments']>[number]
+function groupAssignmentsByOption(rows: Array<OptionAssignmentRow> | undefined | null): Array<{ label: string; rows: Array<OptionAssignmentRow> }> {
+  const groups: Record<string, Array<OptionAssignmentRow>> = {}
+  for (const r of rows ?? []) {
+    const label = String((r as any).optionLabel ?? 'Опция')
+    if (!groups[label]) groups[label] = []
+    groups[label].push(r)
+  }
+  return Object.keys(groups).map((label) => ({ label, rows: groups[label] }))
+}
 
 // Checkbox state for bulk operations
 const selectedProducts = vueRef<Set<number>>(new Set())

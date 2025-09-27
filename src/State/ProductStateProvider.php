@@ -93,6 +93,33 @@ class ProductStateProvider implements ProviderInterface
             $entities = $qb->getQuery()->getResult();
             $resources = array_map([$this, 'transformLightweight'], $entities);
 
+            // Compute optionsCount for current page in one grouped query (only for variable products)
+            $ids = array_map(static fn($e) => $e->getId(), $entities);
+            $optionsCountById = [];
+            if (!empty($ids)) {
+                $connQb = $this->repository->createQueryBuilder('p2')
+                    ->select('p2.id AS id, COUNT(oa.id) AS cnt')
+                    ->leftJoin('p2.optionAssignments', 'oa')
+                    ->andWhere('p2.id IN (:ids)')
+                    ->andWhere('p2.type = :vtype')
+                    ->setParameter('ids', $ids)
+                    ->setParameter('vtype', Product::TYPE_VARIABLE)
+                    ->groupBy('p2.id');
+                $rows = $connQb->getQuery()->getArrayResult();
+                foreach ($rows as $row) {
+                    $optionsCountById[(int)$row['id']] = (int)$row['cnt'];
+                }
+            }
+
+            // Attach counts to lightweight resources
+            foreach ($resources as $r) {
+                if ($r->type === Product::TYPE_VARIABLE) {
+                    $r->optionsCount = $optionsCountById[$r->id ?? 0] ?? 0;
+                } else {
+                    $r->optionsCount = null;
+                }
+            }
+
             // Count with filters applied
             $countQb = $this->repository->createQueryBuilder('p');
             // Reapply filters
@@ -143,7 +170,9 @@ class ProductStateProvider implements ProviderInterface
         foreach ($entity->getOptionAssignments() as $a) {
             $r->optionAssignments[] = [
                 'option' => '/api/options/' . $a->getOption()->getId(),
+                'optionLabel' => $a->getOption()->getName(),
                 'value' => '/api/option_values/' . $a->getValue()->getId(),
+                'valueLabel' => $a->getValue()->getValue(),
                 'height' => $a->getHeight(),
                 'bulbsCount' => $a->getBulbsCount(),
                 'sku' => $a->getSku(),
