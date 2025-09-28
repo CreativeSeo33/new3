@@ -18,6 +18,24 @@ alwaysApply: true
 - @components_index.mdc
 - @pages_index.mdc
 - @admin_spa_task_guide.mdc
+- @wishlist.mdc
+
+## Избранное (Wishlist) — краткая карта
+- Бэкенд: `src/Entity/Wishlist.php`, `src/Entity/WishlistItem.php`, `src/Service/WishlistManager.php`, `src/Service/WishlistContext.php`, `src/Http/WishlistCookieFactory.php`, `src/EventSubscriber/WishlistLoginSubscriber.php`, `src/Controller/Api/WishlistApiController.php`.
+- Cookie: httpOnly, `__Host-wishlist_token`, TTL настраивается в `config/services.yaml` (`wishlist.cookie.*`).
+- Эндпоинты:
+  - `GET /api/wishlist` — список, `GET /api/wishlist/count` — счётчик
+  - `POST /api/wishlist/items` — добавить, `DELETE /api/wishlist/items/{productId}` — удалить
+- Фронтенд (FSD):
+  - Фича: `assets/catalog/src/features/wishlist` (API + UI toggle)
+  - Виджет: `assets/catalog/src/widgets/wishlist-counter`
+  - Реестр: `assets/catalog/src/app/registry.ts` (`wishlist-toggle`, `wishlist-counter`)
+  - Вёрстка: кнопка на странице товара `templates/catalog/product/show.html.twig` с `data-module="wishlist-toggle"`
+
+Связанные правила Cursor
+- @catalog_js_architecture.mdc — создать модули FSD, без inline-скриптов
+- @agent_performance_policy.mdc — узкие поиски (registry/http/component)
+
 
 ## Примечание
 Этот файл создан для быстрого связывания правил внутри репозитория. При добавлении новых глобальных правил — дополняйте раздел ссылок.

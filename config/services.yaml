@@ -38,6 +38,14 @@ parameters:
     cart.cookie.domain: null
     cart.cookie.same_site: 'lax'
 
+    # Wishlist cookie configuration
+    wishlist.cookie.force_secure_in_prod: true
+    wishlist.cookie.use_host_prefix: true
+    wishlist.cookie.name: 'wishlist_token'
+    wishlist.cookie.ttl_days: 365
+    wishlist.cookie.domain: null
+    wishlist.cookie.same_site: 'lax'
+
     # Notification settings
     app.notification.from_email: '%env(ADMIN_FROM_EMAIL)%'
 
@@ -183,6 +191,30 @@ services:
             $ttlDays: '%cart.cookie.ttl_days%'
             $domain: '%cart.cookie.domain%'
             $sameSite: !php/const Symfony\Component\HttpFoundation\Cookie::SAMESITE_LAX
+
+    # Wishlist services
+    App\Http\WishlistCookieFactory:
+        arguments:
+            $forceSecureInProd: '%wishlist.cookie.force_secure_in_prod%'
+            $useHostPrefix: '%wishlist.cookie.use_host_prefix%'
+            $cookieName: '%wishlist.cookie.name%'
+            $ttlDays: '%wishlist.cookie.ttl_days%'
+            $domain: '%wishlist.cookie.domain%'
+            $sameSite: '%wishlist.cookie.same_site%'
+
+    App\Service\WishlistContext:
+        arguments:
+            $cookieName: '@=service("App\\Http\\WishlistCookieFactory").getCookieName()'
+
+    App\EventSubscriber\WishlistLoginSubscriber:
+        arguments:
+            - '@App\Repository\WishlistRepository'
+            - '@App\Service\WishlistManager'
+            - '@doctrine.orm.entity_manager'
+            - '@App\Http\WishlistCookieFactory'
+
+    App\Twig\WishlistExtension:
+        tags: [ 'twig.extension' ]
 
     # Idempotency services for Cart API
     App\Service\Idempotency\IdempotencyService: ~

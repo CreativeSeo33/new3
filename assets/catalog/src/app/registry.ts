@@ -22,9 +22,11 @@ export const registry: Record<string, () => Promise<ModuleInitFunction>> = {
   'mobile-menu': () => import('../features/mobile-menu').then(m => m.init),
   'checkout-form': () => import('../features/checkout-form').then(m => m.init),
   'delivery-selector': () => import('../features/delivery-selector').then(m => m.init),
+  'wishlist-toggle': () => import('../features/wishlist').then(m => m.init),
 
   // Виджеты
   'cart-counter': () => import('../widgets/cart-counter').then(m => m.init),
+  'wishlist-counter': () => import('../widgets/wishlist-counter').then(m => m.init),
 
   // Shared UI компоненты
   'modal': () => import('../shared/ui/modal-simple.js').then(m => m.init),

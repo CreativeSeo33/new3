@@ -1,0 +1,49 @@
+---
+alwaysApply: false
+---
+
+# Wishlist (Избранное)
+
+Назначение: единые правила и карта реализации Избранного (wishlist) в проекте. Использовать для разработки/отладки API и фронтенд‑модулей FSD.
+
+## Состав
+- Бэкенд
+  - Сущности: `src/Entity/Wishlist.php`, `src/Entity/WishlistItem.php`
+  - Сервисы: `src/Service/WishlistManager.php`, `src/Service/WishlistContext.php`
+  - Cookie: `src/Http/WishlistCookieFactory.php` (httpOnly, `__Host-<name>`, долгий TTL)
+  - События: `src/EventSubscriber/WishlistLoginSubscriber.php` (merge гостевого в пользовательский при логине)
+  - API: `src/Controller/Api/WishlistApiController.php`
+- Фронтенд (FSD)
+  - Фича: `assets/catalog/src/features/wishlist` (API + UI toggle)
+  - Виджет: `assets/catalog/src/widgets/wishlist-counter`
+  - Реестр: `assets/catalog/src/app/registry.ts` → `wishlist-toggle`, `wishlist-counter`
+  - Вёрстка: используем кнопку на странице товара `templates/catalog/product/show.html.twig` с `data-module="wishlist-toggle"`
+
+## Эндпоинты API
+- `GET /api/wishlist` — список (минимальные поля товара для отображения)
+- `GET /api/wishlist/count` — счётчик
+- `POST /api/wishlist/items` — добавить (`{ productId }`)
+- `DELETE /api/wishlist/items/{productId}` — удалить
+
+## Гости и пользователи
+- Гость: сервер создаёт/пролонгирует httpOnly cookie‑токен (`__Host-…`), TTL задаётся в `config/services.yaml` → `wishlist.cookie.*`.
+- Пользователь: 1 список на пользователя. При логине — слияние гостевого списка в пользовательский, удаление гостевого.
+
+## Конфигурация
+- `config/services.yaml`:
+  - `wishlist.cookie.*` — имя, TTL (в днях), домен/secure/sameSite
+  - инъекция `$cookieName` в `WishlistContext` через `WishlistCookieFactory::getCookieName()`
+
+## Правила
+- Вся бизнес‑логика на сервере (без клиентских источников истины).
+- Никаких хардкодов в коде — параметры только через конфиг/ENV.
+- Дедупликация по паре `(wishlist_id, product_id)` на уровне БД и сервиса.
+- Продление TTL при любом обращении к API Избранного.
+- Сообщайте фронтенду о изменениях через события (например, `window.dispatchEvent('wishlist:updated')`).
+
+## Связанные правила
+- @ai_context.mdc
+- @catalog_js_architecture.mdc
+- @agent_performance_policy.mdc
+- @twig_components_policy.mdc
+
