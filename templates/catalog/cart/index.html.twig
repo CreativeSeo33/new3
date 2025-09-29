@@ -76,9 +76,40 @@
                 {% endif %}
               </td>
               <td class="py-2 pr-4">
-                {# Используем effectiveUnitPrice, если он больше 0, иначе unitPrice #}
-                {% set displayPrice = item.effectiveUnitPrice > 0 ? item.effectiveUnitPrice : item.unitPrice %}
-                {{ format_price(displayPrice) }}
+                {# Показываем цену со скидкой и без скидки (Simple/Variable) #}
+                {% set discountedPrice = item.effectiveUnitPrice > 0 ? item.effectiveUnitPrice : item.unitPrice %}
+                {% set hasOptions = item.optionAssignments is defined and item.optionAssignments|length > 0 %}
+                {% set originalPrice = null %}
+                {% set hasDiscount = false %}
+
+                {# Вариативный товар: ищем именно ту опцию, чья скидочная цена стала текущей #}
+                {% if hasOptions %}
+                  {% set matchFound = false %}
+                  {% for a in item.optionAssignments %}
+                    {% set candidate = a.salePrice is not null ? a.salePrice : (a.price ?? 0) %}
+                    {% if not matchFound and candidate == discountedPrice and a.salePrice is not null and a.price is not null and a.salePrice < a.price %}
+                      {% set originalPrice = a.price %}
+                      {% set hasDiscount = true %}
+                      {% set matchFound = true %}
+                    {% endif %}
+                  {% endfor %}
+                {% else %}
+                  {# Простой товар: скидка на самом товаре #}
+                  {% if item.product and item.product.salePrice is not null and item.product.price is not null and item.product.salePrice < item.product.price %}
+                    {% set originalPrice = item.product.price %}
+                    {% set hasDiscount = true %}
+                    {% set discountedPrice = item.product.salePrice %}
+                  {% endif %}
+                {% endif %}
+
+                {% if hasDiscount %}
+                  <div class="flex items-center gap-2">
+                    <span class="line-through text-gray-500 text-sm">{{ format_price(originalPrice) }}</span>
+                    <span class="text-red-600 font-medium">{{ format_price(discountedPrice) }}</span>
+                  </div>
+                {% else %}
+                  {{ format_price(discountedPrice) }}
+                {% endif %}
               </td>
               <td class="py-2 pr-4">
                 <input

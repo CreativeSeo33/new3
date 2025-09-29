@@ -37,8 +37,37 @@
     {% endif %}
 
     <div class="text-sm text-gray-700 mt-1">
-      {% set displayPrice = item.effectiveUnitPrice > 0 ? item.effectiveUnitPrice : item.unitPrice %}
-      {{ format_price(displayPrice) }} × {{ item.qty }} = <span class="font-medium" data-testid="row-total">{{ format_price(item.rowTotal) }}</span>
+      {# Показываем цену со скидкой и без скидки (Simple/Variable) #}
+      {% set discountedPrice = item.effectiveUnitPrice > 0 ? item.effectiveUnitPrice : item.unitPrice %}
+      {% set hasOptions = item.optionAssignments is defined and item.optionAssignments|length > 0 %}
+      {% set originalPrice = null %}
+      {% set hasDiscount = false %}
+
+      {% if hasOptions %}
+        {% set matchFound = false %}
+        {% for a in item.optionAssignments %}
+          {% set candidate = a.salePrice is not null ? a.salePrice : (a.price ?? 0) %}
+          {% if not matchFound and candidate == discountedPrice and a.salePrice is not null and a.price is not null and a.salePrice < a.price %}
+            {% set originalPrice = a.price %}
+            {% set hasDiscount = true %}
+            {% set matchFound = true %}
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        {% if item.product and item.product.salePrice is not null and item.product.price is not null and item.product.salePrice < item.product.price %}
+          {% set originalPrice = item.product.price %}
+          {% set hasDiscount = true %}
+          {% set discountedPrice = item.product.salePrice %}
+        {% endif %}
+      {% endif %}
+
+      {% if hasDiscount %}
+        <span class="line-through text-gray-500">{{ format_price(originalPrice) }}</span>
+        <span class="text-red-600 font-medium">{{ format_price(discountedPrice) }}</span>
+      {% else %}
+        {{ format_price(discountedPrice) }}
+      {% endif %}
+      × {{ item.qty }} = <span class="font-medium" data-testid="row-total">{{ format_price(item.rowTotal) }}</span>
     </div>
   </div>
 </div>
