@@ -2,6 +2,109 @@
 alwaysApply: false
 ---
 
+# Facet Filter — руководство для ИИ‑агента (обновлено)
+
+Назначение: быстрое погружение в реализацию фасетного фильтра (backend + Twig/Stimulus), точки расширения и актуальные изменения: пользовательские названия (label), порядок сортировки (sort) и ограничение пересчёта словаря по выбранным кодам.
+
+## Архитектура и потоки
+- Источники данных:
+  - `facet_dictionary` — кеш справочников (атрибуты/опции/цены) по категории.
+  - `FacetConfig` — конфигурация отображения фасетов (GLOBAL/CATEGORY).
+- Флоу:
+  1) Индексация (`FacetIndexer`) обновляет `facet_dictionary` по событиям или вручную.
+  2) Витринный эндпоинт `/api/catalog/facets` считает живые counts с учётом выбранных фильтров `f[code]=csv`, и теперь отдаёт `meta` для заголовков и сортировки.
+  3) Страница категории рендерится Twig’ом; Stimulus‑контроллер управляет чекбоксами, обновляет URL и реактивно перерисовывает фасеты и грид товаров с сортировкой секций по `sort`.
+
+## БД и сущности
+### Таблица `facet_dictionary`
+- Поля: `id`, `category_id` (nullable: GLOBAL), `attributes_json`, `options_json`, `price_min`, `price_max`, `updated_at`.
+- Содержимое (обновлено):
+  - `attributes_json.items[]` = `{ code, name, type, min, max, sort? }`.
+  - `options_json[]` = `{ code, name, sort? , values[]: { code, label } }`.
+- Поведение (обновлено): `name` и `sort` берутся из `FacetConfig` (поля `label` и `order`) при наличии; иначе `name` — из БД (`attribute.name`/`option.name`), `sort` — отсутствует.
+
+### Сущность `FacetConfig`
+- Поля: `scope` ('GLOBAL'|'CATEGORY'), `category`, `attributes[]`, `options[]`, `showZeros`, `collapsedByDefault`, `valuesLimit`, `valuesSort` ('popularity'|'alpha'|'manual').
+- Элементы `attributes[]`/`options[]` (обновлено): `{ id?, code, label?, enabled, widget, operator?, order?, bins? }`.
+- Репозиторий: `findEffectiveConfigForCategory(int $categoryId)` — CATEGORY override → иначе GLOBAL.
+
+## Индексация (FacetIndexer)
+- Метод (обновлено): `reindexCategory(int $categoryId, ?array $attributeCodes = null, ?array $optionCodes = null)`.
+  - Фильтр кодов: `null` — «не задан фильтр» (включить все), `[]` — «задан, но пустой» (ничего не включать), массив — включить только указанные коды.
+  - Атрибуты: DISTINCT из `product_attribute_assignment` (+min/max для числовых).
+  - Опции: DISTINCT из `product_option_value_assignment` (`option_value`), доп. агрегаты при наличии.
+  - Цены: `product.effective_price` → `price_min/max`.
+- Сохранение (обновлено):
+  - В `attributes_json.items[].name` и `options_json[].name` пишется пользовательское `label` из `FacetConfig` (если задано), иначе имя из БД.
+  - В `attributes_json.items[].sort` и `options_json[].sort` пишется `order` из `FacetConfig` (если задано).
+
+## Эндпоинты
+### Админ (ROLE_ADMIN)
+- `GET /api/admin/facets/available?category=<id|null>` — данные из `facet_dictionary` (ETag/Cache-Control).
+- `GET /api/admin/facets/config?category=<id|global>` — получение актуальной конфигурации.
+- `PUT /api/admin/facets/config` — сохранение; контроллер нормализует элементы `{ id?, code, label?, enabled, widget, operator?, order?, bins? }` и стабильно сортирует по `order`, затем `code`.
+- `POST /api/admin/facets/reindex?category=<id|all>` (обновлено) — поддерживает тело запроса:
+  ```json
+  { "attributes": ["code1", "code2"], "options": ["codeA"] }
+  ```
+  - Если массивы отсутствуют → считать все коды; если массив пуст → не включать этот тип.
+
+### Витрина (обновлено)
+- `GET /api/catalog/facets?category=<id>&f[<code>]=v1,v2`
+  - Ответ теперь включает:
+  ```json
+  {
+    "facets": { "diametr": { "type": "attribute", "values": [ ... ] }, ... },
+    "meta": {
+      "diametr": { "title": "Диаметр, мм", "sort": 10 },
+      "color": { "title": "Цвет", "sort": 20 }
+    }
+  }
+  ```
+  - Перечень фасетов берётся из `FacetConfig` (enabled=true) или из `facet_dictionary` (fallback). `meta.title`/`meta.sort` строятся по правилам: `label` из конфигурации → имя из БД → код.
+
+## Витрина (Twig/Stimulus)
+### Разметка
+- `templates/catalog/category/show.html.twig` — контейнер с `data-controller="facets"`, targets для списка фасетов и грида.
+- Передача начального состояния (обновлено): `data-initial-facets='{"facets":{...},"meta":{...}}'` для первичного рендера без API‑вызова.
+
+### Контроллер `assets/controllers/facets_controller.js` (обновлено)
+- Инициализация: читает выбранные фильтры из URL, рендерит из `data-initial-facets` при наличии.
+- Загрузка: `GET /api/catalog/facets` → теперь передаёт `meta` в `renderFacets`.
+- Рендер секций: заголовок = `meta[code].title || code`.
+- Сортировка секций: по `meta.sort` (возрастающий, `null` в конец), затем по `title`.
+- Значения чекбоксов не менялись: опции — по `OptionValue.value`, атрибуты — по `string_value`.
+
+## Админ SPA (UI Facets)
+- Страница `assets/admin/views/Facets.vue` (обновлено):
+  - Две колонки чекбоксов: опции и атрибуты (из репозиториев), с полями «Название» (`label`) и «Порядок» (`order`).
+  - «Сохранить» — пишет `label`/`order` в `FacetConfig`, синхронизируя `enabled` по выбранным.
+  - «Перестроить справочники» — отправляет выбранные коды в `POST /api/admin/facets/reindex` (пресчёт только для выбранных).
+
+## Производительность и лимиты
+- Индексы на таблицах присвоений и `product_to_category` задействованы.
+- Для публичного API лимит значений контролируется `valuesLimit`; сортировка значений по популярности/алфавиту — см. `valuesSort`.
+
+## Чек‑лист
+- Backend:
+  - При изменении формы `FacetConfig` — нормализовать вход и не допускать хардкодов (см. @hardcoderules.mdc).
+  - В `FacetIndexer` учитывать `label`/`order` при выгрузке в `facet_dictionary`.
+  - Публичный `/api/catalog/facets` — возвращать `meta` и учитывать `FacetConfig`/fallback словарь.
+- Frontend:
+  - Stimulus‑контроллер использовать `meta.title` и сортировку по `meta.sort`.
+  - На странице админки — сохранять `label` и `order`, пересчитывать только выбранные коды.
+
+## Связанные правила
+- @projectrules.mdc
+- @hardcoderules.mdc
+- @stimulus_policy.mdc
+- @paginationapiplatformmapping.mdc
+- @doctrine_entities.mdc
+- @catalog_js_architecture.mdc
+---
+alwaysApply: false
+---
+
 # Facet Filter — руководство для ИИ‑агента
 
 Назначение: быстрое погружение в реализацию фасетного фильтра (backend + Twig/Stimulus), точки расширения и правила внесения изменений.
