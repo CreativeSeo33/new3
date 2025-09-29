@@ -14,7 +14,7 @@
         <input
           id="phone"
           name="phone"
-          type="tel"
+          type="text"
           inputmode="tel"
           autocomplete="tel"
           pattern="^\+?[0-9\s\-\(\)]{10,20}$"
@@ -22,6 +22,7 @@
           class="w-full border rounded px-3 py-2"
           value="{{ (checkout.customer.phone ?? '')|e }}"
           required
+          data-controller="phone-mask"
         />
       </div>
       <div>
