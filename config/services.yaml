@@ -49,6 +49,12 @@ parameters:
     # Notification settings
     app.notification.from_email: '%env(ADMIN_FROM_EMAIL)%'
 
+    # Facets configuration (env-driven)
+    env(FACETS_CACHE_TTL): '90'
+    env(FACET_VALUES_LIMIT): '20'
+    app.facets.cache_ttl: '%env(int:FACETS_CACHE_TTL)%'
+    app.facets.values_limit_default: '%env(int:FACET_VALUES_LIMIT)%'
+
     # Yandex Delivery API configuration (env-driven)
     env(YANDEX_DELIVERY_BASE_URL): 'https://b2b-authproxy.taxi.yandex.net'
     env(YANDEX_DELIVERY_TOKEN): ''
@@ -148,7 +154,7 @@ services:
     # Delivery provider registry
     App\Service\Delivery\Provider\DeliveryProviderRegistry:
         arguments:
-            $providers: !tagged_iterator 'app.delivery_provider'
+            $providers: []
 
     # Delivery methods auto-registration
     App\Service\Delivery\Method\PvzDeliveryMethod:
@@ -190,7 +196,7 @@ services:
             $cookieName: '%cart.cookie.name%'
             $ttlDays: '%cart.cookie.ttl_days%'
             $domain: '%cart.cookie.domain%'
-            $sameSite: !php/const Symfony\Component\HttpFoundation\Cookie::SAMESITE_LAX
+            $sameSite: '@=constant("Symfony\\Component\\HttpFoundation\\Cookie::SAMESITE_LAX")'
 
     # Wishlist services
     App\Http\WishlistCookieFactory:
@@ -233,3 +239,30 @@ services:
             $baseUrl: '%app.yandex_delivery.base_url%'
             $token: '%app.yandex_delivery.token%'
             $timeoutSeconds: 15
+
+    # Facets services
+    App\Service\FacetIndexer: ~
+
+    App\EventSubscriber\FacetReindexSubscriber:
+        tags:
+            - { name: kernel.event_subscriber }
+
+    App\Doctrine\Subscriber\FacetDoctrineSubscriber:
+        tags:
+            - { name: doctrine.event_subscriber }
+
+    App\Controller\Admin\FacetController:
+        tags: ['controller.service_arguments']
+        arguments:
+            $cacheTtl: '%app.facets.cache_ttl%'
+
+    App\Controller\Admin\FacetConfigController:
+        tags: ['controller.service_arguments']
+        arguments:
+            $defaultValuesLimit: '%app.facets.values_limit_default%'
+
+    App\Controller\Catalog\FacetsController:
+        tags: ['controller.service_arguments']
+        arguments:
+            $publicTtl: '%app.facets.cache_ttl%'
+            $defaultValuesLimit: '%app.facets.values_limit_default%'

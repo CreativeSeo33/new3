@@ -1,5 +1,5 @@
 {# Сетка товаров: ожидает переменную `products` #}
-<div class="grid lg:grid-cols-5 md:grid-cols-3 gap-4 mb-6">
+<div class="grid lg:grid-cols-5 md:grid-cols-3 gap-4 mb-6" data-testid="category-grid">
   {% for p in products %}
     <div class="relative rounded-lg break-words border bg-white border-gray-300 card-product">
         <div class="flex-auto p-4">

@@ -67,6 +67,12 @@ export const adminRoutes: RouteRecordRaw[] = [
         meta: { requiresAuth: true }
       },
       {
+        path: 'facets',
+        name: 'admin-facets',
+        component: () => import(/* webpackChunkName: "admin-facets" */ '@admin/views/Facets.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
         path: 'settings',
         name: 'admin-settings',
         component: () => import(/* webpackChunkName: "admin-settings" */ '@admin/views/Settings.vue'),
@@ -189,6 +195,7 @@ export const adminSidebarItems: AdminSidebarItem[] = [
   {
     label: 'Система',
     children: [
+      { to: { name: 'admin-facets' }, label: 'Фасетный фильтр', colorClass: 'bg-amber-600' },
       { to: { name: 'admin-orders' }, label: 'Заказы', colorClass: 'bg-purple-500' },
       { to: { name: 'admin-settings' }, label: 'Настройки', colorClass: 'bg-emerald-700' },
       { to: { name: 'admin-order-statuses' }, label: 'Статусы заказов', colorClass: 'bg-indigo-500' },

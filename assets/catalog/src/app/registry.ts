@@ -27,6 +27,8 @@ export const registry: Record<string, () => Promise<ModuleInitFunction>> = {
   // Виджеты
   'cart-counter': () => import('../widgets/cart-counter').then(m => m.init),
   'wishlist-counter': () => import('../widgets/wishlist-counter').then(m => m.init),
+  'facets-panel': () => import('../widgets/facets-panel').then(m => m.init),
+  'facets': () => import('../features/facets').then(m => m.init),
 
   // Shared UI компоненты
   'modal': () => import('../shared/ui/modal-simple.js').then(m => m.init),

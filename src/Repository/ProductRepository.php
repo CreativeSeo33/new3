@@ -86,6 +86,41 @@ final class ProductRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    /**
+     * @param array<string,string[]> $filters code => [values]
+     * @return Product[]
+     */
+    public function findActiveByCategoryWithFacets(Category $category, array $filters, int $limit = 20, int $offset = 0): array
+    {
+        $qb = $this->createQueryBuilder('p')
+            ->distinct()
+            ->innerJoin('p.category', 'pc')
+            ->leftJoin('p.image', 'img')->addSelect('img')
+            ->andWhere('pc.category = :category')
+            ->andWhere('pc.visibility = true')
+            ->andWhere('p.status = true')
+            ->orderBy('p.sortOrder', 'ASC')
+            ->addOrderBy('img.sortOrder', 'ASC')
+            ->setParameter('category', $category)
+            ->setFirstResult($offset)
+            ->setMaxResults($limit);
+
+        $i = 0;
+        foreach ($filters as $code => $values) {
+            if (empty($values)) { continue; }
+            $i++;
+            $codeParam = 'f_code_' . $i;
+            $valsParam = 'f_vals_' . $i;
+            $existsAttr = 'EXISTS (SELECT 1 FROM App\\Entity\\ProductAttributeAssignment paa' . $i . ' JOIN paa' . $i . '.attribute a' . $i . ' WHERE paa' . $i . '.product = p AND a' . $i . '.code = :' . $codeParam . ' AND paa' . $i . '.stringValue IN (:' . $valsParam . '))';
+            $existsOpt = 'EXISTS (SELECT 1 FROM App\\Entity\\ProductOptionValueAssignment pova' . $i . ' JOIN pova' . $i . '.option o' . $i . ' JOIN pova' . $i . '.value ov' . $i . ' WHERE pova' . $i . '.product = p AND o' . $i . '.code = :' . $codeParam . ' AND ov' . $i . '.value IN (:' . $valsParam . '))';
+            $qb->andWhere('(' . $existsAttr . ' OR ' . $existsOpt . ')')
+                ->setParameter($codeParam, $code)
+                ->setParameter($valsParam, $values);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
 }
 
 
