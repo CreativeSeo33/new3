@@ -27,6 +27,8 @@ use App\Entity\PvzPoints;
 use App\Entity\ProductOptionValueAssignment;
 use Psr\Log\LoggerInterface;
 use App\Service\OrderMailer;
+use App\Service\InventoryService;
+use App\Exception\InsufficientStockException;
 
 /**
  * AI-META v1
@@ -102,7 +104,8 @@ final class CheckoutController extends AbstractController
 		DeliveryService $deliveryService,
 		DeliveryContext $deliveryContext,
 		OrderMailer $orderMailer,
-		LoggerInterface $logger
+		LoggerInterface $logger,
+		InventoryService $inventory
 	): Response {
 		$user = $this->getUser();
 		$userId = $user instanceof AppUser ? $user->getId() : null;
@@ -172,6 +175,7 @@ final class CheckoutController extends AbstractController
                 $request,
                 $payload,
                 $sanitize,
+                $inventory,
                 &$createdOrder
             ) {
 				$order = new Order();
@@ -301,6 +305,85 @@ final class CheckoutController extends AbstractController
 				// Закрываем корзину: помечаем истекшей
 				$cart->setExpiresAt(new \DateTimeImmutable('-1 second'));
 
+				// Списание остатков: повторная проверка и вычитание в рамках текущей транзакции
+				foreach ($cart->getItems() as $it) {
+					$product = $it->getProduct();
+					$qty = $it->getQty();
+					// Извлекаем assignmentIds из связи CartItem.optionAssignments; fallback — snapshot/selectedOptionsData
+					$optionAssignmentIds = [];
+					$optionAssignments = $it->getOptionAssignments();
+					if (!$optionAssignments->isEmpty()) {
+						foreach ($optionAssignments as $oa) {
+							$optionAssignmentIds[] = (int)$oa->getId();
+						}
+					} else {
+						$opts = $it->getOptionsSnapshot() ?? $it->getSelectedOptionsData() ?? [];
+						foreach ($opts as $optRow) {
+							$id = $optRow['assignment_id'] ?? ($optRow['assignmentId'] ?? null);
+							if (is_numeric($id)) {
+								$optionAssignmentIds[] = (int)$id;
+							}
+						}
+					}
+					$optionAssignmentIds = array_values(array_unique($optionAssignmentIds));
+
+					// Повторная проверка доступности на момент фиксации
+					$inventory->assertAvailable($product, $qty, $optionAssignmentIds);
+
+					if (empty($optionAssignmentIds)) {
+						// SIMPLE: блокируем и вычитаем количество на товаре
+						$lockedProduct = $em->getRepository(\App\Entity\Product::class)
+							->createQueryBuilder('p')
+							->where('p.id = :id')
+							->setParameter('id', $product->getId())
+							->getQuery()
+							->setLockMode(\Doctrine\DBAL\LockMode::PESSIMISTIC_WRITE)
+							->getSingleResult();
+						$curr = (int)($lockedProduct->getQuantity() ?? 0);
+						if ($curr < $qty) {
+							throw new InsufficientStockException(
+								"Not enough stock for product '" . ($product->getName() ?? 'product') . "'. Available: {$curr}, requested: {$qty}",
+								$curr
+							);
+						}
+						$lockedProduct->setQuantity($curr - $qty);
+					} else {
+						// VARIABLE: блокируем и вычитаем по каждому assignmentId
+						/** @var array<int, int> $deductMap */
+						$deductMap = [];
+						foreach ($optionAssignmentIds as $aid) {
+							$deductMap[$aid] = ($deductMap[$aid] ?? 0) + $qty;
+						}
+						$changedAssignmentIds = [];
+						foreach ($deductMap as $aid => $decQty) {
+							$assignment = $em->getRepository(ProductOptionValueAssignment::class)
+								->createQueryBuilder('a')
+								->where('a.id = :id')
+								->setParameter('id', $aid)
+								->getQuery()
+								->setLockMode(\Doctrine\DBAL\LockMode::PESSIMISTIC_WRITE)
+								->getOneOrNullResult();
+							if ($assignment && $assignment->getProduct()->getId() === $product->getId()) {
+								$curr = (int)($assignment->getQuantity() ?? 0);
+								if ($curr < $decQty) {
+									$optionName = $assignment->getOption()?->getName() ?? 'option';
+									$valueName = $assignment->getValue()?->getValue() ?? '';
+									throw new InsufficientStockException(
+										"Not enough stock for option '{$optionName}: {$valueName}' in product '" . ($product->getName() ?? 'product') . "'. Available: {$curr}, requested: {$decQty}",
+										$curr
+									);
+								}
+								$assignment->setQuantity($curr - $decQty);
+								$changedAssignmentIds[] = (int)$assignment->getId();
+							}
+						}
+						// Инвалидация кеша инвентаря по изменённым вариантам
+						if (!empty($changedAssignmentIds)) {
+							$inventory->invalidateCache($changedAssignmentIds);
+						}
+					}
+				}
+
 				// Фиксируем изменения
 				$em->flush();
 
@@ -308,6 +391,12 @@ final class CheckoutController extends AbstractController
 			});
 		} catch (InvalidDeliveryDataException $e) {
 			return $this->json(['error' => $e->getMessage()], 400);
+		} catch (InsufficientStockException $e) {
+			return $this->json([
+				'error' => 'insufficient_stock',
+				'message' => $e->getMessage(),
+				'availableQuantity' => $e->getAvailableQuantity(),
+			], 409);
 		}
 
 		// Очистка checkout-контекста после успешной транзакции

@@ -1,0 +1,74 @@
+---
+alwaysApply: false
+---
+
+# Политика списания остатков при оформлении заказа (Checkout Stock Deduction)
+
+Назначение: описывает инварианты и порядок вычитания количества товара из склада при оформлении заказа. Применимо к товарам simple (`Product.quantity`) и variable (`ProductOptionValueAssignment.quantity`).
+
+## Область действия
+- Бэкенд: `src/Controller/Catalog/CheckoutController.php`, `src/Service/InventoryService.php`, сущности `Product`, `ProductOptionValueAssignment`.
+- Не затрагивает фронтенд; UI получает ошибки через JSON (409 insufficient_stock).
+
+## Инварианты
+- Проверка наличия (assert) и списание (decrement) — разные операции во времени:
+  - Проверка выполняется при добавлении/изменении количества в корзине (`InventoryService::assertAvailable`).
+  - Списание выполняется только при успешном оформлении заказа, внутри одной транзакции.
+- Никаких отрицательных остатков: при нехватке — прерывание с `InsufficientStockException` и откат транзакции.
+- Конкурентные заказы обрабатываются с блокировкой строк (`PESSIMISTIC_WRITE`) по целевым сущностям склада.
+
+## Порядок списания (в рамках checkout транзакции)
+1) Сборка заказа из корзины в `CheckoutController::submit` (создание `Order`, перенос позиций и опций) — как обычно.
+2) Перед финальным `flush()` выполняется блок «Списание остатков»:
+   - Для каждой позиции корзины (`CartItem`) собираются идентификаторы вариантов:
+     - Сначала из связи `CartItem.optionAssignments` (ManyToMany).
+     - Fallback: из `CartItem.optionsSnapshot` или `CartItem.selectedOptionsData` (ключи `assignment_id`/`assignmentId`).
+     - Уникализация ID.
+   - Повторная проверка наличия через `InventoryService::assertAvailable(product, qty, optionAssignmentIds)` — уже на финальном шаге.
+   - Захват блокировок и списание:
+     - Simple: PESSIMISTIC_WRITE на `Product` → проверка `quantity >= qty` → `setQuantity(quantity - qty)`.
+     - Variable: PESSIMISTIC_WRITE на каждый `ProductOptionValueAssignment` из набора → проверка `quantity >= decQty` → `setQuantity(quantity - decQty)`.
+   - Инвалидация кеша `InventoryService::invalidateCache([...assignmentIds])` для изменённых вариантов.
+3) Финальный `flush()` фиксирует заказ и обновлённые остатки.
+
+## Обработка гонок и ошибок
+- Если после блокировки строк остатка не хватает (например, параллельно уже оформили другой заказ):
+  - Бросается `InsufficientStockException` с `availableQuantity`.
+  - Контроллер возвращает `409` JSON:
+    - `error: "insufficient_stock"`
+    - `message: <текст>`
+    - `availableQuantity: <int>`
+  - Транзакция откатывается, отрицательных остатков нет.
+
+### Пример JSON-ответа при нехватке остатков
+```json
+{
+  "error": "insufficient_stock",
+  "message": "Not enough stock for option 'Height: 60 cm' in product 'Lamp X'. Available: 1, requested: 2",
+  "availableQuantity": 1
+}
+```
+
+## Точки расширения
+- Перенос момента списания: при необходимости можно вынести списание на событие «оплачено» вместо «создан заказ» (например, при отложенной оплате). Тогда блок списания переносится из `CheckoutController::submit` в обработчик/подписчик события оплаты; инварианты и блокировки сохраняются.
+- Резервирование: по аналогии можно добавить «резерв» при создании заказа и «списание» при оплате. Потребуются новые поля/сервисы (в этом репозитории пока отсутствуют).
+
+## Ссылки на код
+- `src/Controller/Catalog/CheckoutController.php` — блок списания перед `flush()`
+- `src/Service/InventoryService.php` — проверки доступности и кеш вариантов, метод `invalidateCache`
+- `src/Entity/Product.php`, `src/Entity/ProductOptionValueAssignment.php`
+
+## Чек-лист для dev-тестирования
+- Подготовьте simple товар с `quantity = 3` и variable товар с комбинациями, у которых `quantity` > 0.
+- Добавьте в корзину 2 единицы товара (simple и/или variable) и оформите заказ — проверьте, что остаток уменьшился корректно.
+- Смоделируйте конфликт: у товара `quantity = 3`, пользователь A оформляет 2, пользователь B пытается оформить 2 сразу после A.
+  - Ожидаемо: B получает 409 `insufficient_stock` и `availableQuantity = 1`.
+- Проверьте, что при повторной попытке B с количеством 1 заказ создаётся.
+- Убедитесь, что `InventoryService::invalidateCache` был вызван (по логам/отладке) и последующие проверки в корзине используют актуальные остатки.
+
+## Связанные правила
+- @ai_context.mdc
+- @order_checkout_flow.mdc
+- @services.mdc
+- @doctrine_entities.mdc
+- @hardcoderules.mdc

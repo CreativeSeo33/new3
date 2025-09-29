@@ -19,6 +19,7 @@ alwaysApply: true
 1) Архитектурные инварианты → @projectrules.mdc
 2) Запрет хардкодов → @hardcoderules.mdc
 3) Checkout/бизнес‑флоу → @order_checkout_flow.mdc
+4) Списание остатков при оформлении заказа → @checkout_stock_deduction.mdc
 4) Справочники → @services.mdc, @doctrine_entities.mdc
 5) Диагностика → @logs.mdc
 6) Stimulus‑policy → @stimulus_policy.mdc
