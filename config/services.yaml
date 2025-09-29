@@ -73,6 +73,10 @@ parameters:
     app.yandex_delivery.base_url: '%env(string:YANDEX_DELIVERY_BASE_URL)%'
     app.yandex_delivery.token: '%env(string:YANDEX_DELIVERY_TOKEN)%'
 
+    # Yandex Maps API (env-driven)
+    env(YANDEX_MAPS_API_KEY): ''
+    app.yandex_maps.api_key: '%env(string:YANDEX_MAPS_API_KEY)%'
+
 services:
     # default configuration for services in *this* file
     _defaults:
