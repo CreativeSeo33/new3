@@ -2,6 +2,7 @@ import { Component } from '@shared/ui/Component';
 import { submitCheckout, saveCheckoutDraft } from '../api';
 import { validatePhone } from '@shared/lib/phone';
 import { getDeliveryContext, type DeliveryContextDto } from '@features/delivery-selector/api';
+import { Spinner } from '@shared/ui/spinner';
 
 export interface CheckoutFormOptions {
   storageKey?: string;
@@ -14,6 +15,7 @@ export class CheckoutFormComponent extends Component {
   private submitButton: HTMLButtonElement | null = null;
   private storageKey: string = 'checkout_form';
   private phoneInput: HTMLInputElement | null = null;
+  private overlaySpinner: Spinner | null = null;
   private handleInvalid = (ev: Event): void => {
     const target = ev.target as (HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null);
     if (target) {
@@ -24,6 +26,10 @@ export class CheckoutFormComponent extends Component {
   init(): void {
     this.form = this.$('form#checkout-form');
     this.submitButton = this.$('button#place-order') as HTMLButtonElement | null;
+    const spinnerHost = document.getElementById('checkout-spinner');
+    if (spinnerHost) {
+      this.overlaySpinner = new Spinner(spinnerHost as HTMLElement, { overlay: true, visible: false, size: 'large', color: 'primary' });
+    }
 
     if (this.options?.storageKey && typeof this.options.storageKey === 'string') {
       this.storageKey = this.options.storageKey;
@@ -161,6 +167,7 @@ export class CheckoutFormComponent extends Component {
     // Упрощаем: ничего не пробрасываем про ID, сервер использует только cityName
 
     if (this.submitButton) this.submitButton.disabled = true;
+    if (this.overlaySpinner) this.overlaySpinner.show();
     try {
       const res = await submitCheckout(submitUrl, payload);
       try { sessionStorage.removeItem(this.storageKey); } catch {}
@@ -174,6 +181,7 @@ export class CheckoutFormComponent extends Component {
       }
     } finally {
       if (this.submitButton) this.submitButton.disabled = false;
+      if (this.overlaySpinner) this.overlaySpinner.hide();
     }
   };
 

@@ -7,7 +7,7 @@
   <div class="container mx-auto px-4 py-6" data-module="checkout-form" data-submit-url="{{ path('checkout_submit') }}" data-testid="checkout-root">
     <h1 class="text-2xl font-semibold mb-6">Оформление заказа</h1>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="relative grid grid-cols-1 md:grid-cols-3 gap-6">
       <div class="md:col-span-2 space-y-6">
         {% include 'components/checkout/contact-form.html.twig' %}
         
@@ -27,6 +27,15 @@
         {% endif %}
         {% include 'components/checkout/submit-button.html.twig' with { disabled: cart.items|length == 0 } %}
       </aside>
+
+      {# Overlay spinner over the whole grid #}
+      {% include 'components/spinner.html.twig' with {
+        id: 'checkout-spinner',
+        overlay: true,
+        visible: false,
+        size: 'large',
+        extra_class: ''
+      } %}
     </div>
 
     <p class="text-xs text-gray-500 mt-6">Нажимая кнопку, вы соглашаетесь с условиями оферты и политикой конфиденциальности.</p>
