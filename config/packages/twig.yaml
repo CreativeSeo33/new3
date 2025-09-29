@@ -3,6 +3,7 @@ twig:
     globals:
         footer_categories: '@App\Service\FooterCategoryService'
         navbar_categories: '@App\Service\NavbarCategoryService'
+        yandex_maps_api_key: '%app.yandex_maps.api_key%'
 
 when@test:
     twig:

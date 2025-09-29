@@ -23,6 +23,7 @@ alwaysApply: true
 4) Справочники → @services.mdc, @doctrine_entities.mdc
 5) Диагностика → @logs.mdc
 6) Stimulus‑policy → @stimulus_policy.mdc
+9) Модуль Яндекс Карт → @yandex_maps_module.mdc
 7) Facet Filter Guide → @facet_filter_guide.mdc
 8) Поиск товаров (TNTSearch) → @search_tntsearch.mdc
 

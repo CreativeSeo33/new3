@@ -1,0 +1,37 @@
+<div class="{{ heightClass }} w-full"
+     role="region"
+     aria-label="Карта пунктов выдачи"
+     data-controller="yandex-map"
+     data-yandex-map-api-key-value="{{ yandex_maps_api_key }}"
+     {% if centerLat is not null and centerLon is not null %}
+       data-yandex-map-lat-value="{{ centerLat }}"
+       data-yandex-map-lon-value="{{ centerLon }}"
+     {% endif %}
+     {% if zoom is not null %}
+       data-yandex-map-zoom-value="{{ zoom }}"
+     {% endif %}
+     data-yandex-map-fit-bounds-value="{{ fitBounds ? 'true' : 'false' }}"
+     {% if clusterOptions is not empty %}
+       data-yandex-map-cluster-options-value='{{ clusterOptions|json_encode(constant("JSON_UNESCAPED_UNICODE"))|e('html_attr') }}'
+     {% endif %}
+     data-yandex-map-points-value='{{ points|json_encode(constant("JSON_UNESCAPED_UNICODE"))|e('html_attr') }}'
+></div>
+
+{% if showList and points is not empty %}
+  <div class="mt-4">
+    <ul class="space-y-2">
+      {% for p in points %}
+        <li class="flex items-start gap-2">
+          <button type="button"
+                  class="text-left text-blue-700 hover:underline"
+                  data-action="yandex-map#focusPoint"
+                  data-id="{{ p.id|default(loop.index) }}">
+            {{ p.address|default(p.title|default('ПВЗ')) }}
+          </button>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}
+
+

@@ -1,0 +1,71 @@
+---
+alwaysApply: false
+---
+# Модуль Яндекс Карт (Stimulus/Twig)
+
+Назначение: правила и интерфейсы для переиспользуемого компонента карты (Yandex Maps) в Twig, с кластеризацией и опциональным списком ПВЗ.
+
+## Область
+- Twig/Stimulus (Symfony UX). Не использовать inline-скрипты.
+- Файлы:
+  - Контроллер: `assets/controllers/yandex_map_controller.ts`
+  - Компонент: `src/Twig/Components/YandexMap.php`
+  - Шаблон компонента: `templates/components/YandexMap.html.twig`
+  - Глобал: `config/packages/twig.yaml` → `yandex_maps_api_key`
+
+## Конфигурация
+- Ключ API берётся из `%app.yandex_maps.api_key%` (env `YANDEX_MAPS_API_KEY`). Не хардкодить.
+- SDK загружается лениво через `<script>` (в контроллере) с кешированием промиса.
+
+## Публичный API (props/атрибуты)
+- `points: Array<{ id?: string|number, lat: number, lon: number, title?: string, address?: string }>` — точки.
+- `heightClass?: string` — высота контейнера (Tailwind), по умолчанию `h-96`.
+- `centerLat?: number`, `centerLon?: number` — явный центр (опционально).
+- `zoom?: number` — стартовый зум (по умолчанию 12).
+- `fitBounds?: boolean` — авто‑фит по кластеру (по умолчанию true).
+- `clusterOptions?: object` — прокидываются в `ymaps.Clusterer`.
+- `showList?: boolean` — отрисовать список точек под картой.
+
+## События
+- `map:ready` — карта готова (резерв).
+- `map:point-click` — клик по метке, `event.detail = point`.
+
+## Методы (через element.yandexMap)
+- `focusPoint(id | { lat, lon })` — центрация и зум на точку.
+- `setPoints(points)` — заменить набор точек и перефитить границы.
+
+## Чек‑лист внедрения
+- Добавьте ключ в `.env.local`: `YANDEX_MAPS_API_KEY=...`.
+- Убедитесь, что `yandex_maps_api_key` доступен в Twig globals.
+- Рендерите компонент через Twig Component:
+  ```twig
+  {% component 'YandexMap' with {
+    points: pvzPoints,
+    heightClass: 'h-96',
+    showList: false
+  } %}{% endcomponent %}
+  ```
+- Для списка ПВЗ:
+  ```twig
+  {% component 'YandexMap' with {
+    points: pvzPoints,
+    heightClass: 'h-[520px]',
+    showList: true
+  } %}{% endcomponent %}
+  ```
+
+## Политики
+- Следовать @stimulus_policy.mdc (никаких inline-скриптов).
+- Запрет хардкодов — @hardcoderules.mdc (ключи, URL SDK).
+- Архитектура — @catalog_js_architecture.mdc (Stimulus‑first во фронтенде каталога).
+
+## Расширения
+- Поддержка подгрузки точек по области (bounds) через API Platform — через отдельный контроллер/эндоинт.
+- Кастомный balloon/tpl — добавьте поля в `points` и соберите HTML в контроллере.
+
+## Связанные правила
+- @ai_context.mdc
+- @stimulus_policy.mdc
+- @hardcoderules.mdc
+- @catalog_js_architecture.mdc
+
