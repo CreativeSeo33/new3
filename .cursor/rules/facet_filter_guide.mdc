@@ -1,0 +1,116 @@
+---
+alwaysApply: false
+---
+
+# Facet Filter — руководство для ИИ‑агента
+
+Назначение: быстрое погружение в реализацию фасетного фильтра (backend + Twig/Stimulus), точки расширения и правила внесения изменений.
+
+## Архитектура и потоки
+- Источники данных:
+  - `facet_dictionary` (БД) — кеш справочников (атрибуты/опции/цены) по категории.
+  - `FacetConfig` (ApiResource) — конфигурация отображения фасетов (GLOBAL/CATEGORY).
+- Флоу:
+  1) Индексация (`FacetIndexer`) обновляет `facet_dictionary` по событиям (см. подписчик) или вручную.
+  2) Витринный эндпоинт `/api/catalog/facets` считает живые counts с учетом выбранных фильтров (`f[code]=csv`). Если нет конфига — перечень фасетов берется из `facet_dictionary` (fallback).
+  3) Страница категории рендерится Twig’ом; Stimulus‑контроллер управляет чекбоксами, обновляет URL и реактивно перерисовывает фасеты и грид товаров.
+
+## БД и сущности
+### Таблица `facet_dictionary`
+- Поля: `id`, `category_id` (nullable: GLOBAL), `attributes_json`, `options_json`, `price_min`, `price_max`, `updated_at`.
+- Ограничения/индексы: `UNIQUE(category_id)`, `FK(category_id→category.id)`.
+- Содержимое:
+  - `attributes_json.items[]` = `{ code, name, type, min, max }` (type: string|int|decimal).
+  - `options_json[]` = `{ code, name, values[]: { code, label } }`.
+
+### Сущность `FacetConfig` (`src/Entity/FacetConfig.php`)
+- Поля: `scope` ('GLOBAL'|'CATEGORY'), `category`, `attributes[]`, `options[]`, `showZeros`, `collapsedByDefault`, `valuesLimit`, `valuesSort` ('popularity'|'alpha'|'manual').
+- Инварианты: 1 GLOBAL, не более одного на категорию.
+- Репозиторий: `findEffectiveConfigForCategory(int $categoryId)` (CATEGORY override → иначе GLOBAL).
+
+## Индексация
+- Сервис: `src/Service/FacetIndexer.php`
+  - `reindexCategory(categoryId)` собирает:
+    - Атрибуты: DISTINCT из `ProductAttributeAssignment` (+min/max для числовых).
+    - Опции: DISTINCT из `ProductOptionValueAssignment` (значения `OptionValue`), а также min/max для некоторых числовых полей (height/bulbs/area при наличии).
+    - Диапазон цен: `Product.effective_price` → `price_min/max`.
+  - Сохранение: UPSERT в `facet_dictionary`.
+- Триггеры: `src/EventSubscriber/FacetReindexSubscriber.php` (+ `src/Doctrine/Subscriber/FacetDoctrineSubscriber.php`) — дебаунс изменений и пересчет в `kernel.terminate`.
+
+## Эндпоинты
+### Админ (ROLE_ADMIN)
+- `GET /api/admin/facets/available?category=<id|null>` — отдает данные из `facet_dictionary` (ETag/Cache-Control).
+- `GET /api/admin/facets/config?category=<id|global>` — получение актуальной конфигурации.
+- `PUT /api/admin/facets/config` — сохранение конфигурации.
+- `POST /api/admin/facets/reindex?category=<id|all>` — пересчет словаря.
+
+### Витрина
+- `GET /api/catalog/facets?category=<id>&f[<code>]=v1,v2` — живые counts по текущей выборке:
+  - Перечень фасетов: из `FacetConfig` (если есть) или из `facet_dictionary` (fallback).
+  - Подсчет: SQL `GROUP BY` c динамическими `EXISTS`‑фильтрами, где каждый выбранный код применяется через OR к атрибутам/опциям:
+    - Атрибуты — по `attribute.code = :code` и `paa.string_value IN (:values)`.
+    - Опции — по `option.code = :code` и `option_value.value IN (:values)`.
+  - Цена: всегда включается как `range` (min/max по живым данным).
+  - Лимит значений: `app.facets.values_limit_default`.
+
+Конфигурация (DI):
+- `app.facets.cache_ttl`: TTL публичного кэша,
+- `app.facets.values_limit_default`: лимит значений на фасет.
+
+## Витрина (Twig/Stimulus)
+### Разметка (`templates/catalog/category/show.html.twig`)
+- Контейнер:
+  - `data-controller="facets"` на грид‑контейнере (оборачивает сайдбар и товары).
+  - Targets: `data-facets-target="list"` (фасеты), `data-facets-target="products"` (грид товаров).
+  - Spinner: `#category-grid-spinner` внутри `products`, абсолютный, с белой подложкой (overlay=true).
+  - Передача начального состояния фасетов (чтобы не дергать API на первом рендере):
+    - `data-initial-facets='{"facets":{...}}'` на `list` (сформировано в `CatalogCategoryController::show`).
+
+### Контроллер `assets/controllers/facets_controller.js`
+- Инициализация:
+  - Читает выбранные фильтры из URL (`f[code]=csv`) → `this.selected`.
+  - Если есть `data-initial-facets` — рендерит фасеты из него; иначе дергает `/api/catalog/facets`.
+- Рендер фасетов:
+  - Для каждого значения рисуется checkbox; `value` — человекочитаемый label (ВАЖНО: на бэке фильтрация опций идет по `OptionValue.value`).
+  - Disabled для `count=0`.
+- Реактивность:
+  - При клике по checkbox:
+    - Обновляет URL через `history.replaceState` (`category` и `f[...]`).
+    - Вызывает `/api/catalog/facets` (показывая spinner), затем догружает HTML сетки `GET /category/{slug}/products?...` и скрывает spinner.
+- Параметры запроса:
+  - `category=<id>`, `f[<code>]=v1,v2` (значения — labels для опций, string_value для атрибутов).
+
+### Грид товаров
+- Маршрут: `GET /category/{slug}/products` — возвращает `_grid.html.twig`.
+- Применение фильтров в репозитории: `ProductRepository::findActiveByCategoryWithFacets(...)` — для каждого кода формирует OR‑exists:
+  - `attribute.code = :code AND paa.stringValue IN (:values)`
+  - ИЛИ `option.code = :code AND optionValue.value IN (:values)`
+  - Между разными кодами — AND (пересечение наборов).
+
+## Расширение/изменения
+- Добавить числовые диапазоны:
+  - В `/api/catalog/facets` и `CatalogCategoryController::show` — добавить ветки для `type=range` с обработкой `min/max` параметров.
+  - В репозитории/SQL — подмешать условия по числовым значениям (int/decimal) и/или цене.
+- Политика операторов:
+  - По умолчанию: внутри одного кода — OR (множественный выбор), между кодами — AND.
+  - Для конкретных атрибутов можно включать AND (см. поле `operator` в `FacetConfig`), потребуется доработка сборки SQL.
+- Производительность:
+  - Индексы уже добавлены: `product_option_value_assignment` (`product_id`, `product_id,option_id`), `product_to_category` (`category_id,product_id`), `product_attribute_assignment` (`string_value`).
+  - Следить за параметризацией IN‑массивов (`ArrayParameterType::STRING`).
+
+## Чек‑лист изменений
+- Backend:
+  - Обновить `FacetConfig`/индексацию/эндпоинты при добавлении нового типа фасета.
+  - Держать фильтры на стороне бэка; SPA/Twig — только UI.
+- Frontend (Stimulus):
+  - Обновлять URL при изменении выбора.
+  - Spinner показывать на время `/api/catalog/facets` и скрывать после догрузки `/category/{slug}/products`.
+  - Сохранять совместимость: опции фильтруются по label, атрибуты — по stringValue.
+
+## Связанные правила
+- @projectrules.mdc
+- @hardcoderules.mdc
+- @stimulus_policy.mdc
+- @paginationapiplatformmapping.mdc
+- @doctrine_entities.mdc
+
