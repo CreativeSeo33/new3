@@ -14,7 +14,7 @@
       <h1 class="text-2xl font-bold text-gray-900 mb-6">Моё избранное</h1>
 
       <div data-module="wishlist-counter">
-        <span class="text-sm text-gray-600">Всего: <span data-wishlist-counter>0</span></span>
+        <span class="text-sm text-gray-600">Всего: <span data-wishlist-counter>{{ wishlist_count() }}</span></span>
       </div>
 
       {% if items is defined and items|length > 0 %}

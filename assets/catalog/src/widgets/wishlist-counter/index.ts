@@ -38,6 +38,7 @@ export class WishlistCounter extends Component {
 
 export function init(root: HTMLElement): () => void {
   const c = new WishlistCounter(root);
+  c.init();
   return () => c.destroy();
 }
 
