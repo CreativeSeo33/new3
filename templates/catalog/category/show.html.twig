@@ -22,14 +22,17 @@
             <div data-facets-target="list" class="space-y-3" data-initial-facets='{{ initial_facets_json|default("")|raw }}'></div>
           </div>
         </aside>
-        <div class="md:col-span-3 relative" data-facets-target="products">
-          <h2>Товары</h2>
-          <div id="category-grid-spinner" class="absolute inset-0 flex items-center justify-center z-10" data-size="small" data-color="secondary" data-overlay="true" style="display:none"></div>
-          {% if products is defined and products is not empty %}
-            {% include 'catalog/category/_grid.html.twig' with { products: products } %}
-          {% else %}
-            <p>Товаров нет.</p>
-          {% endif %}
+        <div class="md:col-span-3">
+          <div class="mb-4" data-facets-target="selected" aria-live="polite"></div>
+          <div class="relative" data-facets-target="products">
+            <h2>Товары</h2>
+            <div id="category-grid-spinner" class="absolute inset-0 flex items-center justify-center z-10" data-size="small" data-color="secondary" data-overlay="true" style="display:none"></div>
+            {% if products is defined and products is not empty %}
+              {% include 'catalog/category/_grid.html.twig' with { products: products } %}
+            {% else %}
+              <p>Товаров нет.</p>
+            {% endif %}
+          </div>
         </div>
       </div>
     </div>

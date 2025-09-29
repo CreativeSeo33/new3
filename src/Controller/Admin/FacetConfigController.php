@@ -46,8 +46,8 @@ final class FacetConfigController extends AbstractController
         return $this->json([
             'scope' => $cfg->getScope(),
             'categoryId' => $cfg->getCategory()?->getId(),
-            'attributes' => $cfg->getAttributes(),
-            'options' => $cfg->getOptions(),
+            'attributes' => $cfg->getAttributes(), // элементы: { id?, code, label?, enabled, widget, operator?, order?, bins? }
+            'options' => $cfg->getOptions(),       // элементы: { id?, code, label?, enabled, widget, order?, bins? }
             'showZeros' => $cfg->isShowZeros(),
             'collapsedByDefault' => $cfg->isCollapsedByDefault(),
             'valuesLimit' => $cfg->getValuesLimit(),
@@ -87,8 +87,35 @@ final class FacetConfigController extends AbstractController
             $cfg->setCategory($catRef);
         }
 
-        $cfg->setAttributes($data['attributes'] ?? [])
-            ->setOptions($data['options'] ?? [])
+        // Нормализуем элементы: гарантируем наличие ключей id/label/order
+        $normItems = static function (?array $items): array {
+            $out = [];
+            foreach (($items ?? []) as $i) {
+                if (!is_array($i)) continue;
+                $out[] = [
+                    'id' => isset($i['id']) ? (int)$i['id'] : null,
+                    'code' => (string)($i['code'] ?? ''),
+                    'label' => array_key_exists('label', $i) ? (string)($i['label']) : null,
+                    'enabled' => (bool)($i['enabled'] ?? false),
+                    'widget' => (string)($i['widget'] ?? 'checkbox'),
+                    'operator' => array_key_exists('operator', $i) ? (string)$i['operator'] : null,
+                    'order' => array_key_exists('order', $i) ? (int)$i['order'] : null,
+                    'bins' => $i['bins'] ?? null,
+                ];
+            }
+            // стабильная сортировка по order, затем по code
+            usort($out, static function ($a, $b) {
+                $ao = $a['order'] ?? null; $bo = $b['order'] ?? null;
+                if ($ao !== null && $bo !== null) return $ao <=> $bo;
+                if ($ao !== null) return -1;
+                if ($bo !== null) return 1;
+                return strcmp((string)($a['code'] ?? ''), (string)($b['code'] ?? ''));
+            });
+            return $out;
+        };
+
+        $cfg->setAttributes($normItems($data['attributes'] ?? []))
+            ->setOptions($normItems($data['options'] ?? []))
             ->setShowZeros((bool)($data['showZeros'] ?? false))
             ->setCollapsedByDefault((bool)($data['collapsedByDefault'] ?? true))
             ->setValuesLimit((int)($data['valuesLimit'] ?? $this->defaultValuesLimit))

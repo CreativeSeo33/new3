@@ -12,8 +12,8 @@ export interface FacetAvailableDto {
 export interface FacetConfigDto extends ApiResource {
   scope: 'CATEGORY' | 'GLOBAL';
   categoryId: number | null;
-  attributes: Array<{ code: string; enabled: boolean; widget: 'checkbox' | 'range'; operator?: 'OR' | 'AND'; order?: number; bins?: number | [number, number][] }>;
-  options: Array<{ code: string; enabled: boolean; widget: 'checkbox' | 'range'; order?: number; bins?: number | [number, number][] }>;
+  attributes: Array<{ id?: number; code: string; label?: string | null; enabled: boolean; widget: 'checkbox' | 'range'; operator?: 'OR' | 'AND'; order?: number | null; bins?: number | [number, number][] }>;
+  options: Array<{ id?: number; code: string; label?: string | null; enabled: boolean; widget: 'checkbox' | 'range'; order?: number | null; bins?: number | [number, number][] }>;
   showZeros: boolean;
   collapsedByDefault: boolean;
   valuesLimit: number;
@@ -40,9 +40,13 @@ export class FacetRepository extends BaseRepository<FacetConfigDto> {
     return data;
   }
 
-  async reindex(category: number | 'all'): Promise<{ status: string; categoryId?: number }> {
+  async reindex(category: number | 'all', payload?: { attributes?: string[]; options?: string[] }): Promise<{ status: string; categoryId?: number }> {
     const q = typeof category === 'number' ? `?category=${category}` : '?category=all';
-    const { data } = await this.http.postJson<{ status: string; categoryId?: number }>(`/admin/facets/reindex${q}`);
+    const body = {
+      attributes: payload?.attributes ?? [],
+      options: payload?.options ?? [],
+    };
+    const { data } = await this.http.postJson<{ status: string; categoryId?: number }>(`/admin/facets/reindex${q}`, body);
     return data;
   }
 }

@@ -8,7 +8,12 @@ export class WishlistCounter extends Component {
 
   init(): void {
     this.counterEl = this.$('[data-wishlist-counter]');
-    this.refresh();
+    // Первичная инициализация: читаем значение из DOM (рендерится Twig через wishlist_count())
+    // Не выполняем сетевой запрос при первой загрузке страницы
+    const initial = this.counterEl?.textContent?.trim();
+    if (initial && this.counterEl) {
+      this.counterEl.textContent = initial;
+    }
     window.addEventListener('wishlist:updated', (e: Event) => {
       const ce = e as CustomEvent;
       const count = typeof ce?.detail?.count === 'number' ? ce.detail.count : undefined;
@@ -22,10 +27,7 @@ export class WishlistCounter extends Component {
 
   private refresh = async (): Promise<void> => {
     try {
-      let count = await getWishlistCount();
-      if (count === 0) {
-        try { count = await getWishlistCount(); } catch {}
-      }
+      const count = await getWishlistCount();
       if (this.counterEl) this.counterEl.textContent = String(count);
     } catch {}
   };

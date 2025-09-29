@@ -77,6 +77,7 @@ final class CatalogCategoryController extends AbstractController
         }
 
         $initialFacets = [];
+        $meta = [];
         // Хелпер: собрать JOIN/EXISTS по активным фильтрам, исключая текущий код
         $buildWhere = function(array $raw, ?string $excludeCode = null): array {
             $joins = '';
@@ -122,6 +123,20 @@ final class CatalogCategoryController extends AbstractController
                     'count' => (int)$r['cnt'],
                 ], $rows)
             ];
+            // Fill meta using config or DB
+            $title = (string)$code;
+            $sort = null;
+            foreach (($config?->getAttributes() ?? []) as $a) {
+                if (!empty($a['code']) && (string)$a['code'] === (string)$code) {
+                    $title = isset($a['label']) && $a['label'] !== null && $a['label'] !== '' ? (string)$a['label'] : $title;
+                    if (isset($a['order']) && $a['order'] !== null) $sort = (int)$a['order'];
+                }
+            }
+            if ($title === (string)$code) {
+                $n = $this->db->fetchOne('SELECT name FROM attribute WHERE code = :c LIMIT 1', ['c' => $code]);
+                if ($n) $title = (string)$n;
+            }
+            $meta[$code] = [ 'title' => $title, 'sort' => $sort ];
         }
         foreach ($optionCodes as $code) {
             [$joinSql, $params, $types] = $buildWhere($rawFilters, $code);
@@ -145,6 +160,20 @@ final class CatalogCategoryController extends AbstractController
                     'count' => (int)$r['cnt'],
                 ], $rows)
             ];
+            // Fill meta using config or DB
+            $title = (string)$code;
+            $sort = null;
+            foreach (($config?->getOptions() ?? []) as $o) {
+                if (!empty($o['code']) && (string)$o['code'] === (string)$code) {
+                    $title = isset($o['label']) && $o['label'] !== null && $o['label'] !== '' ? (string)$o['label'] : $title;
+                    if (isset($o['order']) && $o['order'] !== null) $sort = (int)$o['order'];
+                }
+            }
+            if ($title === (string)$code) {
+                $n = $this->db->fetchOne('SELECT name FROM `option` WHERE code = :c LIMIT 1', ['c' => $code]);
+                if ($n) $title = (string)$n;
+            }
+            $meta[$code] = [ 'title' => $title, 'sort' => $sort ];
         }
         $priceRow = $this->db->fetchAssociative(
             'SELECT MIN(p.effective_price) AS min_price, MAX(p.effective_price) AS max_price FROM product p INNER JOIN product_to_category pc ON pc.product_id = p.id WHERE p.status = 1 AND pc.category_id = :cid',
@@ -162,7 +191,7 @@ final class CatalogCategoryController extends AbstractController
             'category' => $category,
             'products' => $items,
             'breadcrumbs' => $breadcrumbs,
-            'initial_facets_json' => json_encode(['facets' => $initialFacets], JSON_UNESCAPED_UNICODE),
+            'initial_facets_json' => json_encode(['facets' => $initialFacets, 'meta' => $meta], JSON_UNESCAPED_UNICODE),
         ]);
     }
 

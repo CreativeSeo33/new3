@@ -72,13 +72,25 @@ final class FacetController extends AbstractController
     public function reindex(Request $request): Response
     {
         $target = (string)($request->query->get('category') ?? 'all');
+        $attributes = $request->toArray()['attributes'] ?? null;
+        $options = $request->toArray()['options'] ?? null;
+
+        $attrCodes = is_array($attributes) ? array_values(array_filter(array_map('strval', $attributes))) : [];
+        $optCodes = is_array($options) ? array_values(array_filter(array_map('strval', $options))) : [];
+
         if ($target === 'all') {
-            // Fire and forget; do synchronously but return 202
-            $this->indexer->reindexAll();
+            // Перестроить для всех категорий; если переданы списки кодов — применим фильтры к каждой категории
+            $categoryIds = $this->configRepo->getEntityManager()->getConnection()->fetchFirstColumn('SELECT DISTINCT category_id FROM product_to_category');
+            foreach ($categoryIds as $cid) {
+                $id = (int)$cid;
+                if ($id > 0) {
+                    $this->indexer->reindexCategory($id, $attrCodes, $optCodes);
+                }
+            }
             return $this->json(['status' => 'accepted'], 202);
         }
         $cid = (int)$target;
-        $this->indexer->reindexCategory($cid);
+        $this->indexer->reindexCategory($cid, $attrCodes, $optCodes);
         return $this->json(['status' => 'accepted', 'categoryId' => $cid], 202);
     }
 }

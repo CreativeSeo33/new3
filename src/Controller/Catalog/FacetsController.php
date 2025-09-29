@@ -42,6 +42,7 @@ final class FacetsController extends AbstractController
             : $this->configRepo->findOneBy(['scope' => FacetConfig::SCOPE_GLOBAL]);
 
         $facets = [];
+        $meta = [];
 
         // Determine facet codes to include: from config (preferred) or from facet_dictionary fallback
         $attributeCodes = [];
@@ -74,13 +75,66 @@ final class FacetsController extends AbstractController
                 $attrs = json_decode($row['attributes_json'] ?? '[]', true) ?: [];
                 $opts = json_decode($row['options_json'] ?? '[]', true) ?: [];
                 foreach (($attrs['items'] ?? []) as $a) {
-                    if (!empty($a['code'])) $attributeCodes[] = (string)$a['code'];
+                    if (empty($a['code'])) continue;
+                    $code = (string)$a['code'];
+                    $attributeCodes[] = $code;
+                    $meta[$code] = [
+                        'title' => (string)($a['name'] ?? $code),
+                        'sort' => isset($a['sort']) ? (int)$a['sort'] : null,
+                    ];
                 }
                 foreach ($opts as $o) {
-                    if (!empty($o['code'])) $optionCodes[] = (string)$o['code'];
+                    if (empty($o['code'])) continue;
+                    $code = (string)$o['code'];
+                    $optionCodes[] = $code;
+                    $meta[$code] = [
+                        'title' => (string)($o['name'] ?? $code),
+                        'sort' => isset($o['sort']) ? (int)$o['sort'] : null,
+                    ];
                 }
                 $attributeCodes = array_values(array_unique($attributeCodes));
                 $optionCodes = array_values(array_unique($optionCodes));
+            }
+        }
+
+        // If there is config and codes, enrich meta from config and fallback to DB names when needed
+        if ($config && (!empty($attributeCodes) || !empty($optionCodes))) {
+            $attrCfg = [];
+            foreach ($config->getAttributes() as $a) {
+                if (!empty($a['code'])) $attrCfg[strtolower((string)$a['code'])] = $a;
+            }
+            $optCfg = [];
+            foreach ($config->getOptions() as $o) {
+                if (!empty($o['code'])) $optCfg[strtolower((string)$o['code'])] = $o;
+            }
+            // DB names fallback
+            if (!empty($attributeCodes)) {
+                $rows = $this->db->fetchAllAssociative('SELECT code, name FROM attribute WHERE code IN (:codes)', [ 'codes' => $attributeCodes ], [ 'codes' => ArrayParameterType::STRING ]);
+                $names = [];
+                foreach ($rows as $r) $names[strtolower((string)$r['code'])] = (string)$r['name'];
+                foreach ($attributeCodes as $code) {
+                    $key = strtolower((string)$code);
+                    $cfgItem = $attrCfg[$key] ?? null;
+                    $label = is_array($cfgItem) && array_key_exists('label', $cfgItem) && $cfgItem['label'] !== null && $cfgItem['label'] !== ''
+                        ? (string)$cfgItem['label']
+                        : ($names[$key] ?? (string)$code);
+                    $order = is_array($cfgItem) && array_key_exists('order', $cfgItem) && $cfgItem['order'] !== null ? (int)$cfgItem['order'] : null;
+                    $meta[$code] = [ 'title' => $label, 'sort' => $order ];
+                }
+            }
+            if (!empty($optionCodes)) {
+                $rows = $this->db->fetchAllAssociative('SELECT code, name FROM `option` WHERE code IN (:codes)', [ 'codes' => $optionCodes ], [ 'codes' => ArrayParameterType::STRING ]);
+                $names = [];
+                foreach ($rows as $r) $names[strtolower((string)$r['code'])] = (string)$r['name'];
+                foreach ($optionCodes as $code) {
+                    $key = strtolower((string)$code);
+                    $cfgItem = $optCfg[$key] ?? null;
+                    $label = is_array($cfgItem) && array_key_exists('label', $cfgItem) && $cfgItem['label'] !== null && $cfgItem['label'] !== ''
+                        ? (string)$cfgItem['label']
+                        : ($names[$key] ?? (string)$code);
+                    $order = is_array($cfgItem) && array_key_exists('order', $cfgItem) && $cfgItem['order'] !== null ? (int)$cfgItem['order'] : null;
+                    $meta[$code] = [ 'title' => $label, 'sort' => $order ];
+                }
             }
         }
 
@@ -140,7 +194,7 @@ final class FacetsController extends AbstractController
         }
         $facets['price'] = [ 'type' => 'range', 'min' => $priceRow['min_price'] ?? null, 'max' => $priceRow['max_price'] ?? null ];
 
-        return new JsonResponse(['facets' => $facets], 200, [
+        return new JsonResponse(['facets' => $facets, 'meta' => $meta], 200, [
             'Cache-Control' => 'public, max-age=' . $this->publicTtl,
         ]);
     }
