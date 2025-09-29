@@ -133,6 +133,12 @@ export const adminRoutes: RouteRecordRaw[] = [
         meta: { requiresAuth: true }
       },
       {
+        path: 'product-search',
+        name: 'admin-product-search',
+        component: () => import(/* webpackChunkName: "admin-product-search" */ '@admin/views/ProductSearch.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
         path: ':pathMatch(.*)*',
         name: 'AdminNotFound',
         component: () => import(/* webpackChunkName: "not-found" */ '@admin/views/NotFound.vue')
@@ -167,6 +173,7 @@ export const adminSidebarItems: AdminSidebarItem[] = [
     colorClass: 'bg-blue-500'
   },
   { to: { name: 'admin-products' }, label: 'Товары', colorClass: 'bg-emerald-500' },
+  { to: { name: 'admin-product-search' }, label: 'Поиск по товарам', colorClass: 'bg-indigo-600' },
   { to: { name: 'admin-categories' }, label: 'Категории', colorClass: 'bg-cyan-500' },
   {
     label: 'Атрибуты',

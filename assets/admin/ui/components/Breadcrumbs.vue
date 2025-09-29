@@ -35,6 +35,7 @@ const LABELS: Record<string, string> = {
   'admin-dashboard': 'Главная',
   'admin-orders': 'Заказы',
   'admin-products': 'Товары',
+  'admin-product-search': 'Поиск по товарам',
   'admin-product-form': 'Товар',
   'admin-categories': 'Категории',
   'admin-category-form': 'Категория',
