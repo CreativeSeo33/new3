@@ -22,7 +22,24 @@
       <p class="text-gray-600">Введите поисковый запрос.</p>
     {% else %}
       <p class="text-gray-600 mb-4">Найдено: {{ total }}</p>
+      {% if total > 1 %}
+      <div data-controller="facets"
+           data-facets-products-url-value="{{ path('catalog_search_products') }}"
+           data-facets-facets-url-value="{{ path('catalog_facets') }}"
+           class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <aside class="md:col-span-1">
+          <div data-facets-target="list" class="space-y-4"></div>
+        </aside>
+        <main class="md:col-span-3">
+          <div id="category-grid-spinner" class="relative mb-4"></div>
+          <div data-facets-target="products">
+            {% include 'catalog/category/_grid.html.twig' with { products: products } %}
+          </div>
+        </main>
+      </div>
+      {% else %}
       {% include 'catalog/category/_grid.html.twig' with { products: products } %}
+      {% endif %}
       {% if total > products|length %}
         <p class="text-sm text-gray-500">Показаны первые {{ products|length }} результатов.</p>
       {% endif %}

@@ -114,3 +114,66 @@ alwaysApply: false
 - @paginationapiplatformmapping.mdc
 - @doctrine_entities.mdc
 
+## Страница поиска (режим поиска)
+
+Цель: вывести фасетный фильтр с агрегатами поверх результатов полнотекстового поиска и фильтровать найденные товары аналогично странице категории.
+
+### Архитектура
+- Источник подмножества: `TNTSearch` → список `ids` по запросу `text`.
+- Фасеты: тот же публичный эндпоинт `GET /api/catalog/facets`, расширен параметром `text`.
+- Грид: отдельный маршрут `GET /search/products?text=...&f[code]=...` — возвращает HTML `_grid.html.twig`.
+- Витринная страница: `GET /search/?text=...` — шаблон `templates/catalog/search/index.html.twig`.
+
+### Бэкенд — агрегаты в режиме поиска
+- Контроллер: `src/Controller/Catalog/FacetsController.php`
+  - При `category` отсутствует и `text` задан → "search‑mode".
+  - Выполняется поиск: `App\Service\Search\ProductSearch::search(text, 5000, 0)` → получаем `ids`.
+  - Все запросы подсчёта агрегатов выполняются с условием `p.id IN (:ids)` и без join на категорию.
+  - Price‑range считается аналогично по `p.id IN (:ids)`.
+  - Перечень кодов фасетов:
+    1) Если есть `FacetConfig` (GLOBAL scope) — берём включённые `attributes/options` из конфига.
+    2) Иначе используем `facet_dictionary` для `category_id IS NULL` (глобальный словарь).
+    3) Если и этого нет — авто‑детект кодов по найденному подмножеству (`DISTINCT a.code` из `product_attribute_assignment` и `DISTINCT o.code` из `product_option_value_assignment`).
+  - Фильтры `f[code]=csv` учитываются так же, как на категории: OR внутри кода, AND между кодами (через два EXISTS по атрибутам/опциям), исключая текущий код при расчёте его агрегатов.
+
+### Бэкенд — грид товаров в режиме поиска
+- Контроллер: `src/Controller/Catalog/SearchController::products`
+  - По `text` получаем `ids` через `ProductSearch` (до 5000).
+  - Строим `QB`: `p.status = true AND p.id IN (:ids)`.
+  - Применяем те же фасетные фильтры (OR‑EXISTS для атрибутов/опций).
+  - Порядок карточек — в порядке релевантности TNTSearch: после загрузки сущностей сортируем по `ids` (или используем SQL `ORDER BY FIELD`).
+
+### Фронтенд — Stimulus (поиск)
+- Контроллер: `assets/controllers/facets_controller.js`
+  - Для страницы категории формирует query с `category`.
+  - Для страницы поиска вместо `category` подставляет `text` из URL (см. `buildQuery()`):
+    - `q.text = <URLSearchParams.get('text')>`
+  - Эндпоинты берутся из data‑атрибутов на контейнере страницы поиска:
+    - `data-facets-facets-url-value="/api/catalog/facets"`
+    - `data-facets-products-url-value="/search/products"`
+  - Поведение: чтение выбранных `f[...]` из URL, загрузка агрегатов, затем загрузка грида, пересборка URL без удаления `text` (сохраняем параметр запроса).
+
+### Twig — страница поиска
+- Шаблон: `templates/catalog/search/index.html.twig`
+  - Показывать фасетный фильтр только при `total > 1`.
+  - Контейнер:
+    - `data-controller="facets"`
+    - `data-facets-target="list"` (панель фасетов)
+    - `data-facets-target="products"` (контейнер грида)
+    - `#category-grid-spinner` — якорь спиннера
+  - Форма поиска на странице — сабмит на `route('catalog_search')` с полем `name="text"`.
+
+### Параметры запросов
+- `GET /api/catalog/facets?text=<q>&f[code]=v1,v2`
+- `GET /search/products?text=<q>&f[code]=v1,v2`
+
+### Производительность и лимиты
+- Каталог < 5k: безопасно использовать одиночный IN с до 5000 `ids`.
+- При росте — возможно кеширование `ids` по ключу запроса (расширение).
+
+### Чек‑лист
+- Без `text` — режим категории (или пустой фильтр), без деградации.
+- При одном найденном товаре на странице поиска — фасеты скрыты.
+- Порядок товаров сохраняет релевантность TNTSearch.
+- Глобальная конфигурация фасетов и/или `facet_dictionary` учитываются; при их отсутствии — авто‑детект кодов по подмножеству.
+

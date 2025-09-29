@@ -89,7 +89,14 @@ export default class extends Controller {
 
   buildQuery() {
     const q = {}
-    q.category = String(this.categoryIdValue || '')
+    // Для страницы категории передаём category, для поиска — text
+    const url = new URL(window.location.href)
+    const text = url.searchParams.get('text') || ''
+    if (this.hasCategoryIdValue && this.categoryIdValue) {
+      q.category = String(this.categoryIdValue)
+    } else if (text) {
+      q.text = text
+    }
     for (const [code, set] of this.selected.entries()) {
       if (set.size > 0) q[`f[${code}]`] = Array.from(set).join(',')
     }
@@ -99,7 +106,7 @@ export default class extends Controller {
   updateUrl() {
     try {
       const url = new URL(window.location.href)
-      // Стираем прошлые f[...] и category
+      // Стираем прошлые f[...] и category (text сохраняем)
       Array.from(url.searchParams.keys()).forEach(k => { if (k === 'category' || k.startsWith('f[')) url.searchParams.delete(k) })
       const q = this.buildQuery()
       for (const [k, v] of Object.entries(q)) url.searchParams.set(k, v)
