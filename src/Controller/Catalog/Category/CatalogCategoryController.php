@@ -84,10 +84,26 @@ final class CatalogCategoryController extends AbstractController
             $params = [];
             $types = [];
             $i = 0;
+            $numericCodes = ['height', 'bulbs_count', 'lighting_area'];
             foreach ($raw as $c => $csv) {
                 if ($excludeCode !== null && (string)$c === $excludeCode) continue;
                 $values = array_values(array_filter(array_map('trim', explode(',', (string)$csv)), static fn($v) => $v !== ''));
                 if (empty($values)) continue;
+
+                $lower = strtolower((string)$c);
+                if (in_array($lower, $numericCodes, true)) {
+                    $intVals = array_values(array_filter(array_map(static fn($v) => is_numeric($v) ? (int)$v : null, $values), static fn($v) => $v !== null));
+                    if (empty($intVals)) continue;
+                    $i++;
+                    $valsParam = 'f_vals_' . $i;
+                    $col = $lower === 'bulbs_count' ? 'bulbs_count' : ($lower === 'lighting_area' ? 'lighting_area' : 'height');
+                    $joins .= ' AND EXISTS (SELECT 1 FROM product_option_value_assignment pnum_f' . $i
+                        . ' WHERE pnum_f' . $i . '.product_id = p.id AND pnum_f' . $i . '.' . $col . ' IN (:' . $valsParam . '))';
+                    $params[$valsParam] = $intVals;
+                    $types[$valsParam] = ArrayParameterType::INTEGER;
+                    continue;
+                }
+
                 $i++;
                 $codeParam = 'f_code_' . $i;
                 $valsParam = 'f_vals_' . $i;
@@ -140,26 +156,49 @@ final class CatalogCategoryController extends AbstractController
         }
         foreach ($optionCodes as $code) {
             [$joinSql, $params, $types] = $buildWhere($rawFilters, $code);
-            $sql = 'SELECT ov.code AS code, ov.value AS label, COUNT(DISTINCT p.id) AS cnt
-                 FROM product_option_value_assignment pova
-                 INNER JOIN `option` o ON o.id = pova.option_id
-                 INNER JOIN option_value ov ON ov.id = pova.value_id
-                 INNER JOIN product p ON p.id = pova.product_id
-                 INNER JOIN product_to_category pc ON pc.product_id = p.id'
-                 . $joinSql .
-                 ' WHERE p.status = 1 AND pc.category_id = :cid AND o.code = :code
-                 GROUP BY ov.code, ov.value
-                 ORDER BY cnt DESC';
-            $params = array_merge($params, ['cid' => $categoryId, 'code' => $code]);
-            $rows = $this->db->fetchAllAssociative($sql, $params, $types);
-            $initialFacets[$code] = [
-                'type' => 'option',
-                'values' => array_map(static fn(array $r) => [
-                    'code' => (string)$r['code'],
-                    'label' => (string)$r['label'],
-                    'count' => (int)$r['cnt'],
-                ], $rows)
-            ];
+            $lower = strtolower((string)$code);
+            if (in_array($lower, ['height', 'bulbs_count', 'lighting_area'], true)) {
+                $col = $lower === 'bulbs_count' ? 'bulbs_count' : ($lower === 'lighting_area' ? 'lighting_area' : 'height');
+                $sql = 'SELECT CAST(pova.' . $col . ' AS CHAR) AS code, CAST(pova.' . $col . ' AS CHAR) AS label, COUNT(DISTINCT p.id) AS cnt
+                     FROM product_option_value_assignment pova
+                     INNER JOIN product p ON p.id = pova.product_id
+                     INNER JOIN product_to_category pc ON pc.product_id = p.id'
+                     . $joinSql .
+                     ' WHERE p.status = 1 AND pc.category_id = :cid AND pova.' . $col . ' IS NOT NULL
+                     GROUP BY pova.' . $col . '
+                     ORDER BY cnt DESC';
+                $params = array_merge($params, ['cid' => $categoryId]);
+                $rows = $this->db->fetchAllAssociative($sql, $params, $types);
+                $initialFacets[$code] = [
+                    'type' => 'option',
+                    'values' => array_map(static fn(array $r) => [
+                        'code' => (string)$r['code'],
+                        'label' => (string)$r['label'],
+                        'count' => (int)$r['cnt'],
+                    ], $rows)
+                ];
+            } else {
+                $sql = 'SELECT ov.code AS code, ov.value AS label, COUNT(DISTINCT p.id) AS cnt
+                     FROM product_option_value_assignment pova
+                     INNER JOIN `option` o ON o.id = pova.option_id
+                     INNER JOIN option_value ov ON ov.id = pova.value_id
+                     INNER JOIN product p ON p.id = pova.product_id
+                     INNER JOIN product_to_category pc ON pc.product_id = p.id'
+                     . $joinSql .
+                     ' WHERE p.status = 1 AND pc.category_id = :cid AND o.code = :code
+                     GROUP BY ov.code, ov.value
+                     ORDER BY cnt DESC';
+                $params = array_merge($params, ['cid' => $categoryId, 'code' => $code]);
+                $rows = $this->db->fetchAllAssociative($sql, $params, $types);
+                $initialFacets[$code] = [
+                    'type' => 'option',
+                    'values' => array_map(static fn(array $r) => [
+                        'code' => (string)$r['code'],
+                        'label' => (string)$r['label'],
+                        'count' => (int)$r['cnt'],
+                    ], $rows)
+                ];
+            }
             // Fill meta using config or DB
             $title = (string)$code;
             $sort = null;

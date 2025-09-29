@@ -83,6 +83,10 @@ import { httpClient } from '../services/http'
 import { OptionRepository, type Option } from '../repositories/OptionRepository'
 import { AttributeRepository, type Attribute as AttributeDto } from '../repositories/AttributeRepository'
 
+// Системные числовые поля из product_option_value_assignment, управляемые как "опции" (label/order)
+const numericOptionCodes = ['height', 'bulbs_count', 'lighting_area'] as const
+const numericOptionSet = new Set<string>(numericOptionCodes as unknown as string[])
+
 const repo = new FacetRepository()
 const optionRepo = new OptionRepository()
 const attributeRepo = new AttributeRepository()
@@ -180,6 +184,13 @@ async function loadDicts() {
     code: (o.code ?? null) as string | null,
     sortOrder: (o.sortOrder ?? null) as number | null,
   }))
+  // Добавим синтетические опции для числовых полей pova, если их нет в списке
+  const existingCodes = new Set(optionsAll.value.map(o => o.code).filter((c): c is string => !!c))
+  numericOptionCodes.forEach((code, idx) => {
+    if (!existingCodes.has(code)) {
+      optionsAll.value.push({ id: -1000 - idx, name: code, code, sortOrder: null })
+    }
+  })
   attributesAll.value = sortBySortOrderAndName(attrs).map((a: any) => ({
     id: Number(a.id),
     name: (a.name ?? null) as string | null,
@@ -252,7 +263,7 @@ function setItemLabel(code: string, label: string, kind: 'option' | 'attribute')
   if (kind === 'option') {
     const list: any[] = (config.value.options as any[]) ?? []
     const item = list.find(i => i.code === code)
-    if (item) item.label = label
+    if (item) { item.label = label } else { list.push({ code, enabled: isNumericOption(code), widget: isNumericOption(code) ? 'range' : 'checkbox', label }) }
     config.value.options = list as any
   } else {
     const list: any[] = (config.value.attributes as any[]) ?? []
@@ -268,7 +279,7 @@ function setItemOrder(code: string, orderStr: string, kind: 'option' | 'attribut
   if (kind === 'option') {
     const list: any[] = (config.value.options as any[]) ?? []
     const item = list.find(i => i.code === code)
-    if (item) item.order = order
+    if (item) { item.order = order } else { list.push({ code, enabled: isNumericOption(code), widget: isNumericOption(code) ? 'range' : 'checkbox', order }) }
     config.value.options = list as any
   } else {
     const list: any[] = (config.value.attributes as any[]) ?? []
@@ -315,6 +326,11 @@ function makeDefaultConfig(): FacetConfigDto {
     valuesLimit: 20,
     valuesSort: 'popularity',
   } as unknown as FacetConfigDto
+}
+
+function isNumericOption(code: string | null | undefined): boolean {
+  if (!code) return false
+  return numericOptionSet.has(code)
 }
 
 onMounted(async () => {

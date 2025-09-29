@@ -229,6 +229,33 @@ final class FacetsController extends AbstractController
     private function countOptionValues(int $categoryId, string $optionCode, Request $request, array $ids = []): array
     {
         [$joinSql, $params, $types] = $this->buildFacetFilterSql($request, $optionCode);
+
+        // Поддержка числовых кодов, идущих из pova: height | bulbs_count | lighting_area
+        $lower = strtolower($optionCode);
+        if (in_array($lower, ['height', 'bulbs_count', 'lighting_area'], true)) {
+            $col = $lower === 'bulbs_count' ? 'bulbs_count' : ($lower === 'lighting_area' ? 'lighting_area' : 'height');
+            $base = 'SELECT CAST(pova.' . $col . ' AS CHAR) AS code, CAST(pova.' . $col . ' AS CHAR) AS label, COUNT(DISTINCT p.id) AS cnt
+                 FROM product_option_value_assignment pova
+                 INNER JOIN product p ON p.id = pova.product_id';
+            if (!empty($ids)) {
+                $where = ' WHERE p.status = 1 AND pova.' . $col . ' IS NOT NULL AND p.id IN (:ids)';
+                $params = array_merge($params, ['ids' => $ids]);
+                $types['ids'] = ArrayParameterType::INTEGER;
+                $sql = $base . $joinSql . $where . ' GROUP BY pova.' . $col . ' ORDER BY cnt DESC';
+            } else {
+                $sql = $base . ' INNER JOIN product_to_category pc ON pc.product_id = p.id' . $joinSql .
+                    ' WHERE p.status = 1 AND pc.category_id = :cid AND pova.' . $col . ' IS NOT NULL'
+                    . ' GROUP BY pova.' . $col . ' ORDER BY cnt DESC';
+                $params = array_merge($params, ['cid' => $categoryId]);
+            }
+            $rows = $this->db->fetchAllAssociative($sql, $params, $types);
+            return array_map(static fn(array $r) => [
+                'code' => (string)$r['code'],
+                'label' => (string)$r['label'],
+                'count' => (int)$r['cnt'],
+            ], $rows);
+        }
+
         $base = 'SELECT ov.code AS code, ov.value AS label, COUNT(DISTINCT p.id) AS cnt
              FROM product_option_value_assignment pova
              INNER JOIN `option` o ON o.id = pova.option_id
@@ -263,10 +290,27 @@ final class FacetsController extends AbstractController
         $params = [];
         $types = [];
         $i = 0;
+        $numericCodes = ['height', 'bulbs_count', 'lighting_area'];
         foreach ($raw as $code => $csv) {
             if ($excludeCode !== null && (string)$code === $excludeCode) continue;
             $values = array_values(array_filter(array_map('trim', explode(',', (string)$csv)), static fn($v) => $v !== ''));
             if (empty($values)) continue;
+
+            $lower = strtolower((string)$code);
+            if (in_array($lower, $numericCodes, true)) {
+                // Числовые поля из product_option_value_assignment: height | bulbs_count | lighting_area
+                $intVals = array_values(array_filter(array_map(static fn($v) => is_numeric($v) ? (int)$v : null, $values), static fn($v) => $v !== null));
+                if (empty($intVals)) continue;
+                $i++;
+                $valsParam = 'f_vals_' . $i;
+                $col = $lower === 'bulbs_count' ? 'bulbs_count' : ($lower === 'lighting_area' ? 'lighting_area' : 'height');
+                $joins .= ' AND EXISTS (SELECT 1 FROM product_option_value_assignment pnum_f' . $i
+                    . ' WHERE pnum_f' . $i . '.product_id = p.id AND pnum_f' . $i . '.' . $col . ' IN (:' . $valsParam . '))';
+                $params[$valsParam] = $intVals;
+                $types[$valsParam] = ArrayParameterType::INTEGER;
+                continue;
+            }
+
             $i++;
             $codeParam = 'f_code_' . $i;
             $valsParam = 'f_vals_' . $i;

@@ -107,9 +107,21 @@ final class ProductRepository extends ServiceEntityRepository
             ->setMaxResults($limit);
 
         $i = 0;
+        $numericCodes = ['height', 'bulbs_count', 'lighting_area'];
         foreach ($filters as $code => $values) {
             if (empty($values)) { continue; }
             $i++;
+            $lower = strtolower((string)$code);
+            if (in_array($lower, $numericCodes, true)) {
+                $valsParam = 'f_vals_' . $i;
+                $field = $lower === 'bulbs_count' ? 'bulbsCount' : ($lower === 'lighting_area' ? 'lightingArea' : 'height');
+                $existsNum = 'EXISTS (SELECT 1 FROM App\\Entity\\ProductOptionValueAssignment pnum' . $i
+                    . ' WHERE pnum' . $i . '.product = p AND pnum' . $i . '.' . $field . ' IN (:' . $valsParam . '))';
+                $qb->andWhere($existsNum)
+                   ->setParameter($valsParam, array_values(array_map('intval', $values)));
+                continue;
+            }
+
             $codeParam = 'f_code_' . $i;
             $valsParam = 'f_vals_' . $i;
             $existsAttr = 'EXISTS (SELECT 1 FROM App\\Entity\\ProductAttributeAssignment paa' . $i . ' JOIN paa' . $i . '.attribute a' . $i . ' WHERE paa' . $i . '.product = p AND a' . $i . '.code = :' . $codeParam . ' AND paa' . $i . '.stringValue IN (:' . $valsParam . '))';
