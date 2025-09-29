@@ -14,20 +14,95 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
--- Дамп данных таблицы new3.attribute: ~2 rows (приблизительно)
+
+-- Дамп структуры базы данных new3
+DROP DATABASE IF EXISTS `new3`;
+CREATE DATABASE IF NOT EXISTS `new3` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+USE `new3`;
+
+-- Дамп структуры для таблица new3.attribute
+DROP TABLE IF EXISTS `attribute`;
+CREATE TABLE IF NOT EXISTS `attribute` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `attribute_group_id` int DEFAULT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `sort_order` int DEFAULT NULL,
+  `show_in_category` tinyint(1) DEFAULT NULL,
+  `short_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `code` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UNIQ_FA7AEFFB77153098` (`code`),
+  KEY `IDX_FA7AEFFB62D643B7` (`attribute_group_id`),
+  CONSTRAINT `FK_FA7AEFFB62D643B7` FOREIGN KEY (`attribute_group_id`) REFERENCES `attribute_group` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.attribute: ~3 rows (приблизительно)
 INSERT INTO `attribute` (`id`, `attribute_group_id`, `name`, `sort_order`, `show_in_category`, `short_name`, `code`) VALUES
 	(3, 1, 'Диаметр', 1, NULL, NULL, 'diametr'),
 	(4, 2, 'Высота', 2, NULL, NULL, 'vysota'),
 	(5, 2, 'Вес', 2, NULL, NULL, 'ves');
+
+-- Дамп структуры для таблица new3.attribute_group
+DROP TABLE IF EXISTS `attribute_group`;
+CREATE TABLE IF NOT EXISTS `attribute_group` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `sort_order` int DEFAULT NULL,
+  `code` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UNIQ_8EF8A77377153098` (`code`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Дамп данных таблицы new3.attribute_group: ~2 rows (приблизительно)
 INSERT INTO `attribute_group` (`id`, `name`, `sort_order`, `code`) VALUES
 	(1, 'Внешний вид', 1, NULL),
 	(2, 'Размеры', 2, NULL);
 
+-- Дамп структуры для таблица new3.carousel
+DROP TABLE IF EXISTS `carousel`;
+CREATE TABLE IF NOT EXISTS `carousel` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `product_id` int DEFAULT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `products_id` json DEFAULT NULL,
+  `sort` int DEFAULT NULL,
+  `place` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `IDX_1DD747004584665A` (`product_id`),
+  KEY `carousel_place_idx` (`place`),
+  KEY `carousel_sort_idx` (`sort`),
+  CONSTRAINT `FK_1DD747004584665A` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Дамп данных таблицы new3.carousel: ~0 rows (приблизительно)
 
--- Дамп данных таблицы new3.cart: ~37 rows (приблизительно)
+-- Дамп структуры для таблица new3.cart
+DROP TABLE IF EXISTS `cart`;
+CREATE TABLE IF NOT EXISTS `cart` (
+  `id` binary(16) NOT NULL COMMENT '(DC2Type:ulid)',
+  `user_id` int DEFAULT NULL,
+  `token` varchar(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `currency` varchar(3) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `subtotal` int NOT NULL DEFAULT '0',
+  `discount_total` int NOT NULL DEFAULT '0',
+  `total` int NOT NULL DEFAULT '0',
+  `created_at` datetime NOT NULL COMMENT '(DC2Type:datetime_immutable)',
+  `updated_at` datetime NOT NULL COMMENT '(DC2Type:datetime_immutable)',
+  `expires_at` datetime DEFAULT NULL COMMENT '(DC2Type:datetime_immutable)',
+  `version` int NOT NULL DEFAULT '1',
+  `shipping_method` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `shipping_cost` int NOT NULL DEFAULT '0',
+  `ship_to_city` varchar(128) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `shipping_data` json DEFAULT NULL,
+  `pricing_policy` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'SNAPSHOT',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UNIQ_BA388B75F37A13B` (`token`),
+  KEY `IDX_BA388B75F37A13B` (`token`),
+  KEY `IDX_BA388B7A76ED395` (`user_id`),
+  KEY `IDX_BA388B7F9D83E2` (`expires_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.cart: ~42 rows (приблизительно)
 INSERT INTO `cart` (`id`, `user_id`, `token`, `currency`, `subtotal`, `discount_total`, `total`, `created_at`, `updated_at`, `expires_at`, `version`, `shipping_method`, `shipping_cost`, `ship_to_city`, `shipping_data`, `pricing_policy`) VALUES
 	(_binary 0x01994c18060a4e17fb504e0136c31b24, NULL, 'ed0e40a5-f1f1-44df-81e8-bf3cd70876c3', 'RUB', 26400, 0, 26400, '2025-09-15 06:37:46', '2025-09-15 10:29:43', '2026-03-14 10:29:39', 14, 'courier', 0, 'Санкт-Петербург', '[]', 'SNAPSHOT'),
 	(_binary 0x01994e086c9d27e2b0da3da72403fad3, NULL, '62620904-4233-42bf-ad09-acbcb9431efa', 'RUB', 3900, 0, 0, '2025-09-15 15:39:59', '2025-09-15 15:39:59', '2026-03-14 15:39:59', 3, NULL, 0, NULL, NULL, 'SNAPSHOT'),
@@ -72,7 +147,25 @@ INSERT INTO `cart` (`id`, `user_id`, `token`, `currency`, `subtotal`, `discount_
 	(_binary 0x019994556e4509d9155cd223e291a4b6, NULL, 'cc6ca138-76cb-4dea-b303-72b7ca9dc126', 'RUB', 32000, 0, 32000, '2025-09-29 07:17:30', '2025-09-29 07:17:56', '2025-09-29 07:17:55', 5, 'pvz', 0, 'Москва', '[]', 'SNAPSHOT'),
 	(_binary 0x0199946ccfda4d81d0472f8f9039b515, NULL, '3e5f1e81-1aff-4a4c-b23e-d0bfb255689c', 'RUB', 41000, 0, 0, '2025-09-29 07:43:03', '2025-09-29 07:52:14', '2026-03-28 07:52:14', 5, NULL, 0, NULL, NULL, 'SNAPSHOT');
 
--- Дамп данных таблицы new3.cart_idempotency: ~52 rows (приблизительно)
+-- Дамп структуры для таблица new3.cart_idempotency
+DROP TABLE IF EXISTS `cart_idempotency`;
+CREATE TABLE IF NOT EXISTS `cart_idempotency` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `idempotency_key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `cart_id` varchar(26) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `endpoint` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `request_hash` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `status` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `http_status` smallint unsigned DEFAULT NULL,
+  `response_data` json DEFAULT NULL,
+  `instance_id` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` datetime(3) NOT NULL COMMENT '(DC2Type:datetime_immutable)',
+  `expires_at` datetime(3) NOT NULL COMMENT '(DC2Type:datetime_immutable)',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_idem_key` (`idempotency_key`)
+) ENGINE=InnoDB AUTO_INCREMENT=126 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.cart_idempotency: ~61 rows (приблизительно)
 INSERT INTO `cart_idempotency` (`id`, `idempotency_key`, `cart_id`, `endpoint`, `request_hash`, `status`, `http_status`, `response_data`, `instance_id`, `created_at`, `expires_at`) VALUES
 	(65, 'cart-add-b26d4ec9-86a1-442a-ae76-33410233b290', '01K561G1GA9RBZPM2E04VC66S4', 'POST /api/cart/items', '9318caac765c077543813357f29845dae0a61fbb560631f8888133dabf8e4942', 'done', 201, '{"totals": {"total": 3900, "subtotal": 3900, "itemsCount": 1, "discountTotal": 0}, "version": 3, "changedItems": [{"id": 291, "qty": 1, "rowTotal": 3900, "effectiveUnitPrice": 3900}], "removedItemIds": [], "totalItemQuantity": 1}', NULL, '2025-09-15 06:37:46.985', '2025-09-17 06:37:46.985'),
 	(66, 'cart-add-8044e237-47e1-4347-8d08-d39bf0fedafc', '01K561G1GA9RBZPM2E04VC66S4', 'POST /api/cart/items', 'd1d616c347ef0cb21a41235d30fb906915c65776aed1582f07c88bc250783722', 'done', 201, '{"totals": {"total": 13700, "subtotal": 13700, "itemsCount": 2, "discountTotal": 0}, "version": 5, "changedItems": [{"id": 292, "qty": 2, "rowTotal": 9800, "effectiveUnitPrice": 4900}], "removedItemIds": [], "totalItemQuantity": 3}', NULL, '2025-09-15 06:37:55.050', '2025-09-17 06:37:55.050'),
@@ -136,7 +229,32 @@ INSERT INTO `cart_idempotency` (`id`, `idempotency_key`, `cart_id`, `endpoint`, 
 	(124, 'cart-add-23a2a64f-cc43-4db6-a94d-34d6ce13af5d', '01K6A6SKYT9P0X0HSFHY83KD8N', 'POST /api/cart/items', '1dbe76e94b8d1b46dabcaa0a6d1fe0352341f0644d23ef76cf1b965ded83184b', 'done', 201, '{"totals": {"total": 32000, "subtotal": 32000, "itemsCount": 1, "discountTotal": 0}, "version": 3, "changedItems": [{"id": 333, "qty": 2, "rowTotal": 32000, "effectiveUnitPrice": 16000}], "removedItemIds": [], "totalItemQuantity": 2}', NULL, '2025-09-29 07:43:03.161', '2025-10-01 07:43:03.161'),
 	(125, 'cart-add-3bacdfe0-5b40-468f-9257-50b3ab7eb136', '01K6A6SKYT9P0X0HSFHY83KD8N', 'POST /api/cart/items', '8b477a23f34ef04c173eeb56badf9231adf6eecfd5c5035e4182cea82feb56f6', 'done', 201, '{"totals": {"total": 41000, "subtotal": 41000, "itemsCount": 2, "discountTotal": 0}, "version": 5, "changedItems": [{"id": 334, "qty": 2, "rowTotal": 9000, "effectiveUnitPrice": 4500}], "removedItemIds": [], "totalItemQuantity": 4}', NULL, '2025-09-29 07:52:14.421', '2025-10-01 07:52:14.421');
 
--- Дамп данных таблицы new3.cart_item: ~33 rows (приблизительно)
+-- Дамп структуры для таблица new3.cart_item
+DROP TABLE IF EXISTS `cart_item`;
+CREATE TABLE IF NOT EXISTS `cart_item` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `cart_id` binary(16) NOT NULL COMMENT '(DC2Type:ulid)',
+  `product_id` int NOT NULL,
+  `product_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `unit_price` int NOT NULL,
+  `qty` int NOT NULL,
+  `row_total` int NOT NULL,
+  `version` int NOT NULL DEFAULT '1',
+  `options_price_modifier` int NOT NULL DEFAULT '0',
+  `effective_unit_price` int NOT NULL DEFAULT '0',
+  `options_hash` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `selected_options_data` json DEFAULT NULL,
+  `options_snapshot` json DEFAULT NULL,
+  `priced_at` datetime NOT NULL COMMENT '(DC2Type:datetime_immutable)',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_cart_product_options` (`cart_id`,`product_id`,`options_hash`),
+  KEY `IDX_F0FE25271AD5CDBF` (`cart_id`),
+  KEY `IDX_F0FE25274584665A` (`product_id`),
+  CONSTRAINT `FK_F0FE25271AD5CDBF` FOREIGN KEY (`cart_id`) REFERENCES `cart` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_F0FE25274584665A` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=335 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.cart_item: ~41 rows (приблизительно)
 INSERT INTO `cart_item` (`id`, `cart_id`, `product_id`, `product_name`, `unit_price`, `qty`, `row_total`, `version`, `options_price_modifier`, `effective_unit_price`, `options_hash`, `selected_options_data`, `options_snapshot`, `priced_at`) VALUES
 	(291, _binary 0x01994c18060a4e17fb504e0136c31b24, 19, 'Люстра Кольцо', 5000, 3, 11700, 4, -1100, 3900, '7d4540e162ec0331f7a273f965ac45b4', '[{"sku": "2423423", "price": 3900, "valueCode": "diametr", "valueName": "450", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 143}, {"sku": null, "price": 0, "valueCode": "cvet_armatury", "valueName": "Золото", "optionCode": "cvet_armatury", "optionName": "Цвет арматуры", "assignmentId": 144}]', '[{"sku": "2423423", "price": 5000, "height": 200, "attributes": [], "sale_price": 3900, "value_code": "diametr", "value_name": "450", "bulbs_count": 5, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 143, "lighting_area": null}, {"sku": null, "price": null, "height": null, "attributes": [], "sale_price": null, "value_code": "cvet_armatury", "value_name": "Золото", "bulbs_count": null, "option_code": "cvet_armatury", "option_name": "Цвет арматуры", "original_sku": null, "assignment_id": 144, "lighting_area": null}]', '2025-09-15 06:37:47'),
 	(292, _binary 0x01994c18060a4e17fb504e0136c31b24, 19, 'Люстра Кольцо', 5000, 2, 9800, 2, -100, 4900, '70a432de35cf202856e93d9d5d8db301', '[{"sku": null, "price": 0, "valueCode": "cvet_armatury", "valueName": "Серебро", "optionCode": "cvet_armatury", "optionName": "Цвет арматуры", "assignmentId": 142}, {"sku": "234234", "price": 4900, "valueCode": "diametr", "valueName": "500", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 145}]', '[{"sku": null, "price": null, "height": null, "attributes": [], "sale_price": null, "value_code": "cvet_armatury", "value_name": "Серебро", "bulbs_count": null, "option_code": "cvet_armatury", "option_name": "Цвет арматуры", "original_sku": null, "assignment_id": 142, "lighting_area": null}, {"sku": "234234", "price": 6000, "height": 250, "attributes": [], "sale_price": 4900, "value_code": "diametr", "value_name": "500", "bulbs_count": 6, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 145, "lighting_area": null}]', '2025-09-15 06:37:55'),
@@ -180,7 +298,19 @@ INSERT INTO `cart_item` (`id`, `cart_id`, `product_id`, `product_name`, `unit_pr
 	(333, _binary 0x0199946ccfda4d81d0472f8f9039b515, 69, 'Кольцо 17', 0, 2, 32000, 2, 16000, 16000, '77151263a32ad7dfb627efb41e00486a', '[{"sku": "4561521", "price": 16000, "valueCode": "diametr", "valueName": "500", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 308}, {"sku": null, "price": 0, "valueCode": "cvet_armatury", "valueName": "Серебро", "optionCode": "cvet_armatury", "optionName": "Цвет арматуры", "assignmentId": 310}]', '[{"sku": "4561521", "price": 18950, "height": 250, "attributes": [], "sale_price": 16000, "value_code": "diametr", "value_name": "500", "bulbs_count": 6, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 308, "lighting_area": null}, {"sku": null, "price": null, "height": null, "attributes": [], "sale_price": null, "value_code": "cvet_armatury", "value_name": "Серебро", "bulbs_count": null, "option_code": "cvet_armatury", "option_name": "Цвет арматуры", "original_sku": null, "assignment_id": 310, "lighting_area": null}]', '2025-09-29 07:43:03'),
 	(334, _binary 0x0199946ccfda4d81d0472f8f9039b515, 53, 'Кольцо №7', 4500, 2, 9000, 2, 0, 4500, '', NULL, NULL, '2025-09-29 07:52:14');
 
--- Дамп данных таблицы new3.cart_item_option_assignment: ~15 rows (приблизительно)
+-- Дамп структуры для таблица new3.cart_item_option_assignment
+DROP TABLE IF EXISTS `cart_item_option_assignment`;
+CREATE TABLE IF NOT EXISTS `cart_item_option_assignment` (
+  `cart_item_id` int NOT NULL,
+  `product_option_value_assignment_id` int NOT NULL,
+  PRIMARY KEY (`cart_item_id`,`product_option_value_assignment_id`),
+  KEY `IDX_9CAE0419E9B59A59` (`cart_item_id`),
+  KEY `IDX_9CAE04194859DA71` (`product_option_value_assignment_id`),
+  CONSTRAINT `FK_9CAE04194859DA71` FOREIGN KEY (`product_option_value_assignment_id`) REFERENCES `product_option_value_assignment` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_9CAE0419E9B59A59` FOREIGN KEY (`cart_item_id`) REFERENCES `cart_item` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.cart_item_option_assignment: ~18 rows (приблизительно)
 INSERT INTO `cart_item_option_assignment` (`cart_item_id`, `product_option_value_assignment_id`) VALUES
 	(317, 225),
 	(317, 226),
@@ -201,12 +331,52 @@ INSERT INTO `cart_item_option_assignment` (`cart_item_id`, `product_option_value
 	(333, 308),
 	(333, 310);
 
--- Дамп данных таблицы new3.category: ~3 rows (приблизительно)
+-- Дамп структуры для таблица new3.category
+DROP TABLE IF EXISTS `category`;
+CREATE TABLE IF NOT EXISTS `category` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `slug` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `visibility` tinyint(1) DEFAULT NULL,
+  `parent_category_id` int DEFAULT NULL,
+  `meta_title` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `meta_description` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `meta_keywords` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `sort_order` int DEFAULT NULL,
+  `meta_h1` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `description` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `navbar_visibility` tinyint(1) DEFAULT '1',
+  `footer_visibility` tinyint(1) DEFAULT '1',
+  PRIMARY KEY (`id`),
+  KEY `category_name_idx` (`name`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.category: ~4 rows (приблизительно)
 INSERT INTO `category` (`id`, `name`, `slug`, `visibility`, `parent_category_id`, `meta_title`, `meta_description`, `meta_keywords`, `sort_order`, `meta_h1`, `description`, `navbar_visibility`, `footer_visibility`) VALUES
 	(1, 'Потолочные люстры', 'potolochnye-lyustry', 1, NULL, 'Потолочные люстры', '', '', 1, 'Потолочные люстры', '', 1, 1),
 	(2, 'Цветные люстры', 'cvetnye-lyustry', 1, 1, 'Цветные люстры', '', '', 1, 'Цветные люстры', '', 1, 1),
 	(3, 'Большие люстры', 'bolshie-lyustry', 1, NULL, 'Большие люстры', '', '', 2, 'Большие люстры', '', 1, 1),
 	(4, 'Бронзовые люстры', 'bronzovye-lyustry', 1, NULL, 'Бронзовые люстры', '', '', 3, 'Бронзовые люстры', '', 1, 1);
+
+-- Дамп структуры для таблица new3.city
+DROP TABLE IF EXISTS `city`;
+CREATE TABLE IF NOT EXISTS `city` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `address` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `postal_code` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `federal_district` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `region_type` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `region` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `city_type` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `city` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `kladr_id` bigint DEFAULT NULL,
+  `fias_level` int DEFAULT NULL,
+  `capital_marker` int DEFAULT NULL,
+  `geo_lat` double DEFAULT NULL,
+  `geo_lon` double DEFAULT NULL,
+  `population` bigint DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1118 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Дамп данных таблицы new3.city: ~1 117 rows (приблизительно)
 INSERT INTO `city` (`id`, `address`, `postal_code`, `federal_district`, `region_type`, `region`, `city_type`, `city`, `kladr_id`, `fias_level`, `capital_marker`, `geo_lat`, `geo_lon`, `population`) VALUES
@@ -1328,6 +1498,16 @@ INSERT INTO `city` (`id`, `address`, `postal_code`, `federal_district`, `region_
 	(1116, 'Ярославская обл, г Углич', '152610', 'Центральный', 'обл', 'Ярославская', 'г', 'Углич', 7601700100000, 4, 1, 57.5224249, 38.3020044, 34505),
 	(1117, 'г Ярославль', '150000', 'Центральный', 'обл', 'Ярославская', 'г', 'Ярославль', 7600000100000, 4, 2, 57.6215477, 39.8977411, 591486);
 
+-- Дамп структуры для таблица new3.city_modal
+DROP TABLE IF EXISTS `city_modal`;
+CREATE TABLE IF NOT EXISTS `city_modal` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `fias_id` bigint DEFAULT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `sort` int NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Дамп данных таблицы new3.city_modal: ~11 rows (приблизительно)
 INSERT INTO `city_modal` (`id`, `fias_id`, `name`, `sort`) VALUES
 	(4, 3300000100000, 'Владимир', 6),
@@ -1342,29 +1522,103 @@ INSERT INTO `city_modal` (`id`, `fias_id`, `name`, `sort`) VALUES
 	(19, 7800000000000, 'Санкт-Петербург', 1),
 	(20, 6900000100000, 'Тверь', 1);
 
+-- Дамп структуры для таблица new3.delivery_type
+DROP TABLE IF EXISTS `delivery_type`;
+CREATE TABLE IF NOT EXISTS `delivery_type` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `code` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `active` tinyint(1) NOT NULL,
+  `sort_order` int NOT NULL,
+  `is_default` tinyint(1) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UNIQ_5D429FB377153098` (`code`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Дамп данных таблицы new3.delivery_type: ~2 rows (приблизительно)
 INSERT INTO `delivery_type` (`id`, `name`, `code`, `active`, `sort_order`, `is_default`) VALUES
 	(1, 'Пункт выдачи', 'pvz', 1, 1, 1),
 	(2, 'Курьерская доставка', 'courier', 1, 2, 0);
 
--- Дамп данных таблицы new3.doctrine_migration_versions: ~0 rows (приблизительно)
+-- Дамп структуры для таблица new3.doctrine_migration_versions
+DROP TABLE IF EXISTS `doctrine_migration_versions`;
+CREATE TABLE IF NOT EXISTS `doctrine_migration_versions` (
+  `version` varchar(191) COLLATE utf8mb3_unicode_ci NOT NULL,
+  `executed_at` datetime DEFAULT NULL,
+  `execution_time` int DEFAULT NULL,
+  PRIMARY KEY (`version`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
+
+-- Дамп данных таблицы new3.doctrine_migration_versions: ~3 rows (приблизительно)
 INSERT INTO `doctrine_migration_versions` (`version`, `executed_at`, `execution_time`) VALUES
 	('DoctrineMigrations\\Version20250929063258', '2025-09-29 06:33:21', 194),
 	('DoctrineMigrations\\Version20250929090000', '2025-09-29 08:36:06', 180),
 	('DoctrineMigrations\\Version20250929090500', '2025-09-29 08:51:53', 75);
 
--- Дамп данных таблицы new3.facet_config: ~0 rows (приблизительно)
+-- Дамп структуры для таблица new3.facet_config
+DROP TABLE IF EXISTS `facet_config`;
+CREATE TABLE IF NOT EXISTS `facet_config` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `category_id` int DEFAULT NULL,
+  `scope` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `attributes` json DEFAULT NULL,
+  `options` json DEFAULT NULL,
+  `show_zeros` tinyint(1) NOT NULL DEFAULT '0',
+  `collapsed_by_default` tinyint(1) NOT NULL DEFAULT '1',
+  `values_limit` int NOT NULL DEFAULT '20',
+  `values_sort` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'popularity',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UNIQ_FC_CATEGORY` (`category_id`),
+  KEY `IDX_FC_SCOPE` (`scope`),
+  KEY `IDX_FC_CATEGORY` (`category_id`),
+  CONSTRAINT `FK_FC_CATEGORY` FOREIGN KEY (`category_id`) REFERENCES `category` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.facet_config: ~1 rows (приблизительно)
 INSERT INTO `facet_config` (`id`, `category_id`, `scope`, `attributes`, `options`, `show_zeros`, `collapsed_by_default`, `values_limit`, `values_sort`) VALUES
 	(1, NULL, 'GLOBAL', '[{"id": null, "bins": null, "code": "vysota", "label": "Высота, мм", "order": 2, "widget": "checkbox", "enabled": false, "operator": null}, {"id": null, "bins": null, "code": "diametr", "label": null, "order": null, "widget": "checkbox", "enabled": false, "operator": null}, {"id": null, "bins": null, "code": "ves", "label": null, "order": null, "widget": "checkbox", "enabled": false, "operator": null}]', '[{"id": null, "bins": null, "code": "diametr", "label": "Диаметр, мм", "order": 1, "widget": "checkbox", "enabled": true, "operator": null}, {"id": null, "bins": null, "code": "height", "label": "Высота, мм", "order": 2, "widget": "checkbox", "enabled": true, "operator": null}, {"id": null, "bins": null, "code": "bulbs_count", "label": "Лампочки, шт", "order": 3, "widget": "checkbox", "enabled": true, "operator": null}, {"id": null, "bins": null, "code": "cvet_armatury", "label": null, "order": null, "widget": "checkbox", "enabled": false, "operator": null}, {"id": null, "bins": null, "code": "lighting_area", "label": null, "order": null, "widget": "checkbox", "enabled": false, "operator": null}]', 0, 1, 20, 'popularity');
 
--- Дамп данных таблицы new3.facet_dictionary: ~0 rows (приблизительно)
+-- Дамп структуры для таблица new3.facet_dictionary
+DROP TABLE IF EXISTS `facet_dictionary`;
+CREATE TABLE IF NOT EXISTS `facet_dictionary` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `category_id` int DEFAULT NULL,
+  `attributes_json` json DEFAULT NULL,
+  `options_json` json DEFAULT NULL,
+  `price_min` int DEFAULT NULL,
+  `price_max` int DEFAULT NULL,
+  `updated_at` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UNIQ_FD_CATEGORY` (`category_id`),
+  KEY `IDX_FD_CATEGORY` (`category_id`),
+  CONSTRAINT `FK_FACET_DICTIONARY_CATEGORY` FOREIGN KEY (`category_id`) REFERENCES `category` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.facet_dictionary: ~4 rows (приблизительно)
 INSERT INTO `facet_dictionary` (`id`, `category_id`, `attributes_json`, `options_json`, `price_min`, `price_max`, `updated_at`) VALUES
 	(5, 1, '{"items": []}', '[{"code": "diametr", "name": "Диаметр, мм", "sort": 1, "values": [{"code": "diametr", "label": "700"}, {"code": "diametr", "label": "500"}, {"code": "diametr", "label": "800"}, {"code": "diametr", "label": "450"}]}]', 3900, 15600, '2025-09-29 16:27:40'),
 	(6, 2, '{"items": []}', '[{"code": "diametr", "name": "Диаметр, мм", "sort": 1, "values": [{"code": "diametr", "label": "450"}, {"code": "diametr", "label": "500"}]}]', NULL, NULL, '2025-09-29 16:27:40'),
 	(7, 3, '{"items": []}', '[{"code": "diametr", "name": "Диаметр, мм", "sort": 1, "values": [{"code": "diametr", "label": "700"}, {"code": "diametr", "label": "500"}, {"code": "diametr", "label": "800"}, {"code": "diametr", "label": "450"}]}]', 3900, 15600, '2025-09-29 16:27:40'),
 	(8, 4, '{"items": []}', '[{"code": "diametr", "name": "Диаметр, мм", "sort": 1, "values": [{"code": "diametr", "label": "700"}, {"code": "diametr", "label": "500"}]}]', 15600, 15600, '2025-09-29 16:27:40');
 
--- Дамп данных таблицы new3.fias: ~7 818 rows (приблизительно)
+-- Дамп структуры для таблица new3.fias
+DROP TABLE IF EXISTS `fias`;
+CREATE TABLE IF NOT EXISTS `fias` (
+  `fias_id` int NOT NULL AUTO_INCREMENT,
+  `parent_id` int NOT NULL,
+  `postalcode` varchar(6) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `offname` varchar(120) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `shortname` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `level` smallint NOT NULL,
+  PRIMARY KEY (`fias_id`),
+  KEY `postalcode_idx` (`postalcode`),
+  KEY `offname_idx` (`offname`),
+  KEY `level_idx` (`level`),
+  KEY `parent_id_idx` (`parent_id`),
+  KEY `osl_idx` (`offname`,`shortname`,`level`)
+) ENGINE=InnoDB AUTO_INCREMENT=206220 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.fias: ~7 701 rows (приблизительно)
 INSERT INTO `fias` (`fias_id`, `parent_id`, `postalcode`, `offname`, `shortname`, `level`) VALUES
 	(1, 0, NULL, 'Россия', '', 0),
 	(2, 1, '450000', 'Башкортостан', 'Респ.', 1),
@@ -9068,12 +9322,46 @@ INSERT INTO `fias` (`fias_id`, `parent_id`, `postalcode`, `offname`, `shortname`
 	(206217, 708, '429260', 'Таутовское сельское поселение', 'с/п', 4),
 	(206219, 494, '429420', 'Тюрлеминское сельское поселение', 'с/п', 4);
 
+-- Дамп структуры для таблица new3.manufacturer
+DROP TABLE IF EXISTS `manufacturer`;
+CREATE TABLE IF NOT EXISTS `manufacturer` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UNIQ_3D0AE6DC5E237E06` (`name`),
+  KEY `manufacturer_name_idx` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Дамп данных таблицы new3.manufacturer: ~0 rows (приблизительно)
+
+-- Дамп структуры для таблица new3.option
+DROP TABLE IF EXISTS `option`;
+CREATE TABLE IF NOT EXISTS `option` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `sort_order` int NOT NULL,
+  `code` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UNIQ_5A8600B077153098` (`code`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Дамп данных таблицы new3.option: ~2 rows (приблизительно)
 INSERT INTO `option` (`id`, `name`, `sort_order`, `code`) VALUES
 	(5, 'Диаметр', 1, 'diametr'),
 	(6, 'Цвет арматуры', 2, 'cvet_armatury');
+
+-- Дамп структуры для таблица new3.option_value
+DROP TABLE IF EXISTS `option_value`;
+CREATE TABLE IF NOT EXISTS `option_value` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `option_id` int NOT NULL,
+  `value` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `sort_order` int NOT NULL,
+  `code` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `IDX_249CE55CA7C41D6F` (`option_id`),
+  CONSTRAINT `FK_249CE55CA7C41D6F` FOREIGN KEY (`option_id`) REFERENCES `option` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Дамп данных таблицы new3.option_value: ~7 rows (приблизительно)
 INSERT INTO `option_value` (`id`, `option_id`, `value`, `sort_order`, `code`) VALUES
@@ -9085,7 +9373,25 @@ INSERT INTO `option_value` (`id`, `option_id`, `value`, `sort_order`, `code`) VA
 	(11, 5, '700', 4, 'diametr'),
 	(12, 5, '800', 5, 'diametr');
 
--- Дамп данных таблицы new3.order: ~3 rows (приблизительно)
+-- Дамп структуры для таблица new3.order
+DROP TABLE IF EXISTS `order`;
+CREATE TABLE IF NOT EXISTS `order` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `customer_id` int DEFAULT NULL,
+  `delivery_id` int DEFAULT NULL,
+  `order_id` int NOT NULL,
+  `date_added` datetime NOT NULL,
+  `comment` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `status` int DEFAULT NULL,
+  `total` int DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `customer_id` (`customer_id`),
+  UNIQUE KEY `delivery_id` (`delivery_id`),
+  CONSTRAINT `FK_F529939812136921` FOREIGN KEY (`delivery_id`) REFERENCES `order_delivery` (`id`),
+  CONSTRAINT `FK_F52993989395C3F3` FOREIGN KEY (`customer_id`) REFERENCES `order_customer` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.order: ~8 rows (приблизительно)
 INSERT INTO `order` (`id`, `customer_id`, `delivery_id`, `order_id`, `date_added`, `comment`, `status`, `total`) VALUES
 	(16, 16, 15, 11, '2025-09-26 15:17:23', NULL, 1, 3900),
 	(17, 17, 16, 12, '2025-09-26 15:34:52', NULL, 1, 16500),
@@ -9096,7 +9402,21 @@ INSERT INTO `order` (`id`, `customer_id`, `delivery_id`, `order_id`, `date_added
 	(22, 22, 21, 17, '2025-09-29 07:10:12', NULL, 1, 5000),
 	(23, 23, 22, 18, '2025-09-29 07:17:56', NULL, 1, 32000);
 
--- Дамп данных таблицы new3.order_customer: ~3 rows (приблизительно)
+-- Дамп структуры для таблица new3.order_customer
+DROP TABLE IF EXISTS `order_customer`;
+CREATE TABLE IF NOT EXISTS `order_customer` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `phone` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `email` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ip` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `user_agent` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `phone_normal` bigint DEFAULT NULL,
+  `comment` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.order_customer: ~8 rows (приблизительно)
 INSERT INTO `order_customer` (`id`, `name`, `phone`, `email`, `ip`, `user_agent`, `phone_normal`, `comment`) VALUES
 	(16, 'Test 6', '89209217054', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', NULL, NULL),
 	(17, 'Алексей Федотов', '89209217054', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', NULL, NULL),
@@ -9107,7 +9427,29 @@ INSERT INTO `order_customer` (`id`, `name`, `phone`, `email`, `ip`, `user_agent`
 	(22, 'Алекс 2', '89209217054', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', NULL, NULL),
 	(23, 'Алексй', '89209217054', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', NULL, NULL);
 
--- Дамп данных таблицы new3.order_delivery: ~3 rows (приблизительно)
+-- Дамп структуры для таблица new3.order_delivery
+DROP TABLE IF EXISTS `order_delivery`;
+CREATE TABLE IF NOT EXISTS `order_delivery` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `type` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `address` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `city` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `cost` int DEFAULT NULL,
+  `pvz` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `is_free` tinyint(1) NOT NULL DEFAULT '0',
+  `is_custom_calculate` tinyint(1) NOT NULL DEFAULT '0',
+  `pvz_code` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `delivery_date` date DEFAULT NULL,
+  `delivery_time` time DEFAULT NULL,
+  `city_id` int DEFAULT NULL,
+  `pricing_source` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `pricing_trace` json DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `IDX_D6790EA18BAC62AF` (`city_id`),
+  CONSTRAINT `FK_D6790EA18BAC62AF` FOREIGN KEY (`city_id`) REFERENCES `fias` (`fias_id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.order_delivery: ~8 rows (приблизительно)
 INSERT INTO `order_delivery` (`id`, `type`, `address`, `city`, `cost`, `pvz`, `is_free`, `is_custom_calculate`, `pvz_code`, `delivery_date`, `delivery_time`, `city_id`, `pricing_source`, `pricing_trace`) VALUES
 	(15, 'pvz', NULL, 'Санкт-Петербург', 190, NULL, 0, 1, NULL, NULL, NULL, NULL, 'pvz_price', '{"method": "pvz", "source": "pvz_price", "baseCost": 190, "itemsQty": 1, "cartSubtotal": 3900, "effectiveCost": 190, "freeThreshold": 7000, "calculationType": "cost_per_item"}'),
 	(16, 'courier', 'Восточная 80, 99', 'Москва', 0, NULL, 1, 0, NULL, NULL, NULL, NULL, 'pvz_price', '{"method": "courier", "reason": "free_threshold", "source": "pvz_price", "baseCost": 190, "itemsQty": 1, "cartSubtotal": 16500, "effectiveCost": 0, "freeThreshold": 6000, "calculationType": "cost_per_item", "defaultFreeThreshold": 3000, "effectiveFreeThreshold": 6000}'),
@@ -9118,7 +9460,22 @@ INSERT INTO `order_delivery` (`id`, `type`, `address`, `city`, `cost`, `pvz`, `i
 	(21, 'pvz', NULL, 'Москва', 190, NULL, 0, 1, NULL, NULL, NULL, NULL, 'pvz_price', '{"method": "pvz", "source": "pvz_price", "baseCost": 190, "itemsQty": 1, "cartSubtotal": 5000, "effectiveCost": 190, "freeThreshold": 6000, "calculationType": "cost_per_item"}'),
 	(22, 'pvz', NULL, 'Москва', 0, NULL, 1, 1, NULL, NULL, NULL, NULL, 'pvz_price', '{"method": "pvz", "reason": "free_threshold", "source": "pvz_price", "baseCost": 190, "itemsQty": 2, "cartSubtotal": 32000, "effectiveCost": 0, "freeThreshold": 6000, "calculationType": "cost_per_item", "defaultFreeThreshold": 3000, "effectiveFreeThreshold": 6000}');
 
--- Дамп данных таблицы new3.order_products: ~3 rows (приблизительно)
+-- Дамп структуры для таблица new3.order_products
+DROP TABLE IF EXISTS `order_products`;
+CREATE TABLE IF NOT EXISTS `order_products` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `orders_id` int DEFAULT NULL,
+  `product_id` int NOT NULL,
+  `product_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `price` int DEFAULT NULL,
+  `quantity` int NOT NULL,
+  `sale_price` int DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `orders_id` (`orders_id`),
+  CONSTRAINT `FK_5242B8EBCFFE9AD6` FOREIGN KEY (`orders_id`) REFERENCES `order` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.order_products: ~8 rows (приблизительно)
 INSERT INTO `order_products` (`id`, `orders_id`, `product_id`, `product_name`, `price`, `quantity`, `sale_price`) VALUES
 	(19, 16, 19, 'Люстра Кольцо 5 - 3 лампа', 3900, 1, NULL),
 	(20, 17, 70, 'Кольцо 19', 16500, 1, NULL),
@@ -9129,7 +9486,22 @@ INSERT INTO `order_products` (`id`, `orders_id`, `product_id`, `product_name`, `
 	(25, 22, 53, 'Кольцо №7', 5000, 1, NULL),
 	(26, 23, 69, 'Кольцо 17', 16000, 2, NULL);
 
--- Дамп данных таблицы new3.order_product_options: ~6 rows (приблизительно)
+-- Дамп структуры для таблица new3.order_product_options
+DROP TABLE IF EXISTS `order_product_options`;
+CREATE TABLE IF NOT EXISTS `order_product_options` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `product_id` int DEFAULT NULL,
+  `option_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `value` json DEFAULT NULL,
+  `price` int DEFAULT NULL,
+  `order_product_id` int NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `product_id` (`product_id`),
+  KEY `IDX_CAE5226BF65E9B0F` (`order_product_id`),
+  CONSTRAINT `FK_CAE5226BF65E9B0F` FOREIGN KEY (`order_product_id`) REFERENCES `order_products` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.order_product_options: ~10 rows (приблизительно)
 INSERT INTO `order_product_options` (`id`, `product_id`, `option_name`, `value`, `price`, `order_product_id`) VALUES
 	(25, 19, 'Цвет арматуры', '{"sku": null, "valueCode": "cvet_armatury", "valueName": "Серебро", "optionCode": "cvet_armatury", "valueSortOrder": 2, "optionSortOrder": 2}', 0, 19),
 	(26, 19, 'Диаметр', '{"sku": "2423423", "valueCode": "diametr", "valueName": "700", "optionCode": "diametr", "valueSortOrder": 4, "optionSortOrder": 1}', 3900, 19),
@@ -9142,6 +9514,15 @@ INSERT INTO `order_product_options` (`id`, `product_id`, `option_name`, `value`,
 	(33, 69, 'Диаметр', '{"sku": "4561521", "valueCode": "diametr", "valueName": "500", "optionCode": "diametr", "valueSortOrder": 2, "optionSortOrder": 1}', 16000, 26),
 	(34, 69, 'Цвет арматуры', '{"sku": null, "valueCode": "cvet_armatury", "valueName": "Серебро", "optionCode": "cvet_armatury", "valueSortOrder": 2, "optionSortOrder": 2}', 0, 26);
 
+-- Дамп структуры для таблица new3.order_status
+DROP TABLE IF EXISTS `order_status`;
+CREATE TABLE IF NOT EXISTS `order_status` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `sort` int NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Дамп данных таблицы new3.order_status: ~5 rows (приблизительно)
 INSERT INTO `order_status` (`id`, `name`, `sort`) VALUES
 	(1, 'Ожидающий обработки', 1),
@@ -9149,6 +9530,40 @@ INSERT INTO `order_status` (`id`, `name`, `sort`) VALUES
 	(4, 'Отменен', 3),
 	(5, 'Не дозвонился', 4),
 	(6, 'Пока думает', 5);
+
+-- Дамп структуры для таблица new3.product
+DROP TABLE IF EXISTS `product`;
+CREATE TABLE IF NOT EXISTS `product` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `manufacturer_id` int DEFAULT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `slug` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `sort_order` int DEFAULT NULL,
+  `effective_price` int DEFAULT NULL,
+  `status` tinyint(1) NOT NULL DEFAULT '0',
+  `quantity` int DEFAULT NULL,
+  `options_json` json DEFAULT NULL,
+  `attribute_json` json DEFAULT NULL,
+  `code` binary(16) DEFAULT NULL COMMENT '(DC2Type:ulid)',
+  `description` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `price` int DEFAULT NULL,
+  `sale_price` int DEFAULT NULL,
+  `currency` varchar(3) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'RUB',
+  `date_added` datetime DEFAULT NULL,
+  `date_edited` datetime DEFAULT NULL,
+  `type` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'simple',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UNIQ_D34A04AD989D9B62` (`slug`),
+  UNIQUE KEY `UNIQ_D34A04AD77153098` (`code`),
+  KEY `IDX_D34A04ADA23B42D` (`manufacturer_id`),
+  KEY `name` (`name`),
+  KEY `product_status_idx` (`status`),
+  KEY `product_date_added_idx` (`date_added`),
+  KEY `product_sort_order_idx` (`sort_order`),
+  KEY `idx_product_status_created` (`status`,`date_added`),
+  KEY `product_effective_price_idx` (`effective_price`),
+  CONSTRAINT `FK_D34A04ADA23B42D` FOREIGN KEY (`manufacturer_id`) REFERENCES `manufacturer` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=73 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Дамп данных таблицы new3.product: ~11 rows (приблизительно)
 INSERT INTO `product` (`id`, `manufacturer_id`, `name`, `slug`, `sort_order`, `effective_price`, `status`, `quantity`, `options_json`, `attribute_json`, `code`, `description`, `price`, `sale_price`, `currency`, `date_added`, `date_edited`, `type`) VALUES
@@ -9163,6 +9578,34 @@ INSERT INTO `product` (`id`, `manufacturer_id`, `name`, `slug`, `sort_order`, `e
 	(70, NULL, 'Кольцо 19', 'kolco-19', 0, NULL, 1, NULL, '[]', '[]', _binary 0x01997c23a396a480fc641a5cf4802326, '', NULL, NULL, 'RUB', '2025-09-24 14:32:14', NULL, 'variable'),
 	(71, NULL, 'Кольцо 20', 'kolco-20', 16, 15600, 1, NULL, '[]', '[]', _binary 0x01997c2769aa4da2c5160538d228b229, '', NULL, NULL, 'RUB', '2025-09-24 14:36:21', '2025-09-27 09:22:29', 'variable'),
 	(72, NULL, 'Копия Кольцо 20', 'kopiya-kolco-20', 16, 15600, 1, NULL, '[]', '[]', _binary 0x01997c2967292dd1e44306a50f72f98c, '', NULL, NULL, 'RUB', '2025-09-24 14:38:32', '2025-09-24 14:49:45', 'variable');
+
+-- Дамп структуры для таблица new3.product_attribute_assignment
+DROP TABLE IF EXISTS `product_attribute_assignment`;
+CREATE TABLE IF NOT EXISTS `product_attribute_assignment` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `product_id` int NOT NULL,
+  `attribute_id` int NOT NULL,
+  `attribute_group_id` int DEFAULT NULL,
+  `data_type` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'string',
+  `string_value` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `text_value` longtext COLLATE utf8mb4_unicode_ci,
+  `int_value` int DEFAULT NULL,
+  `decimal_value` decimal(15,4) DEFAULT NULL,
+  `bool_value` tinyint(1) DEFAULT NULL,
+  `date_value` date DEFAULT NULL,
+  `json_value` json DEFAULT NULL,
+  `unit` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `position` int NOT NULL DEFAULT '0',
+  `sort_order` int DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `IDX_2AFBF05C4584665A` (`product_id`),
+  KEY `IDX_2AFBF05CB6E62EFA` (`attribute_id`),
+  KEY `IDX_2AFBF05C62D643B7` (`attribute_group_id`),
+  KEY `idx_paa_string` (`string_value`),
+  CONSTRAINT `FK_2AFBF05C4584665A` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_2AFBF05C62D643B7` FOREIGN KEY (`attribute_group_id`) REFERENCES `attribute_group` (`id`) ON DELETE RESTRICT,
+  CONSTRAINT `FK_2AFBF05CB6E62EFA` FOREIGN KEY (`attribute_id`) REFERENCES `attribute` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB AUTO_INCREMENT=49 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Дамп данных таблицы new3.product_attribute_assignment: ~13 rows (приблизительно)
 INSERT INTO `product_attribute_assignment` (`id`, `product_id`, `attribute_id`, `attribute_group_id`, `data_type`, `string_value`, `text_value`, `int_value`, `decimal_value`, `bool_value`, `date_value`, `json_value`, `unit`, `position`, `sort_order`) VALUES
@@ -9179,6 +9622,19 @@ INSERT INTO `product_attribute_assignment` (`id`, `product_id`, `attribute_id`, 
 	(46, 72, 3, 1, 'string', '500', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
 	(47, 72, 4, 2, 'string', '250', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
 	(48, 72, 5, 2, 'string', '5', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL);
+
+-- Дамп структуры для таблица new3.product_image
+DROP TABLE IF EXISTS `product_image`;
+CREATE TABLE IF NOT EXISTS `product_image` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `product_id` int DEFAULT NULL,
+  `image_url` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `sort_order` int NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `product_id` (`product_id`),
+  KEY `product_image_sort_idx` (`sort_order`),
+  CONSTRAINT `FK_64617F034584665A` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=194 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Дамп данных таблицы new3.product_image: ~31 rows (приблизительно)
 INSERT INTO `product_image` (`id`, `product_id`, `image_url`, `sort_order`) VALUES
@@ -9214,7 +9670,36 @@ INSERT INTO `product_image` (`id`, `product_id`, `image_url`, `sort_order`) VALU
 	(192, 72, '/media/cache/md2/img/astra-buton-1-pod-bronzu-zelenaya-1.jpg', 3),
 	(193, 53, '/media/cache/md2/img/anzhelika-3-lampy-niz-1-zoloto-1.jpg', 1);
 
--- Дамп данных таблицы new3.product_option_value_assignment: ~21 rows (приблизительно)
+-- Дамп структуры для таблица new3.product_option_value_assignment
+DROP TABLE IF EXISTS `product_option_value_assignment`;
+CREATE TABLE IF NOT EXISTS `product_option_value_assignment` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `product_id` int NOT NULL,
+  `option_id` int NOT NULL,
+  `value_id` int NOT NULL,
+  `height` int DEFAULT NULL,
+  `price` int DEFAULT NULL,
+  `bulbs_count` int DEFAULT NULL,
+  `lighting_area` int DEFAULT NULL,
+  `sku` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `attributes` json DEFAULT NULL,
+  `original_sku` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `sale_price` int DEFAULT NULL,
+  `sort_order` int DEFAULT NULL,
+  `quantity` int DEFAULT NULL,
+  `set_price` tinyint(1) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `IDX_E85761E84584665A` (`product_id`),
+  KEY `IDX_E85761E8A7C41D6F` (`option_id`),
+  KEY `IDX_E85761E8F920BBA2` (`value_id`),
+  KEY `idx_pova_product` (`product_id`),
+  KEY `idx_pova_product_option` (`product_id`,`option_id`),
+  CONSTRAINT `FK_E85761E84584665A` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_E85761E8A7C41D6F` FOREIGN KEY (`option_id`) REFERENCES `option` (`id`),
+  CONSTRAINT `FK_E85761E8F920BBA2` FOREIGN KEY (`value_id`) REFERENCES `option_value` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=312 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.product_option_value_assignment: ~22 rows (приблизительно)
 INSERT INTO `product_option_value_assignment` (`id`, `product_id`, `option_id`, `value_id`, `height`, `price`, `bulbs_count`, `lighting_area`, `sku`, `attributes`, `original_sku`, `sale_price`, `sort_order`, `quantity`, `set_price`) VALUES
 	(185, 51, 5, 6, 400, 4590, NULL, NULL, NULL, '[]', NULL, NULL, NULL, NULL, 0),
 	(186, 51, 5, 12, NULL, NULL, NULL, NULL, NULL, '[]', NULL, NULL, NULL, NULL, 0),
@@ -9239,7 +9724,19 @@ INSERT INTO `product_option_value_assignment` (`id`, `product_id`, `option_id`, 
 	(310, 69, 6, 9, NULL, NULL, NULL, NULL, NULL, '[]', NULL, NULL, 2, 98, 0),
 	(311, 72, 5, 11, 350, 15600, 5, NULL, NULL, '[]', NULL, NULL, NULL, 50, 0);
 
--- Дамп данных таблицы new3.product_seo: ~9 rows (приблизительно)
+-- Дамп структуры для таблица new3.product_seo
+DROP TABLE IF EXISTS `product_seo`;
+CREATE TABLE IF NOT EXISTS `product_seo` (
+  `product_id` int NOT NULL,
+  `meta_title` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `meta_description` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `meta_keywords` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `h1` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`product_id`),
+  CONSTRAINT `FK_8C5EB82F4584665A` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.product_seo: ~10 rows (приблизительно)
 INSERT INTO `product_seo` (`product_id`, `meta_title`, `meta_description`, `meta_keywords`, `h1`) VALUES
 	(19, '', '', NULL, 'Люстра Кольцо 5 - 2 лампа'),
 	(51, NULL, NULL, NULL, 'Люстра Астра Ажур'),
@@ -9252,7 +9749,24 @@ INSERT INTO `product_seo` (`product_id`, `meta_title`, `meta_description`, `meta
 	(71, 'Кольцо 20', '', NULL, 'Кольцо 20'),
 	(72, 'Кольцо 20', '', NULL, 'Кольцо 20');
 
--- Дамп данных таблицы new3.product_to_category: ~19 rows (приблизительно)
+-- Дамп структуры для таблица new3.product_to_category
+DROP TABLE IF EXISTS `product_to_category`;
+CREATE TABLE IF NOT EXISTS `product_to_category` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `product_id` int NOT NULL,
+  `category_id` int NOT NULL,
+  `is_parent` tinyint(1) DEFAULT '0',
+  `position` int DEFAULT '1',
+  `visibility` tinyint(1) DEFAULT '1',
+  PRIMARY KEY (`id`),
+  KEY `IDX_673A19704584665A` (`product_id`),
+  KEY `IDX_673A197012469DE2` (`category_id`),
+  KEY `idx_ptc_category_product` (`category_id`,`product_id`),
+  CONSTRAINT `FK_673A197012469DE2` FOREIGN KEY (`category_id`) REFERENCES `category` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_673A19704584665A` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=89 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.product_to_category: ~20 rows (приблизительно)
 INSERT INTO `product_to_category` (`id`, `product_id`, `category_id`, `is_parent`, `position`, `visibility`) VALUES
 	(36, 19, 1, 1, NULL, 1),
 	(37, 19, 3, 0, NULL, 1),
@@ -9275,7 +9789,37 @@ INSERT INTO `product_to_category` (`id`, `product_id`, `category_id`, `is_parent
 	(87, 72, 3, 0, NULL, 1),
 	(88, 72, 1, 0, NULL, 1);
 
--- Дамп данных таблицы new3.pvz_points: ~4 444 rows (приблизительно)
+-- Дамп структуры для таблица new3.pvz_points
+DROP TABLE IF EXISTS `pvz_points`;
+CREATE TABLE IF NOT EXISTS `pvz_points` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `code` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `city_code` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `address` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `tariff_zone` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `price` int DEFAULT NULL,
+  `delivery_period` int DEFAULT NULL,
+  `phone` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `region` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `type_of_office` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `metro` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `only_prepaid_orders` varchar(5) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `postal` int DEFAULT NULL,
+  `city` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `time` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `card` int DEFAULT NULL,
+  `shirota` double DEFAULT NULL,
+  `dolgota` double DEFAULT NULL,
+  `company` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `city_id` int DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `city` (`city`),
+  KEY `IDX_E80F6C3D8BAC62AF` (`city_id`),
+  CONSTRAINT `FK_E80F6C3D8BAC62AF` FOREIGN KEY (`city_id`) REFERENCES `fias` (`fias_id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=46884 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.pvz_points: ~4 678 rows (приблизительно)
 INSERT INTO `pvz_points` (`id`, `code`, `name`, `city_code`, `address`, `tariff_zone`, `price`, `delivery_period`, `phone`, `region`, `type_of_office`, `metro`, `only_prepaid_orders`, `postal`, `city`, `time`, `card`, `shirota`, `dolgota`, `company`, `city_id`) VALUES
 	(42206, '0004ccff-edea-46fa-a1c0-30c34178fb0c', 'Пункт выдачи заказов Яндекс Маркета', '117025', 'Москва Ленинградское шоссе 128', NULL, NULL, NULL, '+74951570020', 'Москва', NULL, NULL, NULL, 125445, 'Москва', NULL, 1, 55.869457244873, 37.462108612061, NULL, NULL),
 	(42207, '00120266-3448-4986-b8db-28efea7c34ff', 'Пункт выдачи заказов Яндекс Маркета', '11030', 'Азов переулок Маяковского 19', NULL, NULL, NULL, '+74951570020', 'Ростовская область', NULL, NULL, NULL, 346789, 'Азов', NULL, 1, 47.098316192627, 39.440433502197, NULL, NULL),
@@ -9427,8 +9971,7 @@ INSERT INTO `pvz_points` (`id`, `code`, `name`, `city_code`, `address`, `tariff_
 	(42353, '01944df18f09744489422761204c2abe', 'Пункт выдачи заказов Яндекс Маркета', '117698', 'деревня Голубое Трёхсвятская улица 18', NULL, NULL, NULL, '+74951570020', '', NULL, NULL, NULL, 141551, 'деревня Голубое', NULL, 1, 55.979696, 37.101523, NULL, NULL),
 	(42354, '01944f8dae60715e96903c71f4fac5e7', 'Пункт выдачи заказов Яндекс Маркета', '120548', 'Москва Люблинская улица 76 к2', NULL, NULL, NULL, '+74951570020', 'Москва', NULL, NULL, NULL, 109382, 'Москва', NULL, 1, 55.663203, 37.733712, NULL, NULL),
 	(42355, '01944f8daea4732a9d1fb8048c0a9c89', 'Пункт выдачи заказов Яндекс Маркета', '102045', 'Самара Пугачёвский тракт 66', NULL, NULL, NULL, '+74951570020', 'Самарская область', NULL, NULL, NULL, 443065, 'Самара', NULL, 1, 53.117819, 50.084975, NULL, NULL),
-	(42356, '01944f8daedc745886561a441a337d8a', 'Пункт выдачи заказов Яндекс Маркета', '117028', 'Москва улица Дубки 4А', NULL, NULL, NULL, '+74951570020', 'Москва', NULL, NULL, NULL, 127434, 'Москва', NULL, 1, 55.818097, 37.569167, NULL, NULL);
-INSERT INTO `pvz_points` (`id`, `code`, `name`, `city_code`, `address`, `tariff_zone`, `price`, `delivery_period`, `phone`, `region`, `type_of_office`, `metro`, `only_prepaid_orders`, `postal`, `city`, `time`, `card`, `shirota`, `dolgota`, `company`, `city_id`) VALUES
+	(42356, '01944f8daedc745886561a441a337d8a', 'Пункт выдачи заказов Яндекс Маркета', '117028', 'Москва улица Дубки 4А', NULL, NULL, NULL, '+74951570020', 'Москва', NULL, NULL, NULL, 127434, 'Москва', NULL, 1, 55.818097, 37.569167, NULL, NULL),
 	(42357, '0194514bc77573d998872b400e492b0f', 'Пункт выдачи заказов Яндекс Маркета', '120680', 'Санкт-Петербург улица Радищева 18', NULL, NULL, NULL, '+74951570020', 'Санкт-Петербург', NULL, NULL, NULL, 191014, 'Санкт-Петербург', NULL, 1, 59.938297, 30.36303, NULL, NULL),
 	(42358, '0194514bc79075ed8c5190157bcf50cd', 'Пункт выдачи заказов Яндекс Маркета', '217090', 'Тверь улица Софьи Перовской 30', NULL, NULL, NULL, '+74951570020', 'Тверская область', NULL, NULL, NULL, 170006, 'Тверь', NULL, 1, 56.858152, 35.883512, NULL, NULL),
 	(42359, '0194517b890f7387a7548d00643d0150', 'Пункт выдачи заказов Яндекс Маркета', '215293', 'район Коммунарка улица Лобановский Лес 9', NULL, NULL, NULL, '+74951570020', 'Москва', NULL, NULL, NULL, 108802, 'район Коммунарка', NULL, 1, 55.594915, 37.429691, NULL, NULL),
@@ -11929,7 +12472,8 @@ INSERT INTO `pvz_points` (`id`, `code`, `name`, `city_code`, `address`, `tariff_
 	(44854, '691491ce-355b-4181-a357-61f11d251983', 'Пункт выдачи заказов Яндекс Маркета', '116980', 'Москва Краснобогатырская улица 9', NULL, NULL, NULL, '+74951570020', 'Москва', NULL, NULL, NULL, 107564, 'Москва', NULL, 1, 55.816932678223, 37.692668914795, NULL, NULL),
 	(44855, '691a2971-d08c-4005-ad60-4d99ccfbfceb', 'Пункт выдачи заказов Яндекс Маркета', '10716', 'Балашиха Речная 5', NULL, NULL, NULL, '+74951570020', 'Московская область', NULL, NULL, NULL, 143981, 'Балашиха', NULL, 1, 55.747417449951, 37.961902618408, NULL, NULL),
 	(44856, '692ef476-c5fa-4717-a1fd-23bd106c09eb', 'Пункт выдачи заказов Яндекс Маркета', '217026', 'Ижевск улица Михаила Петрова 33', NULL, NULL, NULL, '+74951570020', 'Удмуртская Республика', NULL, NULL, NULL, 426065, 'Ижевск', NULL, 1, 56.86935043335, 53.290042877197, NULL, NULL),
-	(44857, '6940624d-77bb-4181-ba74-221c181be769', 'Пункт выдачи заказов Яндекс Маркета', '120601', 'Санкт-Петербург Вознесенский проспект 51', NULL, NULL, NULL, '+74951570020', 'Санкт-Петербург', NULL, NULL, NULL, 190068, 'Санкт-Петербург', NULL, 1, 59.921131134033, 30.307622909546, NULL, NULL),
+	(44857, '6940624d-77bb-4181-ba74-221c181be769', 'Пункт выдачи заказов Яндекс Маркета', '120601', 'Санкт-Петербург Вознесенский проспект 51', NULL, NULL, NULL, '+74951570020', 'Санкт-Петербург', NULL, NULL, NULL, 190068, 'Санкт-Петербург', NULL, 1, 59.921131134033, 30.307622909546, NULL, NULL);
+INSERT INTO `pvz_points` (`id`, `code`, `name`, `city_code`, `address`, `tariff_zone`, `price`, `delivery_period`, `phone`, `region`, `type_of_office`, `metro`, `only_prepaid_orders`, `postal`, `city`, `time`, `card`, `shirota`, `dolgota`, `company`, `city_id`) VALUES
 	(44858, '694def3f-025a-4cb0-a220-6f9f1b459893', 'Пункт выдачи заказов партнёра', '20257', 'Гаврилов-Ям улица Чапаева 13', NULL, NULL, NULL, '+74951570020', 'Ярославская область', NULL, NULL, NULL, 152240, 'Гаврилов-Ям', NULL, 1, 57.307441711426, 39.857406616211, NULL, NULL),
 	(44859, '69545cd2-316a-4975-a8ac-5e4b50a672b7', 'Пункт выдачи заказов Яндекс Маркета', '120683', 'Пермь улица Газеты Звезда 12А', NULL, NULL, NULL, '+74951570020', 'Пермский край', NULL, NULL, NULL, 614000, 'Пермь', NULL, 1, 58.014995574951, 56.241264343262, NULL, NULL),
 	(44860, '6963921c-d319-4c53-a4ae-b684f6ddd1ae', 'Пункт выдачи заказов партнёра', '217444', 'Калуга улица Никитина 93А', NULL, NULL, NULL, '+74951570020', 'Калужская область', NULL, NULL, NULL, 248003, 'Калуга', NULL, 1, 54.509178161621, 36.289367675781, NULL, NULL),
@@ -12074,8 +12618,7 @@ INSERT INTO `pvz_points` (`id`, `code`, `name`, `city_code`, `address`, `tariff_
 	(44999, '73949ebd-8907-4056-8501-f2ee98b8f9f7', 'Пункт выдачи заказов Яндекс Маркета', '10710', 'Железногорск улица Энтузиастов 3 к2', NULL, NULL, NULL, '+74951570020', 'Курская область', NULL, NULL, NULL, 307178, 'Железногорск', NULL, 1, 52.35147857666, 35.355152130127, NULL, NULL),
 	(45000, '73aa328e-6dd7-4f22-87b4-b334d9a4b2e3', 'Пункт выдачи заказов Яндекс Маркета', '217082', 'Кемерово улица Марковцева 22', NULL, NULL, NULL, '+74951570020', 'Кемеровская область - Кузбасс', NULL, NULL, NULL, 650003, 'Кемерово', NULL, 1, 55.336399078369, 86.190200805664, NULL, NULL),
 	(45001, '73bf8955-9974-421b-81fc-297165b5cfc1', 'Пункт выдачи заказов Яндекс Маркета', '20595', 'Сысерть улица Карла Либкнехта 65', NULL, NULL, NULL, '+74951570020', 'Свердловская область', NULL, NULL, NULL, 624022, 'Сысерть', NULL, 1, 56.501567840576, 60.817565917969, NULL, NULL),
-	(45002, '73d6abc9-4255-49e4-85e0-361764cdd08a', 'Пункт выдачи заказов Яндекс Маркета', '117022', 'Москва Ангарская улица 57 к1', NULL, NULL, NULL, '+74951570020', 'Москва', NULL, NULL, NULL, 125412, 'Москва', NULL, 1, 55.88321685791, 37.52759552002, NULL, NULL);
-INSERT INTO `pvz_points` (`id`, `code`, `name`, `city_code`, `address`, `tariff_zone`, `price`, `delivery_period`, `phone`, `region`, `type_of_office`, `metro`, `only_prepaid_orders`, `postal`, `city`, `time`, `card`, `shirota`, `dolgota`, `company`, `city_id`) VALUES
+	(45002, '73d6abc9-4255-49e4-85e0-361764cdd08a', 'Пункт выдачи заказов Яндекс Маркета', '117022', 'Москва Ангарская улица 57 к1', NULL, NULL, NULL, '+74951570020', 'Москва', NULL, NULL, NULL, 125412, 'Москва', NULL, 1, 55.88321685791, 37.52759552002, NULL, NULL),
 	(45003, '73e72de7-dc66-4f60-8db2-e2e01c526efc', 'Пункт выдачи заказов Яндекс Маркета', '20237', 'Березники улица Карла Маркса 60', NULL, NULL, NULL, '+74951570020', 'Пермский край', NULL, NULL, NULL, 618417, 'Березники', NULL, 1, 59.408912658691, 56.80570602417, NULL, NULL),
 	(45004, '73f96f22-ff50-4c7d-802f-d9be3e69a614', 'Пункт выдачи заказов Яндекс Маркета', '10750', 'Раменское Дергаевская улица 26', NULL, NULL, NULL, '+74951570020', 'Московская область', NULL, NULL, NULL, 140103, 'Раменское', NULL, 1, 55.578712463379, 38.246646881104, NULL, NULL),
 	(45005, '740065d6-ddfe-449a-bdca-cbbea4eddff1', 'Пункт выдачи заказов Яндекс Маркета', '10959', 'Камышин Пролетарская улица 105', NULL, NULL, NULL, '+74951570020', 'Волгоградская область', NULL, NULL, NULL, 403873, 'Камышин', NULL, 1, 50.075393676758, 45.39900970459, NULL, NULL),
@@ -13958,10 +14501,30 @@ INSERT INTO `pvz_points` (`id`, `code`, `name`, `city_code`, `address`, `tariff_
 	(46882, 'ffcf6029-4255-4932-b7f5-47872abb5355', 'Пункт выдачи заказов Яндекс Маркета', '117049', 'Москва Митинская улица 39', NULL, NULL, NULL, '+74951570020', 'Москва', NULL, NULL, NULL, 125368, 'Москва', NULL, 1, 55.849025726318, 37.354038238525, NULL, NULL),
 	(46883, 'ffe22c6e-6a85-45a7-a04f-2dcc3f16327f', 'Пункт выдачи заказов Яндекс Маркета', '117673', 'деревня Глинка Центральная улица 35 к3', NULL, NULL, NULL, '+74951570020', 'Ленинградская область', NULL, NULL, NULL, 187021, 'деревня Глинка', NULL, 1, 59.677433013916, 30.502948760986, NULL, NULL);
 
+-- Дамп структуры для таблица new3.pvz_price
+DROP TABLE IF EXISTS `pvz_price`;
+CREATE TABLE IF NOT EXISTS `pvz_price` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `city` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `srok` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `city2` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `code` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `alias` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `region` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `cost` int DEFAULT NULL,
+  `free` int DEFAULT NULL,
+  `calculate_price` int DEFAULT NULL,
+  `calculate_delivery_period` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `city_id` int DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `city` (`city`),
+  KEY `IDX_C5BFAFEF8BAC62AF` (`city_id`),
+  CONSTRAINT `FK_C5BFAFEF8BAC62AF` FOREIGN KEY (`city_id`) REFERENCES `fias` (`fias_id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=596 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Дамп данных таблицы new3.pvz_price: ~594 rows (приблизительно)
 INSERT INTO `pvz_price` (`id`, `city`, `srok`, `city2`, `code`, `alias`, `region`, `cost`, `free`, `calculate_price`, `calculate_delivery_period`, `city_id`) VALUES
-	(1, 'Москва', 'от 2 до 4 дней', 'Москве', '', 'moscow', '', 190, 6000, 609, '3', NULL);
-INSERT INTO `pvz_price` (`id`, `city`, `srok`, `city2`, `code`, `alias`, `region`, `cost`, `free`, `calculate_price`, `calculate_delivery_period`, `city_id`) VALUES
+	(1, 'Москва', 'от 2 до 4 дней', 'Москве', '', 'moscow', '', 190, 6000, 609, '3', NULL),
 	(2, 'Тамбов', 'от 5 до 6 дней', 'Тамбове', '', 'tambov', '', 490, 0, 644, '5', NULL),
 	(3, 'Санкт-Петербург', 'от 4 до 6 дней	', 'Санкт-Петербурге', '', 'spb', '', 190, 7000, 609, '4', NULL),
 	(4, 'Новосибирск', 'от 7 до 9 дней', 'Новосибирске', '', 'novosibirsk', '', 490, 0, 859, '7', NULL),
@@ -14556,20 +15119,53 @@ INSERT INTO `pvz_price` (`id`, `city`, `srok`, `city2`, `code`, `alias`, `region
 	(594, 'Приморский', 'от 2 до 4 дней', NULL, NULL, 'primorskiy', NULL, NULL, NULL, 772, '1', NULL),
 	(595, 'Смышляевка', 'от 9 до 11 дней', NULL, NULL, 'smyshlyaevka', NULL, NULL, NULL, 772, '8', NULL);
 
--- Дамп данных таблицы new3.settings: ~1 rows (приблизительно)
+-- Дамп структуры для таблица new3.settings
+DROP TABLE IF EXISTS `settings`;
+CREATE TABLE IF NOT EXISTS `settings` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `value` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.settings: ~2 rows (приблизительно)
 INSERT INTO `settings` (`id`, `name`, `value`) VALUES
-	(1, 'phone', '899933000');
-INSERT INTO `settings` (`id`, `name`, `value`) VALUES
+	(1, 'phone', '899933000'),
 	(2, 'email', 'info@site.ru');
 
--- Дамп данных таблицы new3.users: ~0 rows (приблизительно)
+-- Дамп структуры для таблица new3.users
+DROP TABLE IF EXISTS `users`;
+CREATE TABLE IF NOT EXISTS `users` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(180) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `roles` json NOT NULL,
+  `password` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UNIQ_1483A5E95E237E06` (`name`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.users: ~1 rows (приблизительно)
 INSERT INTO `users` (`id`, `name`, `roles`, `password`) VALUES
 	(1, 'admin', '["ROLE_ADMIN", "ROLE_USER"]', '$2y$13$qJp9xcw0zgGd7IJqMHvS/.mr32.nobYRv4nUGZJz3amLZDzR/1aqW');
 
--- Дамп данных таблицы new3.wishlist: ~3 rows (приблизительно)
+-- Дамп структуры для таблица new3.wishlist
+DROP TABLE IF EXISTS `wishlist`;
+CREATE TABLE IF NOT EXISTS `wishlist` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int DEFAULT NULL,
+  `token` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` datetime NOT NULL COMMENT '(DC2Type:datetime_immutable)',
+  `updated_at` datetime NOT NULL COMMENT '(DC2Type:datetime_immutable)',
+  `expires_at` datetime DEFAULT NULL COMMENT '(DC2Type:datetime_immutable)',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UNIQ_9CE12A315F37A13B` (`token`),
+  UNIQUE KEY `UNIQ_9CE12A31A76ED395` (`user_id`),
+  CONSTRAINT `FK_9CE12A31A76ED395` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.wishlist: ~8 rows (приблизительно)
 INSERT INTO `wishlist` (`id`, `user_id`, `token`, `created_at`, `updated_at`, `expires_at`) VALUES
-	(1, NULL, '08fb95f597697d4ac84aaad212e523e4', '2025-09-29 06:34:29', '2025-09-29 06:34:29', '2026-09-29 06:34:29');
-INSERT INTO `wishlist` (`id`, `user_id`, `token`, `created_at`, `updated_at`, `expires_at`) VALUES
+	(1, NULL, '08fb95f597697d4ac84aaad212e523e4', '2025-09-29 06:34:29', '2025-09-29 06:34:29', '2026-09-29 06:34:29'),
 	(2, NULL, '762771aa9d7291f40bbb5adbf0539f57', '2025-09-29 06:34:29', '2025-09-29 06:34:29', '2026-09-29 06:34:29'),
 	(3, NULL, 'c056a5dbf482b7eb3ff21f90b09d1365', '2025-09-29 06:34:38', '2025-09-29 06:43:31', '2026-09-29 06:34:38'),
 	(4, NULL, 'a4d16f7ba997deeef493ee06dc91e50d', '2025-09-29 06:59:21', '2025-09-29 06:59:21', '2026-09-29 06:59:21'),
@@ -14578,10 +15174,24 @@ INSERT INTO `wishlist` (`id`, `user_id`, `token`, `created_at`, `updated_at`, `e
 	(7, 1, NULL, '2025-09-29 07:07:34', '2025-09-29 07:07:34', NULL),
 	(8, NULL, 'c5e1a8ce9b715d4f1cb8bd7f7426830c', '2025-09-29 07:08:48', '2025-09-29 16:31:54', '2026-09-29 07:08:48');
 
--- Дамп данных таблицы new3.wishlist_item: ~0 rows (приблизительно)
+-- Дамп структуры для таблица new3.wishlist_item
+DROP TABLE IF EXISTS `wishlist_item`;
+CREATE TABLE IF NOT EXISTS `wishlist_item` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `wishlist_id` int NOT NULL,
+  `product_id` int NOT NULL,
+  `created_at` datetime NOT NULL COMMENT '(DC2Type:datetime_immutable)',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_wishlist_product` (`wishlist_id`,`product_id`),
+  KEY `IDX_6424F4E8FB8E54CD` (`wishlist_id`),
+  KEY `IDX_6424F4E84584665A` (`product_id`),
+  CONSTRAINT `FK_6424F4E84584665A` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`),
+  CONSTRAINT `FK_6424F4E8FB8E54CD` FOREIGN KEY (`wishlist_id`) REFERENCES `wishlist` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.wishlist_item: ~2 rows (приблизительно)
 INSERT INTO `wishlist_item` (`id`, `wishlist_id`, `product_id`, `created_at`) VALUES
-	(2, 8, 68, '2025-09-29 14:01:13');
-INSERT INTO `wishlist_item` (`id`, `wishlist_id`, `product_id`, `created_at`) VALUES
+	(2, 8, 68, '2025-09-29 14:01:13'),
 	(3, 8, 70, '2025-09-29 16:31:54');
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
