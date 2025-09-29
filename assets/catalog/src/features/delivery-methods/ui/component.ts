@@ -67,11 +67,17 @@ export class DeliveryMethods extends Component {
     list.innerHTML = types.map(t => {
       const checked = t.code === selectedCode ? 'checked' : '';
       const label = t.name || t.code;
+      const pvzLink = t.code === 'pvz'
+        ? `<a href="#" class="text-blue-700 hover:underline text-sm" data-module="modal" data-src="#pvz-map-modal" data-type="inline" data-width="70vw">Показать пункты выдачи на карте</a>`
+        : '';
       return `
-        <label class="flex items-center gap-2 cursor-pointer">
-          <input type="radio" name="delivery-method" value="${t.code}" ${checked}>
-          <span>${label}</span>
-        </label>
+        <div class="space-x-2">
+          <label class="inline-flex items-center gap-2 cursor-pointer">
+            <input type="radio" name="delivery-method" value="${t.code}" ${checked}>
+            <span>${label}</span>
+          </label>
+          ${pvzLink}
+        </div>
       `;
     }).join('');
   }
@@ -111,6 +117,9 @@ export class DeliveryMethods extends Component {
     const list = this.$('#delivery-methods-list');
     if (!list) return;
     list.addEventListener('change', this.onChange.bind(this));
+
+    // Подключаем lazy‑модуль для Fancybox‑модалок (реестр сам инициализирует по data-module)
+    // Ничего не делаем вручную: bootstrap сканирует DOM и активирует [data-module="modal"].
   }
 }
 

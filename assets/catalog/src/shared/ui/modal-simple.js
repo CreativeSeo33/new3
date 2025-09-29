@@ -72,6 +72,16 @@ export class Modal {
         mainClass: 'modal-fancybox',
         on: {
           ready: () => {
+            // Программно задаём ширину контента для Fancybox v4 через CSS-переменную контейнера
+            if (this.modalOptions.width) {
+              try {
+                const container = document.querySelector('.fancybox__container');
+                if (container) {
+                  container.style.setProperty('--fancybox-content-width', String(this.modalOptions.width));
+                  container.style.setProperty('--fancybox-content-max-width', String(this.modalOptions.width));
+                }
+              } catch {}
+            }
             if (this.modalOptions.onOpen) {
               this.modalOptions.onOpen();
             }

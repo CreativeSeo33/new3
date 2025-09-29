@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controller\Api;
 
 use App\Entity\PvzPoints;
+use App\Entity\City;
 use App\Repository\PvzPriceRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Cache\CacheItemPoolInterface;
@@ -57,13 +58,24 @@ final class DeliveryPublicController extends AbstractController
         if ($cityId <= 0 && $city === '') {
             return $this->json(['error' => 'city or cityId is required'], 422);
         }
+        $cityNameForFilter = null;
+        if ($cityId > 0) {
+            $cityEntity = $this->em->getRepository(City::class)->find($cityId);
+            if ($cityEntity instanceof City) {
+                $cityNameForFilter = trim((string)$cityEntity->getCity());
+            } else {
+                return $this->json(['error' => 'city_not_found', 'message' => 'City not found by id'], 404);
+            }
+        } else {
+            $cityNameForFilter = $city;
+        }
 
         $page = max(1, (int)$request->query->get('page', 1));
         $limitReq = (int)$request->query->get('itemsPerPage', $this->pointsDefaultLimit);
         $limit = $limitReq > 0 ? min($limitReq, $this->pointsMaxLimit) : $this->pointsDefaultLimit;
         $offset = ($page - 1) * $limit;
 
-        $cacheKey = 'delivery_points:' . md5(($cityId > 0 ? ('#' . $cityId) : $city) . '|' . $page . '|' . $limit);
+        $cacheKey = 'delivery_points_' . md5(($cityId > 0 ? ('#' . $cityId) : $city) . '|' . $page . '|' . $limit);
         $item = $this->cache->getItem($cacheKey);
         if ($item->isHit()) {
             return $this->json($item->get());
@@ -75,24 +87,16 @@ final class DeliveryPublicController extends AbstractController
             ->orderBy('p.name', 'ASC')
             ->setFirstResult($offset)
             ->setMaxResults($limit);
-        if ($cityId > 0) {
-            $qb->andWhere('IDENTITY(p.cityFias) = :cityId')->setParameter('cityId', $cityId);
-        } else {
-            $qb->andWhere('LOWER(TRIM(p.city)) = :city')
-               ->setParameter('city', mb_strtolower(trim($city)));
-        }
+        $qb->andWhere('LOWER(TRIM(p.city)) = :city')
+           ->setParameter('city', mb_strtolower(trim((string)$cityNameForFilter)));
 
         $data = $qb->getQuery()->getArrayResult();
 
         // total count
         $countQb = $repo->createQueryBuilder('p')
             ->select('COUNT(p.id)');
-        if ($cityId > 0) {
-            $countQb->andWhere('IDENTITY(p.cityFias) = :cityId')->setParameter('cityId', $cityId);
-        } else {
-            $countQb->andWhere('LOWER(TRIM(p.city)) = :city')
-                    ->setParameter('city', mb_strtolower(trim($city)));
-        }
+        $countQb->andWhere('LOWER(TRIM(p.city)) = :city')
+                ->setParameter('city', mb_strtolower(trim((string)$cityNameForFilter)));
         $total = (int)$countQb->getQuery()->getSingleScalarResult();
 
         $response = [
@@ -141,7 +145,7 @@ final class DeliveryPublicController extends AbstractController
             return $this->json(['error' => 'city is required'], 422);
         }
 
-        $cacheKey = 'delivery_price:' . md5($city);
+        $cacheKey = 'delivery_price_' . md5($city);
         $item = $this->cache->getItem($cacheKey);
         if ($item->isHit()) {
             return $this->json($item->get());

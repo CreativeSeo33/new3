@@ -8,6 +8,9 @@ declare global {
 }
 
 export default class extends Controller {
+  private initialized = false;
+  private map: any | null = null;
+  private clusterer: any | null = null;
   static values = {
     apiKey: String,
     lat: Number,
@@ -27,7 +30,34 @@ export default class extends Controller {
   declare readonly clusterOptionsValue?: Record<string, unknown>;
 
   connect(): void {
+    if ((this.element as any)._ymapInitialized === true) {
+      return;
+    }
+    // Инициализируем карту только если контейнер видим (избегаем hidden-источника Fancybox)
+    try {
+      const el = this.element as HTMLElement;
+      const rect = el.getBoundingClientRect();
+      const cs = window.getComputedStyle(el);
+      const isVisible = rect.width > 0 && rect.height > 0 && cs.display !== 'none' && cs.visibility !== 'hidden';
+      if (!isVisible) {
+        return;
+      }
+    } catch {}
+    (this.element as any)._ymapInitialized = true;
+    this.initialized = true;
     this.initializeMap();
+  }
+
+  disconnect(): void {
+    try {
+      if (this.map && typeof this.map.destroy === 'function') {
+        this.map.destroy();
+      }
+    } catch {}
+    this.map = null;
+    this.clusterer = null;
+    (this.element as any)._ymapInitialized = false;
+    this.initialized = false;
   }
 
   async initializeMap(): Promise<void> {
@@ -45,6 +75,7 @@ export default class extends Controller {
         zoom,
         controls: ['zoomControl', 'geolocationControl'],
       });
+      this.map = map;
 
       const clustererOptions = Object.assign({
         preset: 'islands#invertedVioletClusterIcons',
@@ -54,6 +85,7 @@ export default class extends Controller {
         geoObjectHideIconOnBalloonOpen: false,
       }, this.clusterOptionsValue || {});
       const clusterer = new window.ymaps.Clusterer(clustererOptions);
+      this.clusterer = clusterer;
 
       const points = Array.isArray(this.pointsValue) ? this.pointsValue : [];
       const placemarks = points.map((p) => new window.ymaps.Placemark([p.lat, p.lon], {
@@ -79,11 +111,14 @@ export default class extends Controller {
           }
         }
       } else {
-        // Если точек нет — поставим метку центра
-        map.geoObjects.add(new window.ymaps.Placemark([lat, lon], {}, {
+        // Если точек нет — добавим скрытую fallback-метку, которую будем убирать при первой установке точек
+        const fallback = new window.ymaps.Placemark([lat, lon], {}, {
           preset: 'islands#blueCircleDotIconWithCaption',
           iconCaption: 'Центр города',
-        }));
+          visible: false,
+        });
+        (this.element as any)._fallbackPlacemark = fallback;
+        map.geoObjects.add(fallback);
       }
 
       // Экспортируем упрощённый API на элемент
@@ -101,11 +136,22 @@ export default class extends Controller {
           }
         },
         setPoints: (newPoints: Array<any>) => {
+          // Удаляем fallback-метку, если есть
+          const fb = (this.element as any)._fallbackPlacemark;
+          if (fb) {
+            try { map.geoObjects.remove(fb); } catch {}
+            (this.element as any)._fallbackPlacemark = null;
+          }
           clusterer.removeAll();
-          const newPlacemarks = newPoints.map((p) => new window.ymaps.Placemark([p.lat, p.lon], {
-            balloonContent: p.address || p.title || 'ПВЗ',
-            hintContent: p.title || p.address || 'ПВЗ',
-          }));
+          const newPlacemarks = newPoints.map((p) => {
+            const plat = Number((p as any).lat);
+            const plon = Number((p as any).lon ?? (p as any).lng);
+            const coords: [number, number] = [plat, plon];
+            return new window.ymaps.Placemark(coords, {
+              balloonContent: p.address || p.title || 'ПВЗ',
+              hintContent: p.title || p.address || 'ПВЗ',
+            });
+          });
           clusterer.add(newPlacemarks);
           if (this.fitBoundsValue) {
             const bounds = clusterer.getBounds();

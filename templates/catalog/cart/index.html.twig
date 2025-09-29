@@ -138,7 +138,7 @@
     </div>
 
     <div class="mt-4" data-module="delivery-methods" data-selected-code="{{ deliveryContext.methodCode|default('') }}">
-      <div id="delivery-methods" class="p-4 border rounded" data-testid="delivery-root">
+      <div id="delivery-methods" class="p-4 border rounded" data-testid="delivery-root" data-city-name="{{ deliveryContext.cityName|default('') }}" data-city-id="{{ deliveryContext.cityId|default(0) }}">
         <div class="font-medium mb-2">Способ доставки</div>
         <div id="delivery-methods-list" class="space-y-2">
           {% if types is defined and types is not empty %}
@@ -149,10 +149,30 @@
                 <input type="radio" name="delivery-method" value="{{ t.code }}" {% if isSelected %}checked{% endif %} data-testid="delivery-method-code">
                 <span>{{ t.name ?? t.code }}</span>
               </label>
+              {% if t.code == 'pvz' %}
+                <a href="#"
+                   class="text-blue-700 hover:underline text-sm"
+                   data-module="modal"
+                   data-src="#pvz-map-modal"
+                   data-type="inline"
+                   data-width="70vw"
+                >Показать пункты выдачи на карте</a>
+              {% endif %}
             {% endfor %}
           {% endif %}
         </div>
         <div id="delivery-methods-error" class="text-sm text-red-600 mt-2 hidden"></div>
+      </div>
+      {# Модальное окно с картой ПВЗ #}
+      <div id="pvz-map-modal" class="hidden p-0" style="width: 70vw; max-width: 70vw;">
+        <div class="p-4">
+          <h3 class="text-base font-semibold mb-3">Пункты выдачи на карте</h3>
+          {% component 'YandexMap' with {
+            points: pvzPoints|default([]),
+            heightClass: 'h-[520px]',
+            showList: false
+          } %}{% endcomponent %}
+        </div>
       </div>
     </div>
 
