@@ -4,7 +4,7 @@ alwaysApply: true
 
 # AI_CONTEXT v2
 
-Последнее обновление: 2025-09-15
+Последнее обновление: 2025-09-29
 
 ## Назначение
 Короткий якорный контекст для ИИ: архитектура, инварианты и ссылки на подробные правила. Используется как pinned-документ для ускорения и повышения качества генерации.
@@ -24,6 +24,7 @@ alwaysApply: true
 5) Диагностика → @logs.mdc
 6) Stimulus‑policy → @stimulus_policy.mdc
 7) Facet Filter Guide → @facet_filter_guide.mdc
+8) Поиск товаров (TNTSearch) → @search_tntsearch.mdc
 
 ## Stimulus‑first (UX)
 - Интерактив в Twig — через Symfony UX Stimulus (`data-controller`, `data-action`, targets/values), без inline `<script>`

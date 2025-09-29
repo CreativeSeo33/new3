@@ -49,6 +49,18 @@ parameters:
     # Notification settings
     app.notification.from_email: '%env(ADMIN_FROM_EMAIL)%'
 
+    # Search engine configuration (env-driven)
+    env(SEARCH_ENGINE): 'mysql'
+    env(SEARCH_TNT_STORAGE): '%kernel.project_dir%/var/search/indexes'
+    env(SEARCH_TNT_AS_YOU_TYPE): '1'
+    env(SEARCH_TNT_FUZZY): '1'
+    env(SEARCH_TNT_FUZZY_DISTANCE): '1'
+    search.engine: '%env(string:SEARCH_ENGINE)%'
+    search.tnt.storage: '%env(string:SEARCH_TNT_STORAGE)%'
+    search.tnt.as_you_type: '%env(bool:SEARCH_TNT_AS_YOU_TYPE)%'
+    search.tnt.fuzzy: '%env(bool:SEARCH_TNT_FUZZY)%'
+    search.tnt.fuzzy_distance: '%env(int:SEARCH_TNT_FUZZY_DISTANCE)%'
+
     # Facets configuration (env-driven)
     env(FACETS_CACHE_TTL): '90'
     env(FACET_VALUES_LIMIT): '20'
@@ -145,6 +157,10 @@ services:
     App\State\ProductStateProcessor:
         arguments:
             $cartItemRepository: '@App\Repository\CartItemRepository'
+
+    App\State\ProductStateProvider:
+        arguments:
+            $searchEngine: '%search.engine%'
 
     # Product copy service
     App\Service\ProductCopyService:
@@ -251,6 +267,10 @@ services:
         tags:
             - { name: doctrine.event_subscriber }
 
+    App\Doctrine\Subscriber\ProductSearchIndexerSubscriber:
+        tags:
+            - { name: doctrine.event_subscriber }
+
     App\Controller\Admin\FacetController:
         tags: ['controller.service_arguments']
         arguments:
@@ -266,3 +286,24 @@ services:
         arguments:
             $publicTtl: '%app.facets.cache_ttl%'
             $defaultValuesLimit: '%app.facets.values_limit_default%'
+
+    App\OpenApi\ProductOpenApiDecorator:
+        decorates: 'api_platform.openapi.factory'
+        arguments:
+            - '@App\OpenApi\ProductOpenApiDecorator.inner'
+
+    # Search services
+    App\Service\Search\TNTSearchFactory:
+        arguments:
+            $storagePath: '%search.tnt.storage%'
+            $asYouType: '%search.tnt.as_you_type%'
+            $fuzzy: '%search.tnt.fuzzy%'
+            $fuzzyDistance: '%search.tnt.fuzzy_distance%'
+
+    App\Service\Search\RuQueryNormalizer:
+        arguments:
+            $stopWords: []
+
+    App\Service\Search\ProductIndexer: ~
+
+    App\Service\Search\ProductSearch: ~

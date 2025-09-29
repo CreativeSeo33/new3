@@ -59,13 +59,13 @@
 
         <!-- Search Section -->
         <div class="hidden lg:flex flex-1 max-w-2xl mx-8">
-          <form action="" method="GET" class="relative w-full">
+          <form action="{{ path('catalog_search') }}" method="GET" class="relative w-full">
             <div class="flex">
               <!-- Search Input -->
               <input type="text" 
-                     name="q" 
+                     name="text" 
                      placeholder="Поиск товаров..." 
-                     value="{{ app.request.query.get('q') }}"
+                     value="{{ app.request.query.get('text') }}"
                      class="flex-1 h-12 px-4 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent rounded-l-full">
               
               <!-- Search Button -->
@@ -126,12 +126,12 @@
       
       <!-- Mobile Search -->
       <div class="mt-4 lg:hidden">
-        <form action="" method="GET" class="relative">
+        <form action="{{ path('catalog_search') }}" method="GET" class="relative">
           <div class="flex">
             <input type="text" 
-                   name="q" 
+                   name="text" 
                    placeholder="Поиск товаров..." 
-                   value="{{ app.request.query.get('q') }}"
+                   value="{{ app.request.query.get('text') }}"
                    class="flex-1 h-10 px-4 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent rounded-l-full">
             <button type="submit" 
                     class="h-10 px-4 bg-blue-600 text-white rounded-r-full hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200">

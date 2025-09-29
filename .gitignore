@@ -3,6 +3,9 @@
 !/var/cache/.gitkeep
 !/var/log/.gitkeep
 
+# Search indexes
+/var/search/indexes/
+
 # Symfony specific
 /.env.local
 /.env.local.php

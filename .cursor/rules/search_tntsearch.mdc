@@ -1,0 +1,87 @@
+---
+alwaysApply: false
+---
+
+# Поиск товаров (TNTSearch) — руководство для ИИ‑агента
+
+Назначение: описывает, как устроен и где интегрирован полнотекстовый морфологический поиск по товарам (TNTSearch), точки расширения, фичефлаг, команды и чек‑листы. Использовать для задач поиска, индексации, автодополнения, релевантности и устойчивости к опечаткам.
+
+## Компоненты
+- Сервисы
+  - `App\Service\Search\TNTSearchFactory` — инициализация TNTSearch (driver=filesystem, storage, asYouType, fuzziness)
+  - `App\Service\Search\RuQueryNormalizer` — нормализация и стемминг (Wamania Snowball Russian)
+  - `App\Service\Search\ProductIndexer` — построение документов и индекс (full reindex, upsert, delete)
+  - `App\Service\Search\ProductSearch` — обёртка `search(rawQuery, limit, offset)`
+- Интеграции
+  - API Platform: `App\State\ProductStateProvider`
+    - Поддерживает параметр `q` (коллекция ProductResource)
+    - Флаг переключения: `SEARCH_ENGINE=tnt|mysql` (tnt — использовать индекс; mysql — прежний поиск в БД)
+  - Doctrine: `App\Doctrine\Subscriber\ProductSearchIndexerSubscriber` — инкрементальные обновления
+  - CLI: `app:search:reindex-products` — полный реиндекс
+  - Страница витрины: `GET /search/?text=...` (`App\Controller\Catalog\SearchController`) — UI поиска
+
+## Конфигурация (env → DI)
+- Параметры (`config/services.yaml`):
+  - `search.engine` ← `%env(string:SEARCH_ENGINE)%` (default `mysql`)
+  - `search.tnt.storage` ← `%env(string:SEARCH_TNT_STORAGE)%` (по умолчанию `var/search/indexes`)
+  - `search.tnt.as_you_type` ← `%env(bool:SEARCH_TNT_AS_YOU_TYPE)%`
+  - `search.tnt.fuzzy` ← `%env(bool:SEARCH_TNT_FUZZY)%`
+  - `search.tnt.fuzzy_distance` ← `%env(int:SEARCH_TNT_FUZZY_DISTANCE)%`
+- VCS: `var/search/indexes/` — в `.gitignore`
+- Включение: `SEARCH_ENGINE=tnt`
+- Откат: `SEARCH_ENGINE=mysql`
+
+## Индексация
+- Полный реиндекс: команда `php bin/console app:search:reindex-products`
+  - Блокировка через `symfony/lock`
+  - Индекс создаётся детерминированно: `products.index` в `var/search/indexes`
+- Инкрементальные обновления:
+  - `postPersist`/`postUpdate` → `ProductIndexer::upsert()`
+  - `postRemove` → `ProductIndexer::delete()`
+  - При каскадных изменениях категорий/атрибутов — подписчик обновляет связанные документы через сущность `Product`
+
+## Построение документа
+- Источники полей: `Product::getName()`, имена категорий, атрибуты (`ProductAttributeAssignment`), `description`
+- Веса (через повтор): `name×3`, категории×2, атрибуты×1, описание×1
+- `RuQueryNormalizer` применяет: нижний регистр, очистка пунктуации, стоп‑слова (DI), стемминг (Russian)
+
+## Поиск
+- `ProductSearch::search($rawQuery, $limit, $offset)`
+  - Нормализация запроса; короткие запросы — как префикс (добавление `*`)
+  - `asYouType`/`fuzziness` учитываются через конфиг TNTSearch
+  - TNTSearch возвращает top‑N; `offset/limit` реализуются на уровне PHP
+  - Ответ: `ids`, `scores`, `total`
+
+## API Platform
+- Провайдер: `ProductStateProvider`
+  - Если `q` пуст/не задан → поведение без изменений (фильтры/сортировки через БД)
+  - Если `q` задан и `SEARCH_ENGINE=tnt` → поиск через `ProductSearch`, догрузка сущностей по `ids` с сохранением порядка, `TraversablePaginator`
+  - Фолбэк: при ошибке индекса разрешён быстрый откат через фичефлаг
+- OpenAPI: декоратор `App\OpenApi\ProductOpenApiDecorator` добавляет query‑параметр `q` на коллекции Product
+
+## Витрина (страница поиска)
+- `GET /search/?text=...` — контроллер `SearchController` использует `ProductSearch`, выдача через шаблон `templates/catalog/search/index.html.twig`
+- Поле поиска в хедере сабмитит на `route('catalog_search')` с именем `text`
+
+## Ошибки/диагностика
+- Индекс отсутствует/повреждён — реиндекс командой
+- Проверить конфиг `driver=filesystem` для TNTSearch
+- Стеммер: использовать `Wamania\Snowball\Stemmer\Russian`
+- Логи: `var/log/*.log`
+
+## Чек‑лист PR по поиску
+- Нет изменения поведения без `q`
+- Фичефлаг соблюдён; откат на `mysql` без деградации
+- Индекс хранится в `var/search/indexes` и исключён из VCS
+- Реиндекс работает на 5k товаров разумно (< 2–5 сек)
+- Тесты пройдены: unit `RuQueryNormalizer`, функциональные smoke `q`/пустой/опечатки
+- Обновлена документация и OpenAPI
+
+## Связанные правила
+- @ai_context.mdc
+- @hardcoderules.mdc
+- @paginationapiplatformmapping.mdc
+- @doctrine_entities.mdc
+- @services.mdc
+- @stimulus_policy.mdc
+

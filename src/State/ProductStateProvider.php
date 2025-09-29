@@ -10,6 +10,7 @@ use ApiPlatform\State\Pagination\TraversablePaginator;
 use App\ApiResource\ProductResource;
 use App\Entity\Product;
 use App\Repository\ProductRepository;
+use App\Service\Search\ProductSearch;
 use App\Service\PaginationService;
 
 /**
@@ -30,7 +31,9 @@ class ProductStateProvider implements ProviderInterface
 {
     public function __construct(
         private readonly ProductRepository $repository,
-        private readonly PaginationService $pagination
+        private readonly PaginationService $pagination,
+        private readonly ProductSearch $search,
+        private readonly string $searchEngine = ''
     )
     {
     }
@@ -45,11 +48,37 @@ class ProductStateProvider implements ProviderInterface
 
             $offset = ($page - 1) * $itemsPerPage;
 
+            // q-поиск через TNTSearch при включённом движке
+            $q = trim((string)($filters['q'] ?? ''));
+            $useTnt = ($this->searchEngine === 'tnt') && $q !== '';
+
+            if ($useTnt) {
+                $found = $this->search->search($q, $itemsPerPage, $offset);
+                $ids = $found['ids'];
+                $totalItems = $found['total'];
+                if (empty($ids)) {
+                    return new TraversablePaginator(new \ArrayIterator([]), $page, $itemsPerPage, 0);
+                }
+
+                // Загружаем сущности с сохранением порядка
+                $entities = $this->repository->createQueryBuilder('p')
+                    ->andWhere('p.id IN (:ids)')
+                    ->setParameter('ids', $ids)
+                    ->getQuery()->getResult();
+                // map by id
+                $byId = [];
+                foreach ($entities as $e) { $byId[$e->getId()] = $e; }
+                $ordered = [];
+                foreach ($ids as $id) { if (isset($byId[$id])) { $ordered[] = $byId[$id]; } }
+                $resources = array_map([$this, 'transformLightweight'], $ordered);
+                return new TraversablePaginator(new \ArrayIterator($resources), $page, $itemsPerPage, $totalItems);
+            }
+
             $qb = $this->repository->createQueryBuilder('p')
                 ->setFirstResult($offset)
                 ->setMaxResults($itemsPerPage);
 
-            // Apply name filter (partial match)
+            // Имевшийся name-фильтр остаётся для mysql-движка
             $name = (string)($filters['name'] ?? '');
             $name = trim($name);
             if ($name !== '') {

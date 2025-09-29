@@ -43,7 +43,9 @@
         "symfony/ux-twig-component": "^2.30",
         "symfony/validator": "7.3.*",
         "symfony/webpack-encore-bundle": "^2.3",
-        "symfony/yaml": "7.3.*"
+        "symfony/yaml": "7.3.*",
+        "teamtnt/tntsearch": "5.0",
+        "wamania/php-stemmer": "4.0"
     },
     "config": {
         "allow-plugins": {
