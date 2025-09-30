@@ -1,0 +1,69 @@
+[
+  {
+    "check_id": "AUTH_REQUIRED_NON_SAFE_METHODS",
+    "title": "Небезопасные методы требуют аутентификации",
+    "category": "Authentication",
+    "severity_if_fail": "high",
+    "how_to_decide": "operation.security present OR firewall protects path; method in [POST,PUT,PATCH,DELETE]",
+    "evidence_fields": [
+      "method",
+      "path",
+      "auth",
+      "openapi.security"
+    ]
+  },
+  {
+    "check_id": "AUTH_PRESENT_FOR_SENSITIVE",
+    "title": "Чувствительные эндпоинты не публичны",
+    "category": "Authentication",
+    "severity_if_fail": "high",
+    "how_to_decide": "sensitivity in [high] => auth != public",
+    "evidence_fields": [
+      "path",
+      "sensitivity",
+      "auth"
+    ]
+  },
+  {
+    "check_id": "IDOR_OWNER_CHECK",
+    "title": "Проверка владельца/ролей для путей с {id}",
+    "category": "Authorization",
+    "severity_if_fail": "high",
+    "how_to_decide": "path has {id} and not low sensitivity => require voter/IsGranted/security expression",
+    "evidence_fields": [
+      "path",
+      "sensitivity"
+    ]
+  },
+  {
+    "check_id": "PAGINATION_LIMITS",
+    "title": "Коллекции имеют пагинацию и верхние пределы",
+    "category": "Resource Limits",
+    "severity_if_fail": "medium",
+    "how_to_decide": "collection paths expose page/itemsPerPage and have maximum limits (OpenAPI/config)",
+    "evidence_fields": [
+      "path",
+      "openapi.parameters"
+    ]
+  },
+  {
+    "check_id": "CORS_CREDENTIALS_ORIGINS",
+    "title": "CORS не допускает * с credentials: true",
+    "category": "CORS",
+    "severity_if_fail": "high",
+    "how_to_decide": "nelmio_cors.yaml allow_origin != * if allow_credentials: true",
+    "evidence_fields": [
+      "cors_config"
+    ]
+  },
+  {
+    "check_id": "CONTENT_TYPE_FOR_JSON",
+    "title": "JSON-запросы отправляются с Content-Type: application/json",
+    "category": "Client Calls",
+    "severity_if_fail": "low",
+    "how_to_decide": "client_calls with body require Content-Type header",
+    "evidence_fields": [
+      "client_calls.headers_detected"
+    ]
+  }
+]

@@ -1,0 +1,449 @@
+### API Security Audit
+
+- Endpoints: 252
+- High FAIL: 148
+- High UNKNOWN: 77
+
+### High priority
+
+- GET /api/admin/fias — AUTH_PRESENT_FOR_SENSITIVE (fail), PAGINATION_LIMITS (unknown)
+- GET /api/admin/fias/{id} — AUTH_PRESENT_FOR_SENSITIVE (fail), IDOR_OWNER_CHECK (unknown)
+- GET /api/admin/order-statuses — AUTH_PRESENT_FOR_SENSITIVE (fail), PAGINATION_LIMITS (unknown)
+- POST /api/admin/order-statuses — AUTH_REQUIRED_NON_SAFE_METHODS (fail), AUTH_PRESENT_FOR_SENSITIVE (fail), PAGINATION_LIMITS (unknown)
+- DELETE /api/admin/order-statuses/{id} — AUTH_REQUIRED_NON_SAFE_METHODS (fail), AUTH_PRESENT_FOR_SENSITIVE (fail), IDOR_OWNER_CHECK (unknown)
+- GET /api/admin/order-statuses/{id} — AUTH_PRESENT_FOR_SENSITIVE (fail), IDOR_OWNER_CHECK (unknown)
+- PATCH /api/admin/order-statuses/{id} — AUTH_REQUIRED_NON_SAFE_METHODS (fail), AUTH_PRESENT_FOR_SENSITIVE (fail), IDOR_OWNER_CHECK (unknown)
+- PUT /api/admin/order-statuses/{id} — AUTH_REQUIRED_NON_SAFE_METHODS (fail), AUTH_PRESENT_FOR_SENSITIVE (fail), IDOR_OWNER_CHECK (unknown)
+- GET /api/admin/pvz-points — AUTH_PRESENT_FOR_SENSITIVE (fail), PAGINATION_LIMITS (unknown)
+- DELETE /api/admin/pvz-points/{id} — AUTH_REQUIRED_NON_SAFE_METHODS (fail), AUTH_PRESENT_FOR_SENSITIVE (fail), IDOR_OWNER_CHECK (unknown)
+- GET /api/admin/pvz-points/{id} — AUTH_PRESENT_FOR_SENSITIVE (fail), IDOR_OWNER_CHECK (unknown)
+- PATCH /api/admin/pvz-points/{id} — AUTH_REQUIRED_NON_SAFE_METHODS (fail), AUTH_PRESENT_FOR_SENSITIVE (fail), IDOR_OWNER_CHECK (unknown)
+- PUT /api/admin/pvz-points/{id} — AUTH_REQUIRED_NON_SAFE_METHODS (fail), AUTH_PRESENT_FOR_SENSITIVE (fail), IDOR_OWNER_CHECK (unknown)
+- GET /api/admin/pvz-prices — AUTH_PRESENT_FOR_SENSITIVE (fail), PAGINATION_LIMITS (unknown)
+- DELETE /api/admin/pvz-prices/{id} — AUTH_REQUIRED_NON_SAFE_METHODS (fail), AUTH_PRESENT_FOR_SENSITIVE (fail), IDOR_OWNER_CHECK (unknown)
+- GET /api/admin/pvz-prices/{id} — AUTH_PRESENT_FOR_SENSITIVE (fail), IDOR_OWNER_CHECK (unknown)
+- PATCH /api/admin/pvz-prices/{id} — AUTH_REQUIRED_NON_SAFE_METHODS (fail), AUTH_PRESENT_FOR_SENSITIVE (fail), IDOR_OWNER_CHECK (unknown)
+- PUT /api/admin/pvz-prices/{id} — AUTH_REQUIRED_NON_SAFE_METHODS (fail), AUTH_PRESENT_FOR_SENSITIVE (fail), IDOR_OWNER_CHECK (unknown)
+- GET /api/admin/settings — AUTH_PRESENT_FOR_SENSITIVE (fail), PAGINATION_LIMITS (unknown)
+- POST /api/admin/settings — AUTH_REQUIRED_NON_SAFE_METHODS (fail), AUTH_PRESENT_FOR_SENSITIVE (fail), PAGINATION_LIMITS (unknown)
+- DELETE /api/admin/settings/{id} — AUTH_REQUIRED_NON_SAFE_METHODS (fail), AUTH_PRESENT_FOR_SENSITIVE (fail), IDOR_OWNER_CHECK (unknown)
+- GET /api/admin/settings/{id} — AUTH_PRESENT_FOR_SENSITIVE (fail), IDOR_OWNER_CHECK (unknown)
+- PATCH /api/admin/settings/{id} — AUTH_REQUIRED_NON_SAFE_METHODS (fail), AUTH_PRESENT_FOR_SENSITIVE (fail), IDOR_OWNER_CHECK (unknown)
+- PUT /api/admin/settings/{id} — AUTH_REQUIRED_NON_SAFE_METHODS (fail), AUTH_PRESENT_FOR_SENSITIVE (fail), IDOR_OWNER_CHECK (unknown)
+- POST /api/attribute_groups.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- DELETE /api/attribute_groups/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- PATCH /api/attribute_groups/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- POST /api/attributes.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- DELETE /api/attributes/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail), IDOR_OWNER_CHECK (unknown)
+- PATCH /api/attributes/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail), IDOR_OWNER_CHECK (unknown)
+- DELETE /api/carousels/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- PATCH /api/carousels/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- DELETE /api/cart — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- PATCH /api/cart — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- POST /api/cart/batch — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- POST /api/cart/items — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- DELETE /api/cart/items/{itemId} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- PATCH /api/cart/items/{itemId} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- POST /api/cart/reprice — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- POST /api/categories.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- DELETE /api/categories/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- PATCH /api/categories/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- POST /api/checkout/draft — AUTH_REQUIRED_NON_SAFE_METHODS (fail), AUTH_PRESENT_FOR_SENSITIVE (fail), PAGINATION_LIMITS (unknown)
+- POST /api/cities.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- DELETE /api/cities/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- PATCH /api/cities/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- GET /api/config/pagination/pvz — AUTH_PRESENT_FOR_SENSITIVE (fail), PAGINATION_LIMITS (unknown)
+- POST /api/delivery_types.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- DELETE /api/delivery_types/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail), IDOR_OWNER_CHECK (unknown)
+- PATCH /api/delivery_types/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail), IDOR_OWNER_CHECK (unknown)
+- GET /api/delivery/pvz-points — AUTH_PRESENT_FOR_SENSITIVE (fail), PAGINATION_LIMITS (unknown)
+- POST /api/delivery/select-city — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- POST /api/delivery/select-method — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- POST /api/delivery/select-pvz — AUTH_REQUIRED_NON_SAFE_METHODS (fail), AUTH_PRESENT_FOR_SENSITIVE (fail), PAGINATION_LIMITS (unknown)
+- POST /api/facet_configs.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- PATCH /api/facet_configs/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- POST /api/option_values.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- DELETE /api/option_values/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- PATCH /api/option_values/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- POST /api/options.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- DELETE /api/options/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail), IDOR_OWNER_CHECK (unknown)
+- PATCH /api/options/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail), IDOR_OWNER_CHECK (unknown)
+- POST /api/order_customers.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- DELETE /api/order_customers/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- PATCH /api/order_customers/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- POST /api/order_deliveries.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- DELETE /api/order_deliveries/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- PATCH /api/order_deliveries/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- POST /api/order_product_options.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- DELETE /api/order_product_options/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail), IDOR_OWNER_CHECK (unknown)
+- PATCH /api/order_product_options/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail), IDOR_OWNER_CHECK (unknown)
+- POST /api/order_products.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- DELETE /api/order_products/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- PATCH /api/order_products/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- POST /api/order_statuses.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- DELETE /api/order_statuses/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- PATCH /api/order_statuses/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- PUT /api/order_statuses/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- GET /api/orders.{_format} — AUTH_PRESENT_FOR_SENSITIVE (fail), PAGINATION_LIMITS (unknown)
+- DELETE /api/orders/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail), AUTH_PRESENT_FOR_SENSITIVE (fail), IDOR_OWNER_CHECK (unknown)
+- GET /api/orders/{id}.{_format} — AUTH_PRESENT_FOR_SENSITIVE (fail), IDOR_OWNER_CHECK (unknown)
+- PATCH /api/orders/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail), AUTH_PRESENT_FOR_SENSITIVE (fail), IDOR_OWNER_CHECK (unknown)
+- POST /api/product_attribute_assignments.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- DELETE /api/product_attribute_assignments/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- PATCH /api/product_attribute_assignments/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- POST /api/product_to_categories.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- DELETE /api/product_to_categories/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- POST /api/products.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- DELETE /api/products/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- PATCH /api/products/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail)
+- GET /api/pvz_prices — AUTH_PRESENT_FOR_SENSITIVE (fail), PAGINATION_LIMITS (unknown)
+- POST /api/pvz_prices.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail), AUTH_PRESENT_FOR_SENSITIVE (fail), PAGINATION_LIMITS (unknown)
+- DELETE /api/pvz_prices/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail), AUTH_PRESENT_FOR_SENSITIVE (fail), IDOR_OWNER_CHECK (unknown)
+- GET /api/pvz_prices/{id}.{_format} — AUTH_PRESENT_FOR_SENSITIVE (fail), IDOR_OWNER_CHECK (unknown)
+- PATCH /api/pvz_prices/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail), AUTH_PRESENT_FOR_SENSITIVE (fail), IDOR_OWNER_CHECK (unknown)
+- PUT /api/pvz_prices/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail), AUTH_PRESENT_FOR_SENSITIVE (fail), IDOR_OWNER_CHECK (unknown)
+- GET /api/users.{_format} — AUTH_PRESENT_FOR_SENSITIVE (fail), PAGINATION_LIMITS (unknown)
+- POST /api/users.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail), AUTH_PRESENT_FOR_SENSITIVE (fail), PAGINATION_LIMITS (unknown)
+- DELETE /api/users/{id}.{_format} — AUTH_REQUIRED_NON_SAFE_METHODS (fail), AUTH_PRESENT_FOR_SENSITIVE (fail), IDOR_OWNER_CHECK (unknown)
+- GET /api/users/{id}.{_format} — AUTH_PRESENT_FOR_SENSITIVE (fail), IDOR_OWNER_CHECK (unknown)
+
+### Findings by category
+
+- PAGINATION
+  - GET /api/{index}.{_format}: PAGINATION_LIMITS → unknown
+  - HEAD /api/{index}.{_format}: PAGINATION_LIMITS → unknown
+  - GET /api/admin/fias: PAGINATION_LIMITS → unknown
+  - GET /api/admin/order-statuses: PAGINATION_LIMITS → unknown
+  - POST /api/admin/order-statuses: PAGINATION_LIMITS → unknown
+  - GET /api/admin/pvz-points: PAGINATION_LIMITS → unknown
+  - GET /api/admin/pvz-prices: PAGINATION_LIMITS → unknown
+  - GET /api/admin/settings: PAGINATION_LIMITS → unknown
+  - POST /api/admin/settings: PAGINATION_LIMITS → unknown
+  - GET /api/attribute_groups.{_format}: PAGINATION_LIMITS → unknown
+  - POST /api/attribute_groups.{_format}: PAGINATION_LIMITS → unknown
+  - GET /api/attributes.{_format}: PAGINATION_LIMITS → unknown
+  - POST /api/attributes.{_format}: PAGINATION_LIMITS → unknown
+  - GET /api/carousels.{_format}: PAGINATION_LIMITS → unknown
+  - DELETE /api/cart: PAGINATION_LIMITS → unknown
+  - GET /api/cart: PAGINATION_LIMITS → unknown
+  - PATCH /api/cart: PAGINATION_LIMITS → unknown
+  - POST /api/cart/batch: PAGINATION_LIMITS → unknown
+  - POST /api/cart/items: PAGINATION_LIMITS → unknown
+  - DELETE /api/cart/items/{itemId}: PAGINATION_LIMITS → unknown
+  - PATCH /api/cart/items/{itemId}: PAGINATION_LIMITS → unknown
+  - GET /api/cart/products/{productId}/options: PAGINATION_LIMITS → unknown
+  - POST /api/cart/reprice: PAGINATION_LIMITS → unknown
+  - GET /api/categories.{_format}: PAGINATION_LIMITS → unknown
+  - POST /api/categories.{_format}: PAGINATION_LIMITS → unknown
+  - POST /api/checkout/draft: PAGINATION_LIMITS → unknown
+  - GET /api/cities.{_format}: PAGINATION_LIMITS → unknown
+  - POST /api/cities.{_format}: PAGINATION_LIMITS → unknown
+  - GET /api/city_modals.{_format}: PAGINATION_LIMITS → unknown
+  - GET /api/config/pagination: PAGINATION_LIMITS → unknown
+  - GET /api/config/pagination/city: PAGINATION_LIMITS → unknown
+  - GET /api/config/pagination/pvz: PAGINATION_LIMITS → unknown
+  - GET /api/contexts/{shortName}.{_format}: PAGINATION_LIMITS → unknown
+  - HEAD /api/contexts/{shortName}.{_format}: PAGINATION_LIMITS → unknown
+  - GET /api/csrf: PAGINATION_LIMITS → unknown
+  - GET /api/delivery_types.{_format}: PAGINATION_LIMITS → unknown
+  - POST /api/delivery_types.{_format}: PAGINATION_LIMITS → unknown
+  - GET /api/delivery/context: PAGINATION_LIMITS → unknown
+  - GET /api/delivery/pvz-points: PAGINATION_LIMITS → unknown
+  - POST /api/delivery/select-city: PAGINATION_LIMITS → unknown
+  - POST /api/delivery/select-method: PAGINATION_LIMITS → unknown
+  - POST /api/delivery/select-pvz: PAGINATION_LIMITS → unknown
+  - GET /api/docs.{_format}: PAGINATION_LIMITS → unknown
+  - HEAD /api/docs.{_format}: PAGINATION_LIMITS → unknown
+  - GET /api/errors/{status}.{_format}: PAGINATION_LIMITS → unknown
+  - GET /api/facet_configs.{_format}: PAGINATION_LIMITS → unknown
+  - POST /api/facet_configs.{_format}: PAGINATION_LIMITS → unknown
+  - GET /api/fias: PAGINATION_LIMITS → unknown
+  - ANY /api/login: PAGINATION_LIMITS → unknown
+  - GET /api/option_values.{_format}: PAGINATION_LIMITS → unknown
+  - POST /api/option_values.{_format}: PAGINATION_LIMITS → unknown
+  - GET /api/options.{_format}: PAGINATION_LIMITS → unknown
+  - POST /api/options.{_format}: PAGINATION_LIMITS → unknown
+  - GET /api/order_customers.{_format}: PAGINATION_LIMITS → unknown
+  - POST /api/order_customers.{_format}: PAGINATION_LIMITS → unknown
+  - GET /api/order_deliveries.{_format}: PAGINATION_LIMITS → unknown
+  - POST /api/order_deliveries.{_format}: PAGINATION_LIMITS → unknown
+  - GET /api/order_product_options.{_format}: PAGINATION_LIMITS → unknown
+  - POST /api/order_product_options.{_format}: PAGINATION_LIMITS → unknown
+  - GET /api/order_products.{_format}: PAGINATION_LIMITS → unknown
+  - POST /api/order_products.{_format}: PAGINATION_LIMITS → unknown
+  - GET /api/order_statuses.{_format}: PAGINATION_LIMITS → unknown
+  - POST /api/order_statuses.{_format}: PAGINATION_LIMITS → unknown
+  - GET /api/orders.{_format}: PAGINATION_LIMITS → unknown
+  - GET /api/product_attribute_assignments.{_format}: PAGINATION_LIMITS → unknown
+  - POST /api/product_attribute_assignments.{_format}: PAGINATION_LIMITS → unknown
+  - GET /api/product_to_categories.{_format}: PAGINATION_LIMITS → unknown
+  - POST /api/product_to_categories.{_format}: PAGINATION_LIMITS → unknown
+  - GET /api/products.{_format}: PAGINATION_LIMITS → unknown
+  - POST /api/products.{_format}: PAGINATION_LIMITS → unknown
+  - GET /api/pvz_prices: PAGINATION_LIMITS → unknown
+  - POST /api/pvz_prices.{_format}: PAGINATION_LIMITS → unknown
+  - GET /api/users.{_format}: PAGINATION_LIMITS → unknown
+  - POST /api/users.{_format}: PAGINATION_LIMITS → unknown
+  - GET /api/v2/product_images.{_format}: PAGINATION_LIMITS → unknown
+  - POST /api/v2/product_images.{_format}: PAGINATION_LIMITS → unknown
+  - GET /api/v2/products.{_format}: PAGINATION_LIMITS → unknown
+  - POST /api/v2/products.{_format}: PAGINATION_LIMITS → unknown
+  - GET /api/admin/categories/tree: PAGINATION_LIMITS → unknown
+  - GET /api/admin/facets/available: PAGINATION_LIMITS → unknown
+  - GET /api/admin/facets/config: PAGINATION_LIMITS → unknown
+  - PUT /api/admin/facets/config: PAGINATION_LIMITS → unknown
+  - POST /api/admin/facets/reindex: PAGINATION_LIMITS → unknown
+  - GET /api/admin/media/jpg-list: PAGINATION_LIMITS → unknown
+  - GET /api/admin/media/list: PAGINATION_LIMITS → unknown
+  - GET /api/admin/media/tree: PAGINATION_LIMITS → unknown
+  - GET /api/admin/products/form: PAGINATION_LIMITS → unknown
+  - POST /api/admin/search/reindex-products: PAGINATION_LIMITS → unknown
+  - POST /api/admin/yandex-delivery/offers/create: PAGINATION_LIMITS → unknown
+  - POST /api/admin/yandex-delivery/pickup-points/list: PAGINATION_LIMITS → unknown
+  - POST /api/admin/yandex-delivery/pickup-points/sync: PAGINATION_LIMITS → unknown
+  - GET /api/catalog/facets: PAGINATION_LIMITS → unknown
+  - GET /api/wishlist: PAGINATION_LIMITS → unknown
+  - GET /api/wishlist/count: PAGINATION_LIMITS → unknown
+  - POST /api/wishlist/items: PAGINATION_LIMITS → unknown
+  - DELETE /api/wishlist/items/{productId}: PAGINATION_LIMITS → unknown
+
+- AUTH
+  - GET /api/admin/fias: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - GET /api/admin/fias/{id}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - GET /api/admin/order-statuses: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - POST /api/admin/order-statuses: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /api/admin/order-statuses: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - DELETE /api/admin/order-statuses/{id}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - DELETE /api/admin/order-statuses/{id}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - GET /api/admin/order-statuses/{id}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - PATCH /api/admin/order-statuses/{id}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - PATCH /api/admin/order-statuses/{id}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - PUT /api/admin/order-statuses/{id}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - PUT /api/admin/order-statuses/{id}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - GET /api/admin/pvz-points: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - DELETE /api/admin/pvz-points/{id}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - DELETE /api/admin/pvz-points/{id}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - GET /api/admin/pvz-points/{id}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - PATCH /api/admin/pvz-points/{id}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - PATCH /api/admin/pvz-points/{id}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - PUT /api/admin/pvz-points/{id}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - PUT /api/admin/pvz-points/{id}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - GET /api/admin/pvz-prices: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - DELETE /api/admin/pvz-prices/{id}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - DELETE /api/admin/pvz-prices/{id}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - GET /api/admin/pvz-prices/{id}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - PATCH /api/admin/pvz-prices/{id}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - PATCH /api/admin/pvz-prices/{id}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - PUT /api/admin/pvz-prices/{id}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - PUT /api/admin/pvz-prices/{id}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - GET /api/admin/settings: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - POST /api/admin/settings: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /api/admin/settings: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - DELETE /api/admin/settings/{id}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - DELETE /api/admin/settings/{id}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - GET /api/admin/settings/{id}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - PATCH /api/admin/settings/{id}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - PATCH /api/admin/settings/{id}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - PUT /api/admin/settings/{id}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - PUT /api/admin/settings/{id}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - POST /api/attribute_groups.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - DELETE /api/attribute_groups/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - PATCH /api/attribute_groups/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /api/attributes.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - DELETE /api/attributes/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - PATCH /api/attributes/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - DELETE /api/carousels/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - PATCH /api/carousels/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - DELETE /api/cart: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - PATCH /api/cart: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /api/cart/batch: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /api/cart/items: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - DELETE /api/cart/items/{itemId}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - PATCH /api/cart/items/{itemId}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /api/cart/reprice: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /api/categories.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - DELETE /api/categories/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - PATCH /api/categories/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /api/checkout/draft: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /api/checkout/draft: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - POST /api/cities.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - DELETE /api/cities/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - PATCH /api/cities/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - GET /api/config/pagination/pvz: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - POST /api/delivery_types.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - DELETE /api/delivery_types/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - PATCH /api/delivery_types/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - GET /api/delivery/pvz-points: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - POST /api/delivery/select-city: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /api/delivery/select-method: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /api/delivery/select-pvz: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /api/delivery/select-pvz: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - POST /api/facet_configs.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - PATCH /api/facet_configs/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /api/option_values.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - DELETE /api/option_values/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - PATCH /api/option_values/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /api/options.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - DELETE /api/options/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - PATCH /api/options/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /api/order_customers.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - DELETE /api/order_customers/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - PATCH /api/order_customers/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /api/order_deliveries.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - DELETE /api/order_deliveries/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - PATCH /api/order_deliveries/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /api/order_product_options.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - DELETE /api/order_product_options/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - PATCH /api/order_product_options/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /api/order_products.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - DELETE /api/order_products/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - PATCH /api/order_products/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /api/order_statuses.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - DELETE /api/order_statuses/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - PATCH /api/order_statuses/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - PUT /api/order_statuses/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - GET /api/orders.{_format}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - DELETE /api/orders/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - DELETE /api/orders/{id}.{_format}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - GET /api/orders/{id}.{_format}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - PATCH /api/orders/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - PATCH /api/orders/{id}.{_format}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - POST /api/product_attribute_assignments.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - DELETE /api/product_attribute_assignments/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - PATCH /api/product_attribute_assignments/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /api/product_to_categories.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - DELETE /api/product_to_categories/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /api/products.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - DELETE /api/products/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - PATCH /api/products/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - GET /api/pvz_prices: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - POST /api/pvz_prices.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /api/pvz_prices.{_format}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - DELETE /api/pvz_prices/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - DELETE /api/pvz_prices/{id}.{_format}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - GET /api/pvz_prices/{id}.{_format}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - PATCH /api/pvz_prices/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - PATCH /api/pvz_prices/{id}.{_format}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - PUT /api/pvz_prices/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - PUT /api/pvz_prices/{id}.{_format}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - GET /api/users.{_format}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - POST /api/users.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /api/users.{_format}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - DELETE /api/users/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - DELETE /api/users/{id}.{_format}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - GET /api/users/{id}.{_format}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - PATCH /api/users/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - PATCH /api/users/{id}.{_format}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - POST /api/v2/product_images.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - DELETE /api/v2/product_images/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - PATCH /api/v2/product_images/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /api/v2/products.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - DELETE /api/v2/products/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - PATCH /api/v2/products/{id}.{_format}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - GET /api/admin/categories/tree: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - GET /api/admin/facets/available: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - GET /api/admin/facets/config: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - PUT /api/admin/facets/config: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - PUT /api/admin/facets/config: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - POST /api/admin/facets/reindex: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /api/admin/facets/reindex: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - GET /api/admin/media/jpg-list: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - GET /api/admin/media/list: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - DELETE /api/admin/media/product-image/{id}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - DELETE /api/admin/media/product-image/{id}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - GET /api/admin/media/product/{id}/images: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - POST /api/admin/media/product/{id}/images: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /api/admin/media/product/{id}/images: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - POST /api/admin/media/product/{id}/images/reorder: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /api/admin/media/product/{id}/images/reorder: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - GET /api/admin/media/tree: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - GET /api/admin/products/{id}/bootstrap: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - POST /api/admin/products/{id}/copy: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /api/admin/products/{id}/copy: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - GET /api/admin/products/{id}/form: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - POST /api/admin/products/{id}/sync: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /api/admin/products/{id}/sync: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - GET /api/admin/products/form: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - POST /api/admin/search/reindex-products: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /api/admin/search/reindex-products: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - POST /api/admin/yandex-delivery/offers/create: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /api/admin/yandex-delivery/offers/create: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - POST /api/admin/yandex-delivery/pickup-points/list: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /api/admin/yandex-delivery/pickup-points/list: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - POST /api/admin/yandex-delivery/pickup-points/sync: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /api/admin/yandex-delivery/pickup-points/sync: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - POST /api/wishlist/items: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - DELETE /api/wishlist/items/{productId}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - GET /checkout: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - POST /checkout: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /checkout: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - GET /checkout/success: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - GET /delivery/pvz-points: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - POST /login: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - GET /media/cache/{size}/{path}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - GET /media/cache/resolve/{filter}/{path}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - GET /media/cache/resolve/{filter}/rc/{hash}/{path}: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - GET /search/: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - GET /search/products: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - POST /session/clear: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /session/clear-key/{key}: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /_debug/session/clear: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /_debug/session/destroy: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - POST /_debug/session/regenerate: AUTH_REQUIRED_NON_SAFE_METHODS → fail
+  - ANY /_profiler/{token}/search/results: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - ANY /_profiler/search: AUTH_PRESENT_FOR_SENSITIVE → fail
+  - ANY /_profiler/search_bar: AUTH_PRESENT_FOR_SENSITIVE → fail
+
+- IDOR
+  - GET /api/admin/fias/{id}: IDOR_OWNER_CHECK → unknown
+  - DELETE /api/admin/order-statuses/{id}: IDOR_OWNER_CHECK → unknown
+  - GET /api/admin/order-statuses/{id}: IDOR_OWNER_CHECK → unknown
+  - PATCH /api/admin/order-statuses/{id}: IDOR_OWNER_CHECK → unknown
+  - PUT /api/admin/order-statuses/{id}: IDOR_OWNER_CHECK → unknown
+  - DELETE /api/admin/pvz-points/{id}: IDOR_OWNER_CHECK → unknown
+  - GET /api/admin/pvz-points/{id}: IDOR_OWNER_CHECK → unknown
+  - PATCH /api/admin/pvz-points/{id}: IDOR_OWNER_CHECK → unknown
+  - PUT /api/admin/pvz-points/{id}: IDOR_OWNER_CHECK → unknown
+  - DELETE /api/admin/pvz-prices/{id}: IDOR_OWNER_CHECK → unknown
+  - GET /api/admin/pvz-prices/{id}: IDOR_OWNER_CHECK → unknown
+  - PATCH /api/admin/pvz-prices/{id}: IDOR_OWNER_CHECK → unknown
+  - PUT /api/admin/pvz-prices/{id}: IDOR_OWNER_CHECK → unknown
+  - DELETE /api/admin/settings/{id}: IDOR_OWNER_CHECK → unknown
+  - GET /api/admin/settings/{id}: IDOR_OWNER_CHECK → unknown
+  - PATCH /api/admin/settings/{id}: IDOR_OWNER_CHECK → unknown
+  - PUT /api/admin/settings/{id}: IDOR_OWNER_CHECK → unknown
+  - DELETE /api/attributes/{id}.{_format}: IDOR_OWNER_CHECK → unknown
+  - GET /api/attributes/{id}.{_format}: IDOR_OWNER_CHECK → unknown
+  - PATCH /api/attributes/{id}.{_format}: IDOR_OWNER_CHECK → unknown
+  - GET /api/city_modals/{id}.{_format}: IDOR_OWNER_CHECK → unknown
+  - DELETE /api/delivery_types/{id}.{_format}: IDOR_OWNER_CHECK → unknown
+  - GET /api/delivery_types/{id}.{_format}: IDOR_OWNER_CHECK → unknown
+  - PATCH /api/delivery_types/{id}.{_format}: IDOR_OWNER_CHECK → unknown
+  - DELETE /api/options/{id}.{_format}: IDOR_OWNER_CHECK → unknown
+  - GET /api/options/{id}.{_format}: IDOR_OWNER_CHECK → unknown
+  - PATCH /api/options/{id}.{_format}: IDOR_OWNER_CHECK → unknown
+  - DELETE /api/order_product_options/{id}.{_format}: IDOR_OWNER_CHECK → unknown
+  - GET /api/order_product_options/{id}.{_format}: IDOR_OWNER_CHECK → unknown
+  - PATCH /api/order_product_options/{id}.{_format}: IDOR_OWNER_CHECK → unknown
+  - DELETE /api/orders/{id}.{_format}: IDOR_OWNER_CHECK → unknown
+  - GET /api/orders/{id}.{_format}: IDOR_OWNER_CHECK → unknown
+  - PATCH /api/orders/{id}.{_format}: IDOR_OWNER_CHECK → unknown
+  - DELETE /api/pvz_prices/{id}.{_format}: IDOR_OWNER_CHECK → unknown
+  - GET /api/pvz_prices/{id}.{_format}: IDOR_OWNER_CHECK → unknown
+  - PATCH /api/pvz_prices/{id}.{_format}: IDOR_OWNER_CHECK → unknown
+  - PUT /api/pvz_prices/{id}.{_format}: IDOR_OWNER_CHECK → unknown
+  - DELETE /api/users/{id}.{_format}: IDOR_OWNER_CHECK → unknown
+  - GET /api/users/{id}.{_format}: IDOR_OWNER_CHECK → unknown
+  - PATCH /api/users/{id}.{_format}: IDOR_OWNER_CHECK → unknown
+  - DELETE /api/admin/media/product-image/{id}: IDOR_OWNER_CHECK → unknown
+  - GET /api/admin/media/product/{id}/images: IDOR_OWNER_CHECK → unknown
+  - POST /api/admin/media/product/{id}/images: IDOR_OWNER_CHECK → unknown
+  - POST /api/admin/media/product/{id}/images/reorder: IDOR_OWNER_CHECK → unknown
+  - GET /api/admin/products/{id}/bootstrap: IDOR_OWNER_CHECK → unknown
+  - POST /api/admin/products/{id}/copy: IDOR_OWNER_CHECK → unknown
+  - GET /api/admin/products/{id}/form: IDOR_OWNER_CHECK → unknown
+  - POST /api/admin/products/{id}/sync: IDOR_OWNER_CHECK → unknown
+
+- CONTENT
+  - POST /api/delivery/select-city: CONTENT_TYPE_FOR_JSON → fail
+  - POST /api/wishlist/items: CONTENT_TYPE_FOR_JSON → fail

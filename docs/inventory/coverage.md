@@ -1,8 +1,8 @@
 ### Coverage summary
 
 - **total_server_endpoints**: 252
-- **api_platform**: 30
-- **custom_controller**: 201
+- **api_platform**: 170
+- **custom_controller**: 61
 - **internal|debug**: 21
 - **total_client_calls**: 117
 - **covered_endpoints**: 5 (2%)

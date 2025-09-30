@@ -130,11 +130,23 @@ function compilePathRegex(pathTemplate) {
   return new RegExp('^' + escaped + '/?$', 'i');
 }
 
+function normalizePathForCompare(p) {
+  if (!p) return '';
+  let out = String(p);
+  // Remove .{_format}
+  out = out.replace(/\.{_format}/g, '');
+  // Replace /{param}.{_format} => /{param}
+  out = out.replace(/\/(\{[^}]+\})\.{_format}/g, '/$1');
+  // Remove trailing slash (except root)
+  if (out.length > 1 && out.endsWith('/')) out = out.slice(0, -1);
+  return out;
+}
+
 function guessSourceFromRoute({ route_name, path, hasOpenApiMatch }) {
   const rn = String(route_name || '').toLowerCase();
   const p = String(path || '');
 
-  if (hasOpenApiMatch || rn.startsWith('api_')) return 'api_platform';
+  if (hasOpenApiMatch || rn.startsWith('api_') || rn.startsWith('_api_')) return 'api_platform';
   if (/webhook/.test(rn) || /\/webhook(\/|$)/.test(p)) return 'webhook';
   if (/^\/_/.test(p) || rn.startsWith('debug_') || rn.includes('profiler') || rn.includes('wdt')) return 'internal|debug';
   return 'custom_controller';
@@ -201,6 +213,7 @@ if (!openapi) {
 
 // ---------- Parse OpenAPI ----------
 const openapiPaths = new Map(); // key: METHOD PATH, value: openapi op data
+const openapiPathsNormalized = new Map(); // key: METHOD NORMALIZED_PATH, value: openapi op data
 const openapiIndexByPath = new Map(); // key: path, value: methods map
 
 if (openapi && isPlainObject(openapi.paths)) {
@@ -250,6 +263,8 @@ if (openapi && isPlainObject(openapi.paths)) {
         response_schema_ref: responseSchemaRef || null,
       };
       openapiPaths.set(`${upper} ${opPath}`, entry);
+      const norm = normalizePathForCompare(opPath);
+      openapiPathsNormalized.set(`${upper} ${norm}`, entry);
       if (!openapiIndexByPath.has(opPath)) openapiIndexByPath.set(opPath, new Set());
       openapiIndexByPath.get(opPath).add(upper);
     }
@@ -298,7 +313,7 @@ for (const [route_name, data] of Object.entries(routerIndex)) {
 
   for (const m of methods) {
     const upper = String(m).toUpperCase();
-    const oa = openapiPaths.get(`${upper} ${routePath}`) || null;
+    const oa = openapiPaths.get(`${upper} ${routePath}`) || openapiPathsNormalized.get(`${upper} ${normalizePathForCompare(routePath)}`) || null;
     const hasOpenApiMatch = !!oa;
     const source = guessSourceFromRoute({ route_name, path: routePath, hasOpenApiMatch });
     const entry = {
