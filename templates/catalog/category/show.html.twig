@@ -5,7 +5,12 @@
 {% block catalog_body %}
   <section>
     <div class="container mx-auto px-4 py-8">
-      <h1>Категория: {{ category.name ?? category.slug }}</h1>
+      <h1 class="flex items-center gap-3">
+        <span>Категория: {{ category.name ?? category.slug }}</span>
+        <span class="text-sm font-normal text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+          {{ total|default(0) }} {{ total|default(0) == 1 ? 'товар' : (total|default(0) > 1 and total|default(0) < 5 ? 'товара' : 'товаров') }}
+        </span>
+      </h1>
       {% if category.description %}
         <p>{{ category.description }}</p>
       {% endif %}
