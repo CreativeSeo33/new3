@@ -26,6 +26,8 @@ export class DeliverySelector extends Component {
   private methodInputs: HTMLInputElement[] = [];
   private pvzBlock!: HTMLElement | null;
   private pvzSelect!: HTMLSelectElement | null;
+  private pvzConfirmBtn: HTMLButtonElement | null = null;
+  private pvzSelectedLabel: HTMLElement | null = null;
   private pvzEmpty!: HTMLElement | null;
   private courierBlock!: HTMLElement | null;
   private addrInput!: HTMLInputElement | null;
@@ -37,6 +39,35 @@ export class DeliverySelector extends Component {
   private abortController: AbortController | null = null;
   private currentCityName: string | null = null;
   private spinner: Spinner | null = null;
+  private onMapPointSelect = async (e: Event): Promise<void> => {
+    const ce = e as CustomEvent<MapPoint>;
+    const detail = ce.detail || ({} as MapPoint);
+    const pvzCode = String(detail.id || '').trim();
+    if (!pvzCode) return;
+    try {
+      this.showSpinner();
+      await selectPvz(pvzCode);
+      if (this.pvzSelect) {
+        const existed = Array.from(this.pvzSelect.options).some(o => o.value === pvzCode);
+        if (!existed) {
+          const opt = document.createElement('option');
+          opt.value = pvzCode;
+          opt.textContent = detail.address || detail.title || pvzCode;
+          this.pvzSelect.appendChild(opt);
+        }
+        this.pvzSelect.value = pvzCode;
+      }
+      this.showSelectedLabel(detail.address || detail.title || pvzCode);
+      try {
+        const cart = await fetchFullCart();
+        updateCartSummary(cart);
+      } catch (_) {}
+    } catch (_) {
+      alert('Не удалось выбрать пункт выдачи');
+    } finally {
+      this.hideSpinner();
+    }
+  };
 
   constructor(el: HTMLElement, opts: DeliverySelectorOptions = {}) {
     super(el, opts);
@@ -53,6 +84,8 @@ export class DeliverySelector extends Component {
     this.methodInputs = Array.from(this.el.querySelectorAll('input[name="deliveryMethod"]')) as HTMLInputElement[];
     this.pvzBlock = this.$('#pvz-block');
     this.pvzSelect = this.$('#pvz-select') as HTMLSelectElement | null;
+    this.pvzConfirmBtn = this.$('#pvz-confirm') as HTMLButtonElement | null;
+    this.pvzSelectedLabel = this.$('#pvz-selected-label') as HTMLElement | null;
     this.pvzEmpty = this.$('#pvz-empty');
     this.courierBlock = this.$('#courier-block');
     this.addrInput = this.$('#courier-address') as HTMLInputElement | null;
@@ -95,10 +128,21 @@ export class DeliverySelector extends Component {
     const ctx: DeliveryContextDto = await getDeliveryContext().catch(() => ({ methodCode: 'pvz', cityName: null }));
     const initMethod = (ctx.methodCode || 'pvz') as DeliveryMethodCode;
     this.currentCityName = ctx.cityName || null;
+    const initPvzCode = (ctx as any).pickupPointId ? String((ctx as any).pickupPointId) : '';
     this.methodInputs.forEach((r) => (r.checked = r.value === initMethod));
     this.toggleBlocks(initMethod);
     if (initMethod === 'pvz') {
       await this.loadPvz(this.currentCityName || '');
+      // Если в контексте был выбран ПВЗ — выставим его в select, подпись и сфокусируем карту
+      if (initPvzCode && this.pvzSelect) {
+        const option = Array.from(this.pvzSelect.options).find(o => o.value === initPvzCode);
+        if (option) {
+          this.pvzSelect.value = initPvzCode;
+          this.showSelectedLabel(option.textContent || initPvzCode);
+          this.tryFocusSelectedPvz(initPvzCode);
+          if (this.pvzConfirmBtn) this.pvzConfirmBtn.disabled = false;
+        }
+      }
     }
     this.hideSpinner();
     this.revealBlocks();
@@ -132,22 +176,45 @@ export class DeliverySelector extends Component {
       });
     }
 
-    // Select PVZ
-    this.pvzSelect?.addEventListener('change', async () => {
-      const pvzCode = this.pvzSelect?.value || '';
-      if (!pvzCode) return;
-      try {
-        this.showSpinner();
-        await selectPvz(pvzCode);
+    // Кнопка подтверждения выбора ПВЗ
+    if (this.pvzConfirmBtn) {
+      this.pvzConfirmBtn.addEventListener('click', async () => {
+        const pvzCode = this.pvzSelect?.value || '';
+        if (!pvzCode) return;
         try {
-          const cart = await fetchFullCart();
-          updateCartSummary(cart);
-        } catch (_) {}
-      } catch (e) {
-        alert('Ошибка');
-      } finally {
-        this.hideSpinner();
+          this.showSpinner();
+          await selectPvz(pvzCode);
+          const labelText = this.pvzSelect?.selectedOptions?.[0]?.textContent || pvzCode;
+          this.showSelectedLabel(labelText || pvzCode);
+          // Подсветить выбранную метку и обновить balloon на карте
+          const mapEl = this.pvzMapCanvas;
+          const mapApi = mapEl ? (mapEl as any).yandexMap : null;
+          if (mapApi && typeof mapApi.selectPoint === 'function') {
+            try { mapApi.selectPoint(pvzCode); } catch (_) {}
+          } else if (mapApi && typeof mapApi.focusPoint === 'function') {
+            try { mapApi.focusPoint(pvzCode); } catch (_) {}
+          }
+          try {
+            const cart = await fetchFullCart();
+            updateCartSummary(cart);
+          } catch (_) {}
+        } catch (e) {
+          alert('Ошибка');
+        } finally {
+          this.hideSpinner();
+        }
+      });
+    }
+
+    // Управление активностью кнопки при выборе в селекте
+    this.pvzSelect?.addEventListener('change', () => {
+      const hasValue = !!(this.pvzSelect?.value || '').trim();
+      if (this.pvzConfirmBtn) {
+        this.pvzConfirmBtn.disabled = !hasValue;
       }
+      // Фокусируем карту на выбранной точке (без подтверждения выбора)
+      const code = (this.pvzSelect?.value || '').trim();
+      if (code) this.tryFocusSelectedPvz(code);
     });
 
     // Courier address
@@ -169,6 +236,22 @@ export class DeliverySelector extends Component {
         this.hideSpinner();
       }
     });
+
+    // Выбор ПВЗ с карты через кастомное событие от карты (слушаем на корневом элементе блока)
+    this.el.addEventListener('yandex-map:point-select', this.onMapPointSelect as EventListener);
+  }
+
+  private showSelectedLabel(text: string): void {
+    const el = this.pvzSelectedLabel;
+    if (!el) return;
+    const t = (text || '').trim();
+    if (t.length > 0) {
+      el.textContent = `Выбран пункт: ${t}`;
+      el.classList.remove('hidden');
+    } else {
+      el.textContent = '';
+      el.classList.add('hidden');
+    }
   }
 
   private toggleBlocks(method: DeliveryMethodCode): void {
@@ -208,6 +291,8 @@ export class DeliverySelector extends Component {
         opt.textContent = p.address || p.name || p.code;
         this.pvzSelect.appendChild(opt);
       }
+      // Update confirm button availability after options are loaded
+      if (this.pvzConfirmBtn) this.pvzConfirmBtn.disabled = !((this.pvzSelect.value || '').trim());
       this.updatePvzMapFromApi(list);
     } catch (_) {
       this.pvzEmpty.classList.remove('hidden');
@@ -219,6 +304,7 @@ export class DeliverySelector extends Component {
 
   destroy(): void {
     if (this.abortController) this.abortController.abort();
+    try { this.el.removeEventListener('yandex-map:point-select', this.onMapPointSelect as EventListener); } catch (_) {}
     super.destroy();
   }
 
@@ -295,6 +381,18 @@ export class DeliverySelector extends Component {
     }
     if (attempt >= 10) return;
     window.setTimeout(() => this.trySetMapPoints(points, attempt + 1), 200);
+  }
+
+  private tryFocusSelectedPvz(code: string, attempt = 0): void {
+    const mapEl = this.pvzMapCanvas;
+    if (!mapEl) return;
+    const mapApi = (mapEl as any).yandexMap;
+    if (mapApi && typeof mapApi.focusPoint === 'function') {
+      try { mapApi.focusPoint(code); } catch (_) {}
+      return;
+    }
+    if (attempt >= 10) return;
+    window.setTimeout(() => this.tryFocusSelectedPvz(code, attempt + 1), 200);
   }
 
   private isValidCoords(lat: unknown, lon: unknown): lat is number {

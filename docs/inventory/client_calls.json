@@ -1,0 +1,1774 @@
+[
+  {
+    "file": "assets\\admin\\repositories\\AttributeGroupRepository.ts",
+    "line": 14,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/attribute_groups",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\AttributeGroupRepository.ts",
+    "line": 14,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/attribute_groups/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\AttributeGroupRepository.ts",
+    "line": 14,
+    "client_lib": "axios",
+    "client_method": "POST",
+    "url_template": "/attribute_groups",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\AttributeGroupRepository.ts",
+    "line": 14,
+    "client_lib": "axios",
+    "client_method": "PUT",
+    "url_template": "/attribute_groups/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\AttributeGroupRepository.ts",
+    "line": 14,
+    "client_lib": "axios",
+    "client_method": "PATCH",
+    "url_template": "/attribute_groups/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\AttributeGroupRepository.ts",
+    "line": 14,
+    "client_lib": "axios",
+    "client_method": "DELETE",
+    "url_template": "/attribute_groups/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\AttributeRepository.ts",
+    "line": 16,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/attributes",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\AttributeRepository.ts",
+    "line": 16,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/attributes/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\AttributeRepository.ts",
+    "line": 16,
+    "client_lib": "axios",
+    "client_method": "POST",
+    "url_template": "/attributes",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\AttributeRepository.ts",
+    "line": 16,
+    "client_lib": "axios",
+    "client_method": "PUT",
+    "url_template": "/attributes/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\AttributeRepository.ts",
+    "line": 16,
+    "client_lib": "axios",
+    "client_method": "PATCH",
+    "url_template": "/attributes/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\AttributeRepository.ts",
+    "line": 16,
+    "client_lib": "axios",
+    "client_method": "DELETE",
+    "url_template": "/attributes/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\CategoryRepository.ts",
+    "line": 25,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/categories",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\CategoryRepository.ts",
+    "line": 25,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/categories/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\CategoryRepository.ts",
+    "line": 25,
+    "client_lib": "axios",
+    "client_method": "POST",
+    "url_template": "/categories",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\CategoryRepository.ts",
+    "line": 25,
+    "client_lib": "axios",
+    "client_method": "PUT",
+    "url_template": "/categories/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\CategoryRepository.ts",
+    "line": 25,
+    "client_lib": "axios",
+    "client_method": "PATCH",
+    "url_template": "/categories/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\CategoryRepository.ts",
+    "line": 25,
+    "client_lib": "axios",
+    "client_method": "DELETE",
+    "url_template": "/categories/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\CityRepository.ts",
+    "line": 17,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/cities",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\CityRepository.ts",
+    "line": 17,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/cities/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\CityRepository.ts",
+    "line": 17,
+    "client_lib": "axios",
+    "client_method": "POST",
+    "url_template": "/cities",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\CityRepository.ts",
+    "line": 17,
+    "client_lib": "axios",
+    "client_method": "PUT",
+    "url_template": "/cities/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\CityRepository.ts",
+    "line": 17,
+    "client_lib": "axios",
+    "client_method": "PATCH",
+    "url_template": "/cities/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\CityRepository.ts",
+    "line": 17,
+    "client_lib": "axios",
+    "client_method": "DELETE",
+    "url_template": "/cities/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\DeliveryTypeRepository.ts",
+    "line": 16,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/delivery_types",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\DeliveryTypeRepository.ts",
+    "line": 16,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/delivery_types/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\DeliveryTypeRepository.ts",
+    "line": 16,
+    "client_lib": "axios",
+    "client_method": "POST",
+    "url_template": "/delivery_types",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\DeliveryTypeRepository.ts",
+    "line": 16,
+    "client_lib": "axios",
+    "client_method": "PUT",
+    "url_template": "/delivery_types/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\DeliveryTypeRepository.ts",
+    "line": 16,
+    "client_lib": "axios",
+    "client_method": "PATCH",
+    "url_template": "/delivery_types/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\DeliveryTypeRepository.ts",
+    "line": 16,
+    "client_lib": "axios",
+    "client_method": "DELETE",
+    "url_template": "/delivery_types/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\FacetRepository.ts",
+    "line": 24,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/facets/config",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\FacetRepository.ts",
+    "line": 24,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/facets/config/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\FacetRepository.ts",
+    "line": 24,
+    "client_lib": "axios",
+    "client_method": "POST",
+    "url_template": "/facets/config",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\FacetRepository.ts",
+    "line": 24,
+    "client_lib": "axios",
+    "client_method": "PUT",
+    "url_template": "/facets/config/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\FacetRepository.ts",
+    "line": 24,
+    "client_lib": "axios",
+    "client_method": "PATCH",
+    "url_template": "/facets/config/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\FacetRepository.ts",
+    "line": 24,
+    "client_lib": "axios",
+    "client_method": "DELETE",
+    "url_template": "/facets/config/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\OptionRepository.ts",
+    "line": 15,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/options",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\OptionRepository.ts",
+    "line": 15,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/options/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\OptionRepository.ts",
+    "line": 15,
+    "client_lib": "axios",
+    "client_method": "POST",
+    "url_template": "/options",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\OptionRepository.ts",
+    "line": 15,
+    "client_lib": "axios",
+    "client_method": "PUT",
+    "url_template": "/options/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\OptionRepository.ts",
+    "line": 15,
+    "client_lib": "axios",
+    "client_method": "PATCH",
+    "url_template": "/options/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\OptionRepository.ts",
+    "line": 15,
+    "client_lib": "axios",
+    "client_method": "DELETE",
+    "url_template": "/options/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\OptionValueRepository.ts",
+    "line": 16,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/option_values",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\OptionValueRepository.ts",
+    "line": 16,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/option_values/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\OptionValueRepository.ts",
+    "line": 16,
+    "client_lib": "axios",
+    "client_method": "POST",
+    "url_template": "/option_values",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\OptionValueRepository.ts",
+    "line": 16,
+    "client_lib": "axios",
+    "client_method": "PUT",
+    "url_template": "/option_values/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\OptionValueRepository.ts",
+    "line": 16,
+    "client_lib": "axios",
+    "client_method": "PATCH",
+    "url_template": "/option_values/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\OptionValueRepository.ts",
+    "line": 16,
+    "client_lib": "axios",
+    "client_method": "DELETE",
+    "url_template": "/option_values/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\OrderRepository.ts",
+    "line": 39,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/orders",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\OrderRepository.ts",
+    "line": 39,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/orders/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\OrderRepository.ts",
+    "line": 39,
+    "client_lib": "axios",
+    "client_method": "POST",
+    "url_template": "/orders",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\OrderRepository.ts",
+    "line": 39,
+    "client_lib": "axios",
+    "client_method": "PUT",
+    "url_template": "/orders/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\OrderRepository.ts",
+    "line": 39,
+    "client_lib": "axios",
+    "client_method": "PATCH",
+    "url_template": "/orders/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\OrderRepository.ts",
+    "line": 39,
+    "client_lib": "axios",
+    "client_method": "DELETE",
+    "url_template": "/orders/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\OrderStatusRepository.ts",
+    "line": 14,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/order_statuses",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\OrderStatusRepository.ts",
+    "line": 14,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/order_statuses/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\OrderStatusRepository.ts",
+    "line": 14,
+    "client_lib": "axios",
+    "client_method": "POST",
+    "url_template": "/order_statuses",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\OrderStatusRepository.ts",
+    "line": 14,
+    "client_lib": "axios",
+    "client_method": "PUT",
+    "url_template": "/order_statuses/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\OrderStatusRepository.ts",
+    "line": 14,
+    "client_lib": "axios",
+    "client_method": "PATCH",
+    "url_template": "/order_statuses/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\OrderStatusRepository.ts",
+    "line": 14,
+    "client_lib": "axios",
+    "client_method": "DELETE",
+    "url_template": "/order_statuses/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\ProductAttributeAssignmentRepository.ts",
+    "line": 24,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/product_attribute_assignments",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\ProductAttributeAssignmentRepository.ts",
+    "line": 24,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/product_attribute_assignments/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\ProductAttributeAssignmentRepository.ts",
+    "line": 24,
+    "client_lib": "axios",
+    "client_method": "POST",
+    "url_template": "/product_attribute_assignments",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\ProductAttributeAssignmentRepository.ts",
+    "line": 24,
+    "client_lib": "axios",
+    "client_method": "PUT",
+    "url_template": "/product_attribute_assignments/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\ProductAttributeAssignmentRepository.ts",
+    "line": 24,
+    "client_lib": "axios",
+    "client_method": "PATCH",
+    "url_template": "/product_attribute_assignments/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\ProductAttributeAssignmentRepository.ts",
+    "line": 24,
+    "client_lib": "axios",
+    "client_method": "DELETE",
+    "url_template": "/product_attribute_assignments/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\ProductCategoryRepository.ts",
+    "line": 15,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/product_to_categories",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\ProductCategoryRepository.ts",
+    "line": 15,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/product_to_categories/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\ProductCategoryRepository.ts",
+    "line": 15,
+    "client_lib": "axios",
+    "client_method": "POST",
+    "url_template": "/product_to_categories",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\ProductCategoryRepository.ts",
+    "line": 15,
+    "client_lib": "axios",
+    "client_method": "PUT",
+    "url_template": "/product_to_categories/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\ProductCategoryRepository.ts",
+    "line": 15,
+    "client_lib": "axios",
+    "client_method": "PATCH",
+    "url_template": "/product_to_categories/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\ProductCategoryRepository.ts",
+    "line": 15,
+    "client_lib": "axios",
+    "client_method": "DELETE",
+    "url_template": "/product_to_categories/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\ProductRepository.ts",
+    "line": 51,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/v2/products",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\ProductRepository.ts",
+    "line": 51,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/v2/products/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\ProductRepository.ts",
+    "line": 51,
+    "client_lib": "axios",
+    "client_method": "POST",
+    "url_template": "/v2/products",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\ProductRepository.ts",
+    "line": 51,
+    "client_lib": "axios",
+    "client_method": "PUT",
+    "url_template": "/v2/products/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\ProductRepository.ts",
+    "line": 51,
+    "client_lib": "axios",
+    "client_method": "PATCH",
+    "url_template": "/v2/products/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\ProductRepository.ts",
+    "line": 51,
+    "client_lib": "axios",
+    "client_method": "DELETE",
+    "url_template": "/v2/products/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\PvzPointsRepository.ts",
+    "line": 15,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/admin/pvz-points",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "custom_ajax",
+    "matched": true,
+    "matched_route_name": "admin_dashboard",
+    "matched_path": "/admin/{vueRouting}",
+    "matched_method": "GET"
+  },
+  {
+    "file": "assets\\admin\\repositories\\PvzPointsRepository.ts",
+    "line": 15,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/admin/pvz-points/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "custom_ajax",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\PvzPointsRepository.ts",
+    "line": 15,
+    "client_lib": "axios",
+    "client_method": "POST",
+    "url_template": "/admin/pvz-points",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "custom_ajax",
+    "matched": true,
+    "matched_route_name": "admin_dashboard",
+    "matched_path": "/admin/{vueRouting}",
+    "matched_method": "GET"
+  },
+  {
+    "file": "assets\\admin\\repositories\\PvzPointsRepository.ts",
+    "line": 15,
+    "client_lib": "axios",
+    "client_method": "PUT",
+    "url_template": "/admin/pvz-points/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "custom_ajax",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\PvzPointsRepository.ts",
+    "line": 15,
+    "client_lib": "axios",
+    "client_method": "PATCH",
+    "url_template": "/admin/pvz-points/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "custom_ajax",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\PvzPointsRepository.ts",
+    "line": 15,
+    "client_lib": "axios",
+    "client_method": "DELETE",
+    "url_template": "/admin/pvz-points/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "custom_ajax",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\PvzPriceRepository.ts",
+    "line": 16,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/admin/pvz-prices",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "custom_ajax",
+    "matched": true,
+    "matched_route_name": "admin_dashboard",
+    "matched_path": "/admin/{vueRouting}",
+    "matched_method": "GET"
+  },
+  {
+    "file": "assets\\admin\\repositories\\PvzPriceRepository.ts",
+    "line": 16,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/admin/pvz-prices/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "custom_ajax",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\PvzPriceRepository.ts",
+    "line": 16,
+    "client_lib": "axios",
+    "client_method": "POST",
+    "url_template": "/admin/pvz-prices",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "custom_ajax",
+    "matched": true,
+    "matched_route_name": "admin_dashboard",
+    "matched_path": "/admin/{vueRouting}",
+    "matched_method": "GET"
+  },
+  {
+    "file": "assets\\admin\\repositories\\PvzPriceRepository.ts",
+    "line": 16,
+    "client_lib": "axios",
+    "client_method": "PUT",
+    "url_template": "/admin/pvz-prices/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "custom_ajax",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\PvzPriceRepository.ts",
+    "line": 16,
+    "client_lib": "axios",
+    "client_method": "PATCH",
+    "url_template": "/admin/pvz-prices/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "custom_ajax",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\PvzPriceRepository.ts",
+    "line": 16,
+    "client_lib": "axios",
+    "client_method": "DELETE",
+    "url_template": "/admin/pvz-prices/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "custom_ajax",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\SearchRepository.ts",
+    "line": 12,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/admin/search",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "custom_ajax",
+    "matched": true,
+    "matched_route_name": "admin_dashboard",
+    "matched_path": "/admin/{vueRouting}",
+    "matched_method": "GET"
+  },
+  {
+    "file": "assets\\admin\\repositories\\SearchRepository.ts",
+    "line": 12,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/admin/search/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "custom_ajax",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\SearchRepository.ts",
+    "line": 12,
+    "client_lib": "axios",
+    "client_method": "POST",
+    "url_template": "/admin/search",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "custom_ajax",
+    "matched": true,
+    "matched_route_name": "admin_dashboard",
+    "matched_path": "/admin/{vueRouting}",
+    "matched_method": "GET"
+  },
+  {
+    "file": "assets\\admin\\repositories\\SearchRepository.ts",
+    "line": 12,
+    "client_lib": "axios",
+    "client_method": "PUT",
+    "url_template": "/admin/search/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "custom_ajax",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\SearchRepository.ts",
+    "line": 12,
+    "client_lib": "axios",
+    "client_method": "PATCH",
+    "url_template": "/admin/search/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "custom_ajax",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\SearchRepository.ts",
+    "line": 12,
+    "client_lib": "axios",
+    "client_method": "DELETE",
+    "url_template": "/admin/search/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "custom_ajax",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\SettingsRepository.ts",
+    "line": 13,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/admin/settings",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "custom_ajax",
+    "matched": true,
+    "matched_route_name": "admin_dashboard",
+    "matched_path": "/admin/{vueRouting}",
+    "matched_method": "GET"
+  },
+  {
+    "file": "assets\\admin\\repositories\\SettingsRepository.ts",
+    "line": 13,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/admin/settings/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "custom_ajax",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\SettingsRepository.ts",
+    "line": 13,
+    "client_lib": "axios",
+    "client_method": "POST",
+    "url_template": "/admin/settings",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "custom_ajax",
+    "matched": true,
+    "matched_route_name": "admin_dashboard",
+    "matched_path": "/admin/{vueRouting}",
+    "matched_method": "GET"
+  },
+  {
+    "file": "assets\\admin\\repositories\\SettingsRepository.ts",
+    "line": 13,
+    "client_lib": "axios",
+    "client_method": "PUT",
+    "url_template": "/admin/settings/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "custom_ajax",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\SettingsRepository.ts",
+    "line": 13,
+    "client_lib": "axios",
+    "client_method": "PATCH",
+    "url_template": "/admin/settings/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "custom_ajax",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\SettingsRepository.ts",
+    "line": 13,
+    "client_lib": "axios",
+    "client_method": "DELETE",
+    "url_template": "/admin/settings/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "custom_ajax",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\UserRepository.ts",
+    "line": 14,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/users",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\UserRepository.ts",
+    "line": 14,
+    "client_lib": "axios",
+    "client_method": "GET",
+    "url_template": "/users/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "none",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\UserRepository.ts",
+    "line": 14,
+    "client_lib": "axios",
+    "client_method": "POST",
+    "url_template": "/users",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\UserRepository.ts",
+    "line": 14,
+    "client_lib": "axios",
+    "client_method": "PUT",
+    "url_template": "/users/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\UserRepository.ts",
+    "line": 14,
+    "client_lib": "axios",
+    "client_method": "PATCH",
+    "url_template": "/users/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\admin\\repositories\\UserRepository.ts",
+    "line": 14,
+    "client_lib": "axios",
+    "client_method": "DELETE",
+    "url_template": "/users/{id}",
+    "headers_detected": [
+      "Authorization",
+      "Content-Type",
+      "Accept"
+    ],
+    "body_type": "json",
+    "via": "unknown",
+    "matched": false
+  },
+  {
+    "file": "assets\\catalog\\src\\widgets\\cart-counter\\index.ts",
+    "line": 127,
+    "client_lib": "fetch",
+    "client_method": "GET",
+    "url_template": "/api/cart",
+    "headers_detected": [],
+    "body_type": "none",
+    "via": "api_platform_path",
+    "matched": true,
+    "matched_route_name": "api_cart_get",
+    "matched_path": "/api/cart",
+    "matched_method": "GET"
+  },
+  {
+    "file": "assets\\catalog\\src\\widgets\\cart-counter\\index.ts",
+    "line": 143,
+    "client_lib": "fetch",
+    "client_method": "GET",
+    "url_template": "/api/cart",
+    "headers_detected": [],
+    "body_type": "none",
+    "via": "api_platform_path",
+    "matched": true,
+    "matched_route_name": "api_cart_get",
+    "matched_path": "/api/cart",
+    "matched_method": "GET"
+  },
+  {
+    "file": "assets\\catalog\\src\\shared\\api\\csrf.ts",
+    "line": 39,
+    "client_lib": "fetch",
+    "client_method": "GET",
+    "url_template": "/api/csrf",
+    "headers_detected": [
+      "X-Requested-With"
+    ],
+    "body_type": "none",
+    "via": "api_platform_path",
+    "matched": true,
+    "matched_route_name": "api_csrf_token",
+    "matched_path": "/api/csrf",
+    "matched_method": "GET"
+  },
+  {
+    "file": "assets\\catalog\\src\\features\\wishlist\\api\\index.ts",
+    "line": 17,
+    "client_lib": "fetch",
+    "client_method": "POST",
+    "url_template": "/api/wishlist/items",
+    "headers_detected": [],
+    "body_type": "json",
+    "via": "api_platform_path",
+    "matched": true,
+    "matched_route_name": "app_api_wishlistapi_add",
+    "matched_path": "/api/wishlist/items",
+    "matched_method": "POST"
+  },
+  {
+    "file": "assets\\catalog\\src\\features\\quantity-selector\\api\\index.ts",
+    "line": 43,
+    "client_lib": "fetch",
+    "client_method": "GET",
+    "url_template": "/api/cart",
+    "headers_detected": [],
+    "body_type": "none",
+    "via": "api_platform_path",
+    "matched": true,
+    "matched_route_name": "api_cart_get",
+    "matched_path": "/api/cart",
+    "matched_method": "GET"
+  },
+  {
+    "file": "assets\\catalog\\src\\features\\city-modal\\api\\index.ts",
+    "line": 24,
+    "client_lib": "fetch",
+    "client_method": "POST",
+    "url_template": "/api/delivery/select-city",
+    "headers_detected": [],
+    "body_type": "json",
+    "via": "api_platform_path",
+    "matched": true,
+    "matched_route_name": "api_delivery_select_city",
+    "matched_path": "/api/delivery/select-city",
+    "matched_method": "POST"
+  },
+  {
+    "file": "assets\\catalog\\src\\features\\cart-items-manager\\api\\index.ts",
+    "line": 112,
+    "client_lib": "fetch",
+    "client_method": "GET",
+    "url_template": "/api/cart",
+    "headers_detected": [],
+    "body_type": "none",
+    "via": "api_platform_path",
+    "matched": true,
+    "matched_route_name": "api_cart_get",
+    "matched_path": "/api/cart",
+    "matched_method": "GET"
+  },
+  {
+    "file": "assets\\catalog\\src\\features\\cart-items-manager\\api\\index.ts",
+    "line": 262,
+    "client_lib": "fetch",
+    "client_method": "GET",
+    "url_template": "/api/cart",
+    "headers_detected": [],
+    "body_type": "none",
+    "via": "api_platform_path",
+    "matched": true,
+    "matched_route_name": "api_cart_get",
+    "matched_path": "/api/cart",
+    "matched_method": "GET"
+  },
+  {
+    "file": "assets\\catalog\\src\\features\\autocomplete\\ui\\component.ts",
+    "line": 147,
+    "client_lib": "fetch",
+    "client_method": "POST",
+    "url_template": "/api/delivery/select-city",
+    "headers_detected": [],
+    "body_type": "json",
+    "via": "api_platform_path",
+    "matched": true,
+    "matched_route_name": "api_delivery_select_city",
+    "matched_path": "/api/delivery/select-city",
+    "matched_method": "POST"
+  }
+]

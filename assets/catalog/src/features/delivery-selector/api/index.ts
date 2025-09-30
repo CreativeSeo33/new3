@@ -5,6 +5,7 @@ export type DeliveryMethodCode = 'pvz' | 'courier';
 export interface DeliveryContextDto {
   methodCode?: DeliveryMethodCode | null;
   cityName?: string | null;
+  pickupPointId?: string | number | null;
 }
 
 export interface SelectCityResponseDto {

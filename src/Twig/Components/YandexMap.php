@@ -18,6 +18,7 @@ final class YandexMap
     /** @var array<string, mixed> */
     public array $clusterOptions = [];
     public bool $showList = false;
+    public ?string $selectedId = null;
 }
 
 
