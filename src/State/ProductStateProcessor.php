@@ -41,6 +41,7 @@ class ProductStateProcessor implements ProcessorInterface
         private readonly CartItemRepository $cartItemRepository,
         private readonly \Symfony\Component\HttpFoundation\RequestStack $requestStack,
         private readonly PaginationService $pagination,
+        private readonly ProductStateProvider $provider,
     ) {
     }
 
@@ -215,8 +216,7 @@ class ProductStateProcessor implements ProcessorInterface
         $this->em->flush();
 
         // Return DTO from fresh entity
-        $provider = new ProductStateProvider($this->repository, $this->pagination);
-        return $provider->provide($operation, ['id' => $entity->getId()], $context);
+        return $this->provider->provide($operation, ['id' => $entity->getId()], $context);
     }
 }
 

@@ -1,4 +1,4 @@
-{# Сетка товаров: ожидает переменную `products` #}
+{# Сетка товаров: ожидает переменные `products`, `total`, `page`, `limit`, `slug` #}
 <div class="grid lg:grid-cols-5 md:grid-cols-3 gap-4 mb-6" data-testid="category-grid">
   {% for p in products %}
     <div class="relative rounded-lg break-words border bg-white border-gray-300 card-product">
@@ -57,6 +57,43 @@
     </div>
   {% endfor %}
 </div>
+
+{# Пагинация #}
+{% set totalPages = (total is defined and limit is defined and limit > 0) ? ((total + limit - 1) // limit) : 1 %}
+{% if totalPages > 1 %}
+  {% set q = app.request.query.all %}
+  {% set baseParams = q|merge({ 'limit': limit }) %}
+  {% if baseParams['page'] is defined %}
+    {% set baseParams = baseParams|merge({ 'page': null }) %}
+  {% endif %}
+  <nav class="flex items-center justify-center gap-2" aria-label="Pagination">
+    {# Prev #}
+    {% if page > 1 %}
+      {% set prevParams = baseParams|merge({ 'page': page - 1 }) %}
+      <a class="px-3 py-1 border rounded" href="{{ path('catalog_category_products', { slug: slug }) ~ '?' ~ prevParams|url_encode }}">Назад</a>
+    {% else %}
+      <span class="px-3 py-1 border rounded text-gray-400">Назад</span>
+    {% endif %}
+
+    {# Pages #}
+    {% for p in 1..totalPages %}
+      {% set pParams = baseParams|merge({ 'page': p }) %}
+      {% if p == page %}
+        <span class="px-3 py-1 border rounded bg-gray-200">{{ p }}</span>
+      {% else %}
+        <a class="px-3 py-1 border rounded" href="{{ path('catalog_category_products', { slug: slug }) ~ '?' ~ pParams|url_encode }}">{{ p }}</a>
+      {% endif %}
+    {% endfor %}
+
+    {# Next #}
+    {% if page < totalPages %}
+      {% set nextParams = baseParams|merge({ 'page': page + 1 }) %}
+      <a class="px-3 py-1 border rounded" href="{{ path('catalog_category_products', { slug: slug }) ~ '?' ~ nextParams|url_encode }}">Вперёд</a>
+    {% else %}
+      <span class="px-3 py-1 border rounded text-gray-400">Вперёд</span>
+    {% endif %}
+  </nav>
+{% endif %}
 
 
 

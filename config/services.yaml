@@ -77,6 +77,10 @@ parameters:
     env(YANDEX_MAPS_API_KEY): ''
     app.yandex_maps.api_key: '%env(string:YANDEX_MAPS_API_KEY)%'
 
+    # Catalog pagination (category page)
+    app.pagination.allowed_limits: [10, 20, 30]
+    app.pagination.default_limit: 10
+
 services:
     # default configuration for services in *this* file
     _defaults:

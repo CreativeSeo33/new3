@@ -1,7 +1,7 @@
 import { Controller } from '@hotwired/stimulus'
 
 export default class extends Controller {
-  static targets = ['list', 'products', 'selected']
+  static targets = ['list', 'products', 'selected', 'limit']
   static values = {
     categoryId: Number,
     productsUrl: String,
@@ -14,6 +14,10 @@ export default class extends Controller {
     this.spinner = null
     // Прочитать выбранные фильтры из URL при первой загрузке
     this.readSelectedFromUrl()
+    // Привязываем popstate и синхронизируем селект лимита
+    this.onPopStateBound = this.onPopState.bind(this)
+    window.addEventListener('popstate', this.onPopStateBound)
+    this.syncLimitFromUrl()
     // Render initial facets if provided to avoid API call on first paint
     try {
       const initial = this.listTarget?.getAttribute('data-initial-facets')
@@ -27,6 +31,10 @@ export default class extends Controller {
     } catch (e) {
       this.loadFacets()
     }
+  }
+
+  disconnect() {
+    try { window.removeEventListener('popstate', this.onPopStateBound) } catch (_) {}
   }
 
   readSelectedFromUrl() {
@@ -79,29 +87,25 @@ export default class extends Controller {
   }
 
   async loadProducts() {
+    try { (await this.getOrInitSpinner())?.show() } catch (e) {}
     const url = new URL(this.productsUrlValue, window.location.origin)
     const params = this.buildQuery()
     for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v)
     try {
       const res = await fetch(url.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'text/html' } })
       const html = await res.text()
-      // Парсим только inner grid, чтобы не удалять спиннер
-      const tmp = document.createElement('div')
-      tmp.innerHTML = html
-      const newGrid = tmp.querySelector('[data-testid="category-grid"]') || tmp.querySelector('.grid')
-      const currentGrid = this.productsTarget.querySelector('[data-testid="category-grid"]') || this.productsTarget.querySelector('.grid')
-      if (newGrid && currentGrid) {
-        currentGrid.replaceWith(newGrid)
-      } else if (newGrid) {
-        // Fallback: если по какой-то причине текущего грида нет — добавим новый, не трогая спиннер
-        this.productsTarget.appendChild(newGrid)
-      } else {
-        // В крайнем случае обновим только текст (редко), не трогая остальной контейнер
-        const msg = tmp.textContent || ''
-        const placeholder = document.createElement('div')
-        placeholder.textContent = msg
-        if (currentGrid) currentGrid.replaceWith(placeholder)
+      // Обновляем весь контент продуктов (грид + пагинация), сохраняя спиннер
+      const wrapper = document.createElement('div')
+      wrapper.innerHTML = html
+      const spinnerRoot = this.productsTarget.querySelector('#category-grid-spinner')
+      const children = Array.from(this.productsTarget.children)
+      for (const ch of children) {
+        if (spinnerRoot && ch === spinnerRoot) continue
+        ch.remove()
       }
+      const frag = document.createDocumentFragment()
+      while (wrapper.firstChild) frag.appendChild(wrapper.firstChild)
+      this.productsTarget.appendChild(frag)
     } finally {
       try { this.spinner?.hide() } catch (e) {}
     }
@@ -112,11 +116,15 @@ export default class extends Controller {
     // Для страницы категории передаём category, для поиска — text
     const url = new URL(window.location.href)
     const text = url.searchParams.get('text') || ''
+    const limit = url.searchParams.get('limit') || ''
+    const page = url.searchParams.get('page') || ''
     if (this.hasCategoryIdValue && this.categoryIdValue) {
       q.category = String(this.categoryIdValue)
     } else if (text) {
       q.text = text
     }
+    if (limit) q.limit = limit
+    if (page) q.page = page
     for (const [code, set] of this.selected.entries()) {
       if (set.size > 0) q[`f[${code}]`] = Array.from(set).join(',')
     }
@@ -126,12 +134,76 @@ export default class extends Controller {
   updateUrl() {
     try {
       const url = new URL(window.location.href)
-      // Стираем прошлые f[...] и category (text сохраняем)
+      // Стираем прошлые f[...] и category (text/limit сохраняем); сбрасываем page=1
       Array.from(url.searchParams.keys()).forEach(k => { if (k === 'category' || k.startsWith('f[')) url.searchParams.delete(k) })
       const q = this.buildQuery()
       for (const [k, v] of Object.entries(q)) url.searchParams.set(k, v)
+      url.searchParams.set('page', '1')
       window.history.replaceState({}, '', url.toString())
     } catch (e) {}
+  }
+
+  // === Новое поведение: лимит/страницы ===
+  onLimitChange(event) {
+    const select = event.currentTarget
+    const value = String(select.value || '')
+    try {
+      const url = new URL(window.location.href)
+      if (value) url.searchParams.set('limit', value); else url.searchParams.delete('limit')
+      url.searchParams.set('page', '1')
+      window.history.pushState({}, '', url.toString())
+    } catch (_) {}
+    // Перезагружаем только товары
+    this.loadProducts()
+  }
+
+  onPaginationClick(event) {
+    // Делегирование: реагируем только на клики по ссылкам внутри навигации пагинации
+    const anchor = event.target && event.target.closest ? event.target.closest('a[href]') : null
+    if (!anchor) return
+    const nav = anchor.closest && anchor.closest('nav[aria-label="Pagination"]')
+    if (!nav) return
+    event.preventDefault()
+    try {
+      const linkUrl = new URL(anchor.href)
+      const page = linkUrl.searchParams.get('page') || '1'
+      const limit = linkUrl.searchParams.get('limit') || ''
+      const url = new URL(window.location.href)
+      // копируем f[...]
+      Array.from(url.searchParams.keys()).forEach(k => { if (k.startsWith('f[')) url.searchParams.delete(k) })
+      Array.from(linkUrl.searchParams.keys()).forEach(k => { if (k.startsWith('f[')) url.searchParams.set(k, linkUrl.searchParams.get(k)) })
+      // применяем page/limit
+      url.searchParams.set('page', page)
+      if (limit) url.searchParams.set('limit', limit); else url.searchParams.delete('limit')
+      window.history.pushState({}, '', url.toString())
+    } catch (_) {}
+    this.loadProducts()
+  }
+
+  onPopState() {
+    // Считываем новое состояние из URL
+    const prevSelected = this.selected
+    this.readSelectedFromUrl()
+    this.syncLimitFromUrl()
+    // Сравним строки представления выбранных фасетов
+    const serialize = (m) => JSON.stringify(Array.from(m.entries()).map(([k, set]) => [k, Array.from(set).sort()]).sort())
+    const changedFilters = serialize(prevSelected) !== serialize(this.selected)
+    if (changedFilters) {
+      // Полное обновление
+      this.loadFacets()
+      return
+    }
+    // Иначе изменились только page/limit/прочие — обновим только товары
+    this.loadProducts()
+  }
+
+  syncLimitFromUrl() {
+    if (!this.hasLimitTarget) return
+    try {
+      const url = new URL(window.location.href)
+      const limit = url.searchParams.get('limit')
+      if (limit) this.limitTarget.value = String(limit)
+    } catch (_) {}
   }
 
   renderFacets(facets, meta = {}) {

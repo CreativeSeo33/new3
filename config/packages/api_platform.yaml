@@ -15,3 +15,4 @@ api_platform:
         pagination_maximum_items_per_page: '%pagination.max_items_per_page%'
         pagination_client_items_per_page: true
         pagination_client_page: true
+        items_per_page_parameter_name: 'limit'

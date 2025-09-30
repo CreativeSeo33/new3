@@ -24,11 +24,19 @@
         </aside>
         <div class="md:col-span-3">
           <div class="mb-4" data-facets-target="selected" aria-live="polite"></div>
-          <div class="relative" data-facets-target="products">
+          <div class="mb-4 flex items-center gap-2">
+            <label for="limit-select" class="text-sm text-gray-600">Показывать по:</label>
+            <select id="limit-select" class="border rounded px-2 py-1" data-facets-target="limit" data-action="change->facets#onLimitChange">
+              {% for l in allowedLimits|default([10,20,30]) %}
+                <option value="{{ l }}" {% if (limit|default(20)) == l %}selected{% endif %}>{{ l }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="relative" data-facets-target="products" data-action="click->facets#onPaginationClick">
             <h2>Товары</h2>
             <div id="category-grid-spinner" class="absolute inset-0 flex items-center justify-center z-10" data-size="small" data-color="secondary" data-overlay="true" style="display:none"></div>
             {% if products is defined and products is not empty %}
-              {% include 'catalog/category/_grid.html.twig' with { products: products } %}
+              {% include 'catalog/category/_grid.html.twig' with { products: products, total: total|default(0), page: page|default(1), limit: limit|default(20), slug: category.slug } %}
             {% else %}
               <p>Товаров нет.</p>
             {% endif %}

@@ -12,6 +12,7 @@ use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 
 #[Route(path: '/category', name: 'catalog_category_')]
@@ -27,7 +28,7 @@ final class CatalogCategoryController extends AbstractController
     
 
     #[Route('/{slug}', name: 'show', requirements: ['slug' => '[a-z0-9\-]+' ], methods: ['GET'])]
-    public function show(string $slug, \Symfony\Component\HttpFoundation\Request $request): Response
+    public function show(string $slug, Request $request): Response
     {
         $category = $this->categoryRepository->findOneBy(['slug' => $slug, 'visibility' => true]);
 
@@ -43,9 +44,20 @@ final class CatalogCategoryController extends AbstractController
             if (!empty($values)) $filters[(string)$code] = $values;
         }
 
-        $items = empty($filters)
-            ? $this->productRepository->findActiveByCategory($category, 20, 0)
-            : $this->productRepository->findActiveByCategoryWithFacets($category, $filters, 20, 0);
+        // Параметры пагинации/лимита (SSR для первой загрузки)
+        $allowedLimits = (array)($this->getParameter('app.pagination.allowed_limits') ?? [10, 20, 30]);
+        $defaultLimit = (int)($this->getParameter('app.pagination.default_limit') ?? 20);
+        $currentLimit = (int) $request->query->getInt('limit', $defaultLimit);
+        if (!in_array($currentLimit, array_map('intval', $allowedLimits), true)) {
+            $currentLimit = $defaultLimit;
+        }
+        $page = max(1, (int)$request->query->getInt('page', 1));
+
+        $result = empty($filters)
+            ? $this->productRepository->paginateActiveByCategory($category, $page, $currentLimit)
+            : $this->productRepository->paginateActiveByCategoryWithFacets($category, $filters, $page, $currentLimit);
+        $items = $result['items'];
+        $total = (int)$result['total'];
 
         // Build initial facets on backend (no client API call)
         $categoryId = (int) $category->getId();
@@ -229,13 +241,17 @@ final class CatalogCategoryController extends AbstractController
         return $this->render('catalog/category/show.html.twig', [
             'category' => $category,
             'products' => $items,
+            'total' => $total,
+            'page' => $page,
+            'limit' => $currentLimit,
+            'allowedLimits' => $allowedLimits,
             'breadcrumbs' => $breadcrumbs,
             'initial_facets_json' => json_encode(['facets' => $initialFacets, 'meta' => $meta], JSON_UNESCAPED_UNICODE),
         ]);
     }
 
     #[Route('/{slug}/products', name: 'products', requirements: ['slug' => '[a-z0-9\-]+' ], methods: ['GET'])]
-    public function products(string $slug, \Symfony\Component\HttpFoundation\Request $request): Response
+    public function products(string $slug, Request $request): Response
     {
         $category = $this->categoryRepository->findOneBy(['slug' => $slug, 'visibility' => true]);
         if ($category === null) {
@@ -249,12 +265,26 @@ final class CatalogCategoryController extends AbstractController
             $values = array_values(array_filter(array_map('trim', explode(',', (string)$csv)), static fn($v) => $v !== ''));
             if (!empty($values)) $filters[(string)$code] = $values;
         }
-        $items = empty($filters)
-            ? $this->productRepository->findActiveByCategory($category, 20, 0)
-            : $this->productRepository->findActiveByCategoryWithFacets($category, $filters, 20, 0);
+        $allowedLimits = (array)($this->getParameter('app.pagination.allowed_limits') ?? [10, 20, 30]);
+        $defaultLimit = (int)($this->getParameter('app.pagination.default_limit') ?? 20);
+        $currentLimit = (int) $request->query->getInt('limit', $defaultLimit);
+        if (!in_array($currentLimit, array_map('intval', $allowedLimits), true)) {
+            $currentLimit = $defaultLimit;
+        }
+        $page = max(1, (int)$request->query->getInt('page', 1));
+
+        $result = empty($filters)
+            ? $this->productRepository->paginateActiveByCategory($category, $page, $currentLimit)
+            : $this->productRepository->paginateActiveByCategoryWithFacets($category, $filters, $page, $currentLimit);
+        $items = $result['items'];
+        $total = (int)$result['total'];
 
         return $this->render('catalog/category/_grid.html.twig', [
             'products' => $items,
+            'total' => $total,
+            'page' => $page,
+            'limit' => $currentLimit,
+            'slug' => $category->getSlug(),
         ]);
     }
 }

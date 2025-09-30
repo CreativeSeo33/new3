@@ -8,6 +8,8 @@ use App\Entity\Product;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use App\Entity\ProductAttributeAssignment;
+use Doctrine\ORM\Tools\Pagination\Paginator;
+use Doctrine\ORM\QueryBuilder;
 
 final class ProductRepository extends ServiceEntityRepository
 {
@@ -132,6 +134,92 @@ final class ProductRepository extends ServiceEntityRepository
         }
 
         return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * Пагинация без фасетов: возвращает массив с элементами и общим количеством.
+     *
+     * @return array{items: Product[], total: int}
+     */
+    public function paginateActiveByCategory(Category $category, int $page, int $limit): array
+    {
+        $page = max(1, $page);
+        $offset = ($page - 1) * $limit;
+
+        $qb = $this->createQueryBuilder('p')
+            ->distinct()
+            ->innerJoin('p.category', 'pc')
+            ->leftJoin('p.image', 'img')->addSelect('img')
+            ->andWhere('pc.category = :category')
+            ->andWhere('pc.visibility = true')
+            ->andWhere('p.status = true')
+            ->orderBy('p.sortOrder', 'ASC')
+            ->addOrderBy('img.sortOrder', 'ASC')
+            ->setParameter('category', $category)
+            ->setFirstResult($offset)
+            ->setMaxResults($limit);
+
+        $paginator = new Paginator($qb->getQuery(), true);
+        $total = count($paginator);
+        $items = iterator_to_array($paginator->getIterator());
+
+        return [ 'items' => $items, 'total' => $total ];
+    }
+
+    /**
+     * Пагинация с фасетами: возвращает массив с элементами и общим количеством.
+     *
+     * @param array<string,string[]> $filters
+     * @return array{items: Product[], total: int}
+     */
+    public function paginateActiveByCategoryWithFacets(Category $category, array $filters, int $page, int $limit): array
+    {
+        $page = max(1, $page);
+        $offset = ($page - 1) * $limit;
+
+        $qb = $this->createQueryBuilder('p')
+            ->distinct()
+            ->innerJoin('p.category', 'pc')
+            ->leftJoin('p.image', 'img')->addSelect('img')
+            ->andWhere('pc.category = :category')
+            ->andWhere('pc.visibility = true')
+            ->andWhere('p.status = true')
+            ->orderBy('p.sortOrder', 'ASC')
+            ->addOrderBy('img.sortOrder', 'ASC')
+            ->setParameter('category', $category)
+            ->setFirstResult($offset)
+            ->setMaxResults($limit);
+
+        $i = 0;
+        $numericCodes = ['height', 'bulbs_count', 'lighting_area'];
+        foreach ($filters as $code => $values) {
+            if (empty($values)) { continue; }
+            $i++;
+            $lower = strtolower((string)$code);
+            if (in_array($lower, $numericCodes, true)) {
+                $valsParam = 'f_vals_' . $i;
+                $field = $lower === 'bulbs_count' ? 'bulbsCount' : ($lower === 'lighting_area' ? 'lightingArea' : 'height');
+                $existsNum = 'EXISTS (SELECT 1 FROM App\\Entity\\ProductOptionValueAssignment pnum' . $i
+                    . ' WHERE pnum' . $i . '.product = p AND pnum' . $i . '.' . $field . ' IN (:' . $valsParam . '))';
+                $qb->andWhere($existsNum)
+                   ->setParameter($valsParam, array_values(array_map('intval', $values)));
+                continue;
+            }
+
+            $codeParam = 'f_code_' . $i;
+            $valsParam = 'f_vals_' . $i;
+            $existsAttr = 'EXISTS (SELECT 1 FROM App\\Entity\\ProductAttributeAssignment paa' . $i . ' JOIN paa' . $i . '.attribute a' . $i . ' WHERE paa' . $i . '.product = p AND a' . $i . '.code = :' . $codeParam . ' AND paa' . $i . '.stringValue IN (:' . $valsParam . '))';
+            $existsOpt = 'EXISTS (SELECT 1 FROM App\\Entity\\ProductOptionValueAssignment pova' . $i . ' JOIN pova' . $i . '.option o' . $i . ' JOIN pova' . $i . '.value ov' . $i . ' WHERE pova' . $i . '.product = p AND o' . $i . '.code = :' . $codeParam . ' AND ov' . $i . '.value IN (:' . $valsParam . '))';
+            $qb->andWhere('(' . $existsAttr . ' OR ' . $existsOpt . ')')
+                ->setParameter($codeParam, $code)
+                ->setParameter($valsParam, $values);
+        }
+
+        $paginator = new Paginator($qb->getQuery(), true);
+        $total = count($paginator);
+        $items = iterator_to_array($paginator->getIterator());
+
+        return [ 'items' => $items, 'total' => $total ];
     }
 }
 
