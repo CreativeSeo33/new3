@@ -29,6 +29,7 @@ use Psr\Log\LoggerInterface;
 use App\Service\OrderMailer;
 use App\Service\InventoryService;
 use App\Exception\InsufficientStockException;
+use Doctrine\Persistence\ManagerRegistry;
 
 /**
  * AI-META v1
@@ -61,7 +62,7 @@ final class CheckoutController extends AbstractController
 	) {}
 
 	#[Route('/checkout', name: 'checkout_page', methods: ['GET'])]
-	public function index(CartManager $cartManager, DeliveryService $deliveryService): Response
+	public function index(CartManager $cartManager, DeliveryService $deliveryService, ManagerRegistry $registry): Response
 	{
 		$user = $this->getUser();
 		$userId = $user instanceof AppUser ? $user->getId() : null;
@@ -71,10 +72,30 @@ final class CheckoutController extends AbstractController
 		$deliveryResult = $deliveryService->calculateForCart($cart);
 		$ctx = $this->deliveryContext->get();
 
+		$pvzPoints = [];
+		if (($ctx['methodCode'] ?? null) === 'pvz' && !empty($ctx['cityName'])) {
+			$repo = $registry->getRepository(PvzPoints::class);
+			$rows = $repo->findBy(['city' => $ctx['cityName']], ['name' => 'ASC']);
+			foreach ($rows as $row) {
+				$lat = method_exists($row, 'getShirota') ? $row->getShirota() : null;
+				$lon = method_exists($row, 'getDolgota') ? $row->getDolgota() : null;
+				if ($lat !== null && $lon !== null) {
+					$pvzPoints[] = [
+						'id' => method_exists($row, 'getCode') ? $row->getCode() : null,
+						'lat' => (float) $lat,
+						'lon' => (float) $lon,
+						'title' => method_exists($row, 'getName') ? ($row->getName() ?? 'ПВЗ') : 'ПВЗ',
+						'address' => method_exists($row, 'getAddress') ? ($row->getAddress() ?? '') : '',
+					];
+				}
+			}
+		}
+
 		return $this->render('catalog/checkout/index.html.twig', [
 			'cart' => $cart,
 			'delivery' => $deliveryResult,
 			'deliveryContext' => $ctx,
+			'pvzPoints' => $pvzPoints,
 		]);
 	}
 

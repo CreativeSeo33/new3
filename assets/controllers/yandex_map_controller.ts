@@ -11,6 +11,7 @@ export default class extends Controller {
   private initialized = false;
   private map: any | null = null;
   private clusterer: any | null = null;
+  private visibilityTimer: number | null = null;
   static values = {
     apiKey: String,
     lat: Number,
@@ -33,16 +34,10 @@ export default class extends Controller {
     if ((this.element as any)._ymapInitialized === true) {
       return;
     }
-    // Инициализируем карту только если контейнер видим (избегаем hidden-источника Fancybox)
-    try {
-      const el = this.element as HTMLElement;
-      const rect = el.getBoundingClientRect();
-      const cs = window.getComputedStyle(el);
-      const isVisible = rect.width > 0 && rect.height > 0 && cs.display !== 'none' && cs.visibility !== 'hidden';
-      if (!isVisible) {
-        return;
-      }
-    } catch {}
+    if (!this.isElementVisible()) {
+      this.scheduleInitWhenVisible();
+      return;
+    }
     (this.element as any)._ymapInitialized = true;
     this.initialized = true;
     this.initializeMap();
@@ -50,6 +45,10 @@ export default class extends Controller {
 
   disconnect(): void {
     try {
+      if (this.visibilityTimer !== null) {
+        clearTimeout(this.visibilityTimer);
+        this.visibilityTimer = null;
+      }
       if (this.map && typeof this.map.destroy === 'function') {
         this.map.destroy();
       }
@@ -58,6 +57,35 @@ export default class extends Controller {
     this.clusterer = null;
     (this.element as any)._ymapInitialized = false;
     this.initialized = false;
+  }
+
+  private isElementVisible(): boolean {
+    try {
+      const el = this.element as HTMLElement;
+      const rect = el.getBoundingClientRect();
+      const cs = window.getComputedStyle(el);
+      const hasSize = rect.width > 0 && rect.height > 0;
+      const isShown = cs.display !== 'none' && cs.visibility !== 'hidden' && cs.opacity !== '0';
+      return hasSize && isShown;
+    } catch {
+      return true;
+    }
+  }
+
+  private scheduleInitWhenVisible(): void {
+    if (this.visibilityTimer !== null) return;
+    const check = () => {
+      if (this.isElementVisible()) {
+        this.visibilityTimer = null;
+        if ((this.element as any)._ymapInitialized === true) return;
+        (this.element as any)._ymapInitialized = true;
+        this.initialized = true;
+        this.initializeMap();
+        return;
+      }
+      this.visibilityTimer = window.setTimeout(check, 250);
+    };
+    this.visibilityTimer = window.setTimeout(check, 250);
   }
 
   async initializeMap(): Promise<void> {
@@ -126,7 +154,7 @@ export default class extends Controller {
         focusPoint: (pointIdOrCoords: any) => {
           let coords: [number, number] | null = null;
           if (typeof pointIdOrCoords === 'object' && pointIdOrCoords && 'lat' in pointIdOrCoords) {
-            coords = [Number(pointIdOrCoords.lat), Number(pointIdOrCoords.lon)];
+            coords = [Number((pointIdOrCoords as any).lat), Number((pointIdOrCoords as any).lon)];
           } else {
             const idx = points.findIndex(p => String(p.id) === String(pointIdOrCoords));
             if (idx >= 0) coords = [points[idx].lat, points[idx].lon];

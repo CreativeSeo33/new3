@@ -25,6 +25,9 @@ export interface PvzPointDto {
   code: string;
   name?: string | null;
   address?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+  lon?: number | null; // совместимость
 }
 
 export async function getDeliveryContext(): Promise<DeliveryContextDto> {
@@ -33,13 +36,38 @@ export async function getDeliveryContext(): Promise<DeliveryContextDto> {
   });
 }
 
+// Публичный эндпоинт возвращает объект { data: [...], total, page, itemsPerPage }
+interface PvzPublicResponseItem {
+  id?: number | string | null;
+  code: string;
+  name?: string | null;
+  address?: string | null;
+  city?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+}
+interface PvzPublicResponse {
+  data: PvzPublicResponseItem[];
+  total: number;
+  page: number;
+  itemsPerPage: number;
+}
+
 export async function fetchPvzPoints(cityName: string): Promise<PvzPointDto[]> {
   if (!cityName) return [];
   const params = new URLSearchParams();
   params.set('city', cityName);
-  return get<PvzPointDto[]>(`/api/delivery/pvz-points?${params.toString()}`, {
+  const resp = await get<PvzPublicResponse>(`/delivery/pvz-points?${params.toString()}`, {
     headers: { Accept: 'application/json' },
   });
+  const list = Array.isArray(resp?.data) ? resp.data : [];
+  return list.map((row) => ({
+    code: row.code,
+    name: row.name ?? null,
+    address: row.address ?? null,
+    lat: row.lat ?? null,
+    lng: row.lng ?? null,
+  }));
 }
 
 export async function selectCity(cityName: string, cityId?: number | null, cityKladr?: string | null): Promise<SelectCityResponseDto> {

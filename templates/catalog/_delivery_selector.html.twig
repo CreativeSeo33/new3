@@ -24,6 +24,14 @@
       <div class="text-sm mb-2">Выберите пункт выдачи</div>
       <select id="pvz-select" data-testid="delivery-pvz-select" class="w-full border rounded px-3 py-2"></select>
       <div id="pvz-empty" data-testid="delivery-pvz-empty" class="text-sm text-gray-500 mt-2 hidden">В вашем городе пункты выдачи отсутствуют</div>
+      <div class="mt-4 border rounded p-3 bg-gray-50" data-testid="delivery-pvz-map">
+        {% component 'YandexMap' with {
+          points: pvzPoints|default([]),
+          heightClass: 'h-80',
+          showList: (pvzPoints is defined and pvzPoints is not empty),
+          fitBounds: true
+        } %}{% endcomponent %}
+      </div>
     </div>
 
     <div id="courier-block" data-testid="delivery-courier-block" class="mt-2 hidden">

@@ -1,10 +1,26 @@
 import { Component } from '@shared/ui/Component';
 import { Spinner } from '@shared/ui/spinner';
-import { getDeliveryContext, fetchPvzPoints, selectMethod, selectPvz, type DeliveryMethodCode, type DeliveryContextDto } from '../api';
+import {
+  getDeliveryContext,
+  fetchPvzPoints,
+  selectMethod,
+  selectPvz,
+  type DeliveryMethodCode,
+  type DeliveryContextDto,
+  type PvzPointDto
+} from '../api';
 import { getCart as fetchFullCart } from '@features/add-to-cart/api';
 import { updateCartSummary } from '@shared/ui/updateCartSummary';
 
 export interface DeliverySelectorOptions {}
+
+type MapPoint = {
+  id?: string | number;
+  lat: number;
+  lon: number;
+  title?: string;
+  address?: string;
+};
 
 export class DeliverySelector extends Component {
   private methodInputs: HTMLInputElement[] = [];
@@ -15,6 +31,9 @@ export class DeliverySelector extends Component {
   private addrInput!: HTMLInputElement | null;
   private shipCostEl!: HTMLElement | null;
   private totalEl!: HTMLElement | null;
+  private pvzMapWrapper: HTMLElement | null = null;
+  private pvzMapCanvas: HTMLElement | null = null;
+  private pvzMapPoints: MapPoint[] = [];
   private abortController: AbortController | null = null;
   private currentCityName: string | null = null;
   private spinner: Spinner | null = null;
@@ -37,8 +56,23 @@ export class DeliverySelector extends Component {
     this.pvzEmpty = this.$('#pvz-empty');
     this.courierBlock = this.$('#courier-block');
     this.addrInput = this.$('#courier-address') as HTMLInputElement | null;
-    // Обновляем сайдбарные суммы, если доступны, иначе — локальные
-    // ВАЖНО: сначала ищем по ID, чтобы не зацепить header/widget с таким же data-атрибутом
+    this.pvzMapWrapper = this.$('[data-testid="delivery-pvz-map"]');
+    this.pvzMapCanvas = this.pvzMapWrapper?.querySelector('[data-controller="yandex-map"]') as HTMLElement | null;
+
+    if (this.pvzMapCanvas) {
+      const initial = this.pvzMapCanvas.getAttribute('data-yandex-map-points-value');
+      if (initial) {
+        try {
+          const parsed = JSON.parse(initial) as MapPoint[];
+          if (Array.isArray(parsed)) {
+            this.pvzMapPoints = parsed.filter((p) => this.isValidCoords(p.lat, p.lon));
+          }
+        } catch (_) {
+          this.pvzMapPoints = [];
+        }
+      }
+    }
+
     this.shipCostEl = document.getElementById('cart-shipping')
       || (document.querySelector('[data-cart-shipping]') as HTMLElement | null)
       || this.$('#ship-cost');
@@ -67,6 +101,8 @@ export class DeliverySelector extends Component {
       await this.loadPvz(this.currentCityName || '');
     }
     this.hideSpinner();
+    this.revealBlocks();
+    this.applyMapPoints();
   }
 
   private bindEvents(): void {
@@ -80,6 +116,8 @@ export class DeliverySelector extends Component {
           this.toggleBlocks(value);
           if (value === 'pvz') {
             await this.loadPvz(this.currentCityName || '');
+          } else {
+            this.updatePvzMapFromApi([]);
           }
           // Берём источник истины из полной корзины
           try {
@@ -137,6 +175,9 @@ export class DeliverySelector extends Component {
     const isPvz = method === 'pvz';
     this.pvzBlock?.classList.toggle('hidden', !isPvz);
     this.courierBlock?.classList.toggle('hidden', isPvz);
+    if (isPvz) {
+      this.applyMapPoints();
+    }
   }
 
   private async loadPvz(cityName: string): Promise<void> {
@@ -146,6 +187,7 @@ export class DeliverySelector extends Component {
     if (!cityName) {
       this.pvzEmpty.textContent = 'Город не выбран';
       this.pvzEmpty.classList.remove('hidden');
+      this.updatePvzMapFromApi([]);
       return;
     }
 
@@ -157,6 +199,7 @@ export class DeliverySelector extends Component {
       const list = await fetchPvzPoints(cityName);
       if (!Array.isArray(list) || list.length === 0) {
         this.pvzEmpty.classList.remove('hidden');
+        this.updatePvzMapFromApi([]);
         return;
       }
       for (const p of list) {
@@ -165,8 +208,10 @@ export class DeliverySelector extends Component {
         opt.textContent = p.address || p.name || p.code;
         this.pvzSelect.appendChild(opt);
       }
+      this.updatePvzMapFromApi(list);
     } catch (_) {
       this.pvzEmpty.classList.remove('hidden');
+      this.updatePvzMapFromApi([]);
     } finally {
       this.hideSpinner();
     }
@@ -196,6 +241,66 @@ export class DeliverySelector extends Component {
 
   private hideSpinner(): void {
     try { this.spinner?.hide(); } catch (_) {}
+  }
+
+  private revealBlocks(): void {
+    if (this.pvzBlock) {
+      this.pvzBlock.classList.remove('opacity-0');
+    }
+    if (this.courierBlock) {
+      this.courierBlock.classList.remove('opacity-0');
+    }
+  }
+
+  private updatePvzMapFromApi(list: PvzPointDto[]): void {
+    const points = Array.isArray(list)
+      ? list
+          .map<MapPoint | null>((item) => {
+            const lat = item.lat ?? (item as unknown as { latitude?: number | null }).latitude ?? null;
+            const lonRaw = item.lon ?? item.lng ?? (item as unknown as { longitude?: number | null }).longitude ?? null;
+            if (!this.isValidCoords(lat, lonRaw)) {
+              return null;
+            }
+            const p: MapPoint = {
+              lat: Number(lat),
+              lon: Number(lonRaw)
+            };
+            if (item.code) p.id = item.code;
+            else if (item.name) p.id = item.name;
+            if (item.name != null) p.title = item.name;
+            if (item.address != null) p.address = item.address;
+            return p;
+          })
+          .filter((p): p is MapPoint => p !== null)
+      : [];
+
+    this.pvzMapPoints = points;
+    this.applyMapPoints();
+  }
+
+  private applyMapPoints(): void {
+    if (!this.pvzBlock || this.pvzBlock.classList.contains('hidden')) {
+      return;
+    }
+    this.trySetMapPoints(this.pvzMapPoints);
+  }
+
+  private trySetMapPoints(points: MapPoint[], attempt = 0): void {
+    const mapEl = this.pvzMapCanvas;
+    if (!mapEl) return;
+    const mapApi = (mapEl as any).yandexMap;
+    if (mapApi && typeof mapApi.setPoints === 'function') {
+      mapApi.setPoints(points);
+      return;
+    }
+    if (attempt >= 10) return;
+    window.setTimeout(() => this.trySetMapPoints(points, attempt + 1), 200);
+  }
+
+  private isValidCoords(lat: unknown, lon: unknown): lat is number {
+    const latNum = Number(lat);
+    const lonNum = Number(lon);
+    return Number.isFinite(latNum) && Number.isFinite(lonNum);
   }
 }
 
