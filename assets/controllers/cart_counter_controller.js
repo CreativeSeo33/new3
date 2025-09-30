@@ -164,9 +164,9 @@ export default class extends Controller {
 
   renderItems(items, currency) {
     if (!this.hasListTarget) return;
+    this.hideSkeleton(); // Скрываем skeleton перед рендерингом
     if (!items.length) {
       this.listTarget.innerHTML = '<div class="text-sm text-gray-500">Корзина пуста</div>';
-      this.hideSpinner();
       return;
     }
     const html = items.map((i) => {
@@ -192,34 +192,28 @@ export default class extends Controller {
       `;
     }).join('');
     this.listTarget.innerHTML = html;
-    this.hideSpinner();
   }
 
-  spinnerElement() {
-    try { return this.element.querySelector('#cart-counter-spinner'); } catch { return null; }
+  skeletonElement() {
+    try { return this.element.querySelector('#cart-counter-skeleton'); } catch { return null; }
   }
 
   showSpinner() {
-    const el = this.spinnerElement();
+    // Показываем skeleton вместо спиннера
+    const el = this.skeletonElement();
     if (!el) return;
-    // Инициируем spinner.ts, если он есть
-    try {
-      if (typeof window !== 'undefined' && 'Spinner' in window) {
-        // no-op, если не зарегистрирован глобально
-      }
-    } catch {}
-    // Встроенный механизм: data-visible
-    el.setAttribute('data-visible', 'true');
-    el.style.display = 'flex';
-    el.style.pointerEvents = 'auto';
+    el.classList.remove('hidden');
   }
 
   hideSpinner() {
-    const el = this.spinnerElement();
+    // Скрываем skeleton
+    this.hideSkeleton();
+  }
+
+  hideSkeleton() {
+    const el = this.skeletonElement();
     if (!el) return;
-    el.setAttribute('data-visible', 'false');
-    el.style.display = 'none';
-    el.style.pointerEvents = 'none';
+    el.classList.add('hidden');
   }
 
   updateShippingAndGrandTotal(data) {
