@@ -23,7 +23,15 @@ final class ProductOpenApiDecorator implements OpenApiFactoryInterface
             $op = $item->getGet();
             if ($op === null) { continue; }
             $parameters = $op->getParameters() ?? [];
-            $parameters[] = new Model\Parameter('q', 'query', 'Строка поиска (морфологический, TNTSearch). Пример: "красный телефон"', false, 'string');
+            $parameters[] = new Model\Parameter(
+                name: 'q',
+                in: 'query',
+                description: 'Строка поиска (морфологический, TNTSearch). Пример: "красный телефон"',
+                required: false,
+                deprecated: false,
+                allowEmptyValue: false,
+                schema: ['type' => 'string']
+            );
             $op = $op->withParameters($parameters);
             $paths->addPath($path, $item->withGet($op));
         }
