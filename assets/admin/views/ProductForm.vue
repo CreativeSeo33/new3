@@ -28,6 +28,7 @@
         >
           <option value="simple">Простой товар</option>
           <option value="variable">Вариативный товар</option>
+          <option value="variable_no_prices">Вариативный без цен</option>
         </select>
       </div>
     </div>
@@ -120,6 +121,7 @@
           :option-assignments="form.optionAssignments"
           :option-values-map="optionValuesMap"
           :option-names-map="optionNamesMap"
+          :disable-price-fields="(form?.type === 'variable_no_prices')"
           @remove-option="handleRemoveOption"
           @add-option="handleAddOption"
           @remove-assignment="handleRemoveAssignment"
@@ -168,8 +170,8 @@ const tabs = computed<ProductTab[]>(() => {
     { value: 'photos', label: 'Фотографии' },
   ]
 
-  // Добавляем вкладку опций только для вариативных товаров
-  if (form?.type === 'variable') {
+  // Добавляем вкладку опций только для вариативных товаров (включая подтип без цен)
+  if (form?.type === 'variable' || form?.type === 'variable_no_prices') {
     baseTabs.splice(3, 0, { value: 'options', label: 'Опции' })
   }
 
@@ -190,7 +192,7 @@ const skipBootstrapOnce = ref(false)
 const isVariableWithoutVariations = computed(() => {
   try {
     const type = (form as any)?.type
-    if (type !== 'variable') return false
+    if (type !== 'variable' && type !== 'variable_no_prices') return false
     const rows = Array.isArray((form as any)?.optionAssignments) ? ((form as any).optionAssignments as any[]) : []
     return rows.some(r => r && typeof r.option === 'string' && r.option && typeof r.value === 'string' && r.value) ? false : true
   } catch { return false }
@@ -348,7 +350,7 @@ watch(id, async () => {
     if (!isCreating.value) await loadProductCategories()
   } else if (activeTab.value === 'attributes') {
     // handled inside ProductAttributeAssignments
-  } else if (activeTab.value === 'options' && form?.type === 'variable') {
+  } else if (activeTab.value === 'options' && (form?.type === 'variable' || form?.type === 'variable_no_prices')) {
     // отключено: предзагрузка опций только по запросу в модалке
   }
 })
@@ -382,7 +384,7 @@ watch(() => form?.type, (newType, oldType) => {
 
 // watch для управления статусом вариативных товаров без валидных вариаций
 watch([() => form?.type, () => form?.optionAssignments], ([newType, newOptionAssignments]) => {
-  if (newType === 'variable') {
+  if (newType === 'variable' || newType === 'variable_no_prices') {
     const rows = Array.isArray(newOptionAssignments) ? (newOptionAssignments as any[]) : []
     const valid = rows.filter(r => r && typeof r.option === 'string' && r.option && typeof r.value === 'string' && r.value)
     if (valid.length === 0) {
@@ -451,7 +453,7 @@ watch(activeTab, async (val) => {
     }
   }
   // attributes handled inside ProductAttributeAssignments
-  if (val === 'options' && form?.type === 'variable') {
+  if (val === 'options' && (form?.type === 'variable' || form?.type === 'variable_no_prices')) {
     // bootstrap списка опций отключён по требованию
   }
 }, { immediate: false })

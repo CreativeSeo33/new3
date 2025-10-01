@@ -128,7 +128,7 @@
             {% set currentPrice = null %}
             {% set salePrice = null %}
 
-            {% if product.getType() == 'simple' %}
+            {% if product.getType() in ['simple', 'variable_no_prices'] %}
               {% set currentPrice = product.getPrice() %}
               {% set salePrice = product.getSalePrice() %}
             {% elseif product.getType() == 'variable' %}
@@ -240,10 +240,10 @@
                             value="{{ a.id }}"
                             class="sr-only peer"
                             data-option-name="{{ optionName }}"
-                            data-option-price="{{ a.price|default(0) }}"
+                            data-option-price="{{ product.getType() == 'variable_no_prices' ? 0 : (a.price|default(0)) }}"
                             data-option-value="{{ a.value.value ?? ('Значение #' ~ a.value.id) }}"
                             data-set-price="{{ a.getSetPrice() ? 'true' : 'false' }}"
-                            data-sale-price="{{ a.salePrice is not null ? a.salePrice : 0 }}"
+                            data-sale-price="{{ product.getType() == 'variable_no_prices' ? 0 : (a.salePrice is not null ? a.salePrice : 0) }}"
                             {% if isOut %}disabled{% endif %}
                             {% if not isOut and defaultOption and a.id == defaultOption.id %}checked{% endif %}
                           >
@@ -258,7 +258,7 @@
                             </div>
                             {% if isOut %}
                               <span class="text-sm font-medium text-red-600">Нет в наличии.</span>
-                            {% elseif a.price is not null and a.price > 0 %}
+                            {% elseif product.getType() != 'variable_no_prices' and a.price is not null and a.price > 0 %}
                               {% if a.salePrice is not null and a.salePrice > 0 %}
                                 <div class="flex items-center gap-2">
                                   <span class="text-sm text-gray-500 line-through">{{ a.price }} руб.</span>

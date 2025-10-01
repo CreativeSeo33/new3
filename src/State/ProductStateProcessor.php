@@ -172,9 +172,11 @@ class ProductStateProcessor implements ProcessorInterface
                 $assignment->setBulbsCount(isset($row['bulbsCount']) && is_numeric($row['bulbsCount']) ? (int)$row['bulbsCount'] : null);
                 $assignment->setSku(isset($row['sku']) && is_string($row['sku']) ? $row['sku'] : null);
                 $assignment->setOriginalSku(isset($row['originalSku']) && is_string($row['originalSku']) ? $row['originalSku'] : null);
-                $assignment->setPrice(isset($row['price']) && is_numeric($row['price']) ? (int)$row['price'] : null);
-                $assignment->setSetPrice(isset($row['setPrice']) ? (bool)$row['setPrice'] : null);
-                $assignment->setSalePrice(isset($row['salePrice']) && is_numeric($row['salePrice']) ? (int)$row['salePrice'] : null);
+                // Для variable_no_prices запрещаем устанавливать цены на уровне вариаций
+                $isNoPrices = $entity->getType() === \App\Entity\Product::TYPE_VARIABLE_NO_PRICES;
+                $assignment->setPrice(!$isNoPrices && isset($row['price']) && is_numeric($row['price']) ? (int)$row['price'] : null);
+                $assignment->setSetPrice(!$isNoPrices && isset($row['setPrice']) ? (bool)$row['setPrice'] : null);
+                $assignment->setSalePrice(!$isNoPrices && isset($row['salePrice']) && is_numeric($row['salePrice']) ? (int)$row['salePrice'] : null);
                 $assignment->setSortOrder(isset($row['sortOrder']) && is_numeric($row['sortOrder']) ? (int)$row['sortOrder'] : null);
                 $assignment->setQuantity(isset($row['quantity']) && is_numeric($row['quantity']) ? (int)$row['quantity'] : null);
                 $assignment->setLightingArea(isset($row['lightingArea']) && is_numeric($row['lightingArea']) ? (int)$row['lightingArea'] : null);
@@ -183,26 +185,26 @@ class ProductStateProcessor implements ProcessorInterface
                 $this->em->persist($assignment);
             }
 
-            // Валидация: только один setPrice может быть true среди всех ProductOptionAssignments товара
-            $optionAssignments = $entity->getOptionAssignments();
-            $setPriceCount = 0;
-            $firstTrueAssignment = null;
+            // Валидация: только один setPrice может быть true среди всех ProductOptionAssignments товара (только для типа variable)
+            if ($entity->getType() === \App\Entity\Product::TYPE_VARIABLE) {
+                $optionAssignments = $entity->getOptionAssignments();
+                $setPriceCount = 0;
+                $firstTrueAssignment = null;
 
-            // Считаем количество true и находим первое
-            foreach ($optionAssignments as $assignment) {
-                if ($assignment->getSetPrice() === true) {
-                    $setPriceCount++;
-                    if ($firstTrueAssignment === null) {
-                        $firstTrueAssignment = $assignment;
+                foreach ($optionAssignments as $assignment) {
+                    if ($assignment->getSetPrice() === true) {
+                        $setPriceCount++;
+                        if ($firstTrueAssignment === null) {
+                            $firstTrueAssignment = $assignment;
+                        }
                     }
                 }
-            }
 
-            // Если больше одного setPrice = true, оставляем только первый
-            if ($setPriceCount > 1 && $firstTrueAssignment !== null) {
-                foreach ($optionAssignments as $assignment) {
-                    if ($assignment !== $firstTrueAssignment && $assignment->getSetPrice() === true) {
-                        $assignment->setSetPrice(false);
+                if ($setPriceCount > 1 && $firstTrueAssignment !== null) {
+                    foreach ($optionAssignments as $assignment) {
+                        if ($assignment !== $firstTrueAssignment && $assignment->getSetPrice() === true) {
+                            $assignment->setSetPrice(false);
+                        }
                     }
                 }
             }

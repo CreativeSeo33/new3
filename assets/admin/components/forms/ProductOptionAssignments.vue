@@ -60,12 +60,16 @@
 								<td class="px-3 py-2">{{ fmtNum(r.bulbsCount) }}</td>
 								<td class="px-3 py-2">{{ r.sku || '—' }}</td>
 								<td class="px-3 py-2">{{ r.originalSku || '—' }}</td>
-								<td class="px-3 py-2">{{ fmtNum(r.price) }}</td>
-								<td class="px-3 py-2">{{ fmtNum(r.salePrice) }}</td>
+                                <td class="px-3 py-2">
+                                    <span :class="{'opacity-60': disablePriceInputs}">{{ fmtNum(r.price) }}</span>
+                                </td>
+                                <td class="px-3 py-2">
+                                    <span :class="{'opacity-60': disablePriceInputs}">{{ fmtNum(r.salePrice) }}</span>
+                                </td>
 								<td class="px-3 py-2">{{ fmtNum(r.lightingArea) }}</td>
 								<td class="px-3 py-2">{{ fmtNum(r.quantity) }}</td>
 								<td class="px-3 py-2">{{ fmtNum(r.sortOrder) }}</td>
-								<td class="px-3 py-2">{{ r.setPrice ? 'Да' : 'Нет' }}</td>
+                                <td class="px-3 py-2"><span :class="{'opacity-60': disablePriceInputs}">{{ r.setPrice ? 'Да' : 'Нет' }}</span></td>
 								<td class="px-3 py-2">
 									<button
 										class="mr-2 text-xs px-2 py-1 rounded border bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800"
@@ -167,11 +171,11 @@
 						</label>
 						<label class="block text-sm">
 							<span class="mb-1 block">Цена</span>
-							<input v-model="addValueForm.price" type="number" class="w-full rounded border p-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" />
+							<input v-model="addValueForm.price" type="number" class="w-full rounded border p-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" :disabled="disablePriceInputs" />
 						</label>
 						<label class="block text-sm">
 							<span class="mb-1 block">Скидка</span>
-							<input v-model="addValueForm.salePrice" type="number" class="w-full rounded border p-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" />
+							<input v-model="addValueForm.salePrice" type="number" class="w-full rounded border p-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" :disabled="disablePriceInputs" />
 						</label>
 						<label class="block text-sm">
 							<span class="mb-1 block">Освещение</span>
@@ -187,7 +191,7 @@
 						</label>
 					<label class="block text-sm">
 						<span class="mb-1 block">Базовая</span>
-						<input v-model="addValueForm.setPrice" type="checkbox" class="h-4 w-4" />
+						<input v-model="addValueForm.setPrice" type="checkbox" class="h-4 w-4" :disabled="disablePriceInputs" />
 					</label>
 					</div>
 				</div>
@@ -226,7 +230,10 @@ const props = defineProps<{
   optionAssignments: OptionRow[] | null
   optionValuesMap?: Record<string, string>
   optionNamesMap?: Record<string, string>
+  disablePriceFields?: boolean
 }>()
+
+const disablePriceInputs = computed(() => Boolean(props.disablePriceFields))
 
 const emit = defineEmits<{
 	removeOption: [optionIri: string]

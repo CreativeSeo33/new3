@@ -122,7 +122,7 @@ class ProductStateProvider implements ProviderInterface
             $entities = $qb->getQuery()->getResult();
             $resources = array_map([$this, 'transformLightweight'], $entities);
 
-            // Compute optionsCount for current page in one grouped query (only for variable products)
+            // Compute optionsCount for current page in one grouped query (for variable products of any sub-type)
             $ids = array_map(static fn($e) => $e->getId(), $entities);
             $optionsCountById = [];
             if (!empty($ids)) {
@@ -130,9 +130,9 @@ class ProductStateProvider implements ProviderInterface
                     ->select('p2.id AS id, COUNT(oa.id) AS cnt')
                     ->leftJoin('p2.optionAssignments', 'oa')
                     ->andWhere('p2.id IN (:ids)')
-                    ->andWhere('p2.type = :vtype')
+                    ->andWhere('p2.type IN (:vtypes)')
                     ->setParameter('ids', $ids)
-                    ->setParameter('vtype', Product::TYPE_VARIABLE)
+                    ->setParameter('vtypes', [Product::TYPE_VARIABLE, Product::TYPE_VARIABLE_NO_PRICES])
                     ->groupBy('p2.id');
                 $rows = $connQb->getQuery()->getArrayResult();
                 foreach ($rows as $row) {
@@ -142,7 +142,7 @@ class ProductStateProvider implements ProviderInterface
 
             // Attach counts to lightweight resources
             foreach ($resources as $r) {
-                if ($r->type === Product::TYPE_VARIABLE) {
+                if ($r->type === Product::TYPE_VARIABLE || $r->type === Product::TYPE_VARIABLE_NO_PRICES) {
                     $r->optionsCount = $optionsCountById[$r->id ?? 0] ?? 0;
                 } else {
                     $r->optionsCount = null;

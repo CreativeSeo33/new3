@@ -101,7 +101,7 @@ final class ProductCopyController extends AbstractController
         }
 
         if (isset($data['changeType'])) {
-            $allowedTypes = ['simple', 'variable'];
+            $allowedTypes = ['simple', 'variable', 'variable_no_prices'];
             if (!in_array($data['changeType'], $allowedTypes)) {
                 throw new \InvalidArgumentException('Недопустимый тип товара');
             }

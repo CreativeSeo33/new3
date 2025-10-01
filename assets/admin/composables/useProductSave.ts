@@ -17,7 +17,7 @@ export function useProductSave() {
 		saving.value = true
 		error.value = null
 		try {
-			const isVariable = (data as any)?.type === 'variable'
+      const isVariable = (data as any)?.type === 'variable' || (data as any)?.type === 'variable_no_prices'
 
 			// строгая фильтрация optionAssignments
 			const filteredAssignments = Array.isArray((data as any).optionAssignments)
@@ -56,8 +56,8 @@ export function useProductSave() {
 				metaDescription: data.metaDescription || null,
 				h1: data.h1 || null,
 				optionsJson: (data as any).optionsJson ?? null,
-				// для simple товаров не отправляем optionAssignments вовсе
-				optionAssignments: isVariable ? (filteredAssignments && filteredAssignments.length ? filteredAssignments : []) : undefined,
+        // для не-вариативных товаров не отправляем optionAssignments вовсе
+        optionAssignments: isVariable ? (filteredAssignments && filteredAssignments.length ? filteredAssignments : []) : undefined,
 			}
 
 			let result: ProductDto

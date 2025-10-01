@@ -102,6 +102,7 @@ class Product
     // Типы товаров
     public const TYPE_SIMPLE = 'simple';
     public const TYPE_VARIABLE = 'variable';
+    public const TYPE_VARIABLE_NO_PRICES = 'variable_no_prices';
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -146,7 +147,7 @@ class Product
 
     #[ORM\Column(length: 32, options: ['default' => self::TYPE_SIMPLE])]
     #[Groups(['product:read', 'product:update', 'product:create', 'product:list'])]
-    #[Assert\Choice(choices: [self::TYPE_SIMPLE, self::TYPE_VARIABLE], message: 'Choose a valid product type.')]
+    #[Assert\Choice(choices: [self::TYPE_SIMPLE, self::TYPE_VARIABLE, self::TYPE_VARIABLE_NO_PRICES], message: 'Choose a valid product type.')]
     #[Assert\NotBlank(message: 'Product type is required.')]
     private ?string $type = self::TYPE_SIMPLE;
 
@@ -727,6 +728,11 @@ class Product
         return $this->type === self::TYPE_VARIABLE;
     }
 
+    public function isVariableNoPrices(): bool
+    {
+        return $this->type === self::TYPE_VARIABLE_NO_PRICES;
+    }
+
     /**
      * @param \Symfony\Component\Validator\Context\ExecutionContextInterface $context
      */
@@ -741,15 +747,15 @@ class Product
      */
     public function validateOptionAssignments(\Symfony\Component\Validator\Context\ExecutionContextInterface $context): void
     {
-        // Проверяем, что вариативный товар имеет хотя бы одну вариацию
-        if ($this->isVariable() && $this->optionAssignments->isEmpty()) {
+        // Проверяем, что вариативный товар (любой подтип) имеет хотя бы одну вариацию
+        if (($this->isVariable() || $this->isVariableNoPrices()) && $this->optionAssignments->isEmpty()) {
             $context->buildViolation('Вариативный товар должен иметь хотя бы одну вариацию')
                 ->atPath('type')
                 ->addViolation();
         }
 
-        // Для простого товара вариации не должны существовать
-        if (!$this->isVariable() && !$this->optionAssignments->isEmpty()) {
+        // Для не-вариативного товара вариации не должны существовать
+        if (!($this->isVariable() || $this->isVariableNoPrices()) && !$this->optionAssignments->isEmpty()) {
             $context->buildViolation('Простой товар не должен иметь вариаций')
                 ->atPath('type')
                 ->addViolation();

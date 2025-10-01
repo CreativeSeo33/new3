@@ -73,7 +73,7 @@ final class ProductFormController extends AbstractController
         ];
 
         $flags = [
-            'isVariableWithoutVariations' => ($dto->type === Product::TYPE_VARIABLE) && empty($dto->optionAssignments ?? []),
+            'isVariableWithoutVariations' => (in_array($dto->type, [Product::TYPE_VARIABLE, Product::TYPE_VARIABLE_NO_PRICES], true)) && empty($dto->optionAssignments ?? []),
         ];
 
         $dictVersions = [

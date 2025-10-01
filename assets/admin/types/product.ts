@@ -10,7 +10,7 @@ export interface ProductFormModel {
   metaDescription: string
   h1: string
   sortOrder: number | null
-  type: string
+  type: 'simple' | 'variable' | 'variable_no_prices'
   optionsJson: ProductOptionConfig[] | null
   optionAssignments: ProductOptionValueAssignment[] | null
 }

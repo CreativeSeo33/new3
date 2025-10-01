@@ -114,6 +114,7 @@
                 </a>
               </div>
               <div v-if="p.type === 'variable'" class="text-xs text-neutral-500">Вариативный товар</div>
+              <div v-else-if="p.type === 'variable_no_prices'" class="text-xs text-neutral-500">Вариативный без цен</div>
               <div v-else-if="p.type === 'simple'" class="text-xs text-neutral-500">Простой товар</div>
               <div v-if="p.slug" class="text-xs text-neutral-500">/{{ p.slug }}</div>
             </td>
@@ -145,7 +146,7 @@
               </div>
             </td>
             <td class="px-4 py-2">
-              <template v-if="p.type === 'variable'">
+              <template v-if="p.type === 'variable' || p.type === 'variable_no_prices'">
                 <PopoverRoot :open="isOptionsPopoverOpen(p.id as number)">
                   <PopoverTrigger as-child>
                     <button

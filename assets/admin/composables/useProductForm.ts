@@ -115,7 +115,7 @@ export function useProductForm(initialData?: Partial<ProductFormModel>) {
         break
 
       case 'type':
-        if (!form.type || !['simple', 'variable'].includes(form.type)) {
+        if (!form.type || !['simple', 'variable', 'variable_no_prices'].includes(form.type)) {
           ;(errors as any).type = 'Неверный тип товара'
           return false
         }

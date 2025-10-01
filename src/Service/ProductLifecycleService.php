@@ -64,6 +64,9 @@ class ProductLifecycleService
         if ($product->isVariable()) {
             // Вариативный товар: обнуляем основные цены и вычисляем effectivePrice
             $this->handleVariableProduct($product);
+        } elseif ($product->isVariableNoPrices()) {
+            // Вариативный товар без цен на вариациях: используем цены товара
+            $this->handleVariableNoPricesProduct($product);
         } else {
             // Простой товар: используем основную цену
             $this->handleSimpleProduct($product);
@@ -105,6 +108,20 @@ class ProductLifecycleService
         // Для простого товара effectivePrice равна основной цене
         $effectivePrice = $product->getSalePrice() ?? $product->getPrice();
         $product->setEffectivePrice($effectivePrice);
+    }
+
+    protected function handleVariableNoPricesProduct(Product $product): void
+    {
+        // Должна быть хотя бы одна вариация (как и для обычного вариативного)
+        if ($product->getOptionAssignments()->isEmpty()) {
+            throw new \InvalidArgumentException('Вариативный товар должен иметь хотя бы одну вариацию');
+        }
+        // Количество на уровне товара обнуляем (кол-во управляется на уровне вариаций)
+        $product->setQuantity(null);
+        // Цены на уровне товара сохраняем: effectivePrice = salePrice ?? price
+        $effectivePrice = $product->getSalePrice() ?? $product->getPrice();
+        $product->setEffectivePrice($effectivePrice);
+        // Никаких цен на уровне вариаций тут не учитываем
     }
 }
 

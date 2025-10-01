@@ -118,9 +118,9 @@ class ProductCopyService
             return $options['copyOptions'];
         }
 
-        // Для variable товаров опции ОБЯЗАТЕЛЬНЫ для копирования
+        // Для вариативных товаров (оба подтипа) опции ОБЯЗАТЕЛЬНЫ для копирования
         // Если не копировать опции, то товар станет simple
-        return $original->isVariable();
+        return $original->isVariable() || $original->isVariableNoPrices();
     }
 
     private function createProductCopy(Product $original, array $options): Product
@@ -147,7 +147,7 @@ class ProductCopyService
         $newType = $options['changeType'] ?? $original->getType();
 
         // Если оригинальный товар variable, но мы не копируем опции, то делаем его simple
-        if ($original->isVariable() && !$shouldCopyOptions) {
+        if (($original->isVariable() || $original->isVariableNoPrices()) && !$shouldCopyOptions) {
             $newType = Product::TYPE_SIMPLE;
         }
 
@@ -173,6 +173,10 @@ class ProductCopyService
             // Для variable товаров цены будут обнулены в lifecycle service
             $newProduct->setPrice(null);
             $newProduct->setSalePrice(null);
+        } elseif ($newType === Product::TYPE_VARIABLE_NO_PRICES) {
+            // Для вариативного без цен: используем цены с уровня товара (как есть)
+            $newProduct->setPrice($original->getPrice());
+            $newProduct->setSalePrice($original->getSalePrice());
         } elseif ($newType === Product::TYPE_SIMPLE && $original->isVariable()) {
             // Variable → Simple: берем минимальную цену из вариаций
             $minPrice = $this->getMinPriceFromOptions($original);
