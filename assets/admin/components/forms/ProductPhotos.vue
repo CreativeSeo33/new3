@@ -55,7 +55,12 @@
 
     <div class="mb-2 flex items-center justify-between">
       <div class="text-sm font-medium">Текущие фото товара</div>
-      <div v-if="!isCreating && productImages.length">
+      <div v-if="!isCreating && productImages.length" class="flex items-center gap-2">
+        <button
+          class="px-3 py-1.5 text-xs rounded border text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
+          :disabled="productImagesLoading || warmupLoading"
+          @click="warmupProductImages"
+        >Прогреть кеш фото</button>
         <AlertDialogRoot v-model:open="bulkDeleteDialogOpen">
           <AlertDialogTrigger as-child>
             <button
@@ -251,6 +256,7 @@ const dragOverIndex = ref<number | null>(null)
 const savingOrder = ref(false)
 const bulkDeleteDialogOpen = ref(false)
 const bulkDeleting = ref(false)
+  const warmupLoading = ref(false)
 const hasDuplicateSortOrders = computed(() => {
   const seen = new Set<number>()
   for (const it of productImages.value) {
@@ -491,6 +497,25 @@ async function deleteAllProductImages() {
   } finally {
     deletingImageIds.value = new Set()
     bulkDeleting.value = false
+  }
+}
+
+async function warmupProductImages() {
+  if (props.isCreating) return
+  if (warmupLoading.value) return
+  warmupLoading.value = true
+  try {
+    const res = await mediaRepo.warmProductImages(props.productId)
+    const warmed = Number((res as any)?.warmed ?? 0)
+    if (Number.isFinite(warmed) && warmed > 0) {
+      publishToast(`Прогрето изображений: ${warmed}`)
+    } else {
+      publishToast('Кеш изображений прогрет')
+    }
+  } catch (e: any) {
+    publishToast(e?.message || 'Ошибка прогрева кеша')
+  } finally {
+    warmupLoading.value = false
   }
 }
 

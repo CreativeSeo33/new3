@@ -200,9 +200,13 @@
             <td class="px-4 py-2">
               <span
                 :class="[
-                  'inline-flex items-center rounded-full px-2 py-0.5 text-xs',
-                  p.status ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+                  'inline-flex items-center rounded-full px-2 py-0.5 text-xs cursor-pointer select-none transition-all',
+                  p.status 
+                    ? 'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300 dark:hover:bg-green-900/50' 
+                    : 'bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50',
                 ]"
+                @click="toggleProductStatus(p)"
+                :title="`Переключить статус: ${p.status ? 'Отключить' : 'Активировать'}`"
               >
                 {{ p.status ? 'Активен' : 'Отключен' }}
               </span>
@@ -657,6 +661,31 @@ async function performCopy() {
   }
 }
 
+// Toggle product status
+async function toggleProductStatus(p: ProductDto) {
+  if (!p.id) return
+
+  const newStatus = !p.status
+  const productName = p.name || `ID ${p.id}`
+
+  try {
+    await productRepository.partialUpdate(Number(p.id), { status: newStatus })
+    
+    // Обновляем локальное состояние товара
+    const product = products.value.find(item => Number(item.id) === Number(p.id))
+    if (product) {
+      product.status = newStatus
+    }
+    
+    publishToast(`✅ Статус товара "${productName}" изменён на "${newStatus ? 'Активен' : 'Отключен'}"`)
+  } catch (error: any) {
+    const errorMessage = error.response?.data?.['hydra:description'] ||
+                        error.response?.data?.message ||
+                        error.message ||
+                        'Неизвестная ошибка'
+    publishToast(`❌ Ошибка при изменении статуса товара "${productName}": ${errorMessage}`)
+  }
+}
 
 // Bulk delete functions
 async function confirmBulkDelete() {

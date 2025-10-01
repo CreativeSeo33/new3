@@ -29,6 +29,11 @@ export class MediaRepository {
     const { data } = await httpClient.getJson<{ items: Array<{ id: number; imageUrl: string; sortOrder: number }> }>(`/admin/media/product/${productId}/images`)
     return Array.isArray(data?.items) ? data.items : []
   }
+
+  async warmProductImages(productId: string | number): Promise<{ warmed?: number; errors?: number }> {
+    const { data } = await httpClient.postJson<{ warmed?: number; errors?: number }>(`/admin/media/product/${productId}/images/warmup`, {})
+    return data || {}
+  }
 }
 
 

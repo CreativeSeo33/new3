@@ -27,13 +27,13 @@ final class FacetIndexer
                SELECT p.effective_price AS price_val
                FROM product p
                INNER JOIN product_to_category pc ON pc.product_id = p.id
-               WHERE pc.category_id = :cid AND p.status = 1 AND p.type = \'simple\' AND p.effective_price IS NOT NULL
+               WHERE pc.category_id = :cid AND p.status = 1 AND p.type = \'simple\' AND p.effective_price IS NOT NULL AND p.quantity > 0
                UNION ALL
                SELECT COALESCE(pova.sale_price, pova.price) AS price_val
                FROM product_option_value_assignment pova
                INNER JOIN product p2 ON p2.id = pova.product_id
                INNER JOIN product_to_category pc2 ON pc2.product_id = pova.product_id
-               WHERE pc2.category_id = :cid AND p2.status = 1 AND (pova.sale_price IS NOT NULL OR pova.price IS NOT NULL)
+               WHERE pc2.category_id = :cid AND p2.status = 1 AND (pova.sale_price IS NOT NULL OR pova.price IS NOT NULL) AND p2.type = \'variable\' AND pova.quantity > 0
              ) t',
             ['cid' => $categoryId]
         ) ?: ['min_price' => null, 'max_price' => null];
@@ -82,7 +82,14 @@ final class FacetIndexer
              INNER JOIN attribute a ON a.id = paa.attribute_id
              INNER JOIN product_to_category pc ON pc.product_id = paa.product_id
              INNER JOIN product p ON p.id = paa.product_id
-             WHERE pc.category_id = :cid AND p.status = 1';
+             WHERE pc.category_id = :cid AND p.status = 1
+               AND (
+                 (p.type = \'simple\' AND p.quantity > 0)
+                 OR (p.type = \'variable\' AND EXISTS (
+                      SELECT 1 FROM product_option_value_assignment pova_stock
+                      WHERE pova_stock.product_id = p.id AND pova_stock.quantity > 0
+                 ))
+               )';
         $attrParams = ['cid' => $categoryId];
         $attrTypes = [];
         if ($attrMode === 'codes') {
@@ -109,7 +116,7 @@ final class FacetIndexer
              INNER JOIN option_value ov ON ov.id = pova.value_id
              INNER JOIN product_to_category pc ON pc.product_id = pova.product_id
              INNER JOIN product p ON p.id = pova.product_id
-             WHERE pc.category_id = :cid AND p.status = 1';
+             WHERE pc.category_id = :cid AND p.status = 1 AND pova.quantity > 0';
         $optParams = ['cid' => $categoryId];
         $optTypes = [];
         if ($optMode === 'codes') {

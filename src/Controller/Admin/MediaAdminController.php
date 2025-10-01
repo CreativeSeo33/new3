@@ -284,6 +284,55 @@ class MediaAdminController
         return new JsonResponse(['items' => $result]);
     }
 
+    #[Route(path: '/api/admin/media/product/{id}/images/warmup', name: 'admin_media_warmup_product_images', methods: ['POST'])]
+    public function warmupProductImages(int $id): JsonResponse
+    {
+        /** @var Product|null $product */
+        $product = $this->em->getRepository(Product::class)->find($id);
+        if (!$product) {
+            return new JsonResponse(['error' => 'Product not found'], 404);
+        }
+
+        /** @var ProductImage[] $images */
+        $images = $this->em->getRepository(ProductImage::class)
+            ->findBy(['product' => $product], ['sortOrder' => 'ASC', 'id' => 'ASC']);
+
+        // Собираем уникальные относительные пути оригиналов под /img
+        $relatives = [];
+        foreach ($images as $img) {
+            $imgUrl = (string) $img->getImageUrl();
+            $rel = '';
+            if (str_starts_with($imgUrl, '/media/cache/')) {
+                $parts = explode('/', trim($imgUrl, '/'));
+                $imgIndex = array_search('img', $parts, true);
+                if ($imgIndex !== false && isset($parts[$imgIndex + 1])) {
+                    $rel = implode('/', array_slice($parts, $imgIndex + 1));
+                }
+            } elseif (str_starts_with($imgUrl, '/img/')) {
+                $rel = ltrim(substr($imgUrl, 5), '/');
+            }
+            if ($rel !== '') {
+                $relatives[$rel] = true;
+            }
+        }
+
+        $warmed = 0;
+        $errors = 0;
+        $items = [];
+        foreach (array_keys($relatives) as $rel) {
+            try {
+                $this->imageWarmup->warm($rel, $this->imagineFilters);
+                $warmed++;
+                $items[] = ['relative' => $rel, 'ok' => true];
+            } catch (\Throwable $e) {
+                $errors++;
+                $items[] = ['relative' => $rel, 'ok' => false, 'error' => $e->getMessage()];
+            }
+        }
+
+        return new JsonResponse(['warmed' => $warmed, 'errors' => $errors, 'items' => $items]);
+    }
+
     #[Route(path: '/api/admin/media/product/{id}/images', name: 'admin_media_product_images', methods: ['GET'])]
     public function listProductImagesForProduct(int $id): JsonResponse
     {

@@ -61,6 +61,18 @@ php bin/console app:images:cache:warmup --batch-size=200 --parallel=8
 php bin/console app:images:cache:warmup --batch-size=500 --parallel=12 --filter=md --filter=xl
 ```
 
+### Прогрев фото конкретного товара
+
+- API: `POST /api/admin/media/product/{id}/images/warmup`
+
+```bash
+curl -X POST \
+  -H "Authorization: Bearer <token>" \
+  http://localhost:8000/api/admin/media/product/123/images/warmup
+```
+
+- Admin UI: кнопка «Прогреть кеш фото» на странице товара (блок «Текущие фото товара»). Реализация: `assets/admin/components/forms/ProductPhotos.vue` + `assets/admin/repositories/MediaRepository.ts`.
+
 ## 📈 Производительность
 
 | Количество изображений | Время обработки | Рекомендуемые настройки |
