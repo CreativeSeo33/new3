@@ -53,9 +53,20 @@ final class CatalogCategoryController extends AbstractController
         }
         $page = max(1, (int)$request->query->getInt('page', 1));
 
-        $result = empty($filters)
-            ? $this->productRepository->paginateActiveByCategory($category, $page, $currentLimit)
-            : $this->productRepository->paginateActiveByCategoryWithFacets($category, $filters, $page, $currentLimit);
+        $priceMin = $request->query->get('price_min');
+        $priceMax = $request->query->get('price_max');
+        $priceMinInt = is_numeric((string)$priceMin) ? (int)$priceMin : null;
+        $priceMaxInt = is_numeric((string)$priceMax) ? (int)$priceMax : null;
+
+        // Всегда используем метод с фасетами, чтобы поддерживать price_min/price_max даже без f[]
+        $result = $this->productRepository->paginateActiveByCategoryWithFacets(
+            $category,
+            $filters,
+            $page,
+            $currentLimit,
+            $priceMinInt,
+            $priceMaxInt
+        );
         $items = $result['items'];
         $total = (int)$result['total'];
 
@@ -273,9 +284,19 @@ final class CatalogCategoryController extends AbstractController
         }
         $page = max(1, (int)$request->query->getInt('page', 1));
 
-        $result = empty($filters)
-            ? $this->productRepository->paginateActiveByCategory($category, $page, $currentLimit)
-            : $this->productRepository->paginateActiveByCategoryWithFacets($category, $filters, $page, $currentLimit);
+        $priceMin = $request->query->get('price_min');
+        $priceMax = $request->query->get('price_max');
+        $priceMinInt = is_numeric((string)$priceMin) ? (int)$priceMin : null;
+        $priceMaxInt = is_numeric((string)$priceMax) ? (int)$priceMax : null;
+
+        $result = $this->productRepository->paginateActiveByCategoryWithFacets(
+            $category,
+            $filters,
+            $page,
+            $currentLimit,
+            $priceMinInt,
+            $priceMaxInt
+        );
         $items = $result['items'];
         $total = (int)$result['total'];
 

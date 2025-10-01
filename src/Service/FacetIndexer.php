@@ -19,11 +19,22 @@ final class FacetIndexer
     public function reindexCategory(int $categoryId, ?array $attributeCodes = null, ?array $optionCodes = null): void
     {
         // Price range
+        // simple: use product.effective_price
+        // variable: use each variant assignment price with sale priority (COALESCE(pova.sale_price, pova.price))
         $priceRow = $this->db->fetchAssociative(
-            'SELECT MIN(p.effective_price) AS min_price, MAX(p.effective_price) AS max_price
-             FROM product p
-             INNER JOIN product_to_category pc ON pc.product_id = p.id
-             WHERE pc.category_id = :cid AND p.status = 1',
+             'SELECT MIN(t.price_val) AS min_price, MAX(t.price_val) AS max_price
+             FROM (
+               SELECT p.effective_price AS price_val
+               FROM product p
+               INNER JOIN product_to_category pc ON pc.product_id = p.id
+               WHERE pc.category_id = :cid AND p.status = 1 AND p.type = \'simple\' AND p.effective_price IS NOT NULL
+               UNION ALL
+               SELECT COALESCE(pova.sale_price, pova.price) AS price_val
+               FROM product_option_value_assignment pova
+               INNER JOIN product p2 ON p2.id = pova.product_id
+               INNER JOIN product_to_category pc2 ON pc2.product_id = pova.product_id
+               WHERE pc2.category_id = :cid AND p2.status = 1 AND (pova.sale_price IS NOT NULL OR pova.price IS NOT NULL)
+             ) t',
             ['cid' => $categoryId]
         ) ?: ['min_price' => null, 'max_price' => null];
 

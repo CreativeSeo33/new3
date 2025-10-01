@@ -93,7 +93,7 @@ final class ProductRepository extends ServiceEntityRepository
      * @param array<string,string[]> $filters code => [values]
      * @return Product[]
      */
-    public function findActiveByCategoryWithFacets(Category $category, array $filters, int $limit = 20, int $offset = 0): array
+    public function findActiveByCategoryWithFacets(Category $category, array $filters, int $limit = 20, int $offset = 0, ?int $priceMin = null, ?int $priceMax = null): array
     {
         $qb = $this->createQueryBuilder('p')
             ->distinct()
@@ -107,6 +107,15 @@ final class ProductRepository extends ServiceEntityRepository
             ->setParameter('category', $category)
             ->setFirstResult($offset)
             ->setMaxResults($limit);
+
+        if ($priceMin !== null) {
+            $qb->andWhere('p.effectivePrice >= :priceMin')
+               ->setParameter('priceMin', $priceMin);
+        }
+        if ($priceMax !== null) {
+            $qb->andWhere('p.effectivePrice <= :priceMax')
+               ->setParameter('priceMax', $priceMax);
+        }
 
         $i = 0;
         $numericCodes = ['height', 'bulbs_count', 'lighting_area'];
@@ -172,7 +181,7 @@ final class ProductRepository extends ServiceEntityRepository
      * @param array<string,string[]> $filters
      * @return array{items: Product[], total: int}
      */
-    public function paginateActiveByCategoryWithFacets(Category $category, array $filters, int $page, int $limit): array
+    public function paginateActiveByCategoryWithFacets(Category $category, array $filters, int $page, int $limit, ?int $priceMin = null, ?int $priceMax = null): array
     {
         $page = max(1, $page);
         $offset = ($page - 1) * $limit;
@@ -189,6 +198,15 @@ final class ProductRepository extends ServiceEntityRepository
             ->setParameter('category', $category)
             ->setFirstResult($offset)
             ->setMaxResults($limit);
+
+        if ($priceMin !== null) {
+            $qb->andWhere('p.effectivePrice >= :priceMin')
+               ->setParameter('priceMin', $priceMin);
+        }
+        if ($priceMax !== null) {
+            $qb->andWhere('p.effectivePrice <= :priceMax')
+               ->setParameter('priceMax', $priceMax);
+        }
 
         $i = 0;
         $numericCodes = ['height', 'bulbs_count', 'lighting_area'];
