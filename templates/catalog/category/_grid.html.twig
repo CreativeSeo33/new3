@@ -63,6 +63,9 @@
 {% if totalPages > 1 %}
   {% set q = app.request.query.all %}
   {% set baseParams = q|merge({ 'limit': limit }) %}
+  {# Выбираем маршрут пагинации: поиск или категория #}
+  {% set baseRouteName = routeName|default('catalog_category_products') %}
+  {% set baseRouteParams = routeParams is defined ? routeParams : (slug is defined ? { 'slug': slug } : {}) %}
   {% if baseParams['page'] is defined %}
     {% set baseParams = baseParams|merge({ 'page': null }) %}
   {% endif %}
@@ -70,7 +73,7 @@
     {# Prev #}
     {% if page > 1 %}
       {% set prevParams = baseParams|merge({ 'page': page - 1 }) %}
-      <a class="px-3 py-1 border rounded" href="{{ path('catalog_category_products', { slug: slug }) ~ '?' ~ prevParams|url_encode }}">Назад</a>
+      <a class="px-3 py-1 border rounded" href="{{ path(baseRouteName, baseRouteParams) ~ '?' ~ prevParams|url_encode }}">Назад</a>
     {% else %}
       <span class="px-3 py-1 border rounded text-gray-400">Назад</span>
     {% endif %}
@@ -81,14 +84,14 @@
       {% if p == page %}
         <span class="px-3 py-1 border rounded bg-gray-200">{{ p }}</span>
       {% else %}
-        <a class="px-3 py-1 border rounded" href="{{ path('catalog_category_products', { slug: slug }) ~ '?' ~ pParams|url_encode }}">{{ p }}</a>
+        <a class="px-3 py-1 border rounded" href="{{ path(baseRouteName, baseRouteParams) ~ '?' ~ pParams|url_encode }}">{{ p }}</a>
       {% endif %}
     {% endfor %}
 
     {# Next #}
     {% if page < totalPages %}
       {% set nextParams = baseParams|merge({ 'page': page + 1 }) %}
-      <a class="px-3 py-1 border rounded" href="{{ path('catalog_category_products', { slug: slug }) ~ '?' ~ nextParams|url_encode }}">Вперёд</a>
+      <a class="px-3 py-1 border rounded" href="{{ path(baseRouteName, baseRouteParams) ~ '?' ~ nextParams|url_encode }}">Вперёд</a>
     {% else %}
       <span class="px-3 py-1 border rounded text-gray-400">Вперёд</span>
     {% endif %}

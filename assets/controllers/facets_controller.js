@@ -225,12 +225,14 @@ export default class extends Controller {
     })
     entries.forEach(([code, facet]) => {
       if (facet.type === 'range') return // пока пропускаем диапазон
+      const values = Array.isArray(facet.values) ? facet.values.filter(v => v != null) : []
+      if (values.length === 0) return // не рисуем секцию без значений
       const section = document.createElement('section')
       const title = document.createElement('h3')
       title.textContent = (meta[code]?.title || code)
       section.appendChild(title)
       const list = document.createElement('ul')
-      ;(facet.values || []).forEach(v => {
+      values.forEach(v => {
         const li = document.createElement('li')
         const id = `${code}__${v.code}`
         const cb = document.createElement('input')

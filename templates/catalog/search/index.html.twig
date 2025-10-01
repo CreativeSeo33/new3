@@ -28,12 +28,15 @@
            data-facets-facets-url-value="{{ path('catalog_facets') }}"
            class="grid grid-cols-1 md:grid-cols-4 gap-6">
         <aside class="md:col-span-1">
-          <div data-facets-target="list" class="space-y-4"></div>
+          <div class="facets-panel border rounded p-3">
+            <div data-facets-target="list" class="space-y-4" data-initial-facets='{{ initial_facets_json|default("")|raw }}'></div>
+          </div>
         </aside>
         <main class="md:col-span-3">
-          <div id="category-grid-spinner" class="relative mb-4"></div>
-          <div data-facets-target="products">
-            {% include 'catalog/category/_grid.html.twig' with { products: products } %}
+          <div class="mb-4" data-facets-target="selected" aria-live="polite"></div>
+          <div class="relative mb-4" data-facets-target="products" data-action="click->facets#onPaginationClick">
+            <div id="category-grid-spinner" class="absolute inset-0 flex items-center justify-center z-10" data-size="small" data-color="secondary" data-overlay="true" style="display:none"></div>
+            {% include 'catalog/category/_grid.html.twig' with { products: products, total: total, page: page|default(1), limit: limit|default(20), routeName: 'catalog_search_products', routeParams: {} } %}
           </div>
         </main>
       </div>
