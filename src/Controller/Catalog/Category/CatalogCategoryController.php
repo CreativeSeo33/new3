@@ -58,10 +58,41 @@ final class CatalogCategoryController extends AbstractController
         $priceMinInt = is_numeric((string)$priceMin) ? (int)$priceMin : null;
         $priceMaxInt = is_numeric((string)$priceMax) ? (int)$priceMax : null;
 
-        // Всегда используем метод с фасетами, чтобы поддерживать price_min/price_max даже без f[]
-        $result = $this->productRepository->paginateActiveByCategoryWithFacets(
+        // Определяем перечень кодов атрибутов/опций для типизированной фильтрации
+        $categoryId = (int) $category->getId();
+        $cfg = $this->facetConfigRepository->findEffectiveConfigForCategory($categoryId) ?? null;
+        $attributeCodesFilter = [];
+        $optionCodesFilter = [];
+        if ($cfg) {
+            foreach ($cfg->getAttributes() as $attr) {
+                if (($attr['enabled'] ?? false) && !empty($attr['code'])) {
+                    $attributeCodesFilter[] = (string)$attr['code'];
+                }
+            }
+            foreach ($cfg->getOptions() as $opt) {
+                if (($opt['enabled'] ?? false) && !empty($opt['code'])) {
+                    $optionCodesFilter[] = (string)$opt['code'];
+                }
+            }
+        }
+        if (empty($attributeCodesFilter) && empty($optionCodesFilter)) {
+            $rowFilter = $this->db->fetchAssociative('SELECT attributes_json, options_json FROM facet_dictionary WHERE category_id = :cid LIMIT 1', ['cid' => $categoryId]);
+            if ($rowFilter) {
+                $attrsF = json_decode($rowFilter['attributes_json'] ?? '[]', true) ?: [];
+                $optsF = json_decode($rowFilter['options_json'] ?? '[]', true) ?: [];
+                foreach (($attrsF['items'] ?? []) as $a) { if (!empty($a['code'])) $attributeCodesFilter[] = (string)$a['code']; }
+                foreach ($optsF as $o) { if (!empty($o['code'])) $optionCodesFilter[] = (string)$o['code']; }
+                $attributeCodesFilter = array_values(array_unique($attributeCodesFilter));
+                $optionCodesFilter = array_values(array_unique($optionCodesFilter));
+            }
+        }
+
+        // Используем типизированную фильтрацию, чтобы исключить ложные совпадения между атрибутами и опциями
+        $result = $this->productRepository->paginateActiveByCategoryWithFacetsTyped(
             $category,
             $filters,
+            $attributeCodesFilter,
+            $optionCodesFilter,
             $page,
             $currentLimit,
             $priceMinInt,
@@ -289,9 +320,40 @@ final class CatalogCategoryController extends AbstractController
         $priceMinInt = is_numeric((string)$priceMin) ? (int)$priceMin : null;
         $priceMaxInt = is_numeric((string)$priceMax) ? (int)$priceMax : null;
 
-        $result = $this->productRepository->paginateActiveByCategoryWithFacets(
+        // Определяем перечень кодов атрибутов/опций для типизированной фильтрации
+        $categoryId = (int) $category->getId();
+        $cfg = $this->facetConfigRepository->findEffectiveConfigForCategory($categoryId) ?? null;
+        $attributeCodesFilter = [];
+        $optionCodesFilter = [];
+        if ($cfg) {
+            foreach ($cfg->getAttributes() as $attr) {
+                if (($attr['enabled'] ?? false) && !empty($attr['code'])) {
+                    $attributeCodesFilter[] = (string)$attr['code'];
+                }
+            }
+            foreach ($cfg->getOptions() as $opt) {
+                if (($opt['enabled'] ?? false) && !empty($opt['code'])) {
+                    $optionCodesFilter[] = (string)$opt['code'];
+                }
+            }
+        }
+        if (empty($attributeCodesFilter) && empty($optionCodesFilter)) {
+            $rowFilter = $this->db->fetchAssociative('SELECT attributes_json, options_json FROM facet_dictionary WHERE category_id = :cid LIMIT 1', ['cid' => $categoryId]);
+            if ($rowFilter) {
+                $attrsF = json_decode($rowFilter['attributes_json'] ?? '[]', true) ?: [];
+                $optsF = json_decode($rowFilter['options_json'] ?? '[]', true) ?: [];
+                foreach (($attrsF['items'] ?? []) as $a) { if (!empty($a['code'])) $attributeCodesFilter[] = (string)$a['code']; }
+                foreach ($optsF as $o) { if (!empty($o['code'])) $optionCodesFilter[] = (string)$o['code']; }
+                $attributeCodesFilter = array_values(array_unique($attributeCodesFilter));
+                $optionCodesFilter = array_values(array_unique($optionCodesFilter));
+            }
+        }
+
+        $result = $this->productRepository->paginateActiveByCategoryWithFacetsTyped(
             $category,
             $filters,
+            $attributeCodesFilter,
+            $optionCodesFilter,
             $page,
             $currentLimit,
             $priceMinInt,

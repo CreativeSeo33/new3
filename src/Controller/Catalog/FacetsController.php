@@ -188,18 +188,43 @@ final class FacetsController extends AbstractController
             $meta['category'] = $meta['category'] ?? ['title' => 'Категории', 'sort' => null];
         }
 
-        // Always include live price range
+        // Always include live price range (учитываем тип товара)
         if (!empty($ids)) {
             $priceRow = $this->db->fetchAssociative(
-                'SELECT MIN(p.effective_price) AS min_price, MAX(p.effective_price) AS max_price
-                 FROM product p
-                 WHERE p.status = 1 AND p.id IN (:ids)', ['ids' => $ids], ['ids' => ArrayParameterType::INTEGER]
+                'SELECT MIN(t.price_val) AS min_price, MAX(t.price_val) AS max_price
+                 FROM (
+                   SELECT p.effective_price AS price_val
+                   FROM product p
+                   WHERE p.status = 1 AND p.id IN (:ids) AND p.type = \'' . 'simple' . '\' AND p.effective_price IS NOT NULL
+                   UNION ALL
+                   SELECT COALESCE(pova.sale_price, pova.price) AS price_val
+                   FROM product_option_value_assignment pova
+                   INNER JOIN product pv ON pv.id = pova.product_id
+                   WHERE pv.status = 1 AND pv.id IN (:ids) AND pv.type = \'' . 'variable' . '\' AND (pova.sale_price IS NOT NULL OR pova.price IS NOT NULL)
+                   UNION ALL
+                   SELECT p3.effective_price AS price_val
+                   FROM product p3
+                   WHERE p3.status = 1 AND p3.id IN (:ids) AND p3.type = \'' . 'variable_no_prices' . '\' AND p3.effective_price IS NOT NULL
+                 ) t', ['ids' => $ids], ['ids' => ArrayParameterType::INTEGER]
             ) ?: ['min_price' => null, 'max_price' => null];
         } else {
             $priceRow = $this->db->fetchAssociative(
-                'SELECT MIN(p.effective_price) AS min_price, MAX(p.effective_price) AS max_price
-                 FROM product p INNER JOIN product_to_category pc ON pc.product_id = p.id
-                 WHERE p.status = 1 AND pc.category_id = :cid', ['cid' => $categoryId]
+                'SELECT MIN(t.price_val) AS min_price, MAX(t.price_val) AS max_price
+                 FROM (
+                   SELECT p.effective_price AS price_val
+                   FROM product p INNER JOIN product_to_category pc ON pc.product_id = p.id
+                   WHERE p.status = 1 AND pc.category_id = :cid AND p.type = \'' . 'simple' . '\' AND p.effective_price IS NOT NULL
+                   UNION ALL
+                   SELECT COALESCE(pova.sale_price, pova.price) AS price_val
+                   FROM product_option_value_assignment pova
+                   INNER JOIN product pv ON pv.id = pova.product_id
+                   INNER JOIN product_to_category pc2 ON pc2.product_id = pv.id
+                   WHERE pv.status = 1 AND pc2.category_id = :cid AND pv.type = \'' . 'variable' . '\' AND (pova.sale_price IS NOT NULL OR pova.price IS NOT NULL)
+                   UNION ALL
+                   SELECT p3.effective_price AS price_val
+                   FROM product p3 INNER JOIN product_to_category pc3 ON pc3.product_id = p3.id
+                   WHERE p3.status = 1 AND pc3.category_id = :cid AND p3.type = \'' . 'variable_no_prices' . '\' AND p3.effective_price IS NOT NULL
+                 ) t', ['cid' => $categoryId]
             ) ?: ['min_price' => null, 'max_price' => null];
         }
         $facets['price'] = [ 'type' => 'range', 'min' => $priceRow['min_price'] ?? null, 'max' => $priceRow['max_price'] ?? null ];

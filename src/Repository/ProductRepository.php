@@ -239,6 +239,109 @@ final class ProductRepository extends ServiceEntityRepository
 
         return [ 'items' => $items, 'total' => $total ];
     }
+
+    /**
+     * Пагинация с фасетами (учёт типа кода): атрибуты фильтруются по атрибутам, опции — по опциям.
+     * Если код не распознан (нет в списках), применяется прежняя логика (OR по обоим источникам).
+     *
+     * @param array<string,string[]> $filters
+     * @param string[] $attributeCodes
+     * @param string[] $optionCodes
+     * @return array{items: Product[], total: int}
+     */
+    public function paginateActiveByCategoryWithFacetsTyped(
+        Category $category,
+        array $filters,
+        array $attributeCodes,
+        array $optionCodes,
+        int $page,
+        int $limit,
+        ?int $priceMin = null,
+        ?int $priceMax = null
+    ): array {
+        $page = max(1, $page);
+        $offset = ($page - 1) * $limit;
+
+        $qb = $this->createQueryBuilder('p')
+            ->distinct()
+            ->innerJoin('p.category', 'pc')
+            ->leftJoin('p.image', 'img')->addSelect('img')
+            ->andWhere('pc.category = :category')
+            ->andWhere('pc.visibility = true')
+            ->andWhere('p.status = true')
+            ->orderBy('p.sortOrder', 'ASC')
+            ->addOrderBy('img.sortOrder', 'ASC')
+            ->setParameter('category', $category)
+            ->setFirstResult($offset)
+            ->setMaxResults($limit);
+
+        if ($priceMin !== null) {
+            $qb->andWhere('p.effectivePrice >= :priceMin')
+               ->setParameter('priceMin', $priceMin);
+        }
+        if ($priceMax !== null) {
+            $qb->andWhere('p.effectivePrice <= :priceMax')
+               ->setParameter('priceMax', $priceMax);
+        }
+
+        $i = 0;
+        $numericCodes = ['height', 'bulbs_count', 'lighting_area'];
+        $attrSet = array_flip(array_map(static fn($c) => strtolower((string)$c), $attributeCodes));
+        $optSet = array_flip(array_map(static fn($c) => strtolower((string)$c), $optionCodes));
+
+        foreach ($filters as $code => $values) {
+            if (empty($values)) { continue; }
+            $i++;
+            $lower = strtolower((string)$code);
+
+            if (in_array($lower, $numericCodes, true)) {
+                $valsParam = 'f_vals_' . $i;
+                $field = $lower === 'bulbs_count' ? 'bulbsCount' : ($lower === 'lighting_area' ? 'lightingArea' : 'height');
+                $existsNum = 'EXISTS (SELECT 1 FROM App\\Entity\\ProductOptionValueAssignment pnum' . $i
+                    . ' WHERE pnum' . $i . '.product = p AND pnum' . $i . '.' . $field . ' IN (:' . $valsParam . '))';
+                $qb->andWhere($existsNum)
+                   ->setParameter($valsParam, array_values(array_map('intval', $values)));
+                continue;
+            }
+
+            $valsParam = 'f_vals_' . $i;
+            $codeParam = 'f_code_' . $i;
+
+            $existsAttr = 'EXISTS (SELECT 1 FROM App\\Entity\\ProductAttributeAssignment paa' . $i
+                . ' JOIN paa' . $i . '.attribute a' . $i
+                . ' WHERE paa' . $i . '.product = p AND a' . $i . '.code = :' . $codeParam . ' AND paa' . $i . '.stringValue IN (:' . $valsParam . '))';
+            $existsOpt = 'EXISTS (SELECT 1 FROM App\\Entity\\ProductOptionValueAssignment pova' . $i
+                . ' JOIN pova' . $i . '.option o' . $i
+                . ' JOIN pova' . $i . '.value ov' . $i
+                . ' WHERE pova' . $i . '.product = p AND o' . $i . '.code = :' . $codeParam . ' AND ov' . $i . '.value IN (:' . $valsParam . '))';
+
+            if (isset($attrSet[$lower]) && !isset($optSet[$lower])) {
+                // Явно атрибутный код
+                $qb->andWhere($existsAttr)
+                    ->setParameter($codeParam, $code)
+                    ->setParameter($valsParam, $values);
+                continue;
+            }
+            if (isset($optSet[$lower]) && !isset($attrSet[$lower])) {
+                // Явно опционный код
+                $qb->andWhere($existsOpt)
+                    ->setParameter($codeParam, $code)
+                    ->setParameter($valsParam, $values);
+                continue;
+            }
+
+            // Неизвестно — сохраняем прежнюю логику (OR по обоим источникам)
+            $qb->andWhere('(' . $existsAttr . ' OR ' . $existsOpt . ')')
+                ->setParameter($codeParam, $code)
+                ->setParameter($valsParam, $values);
+        }
+
+        $paginator = new Paginator($qb->getQuery(), true);
+        $total = count($paginator);
+        $items = iterator_to_array($paginator->getIterator());
+
+        return [ 'items' => $items, 'total' => $total ];
+    }
 }
 
 

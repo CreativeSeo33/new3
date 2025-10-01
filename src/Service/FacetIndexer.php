@@ -24,16 +24,28 @@ final class FacetIndexer
         $priceRow = $this->db->fetchAssociative(
              'SELECT MIN(t.price_val) AS min_price, MAX(t.price_val) AS max_price
              FROM (
+               -- Simple: берём effective_price товара при наличии остатка на товаре
                SELECT p.effective_price AS price_val
                FROM product p
                INNER JOIN product_to_category pc ON pc.product_id = p.id
                WHERE pc.category_id = :cid AND p.status = 1 AND p.type = \'simple\' AND p.effective_price IS NOT NULL AND p.quantity > 0
                UNION ALL
+               -- Variable: берём цены вариаций (sale/price) при наличии остатка у вариации
                SELECT COALESCE(pova.sale_price, pova.price) AS price_val
                FROM product_option_value_assignment pova
                INNER JOIN product p2 ON p2.id = pova.product_id
                INNER JOIN product_to_category pc2 ON pc2.product_id = pova.product_id
                WHERE pc2.category_id = :cid AND p2.status = 1 AND (pova.sale_price IS NOT NULL OR pova.price IS NOT NULL) AND p2.type = \'variable\' AND pova.quantity > 0
+               UNION ALL
+               -- Variable without prices: используем effective_price товара, если есть хотя бы одна вариация с остатком
+               SELECT p3.effective_price AS price_val
+               FROM product p3
+               INNER JOIN product_to_category pc3 ON pc3.product_id = p3.id
+               WHERE pc3.category_id = :cid AND p3.status = 1 AND p3.type = \'variable_no_prices\' AND p3.effective_price IS NOT NULL
+                 AND EXISTS (
+                   SELECT 1 FROM product_option_value_assignment pova3
+                   WHERE pova3.product_id = p3.id AND pova3.quantity > 0
+                 )
              ) t',
             ['cid' => $categoryId]
         ) ?: ['min_price' => null, 'max_price' => null];
@@ -88,6 +100,10 @@ final class FacetIndexer
                  OR (p.type = \'variable\' AND EXISTS (
                       SELECT 1 FROM product_option_value_assignment pova_stock
                       WHERE pova_stock.product_id = p.id AND pova_stock.quantity > 0
+                 ))
+                 OR (p.type = \'variable_no_prices\' AND EXISTS (
+                      SELECT 1 FROM product_option_value_assignment pova_stock2
+                      WHERE pova_stock2.product_id = p.id AND pova_stock2.quantity > 0
                  ))
                )';
         $attrParams = ['cid' => $categoryId];
