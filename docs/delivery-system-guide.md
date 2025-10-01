@@ -335,6 +335,29 @@ API `/api/cart` возвращает нужные поля:
 - `shipping.cost` — стоимость доставки (в рублях, может быть `null`),
 - `currency` — валюта (например, `RUB`).
 
+### ⚠️ Важное исправление (2025-01-17)
+
+**Проблема:** При `PvzPrice.cost = null` (индивидуальный расчёт) в API возвращался `cost = 0` вместо `null`, что приводило к показу "0 руб." вместо "Расчет менеджером".
+
+**Причина:** В `CartApiController::serializeCart()` использовался фолбэк:
+```php
+// БЫЛО (неправильно):
+'cost' => $deliveryResult?->cost ?? $cart->getShippingCost(),
+
+// СТАЛО (правильно):
+'cost' => $deliveryResult?->cost, // null означает "Расчет менеджером"
+```
+
+**Решение:**
+1. Убран фолбэк к `Cart::getShippingCost()` в сериализации API
+2. Обновлён TypeScript тип: `cost: number | null`
+3. Фронт корректно обрабатывает `null` как "Расчет менеджером"
+
+**Поведение после исправления:**
+- `cost = null` → "Расчет менеджером"
+- `cost = 0` + `isFree = true` → "0 руб." (бесплатная доставка)
+- `cost > 0` → "N руб."
+
 ### HTML (Twig) — блоки для значений
 
 ```html
@@ -355,13 +378,17 @@ API `/api/cart` возвращает нужные поля:
 ```js
 // после получения data из GET /api/cart
 const subtotal = Number(data?.subtotal || 0);
-const shippingCost = (data?.shipping && typeof data.shipping.cost === 'number') ? data.shipping.cost : null;
+const shippingCost = data?.shipping?.cost; // может быть number или null
 
 // Обновляем доставку
 if (this.hasShippingTarget) {
-  this.shippingTarget.textContent = (shippingCost === null)
-    ? 'Расчет менеджером'
-    : this.formatRub(shippingCost);
+  if (shippingCost === null) {
+    this.shippingTarget.textContent = 'Расчет менеджером';
+  } else if (shippingCost === 0 && data?.shipping?.data?.isFree) {
+    this.shippingTarget.textContent = '0 руб.'; // бесплатная доставка
+  } else {
+    this.shippingTarget.textContent = this.formatRub(shippingCost);
+  }
 }
 
 // Обновляем итог (товары + доставка, если известна)
@@ -373,7 +400,7 @@ if (this.hasDropdownTotalTarget) {
 
 Где `formatRub(amount)` — форматирование "16 600 руб.".
 
-> Примечание: если `shipping.cost = null`, показываем "Расчет менеджером" и считаем итог без доставки.
+> **Важно:** После исправления `shipping.cost` может быть `null`, `0` или положительным числом. Проверяйте `null` для показа "Расчет менеджером", а `0` с `isFree=true` для бесплатной доставки.
 
 ---
 

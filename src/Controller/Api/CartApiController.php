@@ -933,7 +933,7 @@ final class CartApiController extends AbstractController
 			'totalItemQuantity' => $cart->getTotalItemQuantity(),
 			'shipping' => [
 				'method' => $cart->getShippingMethod(),
-				'cost' => $deliveryResult?->cost ?? $cart->getShippingCost(),
+				'cost' => $deliveryResult?->cost, // null означает "Расчет менеджером"
 				'city' => $cart->getShipToCity(),
 				'data' => [
 					'term' => $deliveryResult?->term ?? null,

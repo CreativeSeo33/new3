@@ -44,7 +44,7 @@ export interface Cart {
   totalItemQuantity?: number;
   shipping: {
     method?: string;
-    cost: number;
+    cost: number | null; // null означает "Расчет менеджером"
     city?: string;
     data?: any;
   };

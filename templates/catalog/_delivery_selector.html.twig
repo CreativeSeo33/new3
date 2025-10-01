@@ -46,7 +46,13 @@
     </div>
   </section>
 
-  <div class="text-sm mt-3">Стоимость доставки: <span id="ship-cost" data-testid="delivery-ship-cost">{{ (delivery.cost is defined and delivery.cost is not null) ? (delivery.cost|number_format(0, '.', ' ') ~ ' руб.') : '0 руб.' }}</span></div>
+  <div class="text-sm mt-3">Стоимость доставки: <span id="ship-cost" data-testid="delivery-ship-cost">{{
+    (delivery.cost is defined and delivery.cost is not null)
+      ? ((delivery.cost == 0 and delivery.data is defined and delivery.data.isFree is defined and delivery.data.isFree) 
+          ? '0 руб.' 
+          : (delivery.cost|number_format(0, '.', ' ') ~ ' руб.'))
+      : 'Расчет менеджером'
+  }}</span></div>
 
   <div id="delivery-spinner" data-testid="delivery-spinner" class="absolute inset-0 hidden pointer-events-none"></div>
 </div>
