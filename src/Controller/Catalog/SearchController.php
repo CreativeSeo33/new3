@@ -158,6 +158,16 @@ final class SearchController extends AbstractController
                             $types[$valsParam] = ArrayParameterType::INTEGER;
                             continue;
                         }
+                        if ($lower === 'category') {
+                            $i++;
+                            $valsParam = 'f_vals_' . $i;
+                            $joins .= ' AND EXISTS (SELECT 1 FROM product_to_category pc_f' . $i
+                                . ' INNER JOIN category c_f' . $i . ' ON c_f' . $i . '.id = pc_f' . $i . '.category_id'
+                                . ' WHERE pc_f' . $i . '.product_id = p.id AND pc_f' . $i . '.is_parent = 1 AND c_f' . $i . '.name IN (:' . $valsParam . '))';
+                            $params[$valsParam] = $values;
+                            $types[$valsParam] = ArrayParameterType::STRING;
+                            continue;
+                        }
                         $i++;
                         $codeParam = 'f_code_' . $i;
                         $valsParam = 'f_vals_' . $i;
@@ -276,6 +286,29 @@ final class SearchController extends AbstractController
                     $meta[$code] = $meta[$code] ?? [ 'title' => $title, 'sort' => $sort ];
                 }
 
+                // category facet (по найденному подмножеству ids, только is_parent = 1)
+                [$joinSql, $params, $types] = $buildWhere($rawFilters, 'category');
+                $sql = 'SELECT c.id AS code, c.name AS label, COUNT(DISTINCT p.id) AS cnt'
+                    . ' FROM product_to_category pc'
+                    . ' INNER JOIN category c ON c.id = pc.category_id'
+                    . ' INNER JOIN product p ON p.id = pc.product_id'
+                    . $joinSql
+                    . ' WHERE p.status = 1 AND pc.is_parent = 1 AND p.id IN (:ids)'
+                    . ' GROUP BY c.id, c.name ORDER BY cnt DESC';
+                $params = array_merge($params, ['ids' => $ids]);
+                $types['ids'] = ArrayParameterType::INTEGER;
+                $rows = $this->db->fetchAllAssociative($sql, $params, $types);
+                $catValues = array_map(static fn(array $r) => [
+                    'code' => (string)$r['code'],
+                    'label' => (string)$r['label'],
+                    'count' => (int)$r['cnt'],
+                ], $rows);
+                if ($valuesLimit > 0 && count($catValues) > $valuesLimit) {
+                    $catValues = array_slice($catValues, 0, $valuesLimit);
+                }
+                $initialFacets['category'] = ['type' => 'category', 'values' => $catValues];
+                $meta['category'] = $meta['category'] ?? ['title' => 'Категории', 'sort' => null];
+
                 // Price range for ids
                 $priceRow = $this->db->fetchAssociative(
                     'SELECT MIN(p.effective_price) AS min_price, MAX(p.effective_price) AS max_price FROM product p WHERE p.status = 1 AND p.id IN (:ids)',
@@ -338,6 +371,13 @@ final class SearchController extends AbstractController
                         $prop = $lower === 'bulbs_count' ? 'bulbsCount' : ($lower === 'lighting_area' ? 'lightingArea' : 'height');
                         $existsNum = 'EXISTS (SELECT 1 FROM App\\Entity\\ProductOptionValueAssignment pnum' . $i . ' WHERE pnum' . $i . '.product = p AND pnum' . $i . '.' . $prop . ' IN (:' . $valsParam . '))';
                         $qbIds->andWhere($existsNum)->setParameter($valsParam, $intVals);
+                        continue;
+                    }
+                    if ($lower === 'category') {
+                        $i++;
+                        $valsParam = 'f_vals_' . $i;
+                        $existsCat = 'EXISTS (SELECT 1 FROM App\\Entity\\ProductToCategory pc' . $i . ' JOIN pc' . $i . '.category c' . $i . ' WHERE pc' . $i . '.product = p AND pc' . $i . '.isParent = true AND c' . $i . '.name IN (:' . $valsParam . '))';
+                        $qbIds->andWhere($existsCat)->setParameter($valsParam, $values);
                         continue;
                     }
                     $i++;

@@ -178,6 +178,16 @@ final class FacetsController extends AbstractController
             $facets[$code] = ['type' => 'option', 'values' => $values];
         }
 
+        // Фасет категорий в режиме поиска (по найденному подмножеству ids)
+        if ($isSearchMode) {
+            $catValues = $this->countCategoryValues($request, $ids);
+            if ($this->defaultValuesLimit > 0 && count($catValues) > $this->defaultValuesLimit) {
+                $catValues = array_slice($catValues, 0, $this->defaultValuesLimit);
+            }
+            $facets['category'] = ['type' => 'category', 'values' => $catValues];
+            $meta['category'] = $meta['category'] ?? ['title' => 'Категории', 'sort' => null];
+        }
+
         // Always include live price range
         if (!empty($ids)) {
             $priceRow = $this->db->fetchAssociative(
@@ -280,6 +290,34 @@ final class FacetsController extends AbstractController
         ], $rows);
     }
 
+    private function countCategoryValues(Request $request, array $ids = []): array
+    {
+        // Учитываем все выбранные фильтры, кроме самого category
+        [$joinSql, $params, $types] = $this->buildFacetFilterSql($request, 'category');
+
+        $base = 'SELECT c.id AS code, c.name AS label, COUNT(DISTINCT p.id) AS cnt
+                 FROM product_to_category pc
+                 INNER JOIN category c ON c.id = pc.category_id
+                 INNER JOIN product p ON p.id = pc.product_id';
+
+        if (!empty($ids)) {
+            $where = ' WHERE p.status = 1 AND pc.is_parent = 1 AND p.id IN (:ids)';
+            $params = array_merge($params, ['ids' => $ids]);
+            $types['ids'] = ArrayParameterType::INTEGER;
+            $sql = $base . $joinSql . $where . ' GROUP BY c.id, c.name ORDER BY cnt DESC';
+        } else {
+            // В режиме категории этот фасет не используется
+            $sql = $base . ' WHERE 1=0';
+        }
+
+        $rows = $this->db->fetchAllAssociative($sql, $params, $types);
+        return array_map(static fn(array $r) => [
+            'code' => (string)$r['code'],
+            'label' => (string)$r['label'],
+            'count' => (int)$r['cnt'],
+        ], $rows);
+    }
+
     /**
      * @return array{0:string,1:array}
      */
@@ -308,6 +346,17 @@ final class FacetsController extends AbstractController
                     . ' WHERE pnum_f' . $i . '.product_id = p.id AND pnum_f' . $i . '.' . $col . ' IN (:' . $valsParam . '))';
                 $params[$valsParam] = $intVals;
                 $types[$valsParam] = ArrayParameterType::INTEGER;
+                continue;
+            }
+
+            if ($lower === 'category') {
+                $i++;
+                $valsParam = 'f_vals_' . $i;
+                $joins .= ' AND EXISTS (SELECT 1 FROM product_to_category pc_f' . $i
+                    . ' INNER JOIN category c_f' . $i . ' ON c_f' . $i . '.id = pc_f' . $i . '.category_id'
+                    . ' WHERE pc_f' . $i . '.product_id = p.id AND pc_f' . $i . '.is_parent = 1 AND c_f' . $i . '.name IN (:' . $valsParam . '))';
+                $params[$valsParam] = $values;
+                $types[$valsParam] = ArrayParameterType::STRING;
                 continue;
             }
 
