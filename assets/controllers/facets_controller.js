@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus'
+import noUiSlider from 'nouislider'
 
 export default class extends Controller {
   static targets = ['list', 'products', 'selected', 'limit']
@@ -12,8 +13,13 @@ export default class extends Controller {
     this.selected = new Map() // code -> Set(values)
     this.meta = {} // code -> { title, sort }
     this.spinner = null
+    // Диапазон цены (храним отдельно от selected)
+    this.priceMin = null
+    this.priceMax = null
+    this.priceSlider = null
     // Прочитать выбранные фильтры из URL при первой загрузке
     this.readSelectedFromUrl()
+    this.readPriceFromUrl()
     // Привязываем popstate и синхронизируем селект лимита
     this.onPopStateBound = this.onPopState.bind(this)
     window.addEventListener('popstate', this.onPopStateBound)
@@ -52,6 +58,19 @@ export default class extends Controller {
       this.selected = next
     } catch (_) {
       // ignore
+    }
+  }
+
+  readPriceFromUrl() {
+    try {
+      const url = new URL(window.location.href)
+      const mn = url.searchParams.get('price_min')
+      const mx = url.searchParams.get('price_max')
+      this.priceMin = (mn != null && mn !== '' && !Number.isNaN(Number(mn))) ? Number(mn) : null
+      this.priceMax = (mx != null && mx !== '' && !Number.isNaN(Number(mx))) ? Number(mx) : null
+    } catch (_) {
+      this.priceMin = null
+      this.priceMax = null
     }
   }
 
@@ -125,6 +144,8 @@ export default class extends Controller {
     }
     if (limit) q.limit = limit
     if (page) q.page = page
+    if (this.priceMin != null) q['price_min'] = String(this.priceMin)
+    if (this.priceMax != null) q['price_max'] = String(this.priceMax)
     for (const [code, set] of this.selected.entries()) {
       if (set.size > 0) q[`f[${code}]`] = Array.from(set).join(',')
     }
@@ -184,16 +205,14 @@ export default class extends Controller {
     // Считываем новое состояние из URL
     const prevSelected = this.selected
     this.readSelectedFromUrl()
+    this.readPriceFromUrl()
     this.syncLimitFromUrl()
-    // Сравним строки представления выбранных фасетов
     const serialize = (m) => JSON.stringify(Array.from(m.entries()).map(([k, set]) => [k, Array.from(set).sort()]).sort())
     const changedFilters = serialize(prevSelected) !== serialize(this.selected)
     if (changedFilters) {
-      // Полное обновление
       this.loadFacets()
       return
     }
-    // Иначе изменились только page/limit/прочие — обновим только товары
     this.loadProducts()
   }
 
@@ -224,7 +243,11 @@ export default class extends Controller {
       return ta.localeCompare(tb)
     })
     entries.forEach(([code, facet]) => {
-      if (facet.type === 'range') return // пока пропускаем диапазон
+      if (facet.type === 'range') {
+        // Поддерживаем только ценовой диапазон
+        if (code === 'price') this.renderPriceFacet(root, facet, meta)
+        return
+      }
       const values = Array.isArray(facet.values) ? facet.values.filter(v => v != null) : []
       if (values.length === 0) return // не рисуем секцию без значений
       const section = document.createElement('section')
@@ -255,12 +278,86 @@ export default class extends Controller {
     })
   }
 
+  renderPriceFacet(root, facet, meta) {
+    // facet: { type:'range', min:number|null, max:number|null }
+    const minBound = Number.isFinite(Number(facet.min)) ? Number(facet.min) : 0
+    const maxBound = Number.isFinite(Number(facet.max)) ? Number(facet.max) : 0
+    const startMin = (this.priceMin != null) ? this.priceMin : minBound
+    const startMax = (this.priceMax != null) ? this.priceMax : maxBound
+
+    const section = document.createElement('section')
+    const title = document.createElement('h3')
+    title.textContent = (meta.price?.title || 'Цена')
+    section.appendChild(title)
+
+    const wrapper = document.createElement('div')
+    wrapper.className = 'space-y-3'
+
+    const range = document.createElement('div')
+    range.id = 'hs-price-range'
+    range.className = 'hs-range-slider'
+
+    const valuesRow = document.createElement('div')
+    valuesRow.className = 'flex items-center gap-2 text-sm'
+    const minOut = document.createElement('span')
+    const sep = document.createElement('span')
+    sep.textContent = '—'
+    const maxOut = document.createElement('span')
+    minOut.textContent = String(startMin)
+    maxOut.textContent = String(startMax)
+    valuesRow.appendChild(minOut)
+    valuesRow.appendChild(sep)
+    valuesRow.appendChild(maxOut)
+
+    wrapper.appendChild(range)
+    wrapper.appendChild(valuesRow)
+    section.appendChild(wrapper)
+    root.appendChild(section)
+
+    // Инициализация noUiSlider напрямую
+    try {
+      const slider = noUiSlider.create(range, {
+        range: { min: minBound, max: maxBound },
+        start: [startMin, startMax],
+        connect: true,
+        tooltips: true,
+        format: {
+          to: (value) => Math.round(Number(value)),
+          from: (value) => Number(value)
+        }
+      })
+
+      slider.on('update', (values) => {
+        const [a, b] = values
+        minOut.textContent = String(Math.round(Number(a)))
+        maxOut.textContent = String(Math.round(Number(b)))
+      })
+
+      slider.on('change', async (values) => {
+        const [a, b] = values
+        this.priceMin = Math.round(Number(a))
+        this.priceMax = Math.round(Number(b))
+        this.updateUrl()
+        await this.loadFacets()
+      })
+
+      this.priceSlider = { range, slider, minBound, maxBound, minOut, maxOut }
+    } catch (err) {
+      console.error('Failed to init price range slider', err)
+      this.priceSlider = null
+    }
+  }
+
   renderSelected() {
     const root = this.hasSelectedTarget ? this.selectedTarget : null
     if (!root) return
     const entries = Array.from(this.selected.entries()).flatMap(([code, set]) =>
       Array.from(set).map(v => ({ code, value: String(v) }))
     )
+    if (this.priceMin != null || this.priceMax != null) {
+      const label = `${this.priceMin ?? ''}—${this.priceMax ?? ''}`
+      entries.unshift({ code: 'price', value: label })
+    }
     if (entries.length === 0) {
       root.innerHTML = ''
       return
@@ -296,6 +393,20 @@ export default class extends Controller {
     const btn = event.currentTarget
     const code = btn.dataset.facetsCode
     const value = btn.dataset.facetsValue
+    if (code === 'price') {
+      this.priceMin = null
+      this.priceMax = null
+      // Сбросим слайдер, если есть
+      try {
+        if (this.priceSlider?.range?.noUiSlider) {
+          const { minBound, maxBound } = this.priceSlider
+          this.priceSlider.range.noUiSlider.set([minBound, maxBound])
+        }
+      } catch (_) {}
+      this.updateUrl()
+      await this.loadFacets()
+      return
+    }
     if (!this.selected.has(code)) return
     const set = this.selected.get(code)
     set.delete(value)
@@ -306,6 +417,8 @@ export default class extends Controller {
 
   async clearAll() {
     this.selected.clear()
+    this.priceMin = null
+    this.priceMax = null
     this.updateUrl()
     await this.loadFacets()
   }

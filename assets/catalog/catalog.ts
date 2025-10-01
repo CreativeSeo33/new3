@@ -1,5 +1,10 @@
 // ai:bootstrap area=catalog uses=registry
 import './styles.css';
+import 'nouislider/dist/nouislider.css';
+// Инициализируем глобальный noUiSlider для HSRangeSlider (Preline ожидает window.noUiSlider)
+import * as noUiSliderModule from 'nouislider/dist/nouislider.js';
+// @ts-ignore
+if (typeof window !== 'undefined') { (window as any).noUiSlider = (noUiSliderModule as any).default || (noUiSliderModule as any); }
 import { Fancybox } from '@fancyapps/ui';
 import '@fancyapps/ui/dist/fancybox/fancybox.css';
 import { register } from 'swiper/element/bundle';

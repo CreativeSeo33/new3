@@ -329,6 +329,22 @@ final class FacetsController extends AbstractController
         $types = [];
         $i = 0;
         $numericCodes = ['height', 'bulbs_count', 'lighting_area'];
+
+        // Фильтр по цене (общий для всех фасетов)
+        $priceMin = $request->query->get('price_min');
+        $priceMax = $request->query->get('price_max');
+        if ($priceMin !== null || $priceMax !== null) {
+            if ($priceMin !== null && is_numeric($priceMin)) {
+                $joins .= ' AND p.effective_price >= :f_price_min';
+                $params['f_price_min'] = (int)$priceMin;
+                $types['f_price_min'] = \PDO::PARAM_INT;
+            }
+            if ($priceMax !== null && is_numeric($priceMax)) {
+                $joins .= ' AND p.effective_price <= :f_price_max';
+                $params['f_price_max'] = (int)$priceMax;
+                $types['f_price_max'] = \PDO::PARAM_INT;
+            }
+        }
         foreach ($raw as $code => $csv) {
             if ($excludeCode !== null && (string)$code === $excludeCode) continue;
             $values = array_values(array_filter(array_map('trim', explode(',', (string)$csv)), static fn($v) => $v !== ''));

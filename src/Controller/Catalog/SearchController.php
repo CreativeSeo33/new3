@@ -135,12 +135,25 @@ final class SearchController extends AbstractController
                 }
 
                 // helper: build filter joins excluding current code
-                $buildWhere = function(array $raw, ?string $excludeCode = null) {
+                $buildWhere = function(array $raw, ?string $excludeCode = null) use ($request) {
                     $joins = '';
                     $params = [];
                     $types = [];
                     $i = 0;
                     $numericCodes = ['height', 'bulbs_count', 'lighting_area'];
+                    // Фильтр по цене: применяем к запросам агрегаций на ids
+                    $priceMinRaw = $request->query->get('price_min');
+                    $priceMaxRaw = $request->query->get('price_max');
+                    if ($priceMinRaw !== null && is_numeric((string)$priceMinRaw)) {
+                        $joins .= ' AND p.effective_price >= :f_price_min';
+                        $params['f_price_min'] = (int)$priceMinRaw;
+                        $types['f_price_min'] = \PDO::PARAM_INT;
+                    }
+                    if ($priceMaxRaw !== null && is_numeric((string)$priceMaxRaw)) {
+                        $joins .= ' AND p.effective_price <= :f_price_max';
+                        $params['f_price_max'] = (int)$priceMaxRaw;
+                        $types['f_price_max'] = \PDO::PARAM_INT;
+                    }
                     foreach ($raw as $c => $csv) {
                         if ($excludeCode !== null && (string)$c === $excludeCode) continue;
                         $values = array_values(array_filter(array_map('trim', explode(',', (string)$csv)), static fn($v) => $v !== ''));
@@ -358,6 +371,18 @@ final class SearchController extends AbstractController
 
                 $i = 0;
                 $numericCodes = ['height', 'bulbs_count', 'lighting_area'];
+                // Дополнительные ограничения по цене на выборку ids
+                $priceMinRaw = $request->query->get('price_min');
+                $priceMaxRaw = $request->query->get('price_max');
+                if ($priceMinRaw !== null && is_numeric((string)$priceMinRaw)) {
+                    $i++;
+                    $qbIds->andWhere('p.effectivePrice >= :q_price_min')->setParameter('q_price_min', (int)$priceMinRaw);
+                }
+                if ($priceMaxRaw !== null && is_numeric((string)$priceMaxRaw)) {
+                    $i++;
+                    $qbIds->andWhere('p.effectivePrice <= :q_price_max')->setParameter('q_price_max', (int)$priceMaxRaw);
+                }
+
                 foreach ($raw as $code => $csv) {
                     $values = array_values(array_filter(array_map('trim', explode(',', (string)$csv)), static fn($v) => $v !== ''));
                     if (empty($values)) { continue; }
