@@ -57,7 +57,8 @@ final class DeliveryService
         // 1. Получаем контекст доставки из сессии
         $context = $this->deliveryContext->get();
         $cityName = $context['cityName'] ?? null;
-        $methodCode = $context['methodCode'] ?? 'pvz'; // По умолчанию 'pvz'
+        // Надёжный выбор метода: сначала контекст, затем сохранённый в корзине, затем дефолт pvz
+        $methodCode = $context['methodCode'] ?? ($cart->getShippingMethod() ?? 'pvz');
 
         // 2. Если город не определен, расчет невозможен
         if (!$cityName) {
@@ -96,7 +97,8 @@ final class DeliveryService
     {
         $context = $this->deliveryContext->get();
         $city = $context['cityName'] ?? '';
-        $method = $context['methodCode'] ?? 'pvz';
+        // Используем метод из контекста, иначе из корзины, иначе 'pvz'
+        $method = $context['methodCode'] ?? ($cart->getShippingMethod() ?? 'pvz');
         $qty = $cart->getTotalItemQuantity();
 
         $key = 'ship_quote_' . md5($city . '|' . $method . '|' . $qty);

@@ -21,6 +21,16 @@ export async function http<T = any>(
 
   // Добавляем CSRF токен для state-changing методов
   const finalHeaders: Record<string, string> = { ...defaultHeaders, ...headers };
+  // Пробуем подставить If-Match из sessionStorage для state-changing запросов на cart/delivery
+  try {
+    const isStateChanging = method !== 'GET' && /\/api\/(cart|delivery)\//.test(path);
+    if (isStateChanging) {
+      const etag = sessionStorage.getItem('cart:etag');
+      if (etag && !finalHeaders['If-Match']) {
+        finalHeaders['If-Match'] = etag;
+      }
+    }
+  } catch {}
   if (requiresCsrfToken(method)) {
     try {
       const csrfToken = await getCsrfToken();
@@ -74,7 +84,20 @@ export async function http<T = any>(
   }
 
   try {
-    const response = await fetch(url, config);
+    let response = await fetch(url, config);
+
+    // Авто-ретрай на 412/428: обновим ETag через GET /api/cart и повторим один раз
+    if ((response.status === 412 || response.status === 428) && method !== 'GET') {
+      try {
+        const cartRes = await fetch('/api/cart', { credentials: 'same-origin', headers: { 'Accept': 'application/json' }, cache: 'no-store' });
+        const newEtag = cartRes.headers.get('ETag');
+        if (newEtag) {
+          try { sessionStorage.setItem('cart:etag', newEtag); } catch {}
+          (config.headers as Record<string, string>)['If-Match'] = newEtag;
+          response = await fetch(url, config);
+        }
+      } catch {}
+    }
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => 'Unknown error');

@@ -111,7 +111,12 @@ export default class extends Controller {
       this.hideSpinner();
       return;
     }
-    try { this.cartEtag = res.headers.get('ETag') || null; } catch { this.cartEtag = null; }
+    try {
+      this.cartEtag = res.headers.get('ETag') || null;
+      if (this.cartEtag) {
+        try { sessionStorage.setItem('cart:etag', this.cartEtag); } catch {}
+      }
+    } catch { this.cartEtag = null; }
     if (typeof data?.version === 'number') this.cartVersion = data.version;
     const next = this.extractCountFromResponse(data);
     const total = this.extractSubtotalFromResponse(data);
@@ -147,7 +152,12 @@ export default class extends Controller {
       this.hideSpinner();
       return;
     }
-    try { this.cartEtag = res.headers.get('ETag') || null; } catch { this.cartEtag = null; }
+    try {
+      this.cartEtag = res.headers.get('ETag') || null;
+      if (this.cartEtag) {
+        try { sessionStorage.setItem('cart:etag', this.cartEtag); } catch {}
+      }
+    } catch { this.cartEtag = null; }
     if (typeof data?.version === 'number') this.cartVersion = data.version;
     const items = Array.isArray(data?.items) ? data.items : [];
     this.renderItems(items, data?.currency || 'RUB');

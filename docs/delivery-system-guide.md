@@ -402,6 +402,54 @@ if (this.hasDropdownTotalTarget) {
 
 > **Важно:** После исправления `shipping.cost` может быть `null`, `0` или положительным числом. Проверяйте `null` для показа "Расчет менеджером", а `0` с `isFree=true` для бесплатной доставки.
 
+### 🔒 Синхронизация метода доставки и ETag
+
+Чтобы в мини‑корзине и на сервере всегда совпадала логика расчёта (PVZ vs курьер), используется протокол согласования через ETag:
+
+- При выборе метода доставки отправляйте `POST /api/delivery/select-method` (или `POST /api/delivery/select-pvz`) с заголовком `If-Match: <ETag>`, где `<ETag>` — из последнего ответа `GET /api/cart`.
+- На фронтенде ETag сохраняется в `sessionStorage` под ключом `cart:etag` при каждом `GET /api/cart` (см. контроллер `cart_counter_controller.js`).
+- HTTP‑клиент автоматически подставляет `If-Match` для запросов к `/api/cart` и `/api/delivery` (кроме GET) и делает один авто‑ретрай на коды `412/428`:
+
+```js
+// assets/catalog/src/shared/api/http.ts (фрагмент)
+const isStateChanging = method !== 'GET' && /\/api\/(cart|delivery)\//.test(path);
+if (isStateChanging) {
+  const etag = sessionStorage.getItem('cart:etag');
+  if (etag && !finalHeaders['If-Match']) finalHeaders['If-Match'] = etag;
+}
+
+let response = await fetch(url, config);
+if ((response.status === 412 || response.status === 428) && method !== 'GET') {
+  const cartRes = await fetch('/api/cart', { headers: { 'Accept': 'application/json' }, cache: 'no-store', credentials: 'same-origin' });
+  const newEtag = cartRes.headers.get('ETag');
+  if (newEtag) {
+    sessionStorage.setItem('cart:etag', newEtag);
+    (config.headers)['If-Match'] = newEtag;
+    response = await fetch(url, config);
+  }
+}
+```
+
+### 🔁 Сброс метода при смене города
+
+При выборе нового города метод доставки сбрасывается (и ПВЗ очищается). После `select-city` необходимо заново выбрать метод:
+
+```php
+// src/Service/DeliveryContext.php (фрагмент)
+unset($delivery['methodCode'], $delivery['pickupPointId']);
+```
+
+### 🛡️ Серверный фолбэк выбора метода
+
+На сервере добавлен безопасный фолбэк: если в контексте нет `methodCode`, используется метод из корзины (`Cart::getShippingMethod()`), и только затем дефолт `pvz`.
+
+```php
+// src/Service/Delivery/DeliveryService.php (фрагмент)
+$methodCode = $context['methodCode'] ?? ($cart->getShippingMethod() ?? 'pvz');
+```
+
+Это снижает риск ситуаций, когда UI уже переключился на курьера, а сервер ещё считает ПВЗ.
+
 ---
 
 *Документация создана для junior разработчиков. Обновляйте её при внесении изменений в систему доставки.*
