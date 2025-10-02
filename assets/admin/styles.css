@@ -1,6 +1,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@plugin "flyonui";
+@import "flyonui/variants.css";
+@source "../node_modules/flyonui/flyonui.js"; 
 
 @layer base {
   :root {

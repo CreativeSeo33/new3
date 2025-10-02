@@ -248,9 +248,10 @@ module.exports = {
     },
   },
   plugins: [
-    require('@tailwindcss/forms'),
+    require('@tailwindcss/forms')({ strategy: 'class' }),
     require('@tailwindcss/typography'),
     require('@tailwindcss/line-clamp'),
+    require('flyonui').default,
   ],
   safelist: [
     { pattern: /(bg|text|border)-(primary|success|warning|danger|info)-(50|100|200|300|400|500|600|700|800|900)/ },

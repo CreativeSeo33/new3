@@ -3,6 +3,7 @@ import { createApp } from 'vue';
 import App from './App.vue';
 import { router } from '@admin/router/index';
 import './styles.css';
+import 'flyonui/flyonui';
 
 // Import Stimulus
 import '../bootstrap.js';

@@ -250,32 +250,90 @@ export default class extends Controller {
       }
       const values = Array.isArray(facet.values) ? facet.values.filter(v => v != null) : []
       if (values.length === 0) return // не рисуем секцию без значений
-      const section = document.createElement('section')
-      const title = document.createElement('div')
-      title.className = 'h3'
-      title.textContent = (meta[code]?.title || code)
-      section.appendChild(title)
-      const list = document.createElement('ul')
+      // Wrapper блока фильтра (по шаблону из {# CUSTOM FILTERS #})
+      const wrapper = document.createElement('div')
+      wrapper.className = 'border-t border-gray-200 px-4 py-6'
+
+      const h3 = document.createElement('h3')
+      h3.className = '-mx-2 -my-3 flow-root'
+
+      const btn = document.createElement('button')
+      btn.type = 'button'
+      btn.className = 'flex w-full items-center justify-between bg-white px-2 py-3 text-gray-400 hover:text-gray-500'
+      btn.setAttribute('aria-expanded', 'true')
+      const sectionId = `filter-section-${code}`
+      btn.setAttribute('aria-controls', sectionId)
+
+      const btnTitle = document.createElement('span')
+      btnTitle.className = 'font-medium text-gray-900'
+      btnTitle.textContent = (meta[code]?.title || code)
+
+      const icons = document.createElement('span')
+      icons.className = 'ml-6 flex items-center'
+      icons.innerHTML = `
+        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="size-5 plus" hidden>
+          <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z"></path>
+        </svg>
+        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="size-5 minus">
+          <path d="M4 10a.75.75 0 0 1 .75-.75h10.5a.75.75 0 0 1 0 1.5H4.75A.75.75 0 0 1 4 10Z" clip-rule="evenodd" fill-rule="evenodd"></path>
+        </svg>`
+
+      btn.appendChild(btnTitle)
+      btn.appendChild(icons)
+      h3.appendChild(btn)
+
+      const content = document.createElement('div')
+      content.id = sectionId
+      content.className = 'block pt-6'
+
+      const inner = document.createElement('div')
+      inner.className = 'space-y-2'
+
       values.forEach(v => {
-        const li = document.createElement('li')
+        const row = document.createElement('div')
+        row.className = 'flex items-center gap-2'
         const id = `${code}__${v.code}`
+
         const cb = document.createElement('input')
         cb.type = 'checkbox'
         cb.id = id
+        cb.className = 'checkbox checkbox-primary'
         cb.dataset.action = 'change->facets#toggle'
         cb.dataset.facetsCode = code
         cb.dataset.facetsValue = v.label
         cb.disabled = v.count === 0
         cb.checked = this.selected.get(code)?.has(String(v.label)) || false
+
         const label = document.createElement('label')
+        label.className = 'label-text text-base'
         label.htmlFor = id
         label.textContent = `${v.label} (${v.count})`
-        li.appendChild(cb)
-        li.appendChild(label)
-        list.appendChild(li)
+
+        row.appendChild(cb)
+        row.appendChild(label)
+        inner.appendChild(row)
       })
-      section.appendChild(list)
-      root.appendChild(section)
+
+      content.appendChild(inner)
+
+      // Тогглер раскрытия/сворачивания
+      btn.addEventListener('click', () => {
+        const expanded = btn.getAttribute('aria-expanded') === 'true'
+        btn.setAttribute('aria-expanded', String(!expanded))
+        if (expanded) {
+          content.classList.add('hidden')
+        } else {
+          content.classList.remove('hidden')
+        }
+        const plusIcon = icons.querySelector('.plus')
+        const minusIcon = icons.querySelector('.minus')
+        if (plusIcon) plusIcon.toggleAttribute('hidden', !expanded)
+        if (minusIcon) minusIcon.toggleAttribute('hidden', expanded)
+      })
+
+      wrapper.appendChild(h3)
+      wrapper.appendChild(content)
+      root.appendChild(wrapper)
     })
   }
 
