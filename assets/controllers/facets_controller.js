@@ -251,7 +251,8 @@ export default class extends Controller {
       const values = Array.isArray(facet.values) ? facet.values.filter(v => v != null) : []
       if (values.length === 0) return // не рисуем секцию без значений
       const section = document.createElement('section')
-      const title = document.createElement('h3')
+      const title = document.createElement('div')
+      title.className = 'h3'
       title.textContent = (meta[code]?.title || code)
       section.appendChild(title)
       const list = document.createElement('ul')
@@ -286,7 +287,8 @@ export default class extends Controller {
     const startMax = (this.priceMax != null) ? this.priceMax : maxBound
 
     const section = document.createElement('section')
-    const title = document.createElement('h3')
+    const title = document.createElement('div')
+    title.className = 'h3'
     title.textContent = (meta.price?.title || 'Цена')
     section.appendChild(title)
 

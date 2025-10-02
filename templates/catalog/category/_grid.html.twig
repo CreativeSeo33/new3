@@ -5,7 +5,7 @@
       <h2 class="text-2xl font-bold tracking-tight text-gray-900">{{ gridTitle }}</h2>
     {% endif %}
 
-    <div class="mt-6 grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4" data-testid="category-grid">
+    <div class="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4" data-testid="category-grid">
       {% for p in products %}
         {# Подготовка данных для вариаций #}
         {% set variationsToShow = [] %}
@@ -59,7 +59,7 @@
             </svg>
           </button>
 
-          <div class="mt-4 flex justify-between">
+          <div class="mt-4 flex justify-between px-2">
             <div>
               <div class="text-sm text-gray-700">
                 <a href="{{ path('catalog_product_show', { slug: p.slug }) }}">                  
@@ -71,7 +71,7 @@
             
           </div>
 
-<div class="mt-1 flex justify-between">
+<div class="mt-1 flex justify-between px-2">
           <div class="text-left">
               {% if p.type == 'simple' or p.type == 'variable_no_prices' %}
                 {% set hasDiscount = p.salePrice is not null and p.price is not null and p.salePrice < p.price %}
@@ -102,7 +102,7 @@
             </div>
             </div>
           
-          <div class="flex justify-between">
+          <div class="flex justify-between px-2">
               <p class="mt-1 text-sm text-gray-500">
                   {% if p.type == 'variable' and setPriceVariation %}
                     {% if setPriceVariation.height %}Высота: {{ setPriceVariation.height }} см{% endif %}

@@ -277,3 +277,5 @@ npm run theme:build                # сборка тем для prod
 - При проблемах с шаблонами: проверьте include/extends, используйте `@App/...` для исключения циклов.
 - При проблемах со сборкой: смотрите `webpack.config.js` и `public/build/entrypoints.json`.
 
+
+
