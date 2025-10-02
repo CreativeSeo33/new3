@@ -13,7 +13,7 @@
     </thead>
     <tbody id="cart-items" data-module="cart-items-manager" data-testid="cart-items">
       {% for item in items %}
-        {% include 'components/cart/cart-item-row.html.twig' with { item: item } only %}
+        {% include '@App/catalog/components/cart/cart-item-row.html.twig' with { item: item } only %}
       {% endfor %}
     </tbody>
   </table>

@@ -5,7 +5,11 @@
 
 {% block styles %}
   {{ parent() }}
-  {{ encore_entry_link_tags('catalog') }}
+  {% if theme_enabled %}
+    {{ encore_entry_link_tags(theme_entry('main')) }}
+  {% else %}
+    {{ encore_entry_link_tags('catalog') }}
+  {% endif %}
 {% endblock %}
 
 {% block body %}
@@ -24,7 +28,11 @@
 
 {% block javascripts %}
   {{ parent() }}
-  {{ encore_entry_script_tags('catalog') }}
+  {% if theme_enabled %}
+    {{ encore_entry_script_tags(theme_entry('main')) }}
+  {% else %}
+    {{ encore_entry_script_tags('catalog') }}
+  {% endif %}
   
 {% endblock %}
 

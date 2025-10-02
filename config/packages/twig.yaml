@@ -4,6 +4,10 @@ twig:
         footer_categories: '@App\Service\FooterCategoryService'
         navbar_categories: '@App\Service\NavbarCategoryService'
         yandex_maps_api_key: '%app.yandex_maps.api_key%'
+        theme_enabled: '%app_theme.enabled%'
+    paths:
+        '%kernel.project_dir%/themes/_shared/templates': 'Shared'
+        '%kernel.project_dir%/templates': 'App'
 
 when@test:
     twig:

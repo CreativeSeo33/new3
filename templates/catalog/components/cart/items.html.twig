@@ -1,7 +1,7 @@
 {# ai:component=cart-items map=@component_cart_items_map.mdc v=1 #}
 <div id="checkout-cart-items" class="space-y-3" data-testid="cart-items">
   {% for item in items %}
-    {% include 'components/cart/item.html.twig' with { item: item } %}
+    {% include '@App/catalog/components/cart/item.html.twig' with { item: item } %}
   {% endfor %}
 </div>
 

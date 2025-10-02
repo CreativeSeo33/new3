@@ -15,7 +15,7 @@
     <div class="max-h-96 min-h-24 overflow-y-auto" id="city-modal-list" data-list data-testid="city-modal-list"></div>
   </div>
   <template data-spinner-template>
-    {{ include('components/spinner.html.twig', {
+    {{ include('@App/catalog/components/spinner.html.twig', {
       id: 'city-modal',
       visible: true,
       overlay: true,

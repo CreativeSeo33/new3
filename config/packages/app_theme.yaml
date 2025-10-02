@@ -1,0 +1,13 @@
+parameters:
+    app_theme.enabled: '%env(bool:APP_THEME_ENABLED)%'
+    app_theme.default: 'default'
+    app_theme.cache_enabled: true
+    app_theme.cache_ttl: 3600
+    app_theme.allowed_themes:
+        - _shared
+        - default
+        - modern
+
+when@dev:
+    parameters:
+        app_theme.cache_enabled: false

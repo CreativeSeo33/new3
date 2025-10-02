@@ -1,5 +1,7 @@
 const Encore = require('@symfony/webpack-encore');
 const path = require('path');
+const fs = require('fs');
+const yaml = require('js-yaml');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const selectedEntry = process.env.APP_ENTRY;
 
@@ -73,7 +75,7 @@ Encore
     })
 
     // enables Sass/SCSS support
-    //.enableSassLoader()
+    .enableSassLoader()
 
     // Enable TypeScript with transpileOnly for faster builds
     .enableTypeScriptLoader((tsConfig) => {
@@ -99,5 +101,53 @@ Encore.addAliases({
     '@pages': path.resolve(__dirname, 'assets/catalog/src/pages'),
     '@app': path.resolve(__dirname, 'assets/catalog/src/app'),
 });
+
+// Тематическая сборка (дополнительные entries)
+const themesDir = path.resolve(__dirname, 'themes');
+const themeFilter = (process.env.THEME_FILTER || '').split(',').filter(Boolean);
+let themes = [];
+if (fs.existsSync(themesDir)) {
+    themes = fs.readdirSync(themesDir)
+        .filter((dir) => fs.existsSync(path.join(themesDir, dir, 'theme.yaml')))
+        .map((dir) => {
+            const cfg = yaml.load(fs.readFileSync(path.join(themesDir, dir, 'theme.yaml'), 'utf8')) || {};
+            const entryPath = path.join(themesDir, dir, 'assets/entry.ts');
+            return {
+                code: cfg.code || dir,
+                enabled: cfg.enabled !== false,
+                path: path.join(themesDir, dir),
+                entryPath: fs.existsSync(entryPath) ? entryPath : null,
+            };
+        })
+        .filter((t) => t.enabled && t.entryPath);
+    if (themeFilter.length) {
+        themes = themes.filter((t) => themeFilter.includes(t.code) || themeFilter.includes(path.basename(t.path)));
+    }
+}
+
+if (themes.length) {
+    // Общий alias для shared
+    Encore.addAliases({
+        '@theme-shared': path.resolve(__dirname, 'themes/_shared/assets'),
+    });
+    // Entries и алиасы тем
+    themes.forEach((t) => {
+        Encore.addEntry(`themes/${t.code}/main`, t.entryPath);
+        const aliasKey = `@theme/${t.code}`;
+        const aliasPath = path.join(t.path, 'assets');
+        if (fs.existsSync(aliasPath)) {
+            const extra = {};
+            extra[aliasKey] = aliasPath;
+            Encore.addAliases(extra);
+        }
+    });
+    // Копирование статиков тем
+    Encore.copyFiles({
+        from: './themes',
+        to: 'themes/[path][name].[ext]',
+        pattern: /\.(png|jpe?g|gif|svg|ico|webp|woff2?|ttf|eot)$/i,
+        includeSubdirectories: true,
+    });
+}
 
 module.exports = Encore.getWebpackConfig();

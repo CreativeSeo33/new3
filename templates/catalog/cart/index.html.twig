@@ -6,7 +6,7 @@
 {# ai:page=cart map=@page_cart_map.mdc v=1 #}
 <div class="container mx-auto px-4 py-6 relative">
   <!-- Spinner для всей корзины -->
-  {% include 'components/spinner.html.twig' with {
+  {% include '@App/catalog/components/spinner.html.twig' with {
     id: 'cart-spinner',
     overlay: true,
     size: 'large'

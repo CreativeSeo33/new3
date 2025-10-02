@@ -1,0 +1,53 @@
+{% extends 'catalog/base.html.twig' %}
+
+{% block title %}Результаты поиска{% endblock %}
+
+{% block catalog_body %}
+  <div class="container mx-auto px-4 py-6">
+    <h1 class="text-2xl font-bold mb-4">Поиск: "{{ text }}"</h1>
+    <form action="{{ path('catalog_search') }}" method="GET" class="mb-6">
+      <div class="flex max-w-2xl">
+        <input type="text"
+               name="text"
+               placeholder="Поиск товаров..."
+               value="{{ text }}"
+               class="flex-1 h-12 px-4 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent rounded-l-full">
+        <button type="submit"
+                class="h-12 px-6 bg-blue-600 text-white rounded-r-full hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200">
+          Найти
+        </button>
+      </div>
+    </form>
+    {% if text == '' %}
+      <p class="text-gray-600">Введите поисковый запрос.</p>
+    {% else %}
+      <p class="text-gray-600 mb-4">Найдено: {{ total }}</p>
+      {% if total > 1 %}
+      <div data-controller="facets"
+           data-facets-products-url-value="{{ path('catalog_search_products') }}"
+           data-facets-facets-url-value="{{ path('catalog_facets') }}"
+           class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <aside class="md:col-span-1">
+          <div class="facets-panel border rounded p-3">
+            <div data-facets-target="list" class="space-y-4" data-initial-facets='{{ initial_facets_json|default("")|raw }}'></div>
+          </div>
+        </aside>
+        <main class="md:col-span-3">
+          <div class="mb-4" data-facets-target="selected" aria-live="polite"></div>
+          <div class="relative mb-4" data-facets-target="products" data-action="click->facets#onPaginationClick">
+            <div id="category-grid-spinner" class="absolute inset-0 flex items-center justify-center z-10" data-size="small" data-color="secondary" data-overlay="true" style="display:none"></div>
+            {% include 'catalog/category/_grid.html.twig' with { products: products, total: total, page: page|default(1), limit: limit|default(20), routeName: 'catalog_search_products', routeParams: {} } %}
+          </div>
+        </main>
+      </div>
+      {% else %}
+      {% include 'catalog/category/_grid.html.twig' with { products: products } %}
+      {% endif %}
+      {% if total > products|length %}
+        <p class="text-sm text-gray-500">Показаны первые {{ products|length }} результатов.</p>
+      {% endif %}
+    {% endif %}
+  </div>
+{% endblock %}
+
+

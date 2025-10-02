@@ -1,0 +1,47 @@
+{% extends 'catalog/base.html.twig' %}
+
+{% block title %}Категория {{ category.name ?? category.slug }} — {{ parent() }}{% endblock %}
+
+{% block catalog_body %}
+  <section>
+    <div class="container mx-auto px-4 py-8">
+      <h1 class="flex items-center gap-3">
+        <span>Категория: {{ category.name ?? category.slug }}</span>
+        <span class="text-sm font-normal text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+          {{ total|default(0) }} {{ total|default(0) == 1 ? 'товар' : (total|default(0) > 1 and total|default(0) < 5 ? 'товара' : 'товаров') }}
+        </span>
+      </h1>
+      {% if category.description %}
+        <p>{{ category.description }}</p>
+      {% endif %}
+
+      <div
+        class="grid grid-cols-1 md:grid-cols-4 gap-6"
+        data-controller="facets"
+        data-facets-category-id-value="{{ category.id }}"
+        data-facets-products-url-value="{{ path('catalog_category_products', { slug: category.slug }) }}"
+        data-facets-facets-url-value="{{ path('catalog_facets') }}?category={{ category.id }}"
+      >
+        <aside class="md:col-span-1">
+          <div class="facets-panel border rounded p-3">
+            <div data-facets-target="list" class="space-y-3" data-initial-facets='{{ initial_facets_json|default("")|raw }}'></div>
+          </div>
+        </aside>
+        <div class="md:col-span-3">
+          <div class="mb-4" data-facets-target="selected" aria-live="polite"></div>
+          <div class="relative" data-facets-target="products" data-action="click->facets#onPaginationClick">
+            <h2>Товары</h2>
+            <div id="category-grid-spinner" class="absolute inset-0 flex items-center justify-center z-10" data-size="small" data-color="secondary" data-overlay="true" style="display:none"></div>
+            {% if products is defined and products is not empty %}
+              {% include 'catalog/category/_grid.html.twig' with { products: products, total: total|default(0), page: page|default(1), limit: limit|default(20), slug: category.slug } %}
+            {% else %}
+              <p>Товаров нет.</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}
+
+

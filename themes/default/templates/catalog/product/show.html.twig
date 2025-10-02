@@ -1,0 +1,12 @@
+{% extends 'catalog/base.html.twig' %}
+
+{% block title %}
+  {{ product.metaTitle ?? product.name }} — {{ parent() }}
+{% endblock %}
+
+{% block catalog_body %}
+  {% include 'catalog/product/show.html.twig' %}
+{% endblock %}
+
+
+

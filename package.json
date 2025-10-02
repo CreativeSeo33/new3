@@ -20,10 +20,14 @@
     "autoprefixer": "^10.4.21",
     "core-js": "^3.45.0",
     "cross-env": "^7.0.3",
+    "file-loader": "^6.2.0",
     "fork-ts-checker-webpack-plugin": "^9.1.0",
+    "js-yaml": "^4.1.0",
     "postcss": "^8.5.6",
     "postcss-loader": "^8.1.0",
     "regenerator-runtime": "^0.14.1",
+    "sass": "^1.93.2",
+    "sass-loader": "^16.0.5",
     "storybook": "^8.6.14",
     "tailwindcss": "^3.4.17",
     "ts-loader": "^9.0.0",
@@ -39,11 +43,11 @@
     "@heroicons/vue": "^2.2.0",
     "axios": "^1.7.7",
     "imask": "^7.6.1",
+    "nouislider": "^15.8.0",
     "pinia": "^3.0.3",
+    "preline": "^3.2.1",
     "reka-ui": "^2.4.1",
     "swiper": "^11.2.10",
-    "preline": "^3.2.1",
-    "nouislider": "^15.8.0",
     "vue": "^3.5.18",
     "vue-router": "^4.5.1",
     "vue-tsc": "^3.0.5"
@@ -61,7 +65,11 @@
     "storybook:catalog": "storybook dev -p 6007 -c assets/catalog/.storybook",
     "build-storybook:catalog": "storybook build -c assets/catalog/.storybook -o public/storybook-catalog",
     "storybook:admin": "storybook dev -p 6008 -c assets/admin/.storybook",
-    "build-storybook:admin": "storybook build -c assets/admin/.storybook -o public/storybook-admin"
+    "build-storybook:admin": "storybook build -c assets/admin/.storybook -o public/storybook-admin",
+    "theme:dev": "node tools/theme-build.js --mode=dev",
+    "theme:watch": "node tools/theme-build.js --mode=watch",
+    "theme:build": "node tools/theme-build.js --mode=production",
+    "theme:list": "node tools/theme-list.js"
   },
   "packageManager": "npm@11.5.2+sha512.aac1241cfc3f41dc38780d64295c6c6b917a41e24288b33519a7b11adfc5a54a5f881c642d7557215b6c70e01e55655ed7ba666300fd0238bc75fb17478afaf3"
 }

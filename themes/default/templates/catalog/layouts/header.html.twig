@@ -1,0 +1,219 @@
+<header class="bg-white shadow-sm">
+  <!-- Top Bar -->
+  <div class="bg-gray-900 text-white text-xs">
+    <div class="container mx-auto px-4 py-2 flex justify-between items-center">
+      <div class="flex items-center space-x-4">
+        <div class="flex items-center">
+          <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z"/>
+          </svg>
+          <span>{{ contacts('phone') }}</span>
+        </div>
+        <div class="hidden md:flex items-center">
+          <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0  0 1-1.07-1.916V6.75"/>
+          </svg>
+          <span>sales@yousite.com</span>
+        </div>
+      </div>
+      <div class="flex items-center space-x-4">
+        <a href="#" class="hover:text-gray-300">Войти</a>
+        <a href="#" class="hover:text-gray-300">Регистрация</a>
+        <div class="flex items-center space-x-2">
+          <span>RU</span>
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header Middle Section -->
+  <div class="py-4 border-b border-gray-100">
+    <div class="container mx-auto px-4">
+      <div class="flex items-center justify-between">
+        
+        <!-- Mobile Menu Toggle -->
+        <div class="md:hidden flex items-center">
+          <button id="mobile-menu-toggle" class="p-2 rounded-md text-gray-700 hover:text-blue-600 focus:outline-none">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/>
+            </svg>
+          </button>
+        </div>
+        
+        <!-- Logo Section -->
+        <div class="flex items-center">
+          <a href="{{ path('catalog_index') }}" class="flex items-center gap-3">
+            {% if logo_url is defined and logo_url %}
+              <img src="{{ logo_url }}" alt="{{ site_name|default('Shop') }}" class="h-12 w-auto" />
+            {% else %}
+              <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                <span class="text-white font-bold text-xl">L</span>
+              </div>
+            {% endif %}
+            <span class="text-2xl font-bold text-gray-800 hidden sm:block">{{ site_name|default('ShopGrids') }}</span>
+          </a>
+        </div>
+
+        <!-- Search Section -->
+        <div class="hidden lg:flex flex-1 max-w-2xl mx-8">
+          <form action="{{ path('catalog_search') }}" method="GET" class="relative w-full">
+            <div class="flex">
+              <!-- Search Input -->
+              <input type="text" 
+                     name="text" 
+                     placeholder="Поиск товаров..." 
+                     value="{{ app.request.query.get('text') }}"
+                     class="flex-1 h-12 px-4 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent rounded-l-full">
+              
+              <!-- Search Button -->
+              <button type="submit" 
+                      class="h-12 px-6 bg-blue-600 text-white rounded-r-full hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/>
+                </svg>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Right Side Actions -->
+        <div class="flex items-center space-x-6">
+          
+          {# City from session #}
+          {% set checkout = app.session.get('checkout') %}
+          {% set delivery = checkout.delivery ?? null %}
+          <div class="hidden lg:flex items-center space-x-2 cursor-pointer" id="city-selector" data-city-modal-trigger data-module="city-modal-trigger">
+            <svg class="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.951-7.5 11.951s-7.5-4.809-7.5-11.951a7.5 7.5 0 1 1 15 0Z"/>
+            </svg>
+            <span class="text-sm text-gray-800 font-medium">{{ delivery.city.cityName ?? 'Ваш город' }}</span>
+          </div>
+          
+          <!-- User Account -->
+          <div class="flex items-center space-x-2 cursor-pointer group">
+            <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-gray-200 transition-colors">
+              <svg class="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0  0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0  0 1 6 0Z"/>
+              </svg>
+            </div>
+            <div class="hidden md:flex flex-col text-xs">
+              <span class="text-gray-500">Привет</span>
+              <span class="text-gray-800 font-medium">Войти</span>
+            </div>
+          </div>
+
+          <!-- Wishlist -->
+          <div class="relative">
+            <a href="{{ path('catalog_wishlist') }}" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-50 transition-colors group" data-module="wishlist-counter">
+              <div class="relative">
+                <svg class="w-6 h-6 text-gray-600 group-hover:text-blue-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0  0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0  0 1 12 5.052 5.5 5.5 0  0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0  3.925-2.438 7.111-4.739 9.256a25.175 25.175 0  0 1-4.244 3.17 15.247 15.247 0  0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0  0 1-.704 0l-.003-.001Z"/>
+                </svg>
+                <span class="absolute -top-1 -right-2 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-semibold leading-none text-white bg-blue-600 rounded-full" data-wishlist-counter>{{ wishlist_count() }}</span>
+              </div>
+            </a>
+          </div>
+
+          <!-- Shopping Cart -->
+          {{ component('CartCounter') }}
+
+        </div>
+      </div>
+      
+      <!-- Mobile Search -->
+      <div class="mt-4 lg:hidden">
+        <form action="{{ path('catalog_search') }}" method="GET" class="relative">
+          <div class="flex">
+            <input type="text" 
+                   name="text" 
+                   placeholder="Поиск товаров..." 
+                   value="{{ app.request.query.get('text') }}"
+                   class="flex-1 h-10 px-4 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent rounded-l-full">
+            <button type="submit" 
+                    class="h-10 px-4 bg-blue-600 text-white rounded-r-full hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0  1 0 5.196 5.196a7.5 7.5 0  0 0 10.607 10.607Z"/>
+              </svg>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Menu -->
+  <div id="mobile-menu" class="md:hidden fixed inset-0 z-50 bg-white hidden">
+    <div class="flex flex-col h-full">
+      <!-- Mobile Menu Header -->
+      <div class="flex items-center justify-between p-4 border-b">
+        <div class="flex items-center">
+          <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+            <span class="text-white font-bold text-lg">L</span>
+          </div>
+          <span class="text-xl font-bold text-gray-800 ml-2">{{ site_name|default('ShopGrids') }}</span>
+        </div>
+        <button id="mobile-menu-close" class="p-2 rounded-md text-gray-700 hover:text-blue-600 focus:outline-none">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      
+      <!-- Mobile Menu Content -->
+      <div class="flex-1 overflow-y-auto p-4">
+        <div class="mb-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-3">Категории</h3>
+          <ul class="space-y-2">
+            <li><a href="#" class="block py-2 text-gray-700 hover:text-blue-600">Женская одежда</a></li>
+            <li><a href="#" class="block py-2 text-gray-700 hover:text-blue-600">Мужская одежда</a></li>
+            <li><a href="#" class="block py-2 text-gray-700 hover:text-blue-600">Обувь</a></li>
+            <li><a href="#" class="block py-2 text-gray-700 hover:text-blue-600">Аксессуары</a></li>
+            <li><a href="#" class="block py-2 text-gray-700 hover:text-blue-600">Красота</a></li>
+            <li><a href="#" class="block py-2 text-gray-700 hover:text-blue-600">Детские товары</a></li>
+          </ul>
+        </div>
+        
+        <div class="mb-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-3">Страницы</h3>
+          <ul class="space-y-2">
+            <li><a href="#" class="block py-2 text-gray-700 hover:text-blue-600">О нас</a></li>
+            <li><a href="#" class="block py-2 text-gray-700 hover:text-blue-600">Контакты</a></li>
+            <li><a href="#" class="block py-2 text-gray-700 hover:text-blue-600">Блог</a></li>
+            <li><a href="#" class="block py-2 text-gray-700 hover:text-blue-600">FAQ</a></li>
+          </ul>
+        </div>
+        
+        <div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-3">Аккаунт</h3>
+          <ul class="space-y-2">
+            <li><a href="#" class="block py-2 text-gray-700 hover:text-blue-600">Войти</a></li>
+            <li><a href="#" class="block py-2 text-gray-700 hover:text-blue-600">Регистрация</a></li>
+          </ul>
+        </div>
+      </div>
+      
+      <!-- Mobile Menu Footer -->
+      <div class="p-4 border-t">
+        <div class="flex items-center justify-between">
+          <span class="text-gray-600">RU</span>
+          <div class="flex items-center space-x-4">
+            <a href="#" class="text-gray-600 hover:text-blue-600">Войти</a>
+            <a href="#" class="text-gray-600 hover:text-blue-600">Регистрация</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# City Modal component (Twig UX) #}
+  {{ component('CityModal') }}
+
+  {# Инициализационные якоря для FSD модулей без inline-скриптов #}
+  <div data-module="mobile-menu" aria-hidden="true" class="hidden"></div>
+</header>
+
+

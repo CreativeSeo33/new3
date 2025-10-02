@@ -77,6 +77,9 @@ parameters:
     env(YANDEX_MAPS_API_KEY): ''
     app.yandex_maps.api_key: '%env(string:YANDEX_MAPS_API_KEY)%'
 
+    # Theme system flag default
+    env(APP_THEME_ENABLED): '0'
+
     # Catalog pagination (category page)
     app.pagination.allowed_limits: [10, 20, 30]
     app.pagination.default_limit: 10
@@ -315,3 +318,35 @@ services:
     App\Service\Search\ProductIndexer: ~
 
     App\Service\Search\ProductSearch: ~
+
+    # Theme System
+    App\Theme\ThemeManager:
+        arguments:
+            $themesPath: '%kernel.project_dir%/themes'
+            $defaultTheme: '%app_theme.default%'
+            $cacheEnabled: '%app_theme.cache_enabled%'
+            $cacheTtl: '%app_theme.cache_ttl%'
+            $allowedThemes: '%app_theme.allowed_themes%'
+
+    App\Theme\EventListener\ThemeListener:
+        arguments:
+            $defaultTheme: '%app_theme.default%'
+            $allowedThemes: '%app_theme.allowed_themes%'
+            $enabled: '%app_theme.enabled%'
+        tags:
+            - { name: kernel.event_listener, event: kernel.request, priority: 64 }
+
+    App\Theme\Twig\ThemeLoader:
+        arguments:
+            $themes: '@App\Theme\ThemeManager'
+            $enabled: '%app_theme.enabled%'
+        tags: ['twig.loader']
+
+    App\Theme\Twig\ThemeExtension:
+        tags: ['twig.extension']
+
+    App\Theme\Asset\ThemeAssetPackage:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+            $enabled: '%app_theme.enabled%'
+        public: true

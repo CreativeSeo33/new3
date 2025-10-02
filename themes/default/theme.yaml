@@ -1,0 +1,10 @@
+name: 'Default Theme'
+code: 'default'
+enabled: true
+parent: null
+metadata:
+  description: 'Fallback theme for catalog'
+features: {}
+parameters: {}
+
+
