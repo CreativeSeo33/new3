@@ -1,4 +1,6 @@
 /** @type {import('tailwindcss').Config} */
+const { addDynamicIconSelectors } = require("@iconify/tailwind"); 
+
 module.exports = {
   darkMode: 'class',
   content: [
@@ -252,6 +254,7 @@ module.exports = {
     require('@tailwindcss/typography'),
     require('@tailwindcss/line-clamp'),
     require('flyonui').default,
+    addDynamicIconSelectors(),
   ],
   safelist: [
     { pattern: /(bg|text|border)-(primary|success|warning|danger|info)-(50|100|200|300|400|500|600|700|800|900)/ },

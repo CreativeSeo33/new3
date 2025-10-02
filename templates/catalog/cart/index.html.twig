@@ -112,6 +112,18 @@
                 {% endif %}
               </td>
               <td class="td-cell">
+              <div class="max-w-32" data-input-number>
+  <label class="label-text" for="number-input-mini">Quantity:</label>
+  <div class="input items-center">
+    <button type="button" class="btn btn-primary btn-soft size-5.5 min-h-0 rounded-sm p-0" aria-label="Decrement button" data-input-number-decrement >
+      <span class="icon-[tabler--minus] size-3.5 shrink-0"></span>
+    </button>
+    <input class="text-center" type="text" value="0" aria-label="Mini stacked buttons" data-input-number-input id="number-input-mini" />
+    <button type="button" class="btn btn-primary btn-soft size-5.5 min-h-0 rounded-sm p-0" aria-label="Increment button" data-input-number-increment >
+      <span class="icon-[tabler--plus] size-3.5 shrink-0"></span>
+    </button>
+  </div>
+</div>
                 <input
                   type="number"
                   class="qty-input w-20 border rounded px-2 py-1"
