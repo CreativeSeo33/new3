@@ -37,9 +37,8 @@
               {% endfor %}
             </select>
           </div>
-          <div class="relative" data-facets-target="products" data-action="click->facets#onPaginationClick">
-            <h2>Товары</h2>
-            <div id="category-grid-spinner" class="absolute inset-0 flex items-center justify-center z-10" data-size="small" data-color="secondary" data-overlay="true" style="display:none"></div>
+          <div class="relative" data-facets-target="products" data-action="click->facets#onPaginationClick">            
+            <div id="category-grid-spinner" class="absolute inset-0 flex items-center justify-center z-10 hidden" data-size="small" data-color="secondary" data-overlay="true"></div>
             {% if products is defined and products is not empty %}
               {% include 'catalog/category/_grid.html.twig' with { products: products, total: total|default(0), page: page|default(1), limit: limit|default(20), slug: category.slug } %}
             {% else %}

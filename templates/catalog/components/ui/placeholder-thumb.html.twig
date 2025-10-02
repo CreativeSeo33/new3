@@ -1,0 +1,9 @@
+{# ai:component=placeholder-thumb map=@component_placeholder-thumb_map.mdc v=1 #}
+<div class="placeholder-thumb">
+  <span class="sr-only">{{ label|default('Нет изображения') }}</span>
+  {% if text is defined %}
+    {{ text }}
+  {% else %}
+    Нет фото
+  {% endif %}
+</div>

@@ -1,0 +1,17 @@
+---
+alwaysApply: false
+---
+
+# Component: card-section
+
+Назначение: секция карточек/панелей с серым фоном и скруглением.
+
+Файлы
+- Twig: `templates/catalog/components/ui/card-section.html.twig`
+
+Корневой селектор
+- `.card-section`
+
+Примечания
+- Использует Tailwind класс `.card-section` из `assets/catalog/styles.css`.
+- Блок `{% block content %}` позволяет переопределять содержимое.

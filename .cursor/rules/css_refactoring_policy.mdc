@@ -1,0 +1,72 @@
+---
+description: Единые правила CSS/Tailwind для витрины (Twig/FSD) и Admin SPA
+alwaysApply: false
+---
+# CSS/Tailwind Policy (Catalog + Admin)
+
+Назначение: адаптированные под проект правила из «Правила css рефакторинга от Sonnet 4.5», согласованные с Tailwind конфигом (`tailwind.config.js`) и архитектурой (Twig/Stimulus, FSD и Vue Admin SPA).
+
+## Базовые принципы
+- Tailwind first: приоритет утилитных классов. Компонентные классы — только при повторении 3+ раз.
+- Без inline-стилей в Twig и Vue.
+- Mobile-first. Группируй классы: layout → box → typography → visual → misc → states → responsive.
+- Не дублируй бизнес-логику в CSS; визуальные токены — через Tailwind/темизацию.
+
+## Структура и источники
+- Twig каталога: классы пишем прямо в шаблонах; переиспользуемые блоки выносим в Twig-компоненты.
+- FSD (assets/catalog/src/**): UI-слой использует Tailwind, без собственных CSS-утилит.
+- Admin SPA (assets/admin/**): стили в SFC/`.vue` через классы Tailwind; глобальные токены — из `tailwind.config.js`.
+
+## Конвенции Tailwind
+- Контент-скан: см. `tailwind.config.js` (`templates/**/*.html.twig`, `assets/**`).
+- Цвета/статусы/бренд: используем палитры `primary`, `neutral`, `success|warning|danger|info` и алиас `brand` из конфига. Не добавлять произвольные HEX в разметке без необходимости.
+- Размеры/отступы: стандартные scale из `spacing`. Произвольные значения использовать только если нет ближайшего.
+- Шрифты/радиусы/тени/анимации — доступны из `extend` (`fontFamily`, `borderRadius`, `boxShadow`, `animation`).
+
+## Компонентные классы (`@apply`)
+- Создавай только при повторении 3+ раз либо наличии вариантов.
+- Размещать в тематических файлах `assets/styles/components/_<name>.css` или локально в SFC `:global()` блоках при необходимости.
+
+Пример:
+```css
+.btn { @apply px-4 py-2 rounded font-medium transition-colors duration-200; }
+.btn-primary { @apply bg-primary-600 text-white hover:bg-primary-700; }
+.btn-secondary { @apply bg-neutral-200 text-neutral-800 hover:bg-neutral-300; }
+.btn-lg { @apply px-6 py-3 text-lg; }
+```
+
+## Twig — практики
+- Простые элементы — одна строка; сложные — многострочно с логическими группами.
+- Повторяющиеся наборы — в Twig-переменные (`{% set card = "..." %}`).
+- Компоненты — в `templates/components/**` с картами (`.cursor/rules/component_*.mdc`).
+
+## Stimulus/FSD
+- Запрещены inline `<script>`; интерактив — Stimulus (для простого UI) или FSD (для каталога), см. `@catalog_js_architecture.mdc` и `@stimulus_policy.mdc`.
+- Любые стили — через Tailwind; не писать стили внутри TS.
+
+## Responsive
+- Mobile-first. Использовать брейкпоинты из Tailwind (`sm/md/lg/xl/2xl`).
+- Сетки: `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4` и т.п.
+
+## Перформанс
+- Purge/Content уже настроен в Tailwind. Для динамических классов использовать `safelist` (регулярки в `tailwind.config.js`).
+- Минимизировать собственные CSS-файлы; предпочитать классы.
+
+## Рефакторинг: чек-лист
+- Удаляй дубли и магические числа → замена на классы Tailwind.
+- Inline `style=` → Tailwind классы.
+- Длинные повторяющиеся наборы → компонентные классы или Twig-переменные.
+- Проверяй responsive и доступность фокуса.
+
+## Запреты
+- Хардкод цветов/размеров вне Tailwind scale без причины.
+- Пользовательские утилиты для одного свойства (вместо этого — утилиты Tailwind).
+- Глобальные CSS, влияющие на системные компоненты, без обсуждения.
+
+## Связанные правила
+- @ai_context.mdc
+- @catalog_js_architecture.mdc
+- @stimulus_policy.mdc
+- @twig_components_policy.mdc
+- @agent_performance_policy.mdc
+

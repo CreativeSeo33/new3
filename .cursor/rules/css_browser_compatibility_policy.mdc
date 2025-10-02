@@ -1,0 +1,120 @@
+---
+description: Совместимость CSS/Tailwind для витрины (Catalog) — браузеры, фолбэки, тесты
+alwaysApply: false
+---
+# CSS/Tailwind Browser Compatibility (Catalog)
+
+Назначение: правила совместимости браузеров для витрины. Не распространяется на Admin SPA (`assets/admin/**`).
+
+## Минимальные версии
+- Chrome/Edge ≥100
+- Firefox ≥100
+- Safari ≥15 (iOS ≥15, macOS Big Sur+)
+- Yandex ≥22
+- Samsung Internet ≥18
+- Покрытие: 95–97% аудитории РФ
+
+## Не поддерживаем
+- IE 11, Opera Mini extreme, Safari < 13, UC Browser
+
+## Правила
+- Tailwind first; без inline-стилей в Twig; см. @css_refactoring_policy.mdc
+- Вендорные префиксы — Autoprefixer (не писать вручную)
+- Новые свойства (<95% охвата) — только с фолбэком + `@supports`
+- Пишем fallback → enhancement (progressive enhancement)
+- Фичи с рискованной поддержкой в критичных зонах — избегать
+- Применение только к витрине (`templates/catalog/**`, `assets/catalog/**`); Admin SPA исключён
+
+## Разрешено (безопасно)
+- display: flex/grid; transforms, transitions, animations
+- position: sticky (с `-webkit-sticky` для старого Safari — см. ниже)
+- CSS variables, media queries, базовые селекторы
+- gap в Grid
+
+## Осторожно (с фолбэком)
+- aspect-ratio → паддинг‑хак + `@supports`
+- gap в Flex → маргины на детях + `@supports(gap)`
+- backdrop-filter → полупрозрачный фон как fallback
+- `:has()` → только под `@supports selector()`, избегать в критичных блоках
+- scroll-behavior → прогрессивное улучшение
+
+## Запрещено (пока)
+- Container Queries (`@container`)
+- Cascade Layers (`@layer`) в прод
+- Subgrid
+- Экспериментальные фичи (view transitions, anchor positioning)
+
+## Паттерны фолбэков
+Аспект‑отношение:
+```css
+.video {
+  position: relative;
+  padding-bottom: 56.25%;
+  height: 0;
+}
+.video > * {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+@supports (aspect-ratio: 16/9) {
+  .video { aspect-ratio: 16/9; padding-bottom: 0; height: auto; }
+  .video > * { position: static; }
+}
+```
+
+Gap в Flex:
+```css
+.flex { display: flex; }
+.flex > * + * { margin-left: 1rem; }
+@supports (gap: 1rem) {
+  .flex { gap: 1rem; }
+  .flex > * + * { margin-left: 0; }
+}
+```
+
+Backdrop filter:
+```css
+.card { background: rgba(255,255,255,.9); }
+@supports (backdrop-filter: blur(10px)) {
+  .card { background: rgba(255,255,255,.7); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+}
+```
+
+Sticky:
+```css
+.sticky { position: -webkit-sticky; position: sticky; top: 0; }
+```
+
+Tailwind эквиваленты:
+- aspect-ratio: используйте `supports-[aspect-ratio]:aspect-video` и фолбэк `pb-[56.25%]`
+- flex gap: `gap-*` + фолбэк с `-m-*` на родителе и `p-*` на детях
+- backdrop: `bg-white/90 supports-[backdrop-filter]:bg-white/80 supports-[backdrop-filter]:backdrop-blur-lg`
+- sticky: `sticky top-0` (префикс добавит Autoprefixer)
+
+## Конфигурация инструментов
+- Browserslist (рекомендовано в корне `.browserslistrc`):
+```text
+> 0.5% in RU
+last 2 versions
+not dead
+not IE 11
+iOS >= 15
+```
+- PostCSS: Tailwind + Autoprefixer (использует browserslist). Префиксы не писать вручную.
+
+## Требования к PR с CSS витрины
+- Для новых возможностей CSS есть фолбэк + `@supports`
+- Не используются запрещённые фичи
+- `npm run build` проходит; проверка префиксов — выборочно
+- Мануальная проверка минимум: Chrome, Yandex, Safari iOS
+- Изменения не затрагивают `assets/admin/**`
+
+## Связанные правила
+- @ai_context.mdc
+- @catalog_js_architecture.mdc
+- @css_refactoring_policy.mdc
+- @stimulus_policy.mdc
+- @agent_performance_policy.mdc
+

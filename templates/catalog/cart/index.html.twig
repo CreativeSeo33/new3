@@ -19,18 +19,18 @@
       <table class="min-w-full text-sm">
         <thead>
           <tr class="text-left border-b">
-            <th class="py-2 pr-4">Фото</th>
-            <th class="py-2 pr-4">Товар</th>
-            <th class="py-2 pr-4">Цена</th>
-            <th class="py-2 pr-4">Кол-во</th>
-            <th class="py-2 pr-4">Сумма</th>
-            <th class="py-2 pr-4"></th>
+            <th class="td-cell">Фото</th>
+            <th class="td-cell">Товар</th>
+            <th class="td-cell">Цена</th>
+            <th class="td-cell">Кол-во</th>
+            <th class="td-cell">Сумма</th>
+            <th class="td-cell"></th>
           </tr>
         </thead>
         <tbody id="cart-items" data-module="cart-items-manager" data-testid="cart-items">
           {% for item in cart.items %}
             <tr class="border-b" data-item-id="{{ item.id }}" data-testid="cart-item">
-              <td class="py-2 pr-4">
+              <td class="td-cell">
                 {% if item.product and item.product.image|length > 0 %}
                   {% set firstImage = item.product.image|sort((a,b) => a.sortOrder <=> b.sortOrder)|first %}
                   {% if firstImage %}
@@ -43,17 +43,17 @@
                     {% endif %}
                     <img src="{{ imgSrc }}" alt="{{ item.productName }}" class="w-16 h-16 object-cover rounded border">
                   {% else %}
-                    <div class="w-16 h-16 bg-gray-200 rounded border flex items-center justify-center text-gray-500 text-xs">
+                    <div class="placeholder-thumb">
                       Нет фото
                     </div>
                   {% endif %}
                 {% else %}
-                  <div class="w-16 h-16 bg-gray-200 rounded border flex items-center justify-center text-gray-500 text-xs">
+                  <div class="placeholder-thumb">
                     Нет фото
                   </div>
                 {% endif %}
               </td>
-              <td class="py-2 pr-4">
+              <td class="td-cell">
                 {% if item.product and item.product.slug %}
                   <a href="{{ path('catalog_product_show', {'slug': item.product.slug}) }}" class="text-blue-600 hover:text-blue-800 hover:underline">
                     {{ item.productName }}
@@ -75,7 +75,7 @@
                   </div>
                 {% endif %}
               </td>
-              <td class="py-2 pr-4">
+              <td class="td-cell">
                 {# Показываем цену со скидкой и без скидки (Simple/Variable) #}
                 {% set discountedPrice = item.effectiveUnitPrice > 0 ? item.effectiveUnitPrice : item.unitPrice %}
                 {% set hasOptions = item.optionAssignments is defined and item.optionAssignments|length > 0 %}
@@ -111,7 +111,7 @@
                   {{ format_price(discountedPrice) }}
                 {% endif %}
               </td>
-              <td class="py-2 pr-4">
+              <td class="td-cell">
                 <input
                   type="number"
                   class="qty-input w-20 border rounded px-2 py-1"
@@ -121,8 +121,8 @@
                   data-testid="qty-input"
                 >
               </td>
-              <td class="py-2 pr-4 row-total" data-testid="row-total">{{ format_price(item.rowTotal) }}</td>
-              <td class="py-2 pr-4">
+              <td class="td-cell row-total" data-testid="row-total">{{ format_price(item.rowTotal) }}</td>
+              <td class="td-cell">
                 <button
                   class="remove text-red-600 hover:underline"
                   data-item-id="{{ item.id }}"
@@ -164,7 +164,7 @@
         <div id="delivery-methods-error" class="text-sm text-red-600 mt-2 hidden"></div>
       </div>
       {# Модальное окно с картой ПВЗ #}
-      <div id="pvz-map-modal" class="hidden p-0" style="width: 70vw; max-width: 70vw;">
+      <div id="pvz-map-modal" class="hidden p-0 w-[70vw] max-w-[90vw] lg:max-w-[70vw]">
         <div class="p-4">
           <h3 class="text-base font-semibold mb-3">Пункты выдачи на карте</h3>
           {% component 'YandexMap' with {

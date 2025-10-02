@@ -8,11 +8,11 @@
   position: relative;
 }
 
-/* Переопределяем margin от :host для swiper-container и делаем его на всю ширину */
-.gallery-main-swiper swiper-container {
-  margin: 0 !important;
-  width: 100% !important;
-  max-width: none !important;
+/* Swiper Element задаёт auto-margin на :host; используем класс контейнера вместо принудительных стилей */
+swiper-container.product-gallery-swiper {
+  margin: 0;
+  width: 100%;
+  max-width: none;
 }
 
 /* Стили для основного слайдера */
@@ -41,8 +41,8 @@
 }
 
 .product-gallery-swiper swiper-slide-active .gallery-slide img {
-  width: 100% !important;
-  height: 100% !important;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
 }
 
@@ -230,3 +230,129 @@
 
 
 
+
+@layer components {
+  .card-product {
+    @apply relative break-words overflow-visible rounded-lg bg-white shadow-sm transition duration-200;
+    transition-property: box-shadow, transform, border-color;
+    isolation: isolate;
+  }
+
+  .card-product:hover {
+    @apply -translate-y-1 z-30 shadow-2xl;
+  }
+
+  .card-product::after {
+    content: "";
+    position: absolute;
+    top: -14px;
+    right: -14px;
+    bottom: -14px;
+    left: -178px;
+    border: 2px solid #f6c44f;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 24px 54px rgba(0, 0, 0, 0.25);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(6px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .card-product::after {
+    left: -178px; /* = 150 + 28; задокументировано для читаемости */
+  }
+
+  .card-product:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .card-product__media img {
+    @apply transition-none;
+  }
+
+  .card-product:hover .card-product__media img {
+    transform: none;
+  }
+
+  .card-product__overlay {
+    @apply absolute inset-0 hidden translate-y-1 opacity-0 transition-all duration-200 pointer-events-none lg:block;
+    z-index: 3;
+  }
+
+  .card-product:hover .card-product__overlay {
+    @apply translate-y-0 opacity-100;
+  }
+
+  .card-product .hover-left {
+    @apply absolute -left-[164px] top-1/2 flex w-[150px] -translate-y-1/2 flex-col gap-[10px] pointer-events-auto;
+  }
+
+  .card-product__thumb {
+    @apply h-[150px] w-[150px] overflow-hidden rounded-lg border-[3px] border-transparent bg-black;
+  }
+
+  .card-product__thumb img {
+    @apply h-full w-full object-cover;
+    opacity: 0.85;
+  }
+
+  .card-product__thumb.is-active {
+    border-color: #f6c44f;
+  }
+
+  @supports not (object-fit: cover) {
+    .card-product__thumb {
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    .card-product__thumb img {
+      opacity: 0;
+    }
+  }
+
+  @supports (object-fit: cover) {
+    .card-product__thumb img {
+      object-fit: cover;
+      opacity: 0.85;
+    }
+  }
+
+  @supports not (pointer-events: auto) {
+    .card-product__overlay {
+      pointer-events: auto;
+    }
+  }
+
+  @supports not (isolation: isolate) {
+    .card-product {
+      transform: translateZ(0);
+    }
+  }
+
+  .placeholder-thumb {
+    @apply flex h-16 w-16 items-center justify-center rounded border bg-gray-200 text-xs text-gray-500;
+  }
+
+  .footer-link {
+    @apply text-gray-600 transition-colors hover:text-blue-600;
+  }
+
+  .nav-link {
+    @apply block py-2 text-gray-700 transition-colors hover:text-blue-600;
+  }
+
+  .td-cell {
+    @apply py-2 pr-4;
+  }
+
+  .card-section {
+    @apply bg-gray-50 p-6;
+  }
+}

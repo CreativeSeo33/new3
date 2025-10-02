@@ -35,7 +35,7 @@
         <main class="md:col-span-3">
           <div class="mb-4" data-facets-target="selected" aria-live="polite"></div>
           <div class="relative mb-4" data-facets-target="products" data-action="click->facets#onPaginationClick">
-            <div id="category-grid-spinner" class="absolute inset-0 flex items-center justify-center z-10" data-size="small" data-color="secondary" data-overlay="true" style="display:none"></div>
+            <div id="category-grid-spinner" class="absolute inset-0 flex items-center justify-center z-10 hidden" data-size="small" data-color="secondary" data-overlay="true"></div>
             {% include 'catalog/category/_grid.html.twig' with { products: products, total: total, page: page|default(1), limit: limit|default(20), routeName: 'catalog_search_products', routeParams: {} } %}
           </div>
         </main>

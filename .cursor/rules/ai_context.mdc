@@ -9,6 +9,8 @@ alwaysApply: true
 ## Ссылки на ключевые правила
 - @product_save_and_create_flow.mdc — Поток создания/сохранения товара (v2), кеширование, чек-листы
 - @agent_performance_policy.mdc
+- @css_refactoring_policy.mdc
+- @css_browser_compatibility_policy.mdc
 - @catalog_js_architecture.mdc
 - @stimulus_policy.mdc
 - @doctrine_entities.mdc

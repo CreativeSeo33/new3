@@ -1,9 +1,9 @@
 {# Сетка товаров: ожидает переменные `products`, `total`, `page`, `limit`, `slug` #}
-<div class="grid lg:grid-cols-5 md:grid-cols-3 gap-4 mb-6" data-testid="category-grid">
+<div class="grid gap-6 overflow-visible mb-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4" data-testid="category-grid">
   {% for p in products %}
-    <div class="relative rounded-lg break-words border bg-white border-gray-300 card-product">
-        <div class="flex-auto p-4">
-        <div class="text-center relative flex justify-center">
+    <div class="card-product group">
+      <div class="relative z-[1] flex-auto p-5">
+        <div class="card-product__media relative flex justify-center overflow-visible text-center" data-controller="hover-gallery" data-action="mouseenter->hover-gallery#loadThumbs focusin->hover-gallery#loadThumbs touchstart->hover-gallery#loadThumbs">
           {% set firstImage = p.image|sort((a,b) => a.sortOrder <=> b.sortOrder)|first %}
           {% if firstImage %}
             {% set raw = firstImage.imageUrl %}
@@ -30,17 +30,45 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z"/>
               </svg>
             </button>
+            {# Overlay: позиционируется относительно контейнера фото, без дублирования img #}
+            {% set imagesSorted = p.image|sort((a,b) => a.sortOrder <=> b.sortOrder) %}
+            <div class="card-product__overlay" aria-hidden="true">
+              <div class="hover-left">
+                {% for im in imagesSorted|slice(0,3) %}
+                  {% set tRaw = im.imageUrl %}
+                  {% if tRaw starts with '/media/cache/' %}
+                    {% set tSrc = tRaw %}
+                  {% else %}
+                    {% set tRel = tRaw|replace({'/img/':''})|trim('/') %}
+                    {% set tSrc = asset('/img/' ~ tRel) | imagine_filter('md2') %}
+                  {% endif %}
+                  <div class="card-product__thumb{% if loop.first %} is-active{% endif %}" data-bg="{{ tSrc }}"><img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-src="{{ tSrc }}" alt="{{ p.name }} миниатюра {{ loop.index }}"></div>
+                {% endfor %}
+              </div>
+              <a class="pointer-events-auto absolute left-4 bottom-4 z-10 inline-flex items-center gap-2 rounded-[10px] bg-white/90 px-4 py-3 font-semibold text-slate-900 shadow-lg transition-colors duration-200 hover:bg-white" href="{{ path('catalog_product_show', { slug: p.slug }) }}#gallery">🔍 Увеличить фотографию</a>
+              {#<div class="hover-content">
+                <div class="text-sm text-gray-500">Хрустальная люстра</div>
+                <a class="hover-title" href="{{ path('catalog_product_show', { slug: p.slug }) }}">{{ p.name }}</a>
+                {% if p.getEffectivePrice() %}
+                  <div class="hover-price">{{ p.getEffectivePrice() }} <span class="font-semibold">руб.</span></div>
+                {% endif %}
+                <button type="button" data-product-id="{{ p.id }}" class="js-add-to-cart buy-btn inline-flex items-center justify-center gap-x-2">
+                  <span>Купить</span>
+                </button>
+                <div class="stock"><span>✔</span><span>В наличии</span></div>
+              </div>#}
+            </div>
         </div>
 
-        <div class="flex flex-col gap-3 mt-3">
-          <div class="flex flex-col gap-2">
-            <h3 class="text-base truncate"><a href="{{ path('catalog_product_show', { slug: p.slug }) }}">{{ p.name }}</a></h3>
+        <div class="flex flex-col gap-4 mt-4">
+          <div class="flex flex-col gap-1.5">
+            <h3 class="text-base font-medium text-slate-900"><a href="{{ path('catalog_product_show', { slug: p.slug }) }}" class="transition-colors hover:text-slate-700">{{ p.name }}</a></h3>
           </div>
 
-          <div class="flex justify-between items-center">
+          <div class="flex items-center justify-between">
             <div>
               {% if p.getEffectivePrice() %}
-                <span class="text-gray-900 font-semibold">{{ p.getEffectivePrice() }}</span>
+                <span class="text-lg font-semibold text-slate-900">{{ p.getEffectivePrice() }}</span>
               {% endif %}
             </div>
             <div>
@@ -54,6 +82,8 @@
           </div>
         </div>
       </div>
+
+      
     </div>
   {% endfor %}
 </div>

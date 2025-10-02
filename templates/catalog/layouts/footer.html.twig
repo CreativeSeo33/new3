@@ -49,12 +49,12 @@
       <div>
         <h3 class="text-lg font-semibold text-gray-900 mb-4">ИНФОРМАЦИЯ</h3>
         <ul class="space-y-2">
-          <li><a href="#" class="text-gray-600 hover:text-blue-600">О нас</a></li>
-          <li><a href="#" class="text-gray-600 hover:text-blue-600">Контакты</a></li>
-          <li><a href="{{ path('catalog_dostavka') }}" class="text-gray-600 hover:text-blue-600">Доставка</a></li>
-          <li><a href="#" class="text-gray-600 hover:text-blue-600">Карьера</a></li>
-          <li><a href="#" class="text-gray-600 hover:text-blue-600">Мой аккаунт</a></li>
-          <li><a href="#" class="text-gray-600 hover:text-blue-600">Заказы и возвраты</a></li>
+          <li><a href="#" class="footer-link">О нас</a></li>
+          <li><a href="#" class="footer-link">Контакты</a></li>
+          <li><a href="{{ path('catalog_dostavka') }}" class="footer-link">Доставка</a></li>
+          <li><a href="#" class="footer-link">Карьера</a></li>
+          <li><a href="#" class="footer-link">Мой аккаунт</a></li>
+          <li><a href="#" class="footer-link">Заказы и возвраты</a></li>
         </ul>
       </div>
       
@@ -65,7 +65,7 @@
           {% for category in footer_categories.getFooterCategories() %}
             <li>
               <a href="{{ path('catalog_category_show', {slug: category.slug}) }}"
-                 class="text-gray-600 hover:text-blue-600 transition-colors duration-200">
+                 class="footer-link transition-colors duration-200">
                 {{ category.name }}
               </a>
             </li>
@@ -79,11 +79,11 @@
       <div>
         <h3 class="text-lg font-semibold text-gray-900 mb-4">СЛУЖБА ПОДДЕРЖКИ</h3>
         <ul class="space-y-2">
-          <li><a href="#" class="text-gray-600 hover:text-blue-600">Помощь и FAQ</a></li>
-          <li><a href="#" class="text-gray-600 hover:text-blue-600">Политика возврата</a></li>
-          <li><a href="#" class="text-gray-600 hover:text-blue-600">Условия и положения</a></li>
-          <li><a href="#" class="text-gray-600 hover:text-blue-600">Политика конфиденциальности</a></li>
-          <li><a href="#" class="text-gray-600 hover:text-blue-600">Центр поддержки</a></li>
+          <li><a href="#" class="footer-link">Помощь и FAQ</a></li>
+          <li><a href="#" class="footer-link">Политика возврата</a></li>
+          <li><a href="#" class="footer-link">Условия и положения</a></li>
+          <li><a href="#" class="footer-link">Политика конфиденциальности</a></li>
+          <li><a href="#" class="footer-link">Центр поддержки</a></li>
         </ul>
       </div>
     </div>

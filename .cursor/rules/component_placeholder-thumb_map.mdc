@@ -1,0 +1,20 @@
+---
+alwaysApply: false
+---
+
+# Component: placeholder-thumb
+
+Назначение: заглушка изображений в каталоге (квадрат 64×64).
+
+Файлы
+- Twig: `templates/catalog/components/ui/placeholder-thumb.html.twig`
+
+Корневой селектор
+- `.placeholder-thumb`
+
+Стабильные якоря
+- `data-testid="placeholder-thumb"` (при необходимости добавить)
+
+Примечания
+- Используется для заглушек в корзине/списках.
+- Текст по умолчанию — «Нет фото».

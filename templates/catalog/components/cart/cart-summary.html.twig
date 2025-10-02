@@ -1,3 +1,7 @@
-{% include '@App/catalog/components/cart/summary.html.twig' with { cart: cart, delivery: delivery } %}
+{% component 'card-section' %}
+  {% block content %}
+    {{ parent() }}
+  {% endblock %}
+{% endcomponent %}
 
 
