@@ -232,14 +232,33 @@ swiper-container.product-gallery-swiper {
 
 
 @layer components {
+  /* Wrapper держит место в grid и обеспечивает контекст для absolute-элементов */
+  .card-product-wrapper {
+    position: relative;
+  }
+  
+  .card-product-wrapper::before {
+    content: "";
+    display: block;
+    min-height: 360px;
+  }
+  
   .card-product {
-    @apply relative break-words overflow-visible rounded-lg bg-white shadow-sm transition duration-200;
-    transition-property: box-shadow, transform, border-color;
+    @apply relative break-words overflow-visible bg-white;
     isolation: isolate;
   }
 
+  .card-product__inner {
+    position: relative;
+    z-index: 1;
+  }
+
   .card-product:hover {
-    @apply -translate-y-1 z-30 shadow-2xl;
+    @apply z-30 shadow-2xl;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
   }
 
   .card-product::after {
@@ -248,52 +267,68 @@ swiper-container.product-gallery-swiper {
     top: -14px;
     right: -14px;
     bottom: -14px;
-    left: -178px;
-    border: 2px solid #f6c44f;
-    border-radius: 12px;
+    left: -150px;
+    border: 1px solid var(--f-spinner-color-1);
+    border-radius: 6px;
     background: #fff;
     box-shadow: 0 24px 54px rgba(0, 0, 0, 0.25);
     opacity: 0;
     visibility: hidden;
-    transform: translateY(6px);
-    transition: opacity 0.2s ease, transform 0.2s ease;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
     pointer-events: none;
-    z-index: 0;
+    z-index: -1;
   }
 
-  .card-product::after {
-    left: -178px; /* = 150 + 28; задокументировано для читаемости */
+  .card-product--has-variations:hover::after {
+    bottom: calc(-14px - var(--card-variations-height, 0px));
   }
 
   .card-product:hover::after {
     opacity: 1;
     visibility: visible;
-    transform: translateY(0);
+  }
+  
+  .hidden-variations {
+    display: none;
+    margin-top: 0.75rem;
+  }
+  
+  .card-product--has-variations .hidden-variations {
+    --card-variations-height: var(--card-variations-height, 0px);
+  }
+
+  .card-product:hover .hidden-variations {
+    display: block;
+  }
+  
+  .product-variations {
+    padding: 0.75rem 1rem 1rem;
+    border-top: 1px solid #e2e8f0;
+    position: relative;
+    z-index: 1;
   }
 
   .card-product__media img {
     @apply transition-none;
   }
 
-  .card-product:hover .card-product__media img {
-    transform: none;
-  }
-
   .card-product__overlay {
-    @apply absolute inset-0 hidden translate-y-1 opacity-0 transition-all duration-200 pointer-events-none lg:block;
+    @apply absolute inset-0 hidden opacity-0 pointer-events-none lg:block;
     z-index: 3;
   }
 
   .card-product:hover .card-product__overlay {
-    @apply translate-y-0 opacity-100;
+    @apply opacity-100;
   }
 
   .card-product .hover-left {
-    @apply absolute -left-[164px] top-1/2 flex w-[150px] -translate-y-1/2 flex-col gap-[10px] pointer-events-auto;
+    @apply absolute -left-[146px] flex  flex-col gap-[10px] pointer-events-auto;
+    max-width: 120px;     
   }
 
   .card-product__thumb {
-    @apply h-[150px] w-[150px] overflow-hidden rounded-lg border-[3px] border-transparent bg-black;
+    @apply overflow-hidden rounded-lg border-[3px] border-transparent bg-black;
+    width: 100%;
   }
 
   .card-product__thumb img {

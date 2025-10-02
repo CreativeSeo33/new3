@@ -214,6 +214,20 @@ class ProductStateProcessor implements ProcessorInterface
             $entity->setManufacturerRef($manufacturer);
         }
 
+        // Авто-отключение вариативного товара без остатков по всем опциям
+        if ($entity->isVariable()) {
+            $hasStock = false;
+            foreach ($entity->getOptionAssignments() as $assignment) {
+                if (($assignment->getQuantity() ?? 0) > 0) {
+                    $hasStock = true;
+                    break;
+                }
+            }
+            if ($hasStock === false && ($entity->getStatus() ?? false) === true) {
+                $entity->setStatus(false);
+            }
+        }
+
         $this->em->persist($entity);
         $this->em->flush();
 

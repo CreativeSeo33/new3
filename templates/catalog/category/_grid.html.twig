@@ -1,9 +1,32 @@
 {# Сетка товаров: ожидает переменные `products`, `total`, `page`, `limit`, `slug` #}
-<div class="grid gap-6 overflow-visible mb-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4" data-testid="category-grid">
-  {% for p in products %}
-    <div class="card-product group">
-      <div class="relative z-[1] flex-auto p-5">
-        <div class="card-product__media relative flex justify-center overflow-visible text-center" data-controller="hover-gallery" data-action="mouseenter->hover-gallery#loadThumbs focusin->hover-gallery#loadThumbs touchstart->hover-gallery#loadThumbs">
+<div class="bg-white">
+  <div class="mx-auto max-w-2xl lg:max-w-7xl">
+    {% if gridTitle is defined %}
+      <h2 class="text-2xl font-bold tracking-tight text-gray-900">{{ gridTitle }}</h2>
+    {% endif %}
+
+    <div class="mt-6 grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4" data-testid="category-grid">
+      {% for p in products %}
+        {# Подготовка данных для вариаций #}
+        {% set variationsToShow = [] %}
+        {% set setPriceVariation = null %}
+        {% if p.type == 'variable' %}
+          {% for assignment in p.optionAssignments %}
+            {% if assignment.getSetPrice() %}
+              {% set setPriceVariation = assignment %}
+            {% endif %}
+          {% endfor %}
+          {% if setPriceVariation %}
+            {% set targetOptionId = setPriceVariation.option.id %}
+            {% for assignment in p.optionAssignments %}
+              {% if assignment.option.id == targetOptionId %}
+                {% set variationsToShow = variationsToShow|merge([assignment]) %}
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+        {% endif %}
+
+        <div class="group relative border border-transparent hover:border-gray-200 hover:border-b-transparent hover:shadow-md rounded-t">
           {% set firstImage = p.image|sort((a,b) => a.sortOrder <=> b.sortOrder)|first %}
           {% if firstImage %}
             {% set raw = firstImage.imageUrl %}
@@ -13,120 +36,155 @@
               {% set rel = raw|replace({'/img/':''})|trim('/') %}
               {% set imgSrc = asset('/img/' ~ rel) | imagine_filter('md2') %}
             {% endif %}
-            <a href="{{ path('catalog_product_show', { slug: p.slug }) }}"><img src="{{ imgSrc }}" alt="{{ p.name }}" class="w-full h-auto"></a>
+            <a href="{{ path('catalog_product_show', { slug: p.slug }) }}">
+              <img src="{{ imgSrc }}" alt="{{ p.name }}" class="aspect-square rounded-t w-full rounded-md bg-gray-200 object-cover lg:aspect-auto">
+            </a>
           {% else %}
-            <a href="{{ path('catalog_product_show', { slug: p.slug }) }}"><img src="https://via.placeholder.com/500" alt="{{ p.name }}" class="w-full h-auto"></a>
+            <a href="{{ path('catalog_product_show', { slug: p.slug }) }}">
+              <img src="https://via.placeholder.com/500" alt="{{ p.name }}" class="aspect-square rounded-t w-full rounded-md bg-gray-200 object-cover lg:aspect-auto">
+            </a>
           {% endif %}
-            {# Иконка избранного в углу карточки #}
-            {% set inWishlist = wishlist_has(p.id) %}
-            <button type="button"
-                    class="absolute top-2 right-2 inline-flex items-center justify-center w-9 h-9 rounded-full bg-white/90 shadow hover:bg-white transition-colors{% if inWishlist %} is-active{% endif %}"
-                    aria-label="В избранное"
-                    title="В избранное"
-                    data-module="wishlist-toggle"
-                    data-spinner="false"
-                    data-product-id="{{ p.id }}">
-              <svg class="w-5 h-5 {% if inWishlist %}text-red-600{% else %}text-gray-600{% endif %}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z"/>
-              </svg>
-            </button>
-            {# Overlay: позиционируется относительно контейнера фото, без дублирования img #}
-            {% set imagesSorted = p.image|sort((a,b) => a.sortOrder <=> b.sortOrder) %}
-            <div class="card-product__overlay" aria-hidden="true">
-              <div class="hover-left">
-                {% for im in imagesSorted|slice(0,3) %}
-                  {% set tRaw = im.imageUrl %}
-                  {% if tRaw starts with '/media/cache/' %}
-                    {% set tSrc = tRaw %}
-                  {% else %}
-                    {% set tRel = tRaw|replace({'/img/':''})|trim('/') %}
-                    {% set tSrc = asset('/img/' ~ tRel) | imagine_filter('md2') %}
-                  {% endif %}
-                  <div class="card-product__thumb{% if loop.first %} is-active{% endif %}" data-bg="{{ tSrc }}"><img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-src="{{ tSrc }}" alt="{{ p.name }} миниатюра {{ loop.index }}"></div>
-                {% endfor %}
-              </div>
-              <a class="pointer-events-auto absolute left-4 bottom-4 z-10 inline-flex items-center gap-2 rounded-[10px] bg-white/90 px-4 py-3 font-semibold text-slate-900 shadow-lg transition-colors duration-200 hover:bg-white" href="{{ path('catalog_product_show', { slug: p.slug }) }}#gallery">🔍 Увеличить фотографию</a>
-              {#<div class="hover-content">
-                <div class="text-sm text-gray-500">Хрустальная люстра</div>
-                <a class="hover-title" href="{{ path('catalog_product_show', { slug: p.slug }) }}">{{ p.name }}</a>
-                {% if p.getEffectivePrice() %}
-                  <div class="hover-price">{{ p.getEffectivePrice() }} <span class="font-semibold">руб.</span></div>
-                {% endif %}
-                <button type="button" data-product-id="{{ p.id }}" class="js-add-to-cart buy-btn inline-flex items-center justify-center gap-x-2">
-                  <span>Купить</span>
-                </button>
-                <div class="stock"><span>✔</span><span>В наличии</span></div>
-              </div>#}
-            </div>
-        </div>
 
-        <div class="flex flex-col gap-4 mt-4">
-          <div class="flex flex-col gap-1.5">
-            <h3 class="text-base font-medium text-slate-900"><a href="{{ path('catalog_product_show', { slug: p.slug }) }}" class="transition-colors hover:text-slate-700">{{ p.name }}</a></h3>
+          {% set inWishlist = wishlist_has(p.id) %}
+          <button type="button"
+                  aria-label="В избранное"
+                  title="В избранное"
+                  data-module="wishlist-toggle"
+                  data-spinner="false"
+                  data-product-id="{{ p.id }}"
+                  class="absolute right-2 top-2 z-10 rounded-full bg-white/80 p-2 text-gray-600 shadow-sm hover:text-red-500"
+                  {% if inWishlist %}data-state="active"{% endif %}>
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z"/>
+            </svg>
+          </button>
+
+          <div class="mt-4 flex justify-between">
+            <div>
+              <div class="text-sm text-gray-700">
+                <a href="{{ path('catalog_product_show', { slug: p.slug }) }}">                  
+                  {{ p.name }}
+                </a>
+              </div>
+              
+            </div>
+            
           </div>
 
-          <div class="flex items-center justify-between">
-            <div>
-              {% if p.getEffectivePrice() %}
-                <span class="text-lg font-semibold text-slate-900">{{ p.getEffectivePrice() }}</span>
+<div class="mt-1 flex justify-between">
+          <div class="text-left">
+              {% if p.type == 'simple' or p.type == 'variable_no_prices' %}
+                {% set hasDiscount = p.salePrice is not null and p.price is not null and p.salePrice < p.price %}
+                {% if hasDiscount %}
+                  <div class="flex items-center gap-2 justify-end">
+                    <span class="line-through text-gray-500 text-sm">{{ format_price(p.price)|replace({'₽':'руб.'}) }}</span>
+                    <span class="text-red-600 font-medium">{{ format_price(p.salePrice)|replace({'₽':'руб.'}) }}</span>
+                  </div>
+                {% elseif p.price is not null %}
+                  {{ format_price(p.price)|replace({'₽':'руб.'}) }}
+                {% endif %}
+              {% elseif p.type == 'variable' %}
+                {% if setPriceVariation %}
+                  {% set hasDiscount = setPriceVariation.salePrice is not null and setPriceVariation.price is not null and setPriceVariation.salePrice < setPriceVariation.price %}
+                  {% if hasDiscount %}
+                    <div class="flex items-center gap-2 justify-end">
+                      <span class="line-through text-gray-500 text-sm">{{ format_price(setPriceVariation.price)|replace({'₽':'руб.'}) }}</span>
+                      <span class="text-red-600 font-medium">{{ format_price(setPriceVariation.salePrice)|replace({'₽':'руб.'}) }}</span>
+                    </div>
+                  {% else %}
+                    {% set basePrice = setPriceVariation.salePrice is not null ? setPriceVariation.salePrice : (setPriceVariation.price ?? null) %}
+                    {% if basePrice is not null %}{{ format_price(basePrice)|replace({'₽':'руб.'}) }}{% endif %}
+                  {% endif %}
+                {% elseif p.effectivePrice %}
+                  {{ format_price(p.effectivePrice)|replace({'₽':'руб.'}) }}
+                {% endif %}
               {% endif %}
             </div>
-            <div>
-              <button type="button" data-product-id="{{ p.id }}" class="js-add-to-cart btn inline-flex items-center gap-x-1 bg-green-600 text-white border-green-600 disabled:opacity-50 disabled:pointer-events-none hover:text-white hover:bg-green-700 hover:border-green-700 active:bg-green-700 active:border-green-700 focus:outline-none focus:ring-4 focus:ring-green-300 btn-sm">
-                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-                </svg>
-                <span>Купить</span>
-              </button>
             </div>
-          </div>
+          
+          <div class="flex justify-between">
+              <p class="mt-1 text-sm text-gray-500">
+                  {% if p.type == 'variable' and setPriceVariation %}
+                    {% if setPriceVariation.height %}Высота: {{ setPriceVariation.height }} см{% endif %}
+                    {% if setPriceVariation.height and setPriceVariation.bulbsCount %} • {% endif %}
+                    {% if setPriceVariation.bulbsCount %}Лампочки: {{ setPriceVariation.bulbsCount }}{% endif %}
+                  {% endif %}
+              </p>
+            </div>
+            
+          
+
+          {% if variationsToShow|length > 1 %}
+            <ul class="space-y-2 p-2 block opacity-0 pointer-events-none transition-opacity duration-200 ease-out group-hover:opacity-100 group-hover:pointer-events-auto absolute inset-x-0 top-full -mt-px z-50 bg-white shadow-lg border-gray-200 border-t-0 rounded-b">
+              {% for variation in variationsToShow %}
+                <li class="flex items-center justify-between text-xs text-gray-700">
+                  <div class="truncate">{{ variation.value.value }}</div>
+                  <div class="mx-2 text-gray-500">
+                    {% if variation.height %}Высота: {{ variation.height }} см{% endif %}
+                    {% if variation.height and variation.bulbsCount %} • {% endif %}
+                    {% if variation.bulbsCount %}Лампочки: {{ variation.bulbsCount }}{% endif %}
+                  </div>
+                  <div class="text-right">
+                    {% set hasDiscount = variation.salePrice is not null and variation.price is not null and variation.salePrice < variation.price %}
+                    {% if hasDiscount %}
+                      <div class="flex items-center gap-2 justify-end">
+                        <span class="line-through text-gray-500 text-xs">{{ format_price(variation.price)|replace({'₽':'руб.'}) }}</span>
+                        <span class="text-red-600 font-medium">{{ format_price(variation.salePrice)|replace({'₽':'руб.'}) }}</span>
+                      </div>
+                    {% else %}
+                      {% set basePrice = variation.salePrice is not null ? variation.salePrice : (variation.price ?? null) %}
+                      {% if basePrice is not null %}{{ format_price(basePrice)|replace({'₽':'руб.'}) }}{% endif %}
+                    {% endif %}
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
         </div>
-      </div>
-
-      
+      {% endfor %}
     </div>
-  {% endfor %}
-</div>
 
-{# Пагинация #}
-{% set totalPages = (total is defined and limit is defined and limit > 0) ? ((total + limit - 1) // limit) : 1 %}
-{% if totalPages > 1 %}
-  {% set q = app.request.query.all %}
-  {% set baseParams = q|merge({ 'limit': limit }) %}
-  {# Выбираем маршрут пагинации: поиск или категория #}
-  {% set baseRouteName = routeName|default('catalog_category_products') %}
-  {% set baseRouteParams = routeParams is defined ? routeParams : (slug is defined ? { 'slug': slug } : {}) %}
-  {% if baseParams['page'] is defined %}
-    {% set baseParams = baseParams|merge({ 'page': null }) %}
-  {% endif %}
-  <nav class="flex items-center justify-center gap-2" aria-label="Pagination">
-    {# Prev #}
-    {% if page > 1 %}
-      {% set prevParams = baseParams|merge({ 'page': page - 1 }) %}
-      <a class="px-3 py-1 border rounded" href="{{ path(baseRouteName, baseRouteParams) ~ '?' ~ prevParams|url_encode }}">Назад</a>
-    {% else %}
-      <span class="px-3 py-1 border rounded text-gray-400">Назад</span>
-    {% endif %}
-
-    {# Pages #}
-    {% for p in 1..totalPages %}
-      {% set pParams = baseParams|merge({ 'page': p }) %}
-      {% if p == page %}
-        <span class="px-3 py-1 border rounded bg-gray-200">{{ p }}</span>
-      {% else %}
-        <a class="px-3 py-1 border rounded" href="{{ path(baseRouteName, baseRouteParams) ~ '?' ~ pParams|url_encode }}">{{ p }}</a>
+    {# Пагинация #}
+    {% set totalPages = (total is defined and limit is defined and limit > 0) ? ((total + limit - 1) // limit) : 1 %}
+    {% if totalPages > 1 %}
+      {% set q = app.request.query.all %}
+      {% set baseParams = q|merge({ 'limit': limit }) %}
+      {# Выбираем маршрут пагинации: поиск или категория #}
+      {% set baseRouteName = routeName|default('catalog_category_products') %}
+      {% set baseRouteParams = routeParams is defined ? routeParams : (slug is defined ? { 'slug': slug } : {}) %}
+      {% if baseParams['page'] is defined %}
+        {% set baseParams = baseParams|merge({ 'page': null }) %}
       {% endif %}
-    {% endfor %}
+      <nav aria-label="Pagination" class="mt-8 flex items-center justify-center gap-2">
+        {# Prev #}
+        {% if page > 1 %}
+          {% set prevParams = baseParams|merge({ 'page': page - 1 }) %}
+          <a class="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50" href="{{ path(baseRouteName, baseRouteParams) ~ '?' ~ prevParams|url_encode }}">Назад</a>
+        {% else %}
+          <span class="inline-flex items-center rounded-md border border-gray-200 px-3 py-1.5 text-sm text-gray-400">Назад</span>
+        {% endif %}
 
-    {# Next #}
-    {% if page < totalPages %}
-      {% set nextParams = baseParams|merge({ 'page': page + 1 }) %}
-      <a class="px-3 py-1 border rounded" href="{{ path(baseRouteName, baseRouteParams) ~ '?' ~ nextParams|url_encode }}">Вперёд</a>
-    {% else %}
-      <span class="px-3 py-1 border rounded text-gray-400">Вперёд</span>
+        {# Pages #}
+        {% for p in 1..totalPages %}
+          {% set pParams = baseParams|merge({ 'page': p }) %}
+          {% if p == page %}
+            <span class="inline-flex items-center rounded-md bg-gray-900 px-3 py-1.5 text-sm font-medium text-white">{{ p }}</span>
+          {% else %}
+            <a class="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50" href="{{ path(baseRouteName, baseRouteParams) ~ '?' ~ pParams|url_encode }}">{{ p }}</a>
+          {% endif %}
+        {% endfor %}
+
+        {# Next #}
+        {% if page < totalPages %}
+          {% set nextParams = baseParams|merge({ 'page': page + 1 }) %}
+          <a class="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50" href="{{ path(baseRouteName, baseRouteParams) ~ '?' ~ nextParams|url_encode }}">Вперёд</a>
+        {% else %}
+          <span class="inline-flex items-center rounded-md border border-gray-200 px-3 py-1.5 text-sm text-gray-400">Вперёд</span>
+        {% endif %}
+      </nav>
     {% endif %}
-  </nav>
-{% endif %}
+  </div>
+</div>
 
 
 

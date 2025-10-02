@@ -80,9 +80,11 @@ final class ProductRepository extends ServiceEntityRepository
             ->andWhere('pc.category = :category')
             ->andWhere('pc.visibility = true')
             ->andWhere('p.status = true')
+            ->andWhere('(p.type <> :varType OR EXISTS (SELECT 1 FROM App\\Entity\\ProductOptionValueAssignment pova_stock WHERE pova_stock.product = p AND pova_stock.quantity > 0))')
             ->orderBy('p.sortOrder', 'ASC')
             ->addOrderBy('img.sortOrder', 'ASC')
             ->setParameter('category', $category)
+            ->setParameter('varType', Product::TYPE_VARIABLE)
             ->setFirstResult($offset)
             ->setMaxResults($limit)
             ->getQuery()
@@ -102,9 +104,11 @@ final class ProductRepository extends ServiceEntityRepository
             ->andWhere('pc.category = :category')
             ->andWhere('pc.visibility = true')
             ->andWhere('p.status = true')
+            ->andWhere('(p.type <> :varType OR EXISTS (SELECT 1 FROM App\\Entity\\ProductOptionValueAssignment pova_stock WHERE pova_stock.product = p AND pova_stock.quantity > 0))')
             ->orderBy('p.sortOrder', 'ASC')
             ->addOrderBy('img.sortOrder', 'ASC')
             ->setParameter('category', $category)
+            ->setParameter('varType', Product::TYPE_VARIABLE)
             ->setFirstResult($offset)
             ->setMaxResults($limit);
 
@@ -162,9 +166,11 @@ final class ProductRepository extends ServiceEntityRepository
             ->andWhere('pc.category = :category')
             ->andWhere('pc.visibility = true')
             ->andWhere('p.status = true')
+            ->andWhere('(p.type <> :varType OR EXISTS (SELECT 1 FROM App\\Entity\\ProductOptionValueAssignment pova_stock WHERE pova_stock.product = p AND pova_stock.quantity > 0))')
             ->orderBy('p.sortOrder', 'ASC')
             ->addOrderBy('img.sortOrder', 'ASC')
             ->setParameter('category', $category)
+            ->setParameter('varType', Product::TYPE_VARIABLE)
             ->setFirstResult($offset)
             ->setMaxResults($limit);
 
@@ -193,9 +199,11 @@ final class ProductRepository extends ServiceEntityRepository
             ->andWhere('pc.category = :category')
             ->andWhere('pc.visibility = true')
             ->andWhere('p.status = true')
+            ->andWhere('(p.type <> :varType OR EXISTS (SELECT 1 FROM App\\Entity\\ProductOptionValueAssignment pova_stock WHERE pova_stock.product = p AND pova_stock.quantity > 0))')
             ->orderBy('p.sortOrder', 'ASC')
             ->addOrderBy('img.sortOrder', 'ASC')
             ->setParameter('category', $category)
+            ->setParameter('varType', Product::TYPE_VARIABLE)
             ->setFirstResult($offset)
             ->setMaxResults($limit);
 
@@ -269,9 +277,11 @@ final class ProductRepository extends ServiceEntityRepository
             ->andWhere('pc.category = :category')
             ->andWhere('pc.visibility = true')
             ->andWhere('p.status = true')
+            ->andWhere('(p.type <> :varType OR EXISTS (SELECT 1 FROM App\\Entity\\ProductOptionValueAssignment pova_stock WHERE pova_stock.product = p AND pova_stock.quantity > 0))')
             ->orderBy('p.sortOrder', 'ASC')
             ->addOrderBy('img.sortOrder', 'ASC')
             ->setParameter('category', $category)
+            ->setParameter('varType', Product::TYPE_VARIABLE)
             ->setFirstResult($offset)
             ->setMaxResults($limit);
 

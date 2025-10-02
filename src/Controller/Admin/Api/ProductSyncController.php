@@ -107,6 +107,7 @@ final class ProductSyncController extends AbstractController
                 $em->flush();
                 $optRepo = $em->getRepository(Option::class);
                 $valRepo = $em->getRepository(OptionValue::class);
+                $hasStock = false;
                 foreach ((array) $payload['optionAssignments'] as $row) {
                     if (!is_array($row)) continue;
                     $optionIri = (string) ($row['option'] ?? '');
@@ -134,7 +135,9 @@ final class ProductSyncController extends AbstractController
                     $a->setQuantity(isset($row['quantity']) && is_numeric($row['quantity']) ? (int) $row['quantity'] : null);
                     $a->setAttributes(isset($row['attributes']) && is_array($row['attributes']) ? $row['attributes'] : null);
                     $em->persist($a);
+                    if (($row['quantity'] ?? null) !== null && is_numeric($row['quantity']) && (int)$row['quantity'] > 0) { $hasStock = true; }
                 }
+                if ($product->getType() === Product::TYPE_VARIABLE && ($product->getStatus() ?? false) === true && $hasStock === false) { $product->setStatus(false); }
             }
 
             // 4) Photos order
@@ -160,6 +163,19 @@ final class ProductSyncController extends AbstractController
                         }
                     }
                 }
+            }
+
+            // If options not provided, auto-disable variable product with no stock on any option (DB check)
+            if (!isset($payload['optionAssignments']) && $product->getType() === Product::TYPE_VARIABLE && ($product->getStatus() ?? false) === true) {
+                $cnt = (int) $em->createQueryBuilder()
+                    ->select('COUNT(a.id)')
+                    ->from(ProductOptionValueAssignment::class, 'a')
+                    ->where('a.product = :p')
+                    ->andWhere('a.quantity > 0')
+                    ->setParameter('p', $product)
+                    ->getQuery()
+                    ->getSingleScalarResult();
+                if ($cnt === 0) { $product->setStatus(false); }
             }
 
             $em->flush();
