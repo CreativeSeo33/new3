@@ -54,16 +54,50 @@ final class SearchController extends AbstractController
                 $offset = ($page - 1) * $currentLimit;
                 $pagedIds = array_slice($ids, $offset, $currentLimit);
                 if (!empty($pagedIds)) {
-                    $entities = $this->productRepository->createQueryBuilder('p')
+                    $sort = (string)($request->query->get('sort') ?? 'relevance');
+                    $qb = $this->productRepository->createQueryBuilder('p')
                         ->leftJoin('p.image', 'img')->addSelect('img')
                         ->andWhere('p.id IN (:ids)')
                         ->andWhere('p.status = true')
-                        ->setParameter('ids', $pagedIds)
-                        ->getQuery()->getResult();
-
-                    $byId = [];
-                    foreach ($entities as $e) { $byId[$e->getId()] = $e; }
-                    foreach ($pagedIds as $id) { if (isset($byId[$id])) { $products[] = $byId[$id]; } }
+                        ->setParameter('ids', $pagedIds);
+                    // Применяем сортировку для search (по умолчанию сохраняем порядок релевантности)
+                    switch (strtolower($sort)) {
+                        case 'popular':
+                            $qb->orderBy('p.sortOrder', 'ASC');
+                            break;
+                        case 'price_asc':
+                            $qb->orderBy('p.effectivePrice', 'ASC');
+                            break;
+                        case 'price_desc':
+                            $qb->orderBy('p.effectivePrice', 'DESC');
+                            break;
+                        case 'date_asc':
+                            $qb->orderBy('p.timestamps.createdAt', 'ASC');
+                            break;
+                        case 'date_desc':
+                            $qb->orderBy('p.timestamps.createdAt', 'DESC');
+                            break;
+                        case 'name_asc':
+                            $qb->orderBy('p.name', 'ASC');
+                            break;
+                        case 'name_desc':
+                            $qb->orderBy('p.name', 'DESC');
+                            break;
+                        case 'relevance':
+                        default:
+                            // Сохраняем порядок $pagedIds; Doctrine не гарантирует порядок IN(...)
+                            $entities = $qb->getQuery()->getResult();
+                            $byId = [];
+                            foreach ($entities as $e) { $byId[$e->getId()] = $e; }
+                            foreach ($pagedIds as $id) { if (isset($byId[$id])) { $products[] = $byId[$id]; } }
+                            $entities = null; // уже собрали $products
+                            break;
+                    }
+                    if (empty($products)) {
+                        // Для всех сортировок кроме relevance просто возьмём результат ORM
+                        $entities = $qb->getQuery()->getResult();
+                        $products = is_array($entities) ? $entities : [];
+                    }
                 }
 
                 // === Build initial facets/meta for SSR (search-mode) ===
@@ -441,14 +475,46 @@ final class SearchController extends AbstractController
                 $pagedIds = array_slice($orderedFiltered, $offset, $currentLimit);
 
                 if (!empty($pagedIds)) {
-                    $entities = $this->productRepository->createQueryBuilder('p')
+                    $sort = (string)($request->query->get('sort') ?? 'relevance');
+                    $qb = $this->productRepository->createQueryBuilder('p')
                         ->leftJoin('p.image', 'img')->addSelect('img')
                         ->andWhere('p.status = true')
-                        ->andWhere('p.id IN (:ids)')->setParameter('ids', $pagedIds)
-                        ->getQuery()->getResult();
-                    $byId = [];
-                    foreach ($entities as $e) { $byId[$e->getId()] = $e; }
-                    foreach ($pagedIds as $id) { if (isset($byId[$id])) { $products[] = $byId[$id]; } }
+                        ->andWhere('p.id IN (:ids)')->setParameter('ids', $pagedIds);
+                    switch (strtolower($sort)) {
+                        case 'popular':
+                            $qb->orderBy('p.sortOrder', 'ASC');
+                            break;
+                        case 'price_asc':
+                            $qb->orderBy('p.effectivePrice', 'ASC');
+                            break;
+                        case 'price_desc':
+                            $qb->orderBy('p.effectivePrice', 'DESC');
+                            break;
+                        case 'date_asc':
+                            $qb->orderBy('p.timestamps.createdAt', 'ASC');
+                            break;
+                        case 'date_desc':
+                            $qb->orderBy('p.timestamps.createdAt', 'DESC');
+                            break;
+                        case 'name_asc':
+                            $qb->orderBy('p.name', 'ASC');
+                            break;
+                        case 'name_desc':
+                            $qb->orderBy('p.name', 'DESC');
+                            break;
+                        case 'relevance':
+                        default:
+                            $entities = $qb->getQuery()->getResult();
+                            $byId = [];
+                            foreach ($entities as $e) { $byId[$e->getId()] = $e; }
+                            foreach ($pagedIds as $id) { if (isset($byId[$id])) { $products[] = $byId[$id]; } }
+                            $entities = null;
+                            break;
+                    }
+                    if (empty($products)) {
+                        $entities = $qb->getQuery()->getResult();
+                        $products = is_array($entities) ? $entities : [];
+                    }
                 }
             }
         }

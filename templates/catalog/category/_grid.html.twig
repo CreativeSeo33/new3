@@ -155,7 +155,7 @@
       {% if baseParams['page'] is defined %}
         {% set baseParams = baseParams|merge({ 'page': null }) %}
       {% endif %}
-      <nav aria-label="Pagination" class="mt-8 flex items-center justify-center">
+      <nav aria-label="Pagination" class="mt-8 pt-8 flex items-center justify-center border-t border-gray-200">
         <div class="flex items-center gap-x-1">
           {% if page > 1 %}
             {% set prevParams = baseParams|merge({ 'page': page - 1 }) %}

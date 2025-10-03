@@ -265,7 +265,8 @@ final class ProductRepository extends ServiceEntityRepository
         int $page,
         int $limit,
         ?int $priceMin = null,
-        ?int $priceMax = null
+        ?int $priceMax = null,
+        ?string $sort = null
     ): array {
         $page = max(1, $page);
         $offset = ($page - 1) * $limit;
@@ -278,12 +279,40 @@ final class ProductRepository extends ServiceEntityRepository
             ->andWhere('pc.visibility = true')
             ->andWhere('p.status = true')
             ->andWhere('(p.type <> :varType OR EXISTS (SELECT 1 FROM App\\Entity\\ProductOptionValueAssignment pova_stock WHERE pova_stock.product = p AND pova_stock.quantity > 0))')
-            ->orderBy('p.sortOrder', 'ASC')
-            ->addOrderBy('img.sortOrder', 'ASC')
             ->setParameter('category', $category)
             ->setParameter('varType', Product::TYPE_VARIABLE)
             ->setFirstResult($offset)
             ->setMaxResults($limit);
+
+        // Apply sorting
+        $normalizedSort = is_string($sort) ? strtolower(trim($sort)) : null;
+        switch ($normalizedSort) {
+            case 'price_asc':
+                $qb->orderBy('p.effectivePrice', 'ASC');
+                break;
+            case 'price_desc':
+                $qb->orderBy('p.effectivePrice', 'DESC');
+                break;
+            case 'date_asc':
+                // Embeddable field maps to column date_added
+                $qb->orderBy('p.timestamps.createdAt', 'ASC');
+                break;
+            case 'date_desc':
+                $qb->orderBy('p.timestamps.createdAt', 'DESC');
+                break;
+            case 'name_asc':
+                $qb->orderBy('p.name', 'ASC');
+                break;
+            case 'name_desc':
+                $qb->orderBy('p.name', 'DESC');
+                break;
+            case 'popular':
+            default:
+                $qb->orderBy('p.sortOrder', 'ASC');
+                break;
+        }
+        // Stable image order
+        $qb->addOrderBy('img.sortOrder', 'ASC');
 
         if ($priceMin !== null) {
             $qb->andWhere('p.effectivePrice >= :priceMin')

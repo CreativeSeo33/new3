@@ -32,14 +32,29 @@
 
         </aside>
         <div class="md:col-span-3">
-          <div class="mb-4" data-facets-target="selected" aria-live="polite"></div>
-          <div class="mb-4 flex items-center gap-2">
-            <label for="limit-select" class="text-sm text-gray-600">Показывать по:</label>
-            <select id="limit-select" class="select max-w-40 appearance-none" aria-label="select" data-facets-target="limit" data-action="change->facets#onLimitChange">
+          <div class="mt-4 pb-6 border-b border-gray-200 hidden" data-facets-target="selected" aria-live="polite"></div>
+          <div class="pb-6 pt-6 flex justify-normal items-center gap-2 border-b border-gray-200">
+          
+            <label for="limit-select" class="text-sm text-gray-600 align-left">Показывать по:</label>
+            <select id="limit-select" class="select max-w-40 appearance-none align-left" aria-label="select" data-facets-target="limit" data-action="change->facets#onLimitChange">
               {% for l in allowedLimits|default([10,20,30]) %}
                 <option value="{{ l }}" {% if (limit|default(20)) == l %}selected{% endif %}>{{ l }}</option>
               {% endfor %}
             </select>
+            
+            <div>
+            <label for="sort-select" class="text-sm text-gray-600 ml-4">Сортировать:</label>
+            {% set currentSort = app.request.query.get('sort')|default('popular') %}
+            <select id="sort-select" class="select max-w-60 appearance-none" aria-label="select" data-facets-target="sort" data-action="change->facets#onSortChange">
+              <option value="popular" {% if currentSort == 'popular' %}selected{% endif %}>По популярности</option>
+              <option value="price_asc" {% if currentSort == 'price_asc' %}selected{% endif %}>Цена: по возрастанию</option>
+              <option value="price_desc" {% if currentSort == 'price_desc' %}selected{% endif %}>Цена: по убыванию</option>
+              <option value="date_desc" {% if currentSort == 'date_desc' %}selected{% endif %}>Новинки (сначала новые)</option>
+              <option value="date_asc" {% if currentSort == 'date_asc' %}selected{% endif %}>Сначала старые</option>
+              <option value="name_asc" {% if currentSort == 'name_asc' %}selected{% endif %}>Название: A→Z</option>
+              <option value="name_desc" {% if currentSort == 'name_desc' %}selected{% endif %}>Название: Z→A</option>
+            </select>
+            </div>
           </div>
           <div class="relative" data-facets-target="products" data-action="click->facets#onPaginationClick">            
             <div id="category-grid-spinner" class="absolute inset-0 flex items-center justify-center z-10 hidden" data-size="small" data-color="secondary" data-overlay="true"></div>

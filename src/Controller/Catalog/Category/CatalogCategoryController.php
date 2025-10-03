@@ -57,6 +57,7 @@ final class CatalogCategoryController extends AbstractController
         $priceMax = $request->query->get('price_max');
         $priceMinInt = is_numeric((string)$priceMin) ? (int)$priceMin : null;
         $priceMaxInt = is_numeric((string)$priceMax) ? (int)$priceMax : null;
+        $sort = $request->query->get('sort');
 
         // Определяем перечень кодов атрибутов/опций для типизированной фильтрации
         $categoryId = (int) $category->getId();
@@ -96,7 +97,8 @@ final class CatalogCategoryController extends AbstractController
             $page,
             $currentLimit,
             $priceMinInt,
-            $priceMaxInt
+            $priceMaxInt,
+            is_string($sort) ? $sort : null
         );
         $items = $result['items'];
         $total = (int)$result['total'];
@@ -319,6 +321,7 @@ final class CatalogCategoryController extends AbstractController
         $priceMax = $request->query->get('price_max');
         $priceMinInt = is_numeric((string)$priceMin) ? (int)$priceMin : null;
         $priceMaxInt = is_numeric((string)$priceMax) ? (int)$priceMax : null;
+        $sort = $request->query->get('sort');
 
         // Определяем перечень кодов атрибутов/опций для типизированной фильтрации
         $categoryId = (int) $category->getId();
@@ -357,7 +360,8 @@ final class CatalogCategoryController extends AbstractController
             $page,
             $currentLimit,
             $priceMinInt,
-            $priceMaxInt
+            $priceMaxInt,
+            is_string($sort) ? $sort : null
         );
         $items = $result['items'];
         $total = (int)$result['total'];

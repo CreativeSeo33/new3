@@ -2,7 +2,7 @@ import { Controller } from '@hotwired/stimulus'
 import noUiSlider from 'nouislider'
 
 export default class extends Controller {
-  static targets = ['list', 'products', 'selected', 'limit']
+  static targets = ['list', 'products', 'selected', 'limit', 'sort']
   static values = {
     categoryId: Number,
     productsUrl: String,
@@ -24,6 +24,7 @@ export default class extends Controller {
     this.onPopStateBound = this.onPopState.bind(this)
     window.addEventListener('popstate', this.onPopStateBound)
     this.syncLimitFromUrl()
+    this.syncSortFromUrl()
     // Render initial facets if provided to avoid API call on first paint
     try {
       const initial = this.listTarget?.getAttribute('data-initial-facets')
@@ -137,6 +138,7 @@ export default class extends Controller {
     const text = url.searchParams.get('text') || ''
     const limit = url.searchParams.get('limit') || ''
     const page = url.searchParams.get('page') || ''
+    const sort = url.searchParams.get('sort') || ''
     if (this.hasCategoryIdValue && this.categoryIdValue) {
       q.category = String(this.categoryIdValue)
     } else if (text) {
@@ -144,6 +146,7 @@ export default class extends Controller {
     }
     if (limit) q.limit = limit
     if (page) q.page = page
+    if (sort) q.sort = sort
     if (this.priceMin != null) q['price_min'] = String(this.priceMin)
     if (this.priceMax != null) q['price_max'] = String(this.priceMax)
     for (const [code, set] of this.selected.entries()) {
@@ -189,6 +192,7 @@ export default class extends Controller {
       const linkUrl = new URL(anchor.href)
       const page = linkUrl.searchParams.get('page') || '1'
       const limit = linkUrl.searchParams.get('limit') || ''
+      const sort = linkUrl.searchParams.get('sort') || ''
       const url = new URL(window.location.href)
       // копируем f[...]
       Array.from(url.searchParams.keys()).forEach(k => { if (k.startsWith('f[')) url.searchParams.delete(k) })
@@ -196,6 +200,7 @@ export default class extends Controller {
       // применяем page/limit
       url.searchParams.set('page', page)
       if (limit) url.searchParams.set('limit', limit); else url.searchParams.delete('limit')
+      if (sort) url.searchParams.set('sort', sort); else url.searchParams.delete('sort')
       window.history.pushState({}, '', url.toString())
     } catch (_) {}
     this.loadProducts()
@@ -207,6 +212,7 @@ export default class extends Controller {
     this.readSelectedFromUrl()
     this.readPriceFromUrl()
     this.syncLimitFromUrl()
+    this.syncSortFromUrl()
     const serialize = (m) => JSON.stringify(Array.from(m.entries()).map(([k, set]) => [k, Array.from(set).sort()]).sort())
     const changedFilters = serialize(prevSelected) !== serialize(this.selected)
     if (changedFilters) {
@@ -223,6 +229,27 @@ export default class extends Controller {
       const limit = url.searchParams.get('limit')
       if (limit) this.limitTarget.value = String(limit)
     } catch (_) {}
+  }
+
+  syncSortFromUrl() {
+    if (!this.hasSortTarget) return
+    try {
+      const url = new URL(window.location.href)
+      const sort = url.searchParams.get('sort')
+      if (sort) this.sortTarget.value = String(sort)
+    } catch (_) {}
+  }
+
+  onSortChange(event) {
+    const select = event.currentTarget
+    const value = String(select.value || '')
+    try {
+      const url = new URL(window.location.href)
+      if (value) url.searchParams.set('sort', value); else url.searchParams.delete('sort')
+      url.searchParams.set('page', '1')
+      window.history.pushState({}, '', url.toString())
+    } catch (_) {}
+    this.loadProducts()
   }
 
   renderFacets(facets, meta = {}) {
@@ -386,7 +413,7 @@ export default class extends Controller {
 
     const title = document.createElement('div')
     title.className = 'h3'
-    title.textContent = (meta.price?.title || 'Цена')
+    title.textContent = (meta.price?.title || 'Цена, руб')
     const section = document.createElement('section')
     section.className = 'my-16 px-2'
 
@@ -488,8 +515,10 @@ export default class extends Controller {
     }
     if (entries.length === 0) {
       root.innerHTML = ''
+      try { root.classList.add('hidden') } catch (_) {}
       return
     }
+    try { root.classList.remove('hidden') } catch (_) {}
     const wrap = document.createElement('div')
     wrap.className = 'selected-filters flex flex-wrap items-center gap-2'
     const title = document.createElement('span')
