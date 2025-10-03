@@ -155,32 +155,45 @@
       {% if baseParams['page'] is defined %}
         {% set baseParams = baseParams|merge({ 'page': null }) %}
       {% endif %}
-      <nav aria-label="Pagination" class="mt-8 flex items-center justify-center gap-2">
-        {# Prev #}
-        {% if page > 1 %}
-          {% set prevParams = baseParams|merge({ 'page': page - 1 }) %}
-          <a class="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50" href="{{ path(baseRouteName, baseRouteParams) ~ '?' ~ prevParams|url_encode }}">Назад</a>
-        {% else %}
-          <span class="inline-flex items-center rounded-md border border-gray-200 px-3 py-1.5 text-sm text-gray-400">Назад</span>
-        {% endif %}
-
-        {# Pages #}
-        {% for p in 1..totalPages %}
-          {% set pParams = baseParams|merge({ 'page': p }) %}
-          {% if p == page %}
-            <span class="inline-flex items-center rounded-md bg-gray-900 px-3 py-1.5 text-sm font-medium text-white">{{ p }}</span>
+      <nav aria-label="Pagination" class="mt-8 flex items-center justify-center">
+        <div class="flex items-center gap-x-1">
+          {% if page > 1 %}
+            {% set prevParams = baseParams|merge({ 'page': page - 1 }) %}
+            <a class="btn btn-soft max-sm:btn-square" href="{{ path(baseRouteName, baseRouteParams) ~ '?' ~ prevParams|url_encode }}">
+              <span class="icon-[tabler--chevron-left] size-5 rtl:rotate-180"></span>
+              <span class="hidden sm:inline">Назад</span>
+            </a>
           {% else %}
-            <a class="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50" href="{{ path(baseRouteName, baseRouteParams) ~ '?' ~ pParams|url_encode }}">{{ p }}</a>
+            <span class="btn btn-soft max-sm:btn-square pointer-events-none opacity-50" aria-disabled="true">
+              <span class="icon-[tabler--chevron-left] size-5 rtl:rotate-180"></span>
+              <span class="hidden sm:inline">Назад</span>
+            </span>
           {% endif %}
-        {% endfor %}
 
-        {# Next #}
-        {% if page < totalPages %}
-          {% set nextParams = baseParams|merge({ 'page': page + 1 }) %}
-          <a class="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50" href="{{ path(baseRouteName, baseRouteParams) ~ '?' ~ nextParams|url_encode }}">Вперёд</a>
-        {% else %}
-          <span class="inline-flex items-center rounded-md border border-gray-200 px-3 py-1.5 text-sm text-gray-400">Вперёд</span>
-        {% endif %}
+          <div class="flex items-center gap-x-1">
+            {% for p in 1..totalPages %}
+              {% set pParams = baseParams|merge({ 'page': p }) %}
+              {% if p == page %}
+                <a class="btn btn-soft btn-square aria-[current='page']:text-bg-soft-primary" href="{{ path(baseRouteName, baseRouteParams) ~ '?' ~ pParams|url_encode }}" aria-current="page">{{ p }}</a>
+              {% else %}
+                <a class="btn btn-soft btn-square aria-[current='page']:text-bg-soft-primary" href="{{ path(baseRouteName, baseRouteParams) ~ '?' ~ pParams|url_encode }}">{{ p }}</a>
+              {% endif %}
+            {% endfor %}
+          </div>
+
+          {% if page < totalPages %}
+            {% set nextParams = baseParams|merge({ 'page': page + 1 }) %}
+            <a class="btn btn-soft max-sm:btn-square" href="{{ path(baseRouteName, baseRouteParams) ~ '?' ~ nextParams|url_encode }}">
+              <span class="hidden sm:inline">Вперёд</span>
+              <span class="icon-[tabler--chevron-right] size-5 rtl:rotate-180"></span>
+            </a>
+          {% else %}
+            <span class="btn btn-soft max-sm:btn-square pointer-events-none opacity-50" aria-disabled="true">
+              <span class="hidden sm:inline">Вперёд</span>
+              <span class="icon-[tabler--chevron-right] size-5 rtl:rotate-180"></span>
+            </span>
+          {% endif %}
+        </div>
       </nav>
     {% endif %}
   </div>
