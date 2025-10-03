@@ -113,25 +113,25 @@
               </td>
               <td class="td-cell">
               <div class="max-w-32" data-input-number>
-  <label class="label-text" for="number-input-mini">Quantity:</label>
-  <div class="input items-center">
-    <button type="button" class="btn btn-primary btn-soft size-5.5 min-h-0 rounded-sm p-0" aria-label="Decrement button" data-input-number-decrement >
-      <span class="icon-[tabler--minus] size-3.5 shrink-0"></span>
-    </button>
-    <input class="text-center" type="text" value="0" aria-label="Mini stacked buttons" data-input-number-input id="number-input-mini" />
-    <button type="button" class="btn btn-primary btn-soft size-5.5 min-h-0 rounded-sm p-0" aria-label="Increment button" data-input-number-increment >
-      <span class="icon-[tabler--plus] size-3.5 shrink-0"></span>
-    </button>
-  </div>
-</div>
-                <input
-                  type="number"
-                  class="qty-input w-20 border rounded px-2 py-1"
-                  value="{{ item.qty }}"
-                  min="1"
-                  data-item-id="{{ item.id }}"
-                  data-testid="qty-input"
-                >
+
+                <label class="label-text" for="number-input-mini">Quantity:</label>
+                <div class="input items-center">
+                  <button type="button" class="btn btn-primary btn-soft size-5 min-h-0 rounded-sm p-0" aria-label="Decrement button" data-input-number-decrement data-item-id="{{ item.id }}">
+                    <span class="icon-[tabler--minus] size-3.5 shrink-0"></span>
+                  </button>
+                  <input class="text-center"
+                         type="text"
+                         value="{{ item.qty }}"
+                         aria-label="Mini stacked buttons"
+                         data-input-number-input
+                         id="number-input-mini"
+                         data-item-id="{{ item.id }}"
+                         data-testid="qty-input" />
+                  <button type="button" class="btn btn-primary btn-soft size-5 min-h-0 rounded-sm p-0" aria-label="Increment button" data-input-number-increment data-item-id="{{ item.id }}">
+                    <span class="icon-[tabler--plus] size-3.5 shrink-0"></span>
+                  </button>
+                </div>
+              </div>
               </td>
               <td class="td-cell row-total" data-testid="row-total">{{ format_price(item.rowTotal) }}</td>
               <td class="td-cell">

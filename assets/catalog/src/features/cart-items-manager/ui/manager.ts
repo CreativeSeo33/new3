@@ -30,6 +30,8 @@ export class CartItemsManager extends Component {
     // Делегируем обработчики событий на контейнер
     this.on('change', this.handleQuantityChange.bind(this), { passive: true });
     this.on('click', this.handleRemoveClick.bind(this), { passive: true });
+    // Инкремент/декремент количества через кнопки рядом с количеством
+    this.on('click', this.handleQtyButtonsClick.bind(this), { passive: true });
   }
 
   /**
@@ -38,12 +40,15 @@ export class CartItemsManager extends Component {
   private async handleQuantityChange(e: Event): Promise<void> {
     const target = e.target as HTMLInputElement;
 
-    if (!target.classList.contains('qty-input')) {
+    // Поддерживаем как старый .qty-input, так и новый mini-инпут [data-input-number-input]
+    if (!target.classList.contains('qty-input') && !target.hasAttribute('data-input-number-input')) {
       return;
     }
 
-    const itemId = target.dataset.itemId;
-    const qty = parseInt(target.value, 10);
+    // Получаем itemId из самого инпута или из ближайшей строки tr[data-item-id]
+    const row = target.closest('tr') as HTMLTableRowElement | null;
+    const itemId = target.dataset.itemId || row?.dataset.itemId || '';
+    const qty = Math.max(1, parseInt(String(target.value).replace(/[^\d]/g, ''), 10) || 1);
 
     if (!itemId || qty <= 0) {
       return;
@@ -87,9 +92,9 @@ export class CartItemsManager extends Component {
       }
 
       // Находим строку товара и обновляем данные на основе delta
-      const row = target.closest('tr') as HTMLTableRowElement;
-      if (row) {
-        this.updateRowDataFromDelta(row, resultData, itemId);
+      const currentRow = row || (target.closest('tr') as HTMLTableRowElement);
+      if (currentRow) {
+        this.updateRowDataFromDelta(currentRow, resultData, itemId);
       }
 
       // Получаем полную корзину и обновляем все данные (субтотал, доставку, итого)
@@ -159,6 +164,80 @@ export class CartItemsManager extends Component {
 
     // Выполняем удаление сразу без подтверждения
     await this.performRemoveItem(numericId, target);
+  }
+
+
+  /**
+   * Обработчик кликов по кнопкам увеличения/уменьшения количества
+   * Кнопки помечены атрибутами data-input-number-increment / data-input-number-decrement
+   * и/или aria-label="Increment button" / aria-label="Decrement button"
+   */
+  private handleQtyButtonsClick(e: Event): void {
+    const rawTarget = e.target as HTMLElement;
+    const button = rawTarget.closest('button');
+    if (!button) {
+      return;
+    }
+
+    const isIncrement = button.hasAttribute('data-input-number-increment') || button.getAttribute('aria-label') === 'Increment button';
+    const isDecrement = button.hasAttribute('data-input-number-decrement') || button.getAttribute('aria-label') === 'Decrement button';
+
+    if (!isIncrement && !isDecrement) {
+      return;
+    }
+
+    // Если используем сторонний виджет числового инпута, не меняем значение вручную,
+    // а лишь инициируем change на mini-инпуте после того, как виджет его обновит
+    const numericWidget = button.closest('[data-input-number]');
+    if (numericWidget) {
+      const rowForWidget = button.closest('tr');
+      const miniForWidget = rowForWidget?.querySelector<HTMLInputElement>('[data-input-number-input]');
+      if (miniForWidget) {
+        setTimeout(() => {
+          miniForWidget.dispatchEvent(new Event('change', { bubbles: true }));
+        }, 0);
+      }
+      return;
+    }
+
+    // Находим строку товара
+    const row = button.closest('tr');
+    if (!row) {
+      return;
+    }
+
+    // Предпочитаем новый mini-инпут; поддерживаем legacy .qty-input для обратной совместимости
+    const miniInput = row.querySelector<HTMLInputElement>('[data-input-number-input]');
+    const legacyQtyInput = row.querySelector<HTMLInputElement>('.qty-input[data-testid="qty-input"]');
+    const targetInput = miniInput || legacyQtyInput;
+
+    if (!targetInput) {
+      return;
+    }
+
+    if ((targetInput as HTMLInputElement).disabled) {
+      // Уже идёт апдейт — игнорируем повторные клики
+      return;
+    }
+
+    const current = parseInt(targetInput.value, 10) || 0;
+    let next = current;
+    if (isIncrement) {
+      next = current + 1;
+    } else if (isDecrement) {
+      next = Math.max(1, current - 1);
+    }
+
+    if (next === current) {
+      return;
+    }
+
+    // Обновляем оба инпута (визуальный и реальный) и триггерим change на целевом
+    if (legacyQtyInput) legacyQtyInput.value = String(next);
+    if (miniInput) miniInput.value = String(next);
+
+    // Триггерим существующую логику изменения количества
+    targetInput.dispatchEvent(new Event('change', { bubbles: true }));
   }
 
 
@@ -399,10 +478,14 @@ export class CartItemsManager extends Component {
       return;
     }
 
-    // Обновляем количество
+    // Обновляем количество в обоих вариантах инпутов
     const qtyInput = row.querySelector('.qty-input') as HTMLInputElement;
     if (qtyInput) {
       qtyInput.value = changedItem.qty.toString();
+    }
+    const miniInput = row.querySelector('[data-input-number-input]') as HTMLInputElement;
+    if (miniInput) {
+      miniInput.value = changedItem.qty.toString();
     }
 
     // Обновляем цену (колонка 3 - Цена)
@@ -662,10 +745,15 @@ export class CartItemsManager extends Component {
    * Публичный метод для программного обновления количества
    */
   public async updateQuantity(itemId: string | number, qty: number): Promise<void> {
-    const input = this.$(`[data-item-id="${itemId}"].qty-input`) as HTMLInputElement;
-    if (input) {
-      input.value = qty.toString();
-      input.dispatchEvent(new Event('change', { bubbles: true }));
+    // Предпочитаем mini-инпут, поддерживаем legacy .qty-input
+    const row = this.$(`tr[data-item-id="${itemId}"]`) as HTMLElement;
+    const mini = row ? (row.querySelector('[data-input-number-input]') as HTMLInputElement | null) : null;
+    const legacy = row ? (row.querySelector('.qty-input') as HTMLInputElement | null) : null;
+
+    const target = mini || legacy;
+    if (target) {
+      target.value = String(Math.max(1, qty));
+      target.dispatchEvent(new Event('change', { bubbles: true }));
     }
   }
 

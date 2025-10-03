@@ -7,6 +7,7 @@ module.exports = {
     './templates/**/*.html.twig',
     './assets/admin/**/*.{js,vue,ts}',
     './assets/catalog/**/*.{js,vue,ts}',
+    './assets/controllers/**/*.{js,ts}',
     // './assets/shared/**/*.{js,vue,ts}', // shared более не используется
   ],
   theme: {
