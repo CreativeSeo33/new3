@@ -1,6 +1,5 @@
 // ai:bootstrap area=catalog uses=registry
 import './styles.css';
-import 'nouislider/dist/nouislider.css';
 import 'flyonui/flyonui';
 // Инициализируем глобальный noUiSlider для HSRangeSlider (Preline ожидает window.noUiSlider)
 import * as noUiSliderModule from 'nouislider/dist/nouislider.js';

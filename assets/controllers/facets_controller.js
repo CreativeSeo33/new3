@@ -242,17 +242,25 @@ export default class extends Controller {
       const tb = (mb.title || codeB) + ''
       return ta.localeCompare(tb)
     })
+    // Всегда рисуем секцию цены (range) первой
+    try {
+      const priceEntry = entries.find(([code, facet]) => facet && facet.type === 'range' && code === 'price')
+      if (priceEntry) this.renderPriceFacet(root, priceEntry[1], meta)
+    } catch (_) {}
     entries.forEach(([code, facet]) => {
       if (facet.type === 'range') {
-        // Поддерживаем только ценовой диапазон
-        if (code === 'price') this.renderPriceFacet(root, facet, meta)
+        // Диапазоны (включая цену) уже обработаны выше / пропускаем
         return
       }
       const values = Array.isArray(facet.values) ? facet.values.filter(v => v != null) : []
       if (values.length === 0) return // не рисуем секцию без значений
       // Wrapper блока фильтра (по шаблону из {# CUSTOM FILTERS #})
       const wrapper = document.createElement('div')
-      wrapper.className = 'border-t border-gray-200 px-4 py-6'
+      // У первого элемента не показываем верхнюю границу
+      wrapper.className = 'border-gray-200 py-4'
+      if (root.childElementCount > 0) {
+        wrapper.classList.add('border-t')
+      }
 
       const h3 = document.createElement('h3')
       h3.className = '-mx-2 -my-3 flow-root'
@@ -284,10 +292,10 @@ export default class extends Controller {
 
       const content = document.createElement('div')
       content.id = sectionId
-      content.className = 'block pt-6'
+      content.className = 'block pt-2'
 
       const inner = document.createElement('div')
-      inner.className = 'space-y-2'
+      inner.className = 'space-y-1'
 
       values.forEach(v => {
         const row = document.createElement('div')
@@ -334,64 +342,124 @@ export default class extends Controller {
       wrapper.appendChild(h3)
       wrapper.appendChild(content)
       root.appendChild(wrapper)
+
+      // Ограничиваем высоту содержимого секции фильтра примерно 7 строками
+      // и включаем вертикальный скролл при превышении
+      try {
+        const rows = inner ? Array.from(inner.children) : []
+        if (rows.length > 7) {
+          const contentRect = content.getBoundingClientRect()
+          const seventhRow = rows[6]
+          const heightForSeven = Math.ceil(seventhRow.getBoundingClientRect().bottom - contentRect.top)
+          content.style.maxHeight = heightForSeven + 'px'
+          content.classList.add('overflow-y-auto')
+        } else {
+          content.style.maxHeight = ''
+          content.classList.remove('overflow-y-auto')
+        }
+      } catch (_) {}
     })
   }
 
   renderPriceFacet(root, facet, meta) {
-    // facet: { type:'range', min:number|null, max:number|null }
-    const minBound = Number.isFinite(Number(facet.min)) ? Number(facet.min) : 0
-    const maxBound = Number.isFinite(Number(facet.max)) ? Number(facet.max) : 0
+    // facet: { type:'range', min:number|string|null, max:number|string|null }
+    const toNumber = (val) => {
+      const direct = Number(val)
+      if (Number.isFinite(direct)) return direct
+      if (typeof val === 'string') {
+        const normalized = val.replace(/\s+/g, '').replace(',', '.')
+        const num = Number(normalized)
+        if (Number.isFinite(num)) return num
+      }
+      return NaN
+    }
+    const parsedMin = toNumber(facet.min)
+    const parsedMax = toNumber(facet.max)
+    let minBound = Number.isFinite(parsedMin) ? parsedMin : 0
+    let maxBound = Number.isFinite(parsedMax) ? parsedMax : 0
+    // Если min == max (все товары с одинаковой ценой) — слегка расширим диапазон, чтобы noUiSlider отрисовал пипсы/ручки
+    if (Number.isFinite(minBound) && Number.isFinite(maxBound) && maxBound <= minBound) {
+      maxBound = minBound + 1
+    }
     const startMin = (this.priceMin != null) ? this.priceMin : minBound
     const startMax = (this.priceMax != null) ? this.priceMax : maxBound
 
-    const section = document.createElement('section')
     const title = document.createElement('div')
     title.className = 'h3'
     title.textContent = (meta.price?.title || 'Цена')
-    section.appendChild(title)
+    const section = document.createElement('section')
+    section.className = 'my-16 px-2'
 
     const wrapper = document.createElement('div')
     wrapper.className = 'space-y-3'
 
     const range = document.createElement('div')
     range.id = 'hs-price-range'
-    range.className = 'hs-range-slider'
-
-    const valuesRow = document.createElement('div')
-    valuesRow.className = 'flex items-center gap-2 text-sm'
-    const minOut = document.createElement('span')
-    const sep = document.createElement('span')
-    sep.textContent = '—'
-    const maxOut = document.createElement('span')
-    minOut.textContent = String(startMin)
-    maxOut.textContent = String(startMax)
-    valuesRow.appendChild(minOut)
-    valuesRow.appendChild(sep)
-    valuesRow.appendChild(maxOut)
 
     wrapper.appendChild(range)
-    wrapper.appendChild(valuesRow)
     section.appendChild(wrapper)
+    // Вставляем заголовок перед секцией
+    root.appendChild(title)
     root.appendChild(section)
 
-    // Инициализация noUiSlider напрямую
+    // Инициализация noUiSlider напрямую с пипсами/tooltip
     try {
       const slider = noUiSlider.create(range, {
         range: { min: minBound, max: maxBound },
         start: [startMin, startMax],
         connect: true,
         tooltips: true,
+        // Пипсы для визуальных меток (5 равномерных значений)
+        pips: (Number.isFinite(minBound) && Number.isFinite(maxBound) && maxBound > minBound)
+          ? {
+              mode: 'values',
+              values: [
+                minBound,
+                Math.round(minBound + (maxBound - minBound) * 0.25),
+                Math.round(minBound + (maxBound - minBound) * 0.5),
+                Math.round(minBound + (maxBound - minBound) * 0.75),
+                maxBound
+              ],
+              density: 20
+            }
+          : undefined,
         format: {
           to: (value) => Math.round(Number(value)),
           from: (value) => Number(value)
         }
       })
 
-      slider.on('update', (values) => {
-        const [a, b] = values
-        minOut.textContent = String(Math.round(Number(a)))
-        maxOut.textContent = String(Math.round(Number(b)))
-      })
+      // Навешиваем FlyonUI классы на внутренние элементы noUiSlider
+      try {
+        const addClasses = (el, classes) => {
+          if (!el || !classes) return
+          classes.split(/\s+/).filter(Boolean).forEach(cls => el.classList.add(cls))
+        }
+        // target (корневой элемент слайдера)
+        addClasses(range, 'relative h-2 rounded-full bg-neutral/10')
+        // connects/base/connect
+        const base = range.querySelector('.noUi-base')
+        addClasses(base, 'size-full relative z-1')
+        const connects = range.querySelector('.noUi-connects')
+        addClasses(connects, 'relative z-0 w-full h-2 rtl:rounded-e-full rtl:rounded-s-none rounded-s-full overflow-hidden')
+        const connect = range.querySelector('.noUi-connect')
+        addClasses(connect, 'absolute top-0 end-0 rtl:start-0 z-1 w-full h-full bg-primary origin-[0_0]')
+        // origins/handles
+        range.querySelectorAll('.noUi-origin').forEach(el => addClasses(el, 'absolute top-0 end-0 rtl:start-0 w-full h-full origin-[0_0] rounded-full'))
+        range.querySelectorAll('.noUi-handle').forEach(el => addClasses(el, 'absolute top-1/2 end-0 rtl:start-0 size-4 bg-base-100 border-[3px] border-primary rounded-full translate-x-2/4 -translate-y-2/4 hover:cursor-grab active:cursor-grabbing hover:ring-2 ring-primary active:ring-[3px]'))
+        range.querySelectorAll('.noUi-touch-area').forEach(el => addClasses(el, 'absolute -top-1 -bottom-1 -start-1 -end-1'))
+        // tooltips
+        range.querySelectorAll('.noUi-tooltip').forEach(el => addClasses(el, 'bg-neutral rounded-xl text-sm text-neutral-content shadow-base-300/20 py-1 px-2 mb-3 absolute bottom-full left-1/2 -translate-x-1/2 shadow-md'))
+        // pips
+        const pips = range.querySelector('.noUi-pips')
+        if (pips) {
+          addClasses(pips, 'relative w-full h-7 mt-3')
+          range.querySelectorAll('.noUi-value').forEach(el => addClasses(el, 'absolute top-4 -translate-x-1/2 text-sm text-base-content/80'))
+          range.querySelectorAll('.noUi-marker').forEach(el => addClasses(el, 'absolute h-4 border-s border-base-content/25'))
+        }
+      } catch (_) {}
+
+      // tooltip обновляется самим noUiSlider
 
       slider.on('change', async (values) => {
         const [a, b] = values
@@ -401,7 +469,7 @@ export default class extends Controller {
         await this.loadFacets()
       })
 
-      this.priceSlider = { range, slider, minBound, maxBound, minOut, maxOut }
+      this.priceSlider = { range, slider, minBound, maxBound }
     } catch (err) {
       console.error('Failed to init price range slider', err)
       this.priceSlider = null

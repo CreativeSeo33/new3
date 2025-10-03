@@ -28,8 +28,8 @@
            data-facets-facets-url-value="{{ path('catalog_facets') }}"
            class="grid grid-cols-1 md:grid-cols-4 gap-6">
         <aside class="md:col-span-1">
-          <div class="facets-panel border rounded p-3">
-            <div data-facets-target="list" class="space-y-4" data-initial-facets='{{ initial_facets_json|default("")|raw }}'></div>
+          <div class="facets-panel">
+            <div data-facets-target="list" data-initial-facets='{{ initial_facets_json|default("")|raw }}'></div>
           </div>
         </aside>
         <main class="md:col-span-3">

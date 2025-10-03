@@ -5,6 +5,24 @@
 @import "../../node_modules/flyonui/variants.css";
 
 @layer base {
+  :root {
+    --primary: 239 84% 67%;
+    --primary-foreground: 0 0% 100%;
+  }
+  .dark {
+    --primary: 239 84% 67%;
+    --primary-foreground: 0 0% 100%;
+  }
+  .bg-neutral {
+    background-color: var(--color-neutral);
+  }
+  .bg-neutral\/10 {
+    background-color: 
+color-mix(in oklab, var(--color-neutral) 10%, transparent);
+}
+}
+
+@layer base {
   h1 { @apply text-3xl sm:text-4xl md:text-5xl font-bold leading-tight; }
   h2 { @apply text-2xl sm:text-3xl md:text-4xl font-semibold leading-tight; }
   h3 { @apply text-xl sm:text-2xl font-semibold leading-snug; }

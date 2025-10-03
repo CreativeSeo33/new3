@@ -322,9 +322,23 @@ final class SearchController extends AbstractController
                 $initialFacets['category'] = ['type' => 'category', 'values' => $catValues];
                 $meta['category'] = $meta['category'] ?? ['title' => 'Категории', 'sort' => null];
 
-                // Price range for ids
+                // Price range for ids (include variants like in FacetsController)
                 $priceRow = $this->db->fetchAssociative(
-                    'SELECT MIN(p.effective_price) AS min_price, MAX(p.effective_price) AS max_price FROM product p WHERE p.status = 1 AND p.id IN (:ids)',
+                    'SELECT MIN(t.price_val) AS min_price, MAX(t.price_val) AS max_price
+                     FROM (
+                       SELECT p.effective_price AS price_val
+                       FROM product p
+                       WHERE p.status = 1 AND p.id IN (:ids) AND p.type = \'simple\' AND p.effective_price IS NOT NULL
+                       UNION ALL
+                       SELECT COALESCE(pova.sale_price, pova.price) AS price_val
+                       FROM product_option_value_assignment pova
+                       INNER JOIN product pv ON pv.id = pova.product_id
+                       WHERE pv.status = 1 AND pv.id IN (:ids) AND pv.type = \'variable\' AND (pova.sale_price IS NOT NULL OR pova.price IS NOT NULL)
+                       UNION ALL
+                       SELECT p3.effective_price AS price_val
+                       FROM product p3
+                       WHERE p3.status = 1 AND p3.id IN (:ids) AND p3.type = \'variable_no_prices\' AND p3.effective_price IS NOT NULL
+                     ) t',
                     ['ids' => $ids],
                     ['ids' => ArrayParameterType::INTEGER]
                 ) ?: ['min_price' => null, 'max_price' => null];
