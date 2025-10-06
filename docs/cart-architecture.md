@@ -105,6 +105,17 @@
 
 ---
 
+## Страницы /cart и /checkout (GET)
+
+- Страницы `GET /cart` и `GET /checkout` используют `CartContext->getOrCreate(userId, response)` для получения текущей корзины.
+- Это гарантирует, что гостевая корзина определяется по токен‑cookie (`__Host-cart_id`) даже при наличии `userId` (кейс: пользователь авторизован в Admin SPA по JWT, но страницы работают без сессии Symfony).
+- Set‑Cookie, выставленный `CartContext`, прокидывается из временного Response в итоговый Response рендера страницы, чтобы браузер стабильно сохранял токен.
+- До расчёта доставки на страницах вызывается `DeliveryService->calculateForCart($cart)`.
+
+Примечание: раньше страница брала корзину через `CartManager::getOrCreateCurrent($userId)`; это работало только для сессионной авторизации Symfony и могло показывать «пустую корзину» при наличии гостевой корзины. Правки исключили этот рассинхрон.
+
+---
+
 ## Идемпотентность
 
 - Поддерживается заголовок `Idempotency-Key` для write‑эндпоинтов (`POST /api/cart/items`, `PATCH /items/{id}`, `DELETE /items/{id}`, `DELETE /api/cart`, `POST /api/cart/batch`, `POST /api/cart/reprice`, `PATCH /api/cart`).
