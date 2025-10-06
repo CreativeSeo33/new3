@@ -342,6 +342,11 @@ services:
 
     App\Service\Search\ProductSearch: ~
 
+    # Mailer for auth flows
+    App\Service\Auth\MailerService:
+        arguments:
+            $from: '%app.notification.from_email%'
+
     # Theme System
     App\Theme\ThemeManager:
         arguments:
@@ -380,5 +385,4 @@ services:
         decorates: 'lexik_jwt_authentication.extractor.chain_extractor'
         arguments:
             $cookieExtractor: '@lexik_jwt_authentication.extractor.cookie_extractor'
-            $splitCookieExtractor: '@lexik_jwt_authentication.extractor.split_cookie_extractor'
             $inner: '@App\Security\Jwt\CookieFirstChainExtractor.inner'

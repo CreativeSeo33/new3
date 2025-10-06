@@ -45,8 +45,8 @@ export class AuthLoginComponent extends Component {
           });
         } catch {}
       }
-      // Перезагрузим или редиректнем
-      location.href = '/';
+      // Редирект в личный кабинет
+      location.href = '/account';
     } catch (error) {
       if (this.options.showErrors !== false) {
         const box = this.$('[data-error]');

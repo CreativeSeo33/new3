@@ -11,18 +11,24 @@ security:
                 class: App\Entity\User
                 property: name
     firewalls:
+        account:
+            # Личный кабинет — защищён JWT по cookie __Host-acc
+            pattern: ^/account
+            stateless: true
+            provider: app_user_provider
+            jwt: ~
+        api_customer_auth:
+            # Публичные эндпойнты аутентификации клиента (совпадают с ^/api/customer, но доступ PUBLIC)
+            pattern: ^/api/customer/auth
+            stateless: true
+            security: false
+
         api_customer:
             # Защищённые клиентские эндпойнты под JWT
             pattern: ^/api/customer
             stateless: true
             provider: app_user_provider
             jwt: ~
-
-        api_customer_auth:
-            # Публичные эндпойнты аутентификации клиента (совпадают с ^/api/customer, но доступ PUBLIC)
-            pattern: ^/api/customer/auth
-            stateless: true
-            security: false
 
         api:
             pattern: ^/api(?!/admin)
@@ -54,6 +60,7 @@ security:
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
+        - { path: ^/account, roles: IS_AUTHENTICATED_FULLY }
         # Порядок важен: сначала узкие правила, затем общий публичный ^/api
         - { path: ^/api/customer/auth, roles: PUBLIC_ACCESS }
         - { path: ^/api/customer, roles: IS_AUTHENTICATED_FULLY }

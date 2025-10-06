@@ -20,6 +20,7 @@ use App\Entity\UserOneTimeToken;
 use App\Entity\UserRefreshToken;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 use App\Service\Auth\AntiTimingService;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 #[Route('/api/customer/auth', name: 'customer_auth_')]
 final class AuthController extends AbstractController
@@ -32,7 +33,7 @@ final class AuthController extends AbstractController
         DisposableEmailChecker $deny,
         OneTimeTokenManager $ott,
         MailerService $mailer,
-        RateLimiterFactory $auth_register,
+        #[Autowire(service: 'limiter.auth_register')] RateLimiterFactory $auth_register,
         AntiTimingService $antiTiming
     ): JsonResponse
     {
@@ -61,6 +62,8 @@ final class AuthController extends AbstractController
         $user = new User();
         $user->setEmail($email);
         $user->setName($email); // временно используем email как name для совместимости
+        // Сохраняем базовую роль в БД, чтобы не было пустого массива в storage
+        $user->setRoles(['ROLE_USER']);
         $user->setPassword($hasher->hashPassword($user, $password));
         $em->persist($user);
         $em->flush();

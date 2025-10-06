@@ -12,16 +12,13 @@ use Symfony\Component\HttpFoundation\Request;
 class CookieFirstChainExtractor implements TokenExtractorInterface
 {
     private TokenExtractorInterface $cookieExtractor;
-    private TokenExtractorInterface $splitCookieExtractor;
     private TokenExtractorInterface $innerChain;
 
     public function __construct(
         TokenExtractorInterface $cookieExtractor,
-        TokenExtractorInterface $splitCookieExtractor,
         TokenExtractorInterface $inner
     ) {
         $this->cookieExtractor = $cookieExtractor;
-        $this->splitCookieExtractor = $splitCookieExtractor;
         $this->innerChain = $inner;
     }
 
@@ -31,11 +28,6 @@ class CookieFirstChainExtractor implements TokenExtractorInterface
     public function extract(Request $request)
     {
         $token = $this->cookieExtractor->extract($request);
-        if ($token) {
-            return $token;
-        }
-
-        $token = $this->splitCookieExtractor->extract($request);
         if ($token) {
             return $token;
         }
