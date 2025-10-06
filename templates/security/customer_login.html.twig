@@ -1,0 +1,28 @@
+{% extends 'catalog/base.html.twig' %}
+
+{% block title %}Вход в аккаунт — {{ parent() }}{% endblock %}
+
+{% block catalog_body %}
+  <div class="min-h-screen flex items-center justify-center bg-gray-100 px-6 py-12">
+    <div class="w-full max-w-md rounded-xl border border-gray-200 bg-white p-8 shadow-lg space-y-5" data-module="auth-login">
+      <h1 class="text-2xl font-semibold tracking-tight text-slate-800">Вход</h1>
+      <div class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2 hidden" data-error hidden></div>
+
+      <form class="space-y-4" method="post" action="#" novalidate>
+        <div class="space-y-1.5">
+          <label class="block text-sm font-medium text-slate-600" for="email">Email</label>
+          <input class="block w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-slate-900 placeholder-slate-400 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition" type="email" id="email" name="email" autocomplete="email" placeholder="user@example.com" required />
+        </div>
+        <div class="space-y-1.5">
+          <label class="block text-sm font-medium text-slate-600" for="password">Пароль</label>
+          <input class="block w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-slate-900 placeholder-slate-400 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition" type="password" id="password" name="password" autocomplete="current-password" required />
+        </div>
+        <button class="w-full inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-3 font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-100 transition" type="submit">Войти</button>
+      </form>
+
+      <p class="text-sm text-slate-600">Нет аккаунта? <a class="text-indigo-600 hover:text-indigo-700" href="{{ path('customer_register') }}">Зарегистрироваться</a></p>
+    </div>
+  </div>
+{% endblock %}
+
+

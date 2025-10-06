@@ -3,3 +3,22 @@ lexik_jwt_authentication:
     token_ttl: 604800 # 7 days
     encoder:
         signature_algorithm: HS256
+    # Token extractors with deterministic priority. Cookie must win over Authorization header.
+    token_extractors:
+        cookie:
+            enabled: true
+            name: '__Host-acc'
+        authorization_header:
+            enabled: true
+            prefix: Bearer
+            name: Authorization
+        query_parameter:
+            enabled: false
+            name: bearer
+        split_cookie:
+            enabled: false
+            cookies:
+                - jwt_hp
+                - jwt_s
+    # Keep body clean when using cookies (no raw token leakage to JS parts by default)
+    remove_token_from_body_when_cookies_used: true

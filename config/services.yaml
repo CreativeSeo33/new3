@@ -350,3 +350,12 @@ services:
             $projectDir: '%kernel.project_dir%'
             $enabled: '%app_theme.enabled%'
         public: true
+
+    # Prefer cookie-based token over Authorization header for JWT extraction
+    # Decorate Lexik chain extractor with cookie-first behavior
+    App\Security\Jwt\CookieFirstChainExtractor:
+        decorates: 'lexik_jwt_authentication.extractor.chain_extractor'
+        arguments:
+            $cookieExtractor: '@lexik_jwt_authentication.extractor.cookie_extractor'
+            $splitCookieExtractor: '@lexik_jwt_authentication.extractor.split_cookie_extractor'
+            $inner: '@App\Security\Jwt\CookieFirstChainExtractor.inner'
