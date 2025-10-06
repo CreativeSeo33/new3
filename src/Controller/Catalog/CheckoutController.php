@@ -14,6 +14,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use App\Service\CartManager;
+use App\Service\CartContext;
 use App\Service\CheckoutContext;
 use App\Service\DeliveryContext;
 use App\Service\Delivery\DeliveryService;
@@ -61,12 +62,13 @@ final class CheckoutController extends AbstractController
 		private readonly DeliveryContext $deliveryContext
 	) {}
 
-	#[Route('/checkout', name: 'checkout_page', methods: ['GET'])]
-	public function index(CartManager $cartManager, DeliveryService $deliveryService, ManagerRegistry $registry): Response
+    #[Route('/checkout', name: 'checkout_page', methods: ['GET'])]
+    public function index(CartContext $cartContext, DeliveryService $deliveryService, ManagerRegistry $registry): Response
 	{
 		$user = $this->getUser();
 		$userId = $user instanceof AppUser ? $user->getId() : null;
-		$cart = $cartManager->getOrCreateCurrent($userId);
+        $tmpResp = new Response();
+        $cart = $cartContext->getOrCreate($userId, $tmpResp);
 
 		// Расчёт доставки и контекста, как на странице корзины
 		$deliveryResult = $deliveryService->calculateForCart($cart);
@@ -91,12 +93,18 @@ final class CheckoutController extends AbstractController
 			}
 		}
 
-		return $this->render('catalog/checkout/index.html.twig', [
-			'cart' => $cart,
-			'delivery' => $deliveryResult,
-			'deliveryContext' => $ctx,
-			'pvzPoints' => $pvzPoints,
-		]);
+        $final = $this->render('catalog/checkout/index.html.twig', [
+            'cart' => $cart,
+            'delivery' => $deliveryResult,
+            'deliveryContext' => $ctx,
+            'pvzPoints' => $pvzPoints,
+        ]);
+
+        foreach ($tmpResp->headers->getCookies() as $cookie) {
+            $final->headers->setCookie($cookie);
+        }
+
+        return $final;
 	}
 
 	/**
@@ -116,9 +124,10 @@ final class CheckoutController extends AbstractController
 	 * lastUpdated: 2025-09-15
 	 */
 	#[Route('/checkout', name: 'checkout_submit', methods: ['POST'])]
-	public function submit(
+    public function submit(
 		Request $request,
-		CartManager $cartManager,
+        CartContext $cartContext,
+        CartManager $cartManager,
 		CheckoutContext $checkout,
 		OrderRepository $orders,
 		EntityManagerInterface $em,
@@ -128,15 +137,23 @@ final class CheckoutController extends AbstractController
 		LoggerInterface $logger,
 		InventoryService $inventory
 	): Response {
-		$user = $this->getUser();
-		$userId = $user instanceof AppUser ? $user->getId() : null;
-		$cart = $cartManager->getOrCreateForWrite($userId);
+        $user = $this->getUser();
+        $userId = $user instanceof AppUser ? $user->getId() : null;
+        $tmpResp = new Response();
+        $cart = $cartContext->getOrCreateForWrite($userId, $tmpResp);
 		if ($cart->getItems()->count() === 0) {
-			// Для фронта возвращаем JSON с 409 и ссылкой на корзину, чтобы избежать HTML redirect
-			return $this->json([
+			// HTML‑путь: редирект на корзину вместо 409 страницы
+			if (!$this->wantsJson($request)) {
+				$resp = $this->redirectToRoute('cart_page');
+				foreach ($tmpResp->headers->getCookies() as $cookie) { $resp->headers->setCookie($cookie); }
+				return $resp;
+			}
+			$resp = $this->json([
 				'error' => 'Cart is empty',
 				'redirectUrl' => $this->generateUrl('cart_page'),
 			], 409);
+			foreach ($tmpResp->headers->getCookies() as $cookie) { $resp->headers->setCookie($cookie); }
+			return $resp;
 		}
 
 		$payload = json_decode($request->getContent() ?: '[]', true);
@@ -411,13 +428,27 @@ final class CheckoutController extends AbstractController
 				$createdOrder = $order;
 			});
 		} catch (InvalidDeliveryDataException $e) {
-			return $this->json(['error' => $e->getMessage()], 400);
+			if (!$this->wantsJson($request)) {
+				$resp = $this->redirectToRoute('cart_page');
+				foreach ($tmpResp->headers->getCookies() as $cookie) { $resp->headers->setCookie($cookie); }
+				return $resp;
+			}
+			$resp = $this->json(['error' => $e->getMessage()], 400);
+			foreach ($tmpResp->headers->getCookies() as $cookie) { $resp->headers->setCookie($cookie); }
+			return $resp;
 		} catch (InsufficientStockException $e) {
-			return $this->json([
+			if (!$this->wantsJson($request)) {
+				$resp = $this->redirectToRoute('cart_page');
+				foreach ($tmpResp->headers->getCookies() as $cookie) { $resp->headers->setCookie($cookie); }
+				return $resp;
+			}
+			$resp = $this->json([
 				'error' => 'insufficient_stock',
 				'message' => $e->getMessage(),
 				'availableQuantity' => $e->getAvailableQuantity(),
 			], 409);
+			foreach ($tmpResp->headers->getCookies() as $cookie) { $resp->headers->setCookie($cookie); }
+			return $resp;
 		}
 
 		// Очистка checkout-контекста после успешной транзакции
@@ -440,11 +471,22 @@ final class CheckoutController extends AbstractController
             $request->getSession()?->set('order.success.id', $createdOrder->getOrderId());
         }
 
-		return $this->json([
+		$resp = $this->json([
 			'id' => $createdOrder?->getId(),
 			'orderId' => $createdOrder?->getOrderId(),
 			'redirectUrl' => $createdOrder ? $this->generateUrl('checkout_success') : null,
 		]);
+		foreach ($tmpResp->headers->getCookies() as $cookie) { $resp->headers->setCookie($cookie); }
+		return $resp;
+	}
+
+	private function wantsJson(Request $request): bool
+	{
+		$accept = $request->headers->get('Accept') ?? '';
+		if (str_contains($accept, 'application/json')) return true;
+		if ($request->isXmlHttpRequest()) return true;
+		$ct = $request->headers->get('Content-Type') ?? '';
+		return str_contains($ct, 'application/json');
 	}
 
     #[Route('/checkout/success', name: 'checkout_success', methods: ['GET'])]
