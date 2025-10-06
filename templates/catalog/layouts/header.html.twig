@@ -17,8 +17,8 @@
         </div>
       </div>
       <div class="flex items-center space-x-4">
-        <a href="#" class="hover:text-gray-300">Войти</a>
-        <a href="#" class="hover:text-gray-300">Регистрация</a>
+        <a href="{{ path('customer_login') }}" class="hover:text-gray-300">Войти</a>
+        <a href="{{ path('customer_register') }}" class="hover:text-gray-300">Регистрация</a>
         <div class="flex items-center space-x-2">
           <span>RU</span>
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -103,7 +103,7 @@
             </div>
             <div class="hidden md:flex flex-col text-xs">
               <span class="text-gray-500">Привет</span>
-              <span class="text-gray-800 font-medium">Войти</span>
+              <a href="{{ path('customer_login') }}" class="text-gray-800 font-medium hover:text-blue-600">Войти</a>
             </div>
           </div>
 
@@ -192,8 +192,8 @@
         <div>
           <h3 class="text-lg font-semibold text-gray-900 mb-3">Аккаунт</h3>
           <ul class="space-y-2">
-            <li><a href="#" class="nav-link">Войти</a></li>
-            <li><a href="#" class="nav-link">Регистрация</a></li>
+            <li><a href="{{ path('customer_login') }}" class="nav-link">Войти</a></li>
+            <li><a href="{{ path('customer_register') }}" class="nav-link">Регистрация</a></li>
           </ul>
         </div>
       </div>
@@ -203,8 +203,8 @@
         <div class="flex items-center justify-between">
           <span class="text-gray-600">RU</span>
           <div class="flex items-center space-x-4">
-            <a href="#" class="text-gray-600 hover:text-blue-600">Войти</a>
-            <a href="#" class="text-gray-600 hover:text-blue-600">Регистрация</a>
+            <a href="{{ path('customer_login') }}" class="text-gray-600 hover:text-blue-600">Войти</a>
+            <a href="{{ path('customer_register') }}" class="text-gray-600 hover:text-blue-600">Регистрация</a>
           </div>
         </div>
       </div>

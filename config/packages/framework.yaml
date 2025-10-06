@@ -1,5 +1,22 @@
 # see https://symfony.com/doc/current/reference/configuration/framework.html
 framework:
+    rate_limiter:
+        auth_register:
+            policy: 'fixed_window'
+            limit: 20
+            interval: '1 minute'
+        auth_login:
+            policy: 'fixed_window'
+            limit: 10
+            interval: '1 minute'
+        auth_refresh:
+            policy: 'fixed_window'
+            limit: 30
+            interval: '1 minute'
+        auth_pwd_request:
+            policy: 'fixed_window'
+            limit: 20
+            interval: '1 minute'
     secret: '%env(APP_SECRET)%'
 
     # CSRF protection for API endpoints

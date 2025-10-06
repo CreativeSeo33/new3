@@ -31,8 +31,22 @@ export class AuthLoginComponent extends Component {
 
     try {
       await login({ email, password });
-      // Успех: перезагрузим страницу, чтобы состояние аутентификации применилось
-      window.location.reload();
+      // Если в URL пришёл verify_token, отправим подтверждение и редиректнем на главную
+      const params = new URLSearchParams(location.search);
+      const verifyToken = params.get('verify_token');
+      const verifyEmail = params.get('email') || email;
+      if (verifyToken) {
+        try {
+          await fetch('/api/customer/auth/email/verify', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            body: JSON.stringify({ token: verifyToken, email: verifyEmail }),
+          });
+        } catch {}
+      }
+      // Перезагрузим или редиректнем
+      location.href = '/';
     } catch (error) {
       if (this.options.showErrors !== false) {
         const box = this.$('[data-error]');

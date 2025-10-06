@@ -16,6 +16,7 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
+use Doctrine\DBAL\Types\Types;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: 'users')]
@@ -49,6 +50,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Assert\Length(min: 2)]
     private string $name = '';
 
+    // Email для клиентской аутентификации (нормализуется в lower)
+    #[ORM\Column(type: 'string', length: 180, unique: true, nullable: true)]
+    private ?string $email = null;
+
     /**
      * @var list<string>
      */
@@ -63,6 +68,24 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['user:post','user:patch'])]
     #[Assert\Length(min: 6, groups: ['user:post'])]
     private ?string $plainPassword = null;
+
+    // Верификация email
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $isVerified = false;
+
+    // Аудит/безопасность
+    #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
+    private int $failedLoginAttempts = 0;
+
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $lockedUntil = null;
+
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $lastLoginAt = null;
+
+    // Немедленная инвалидция access-токенов
+    #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
+    private int $tokenVersion = 0;
 
     public function getId(): ?int
     {
@@ -128,6 +151,72 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setPlainPassword(?string $plainPassword): self
     {
         $this->plainPassword = $plainPassword;
+        return $this;
+    }
+
+    public function getEmail(): ?string
+    {
+        return $this->email;
+    }
+
+    public function setEmail(?string $email): self
+    {
+        $this->email = $email ? mb_strtolower(trim($email)) : null;
+        return $this;
+    }
+
+    public function isVerified(): bool
+    {
+        return $this->isVerified;
+    }
+
+    public function setIsVerified(bool $verified): self
+    {
+        $this->isVerified = $verified;
+        return $this;
+    }
+
+    public function getFailedLoginAttempts(): int
+    {
+        return $this->failedLoginAttempts;
+    }
+
+    public function setFailedLoginAttempts(int $attempts): self
+    {
+        $this->failedLoginAttempts = max(0, $attempts);
+        return $this;
+    }
+
+    public function getLockedUntil(): ?\DateTimeImmutable
+    {
+        return $this->lockedUntil;
+    }
+
+    public function setLockedUntil(?\DateTimeImmutable $until): self
+    {
+        $this->lockedUntil = $until;
+        return $this;
+    }
+
+    public function getLastLoginAt(): ?\DateTimeImmutable
+    {
+        return $this->lastLoginAt;
+    }
+
+    public function setLastLoginAt(?\DateTimeImmutable $at): self
+    {
+        $this->lastLoginAt = $at;
+        return $this;
+    }
+
+    public function getTokenVersion(): int
+    {
+        return $this->tokenVersion;
+    }
+
+    public function incrementTokenVersion(): self
+    {
+        $this->tokenVersion++;
         return $this;
     }
 }

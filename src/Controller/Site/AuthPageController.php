@@ -20,6 +20,18 @@ final class AuthPageController extends AbstractController
     {
         return $this->render('security/register.html.twig');
     }
+
+    #[Route('/auth/password/request', name: 'customer_password_request', methods: ['GET'])]
+    public function passwordRequest(): Response
+    {
+        return $this->render('security/password_request.html.twig');
+    }
+
+    #[Route('/auth/password/reset', name: 'customer_password_reset', methods: ['GET'])]
+    public function passwordReset(): Response
+    {
+        return $this->render('security/password_reset.html.twig');
+    }
 }
 
 

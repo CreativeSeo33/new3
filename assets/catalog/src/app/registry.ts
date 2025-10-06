@@ -25,6 +25,7 @@ export const registry: Record<string, () => Promise<ModuleInitFunction>> = {
   'wishlist-toggle': () => import('../features/wishlist').then(m => m.init),
   'auth-login': () => import('../features/auth-login').then(m => m.init),
   'auth-register': () => import('../features/auth-register').then(m => m.init),
+  'auth-password': () => import('../features/auth-password').then(m => m.init),
 
   // Виджеты
   'cart-counter': () => import('../widgets/cart-counter').then(m => m.init),

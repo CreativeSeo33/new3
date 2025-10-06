@@ -4,6 +4,29 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    # Auth/JWT configuration (env-driven)
+    env(JWT_ACCESS_TTL): '900'
+    env(JWT_REFRESH_TTL): '2592000'
+    env(AUTH_MAX_FAILED): '10'
+    env(AUTH_LOCK_MINUTES): '15'
+    env(AUTH_FAILURE_DELAY_MS_MIN): '120'
+    env(AUTH_FAILURE_DELAY_MS_MAX): '280'
+    env(APP_PEPPER): ''
+    env(AUTH_DISPOSABLE_DOMAINS_PATH): ''
+
+    env(AUTH_VERIFY_TTL): '86400' # 24h
+    env(AUTH_PWD_RESET_TTL): '1800' # 30m
+    env(APP_FRONTEND_BASE_URL): 'https://127.0.0.1:8001'
+
+    app.auth.access_ttl: '%env(int:JWT_ACCESS_TTL)%'
+    app.auth.refresh_ttl: '%env(int:JWT_REFRESH_TTL)%'
+    app.auth.max_failed: '%env(int:AUTH_MAX_FAILED)%'
+    app.auth.lock_minutes: '%env(int:AUTH_LOCK_MINUTES)%'
+    app.auth.failure_delay_ms_min: '%env(int:AUTH_FAILURE_DELAY_MS_MIN)%'
+    app.auth.failure_delay_ms_max: '%env(int:AUTH_FAILURE_DELAY_MS_MAX)%'
+    app.auth.verify_ttl: '%env(int:AUTH_VERIFY_TTL)%'
+    app.auth.pwd_reset_ttl: '%env(int:AUTH_PWD_RESET_TTL)%'
+    app.frontend_base_url: '%env(string:APP_FRONTEND_BASE_URL)%'
     app.imagine.filters:
         - 'sm'
         - 'md'

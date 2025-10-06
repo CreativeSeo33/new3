@@ -37,6 +37,8 @@ export class AuthRegisterComponent extends Component {
         try { successBox.classList.remove('hidden'); } catch {}
         successBox.textContent = 'Письмо отправлено. Проверьте почту.';
       }
+      // UX: через 2 секунды предложим войти
+      setTimeout(() => { location.href = '/auth/login'; }, 2000);
     } catch (error) {
       if (this.options.showErrors !== false) {
         const box = this.$('[data-error]');
