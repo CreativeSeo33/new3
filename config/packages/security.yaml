@@ -17,6 +17,7 @@ security:
             stateless: true
             provider: app_user_provider
             jwt: ~
+            entry_point: App\Security\EntryPoint\AccountLoginRedirectEntryPoint
         api_customer_auth:
             # Публичные эндпойнты аутентификации клиента (совпадают с ^/api/customer, но доступ PUBLIC)
             pattern: ^/api/customer/auth

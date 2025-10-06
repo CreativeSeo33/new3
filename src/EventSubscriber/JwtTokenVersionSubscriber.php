@@ -51,7 +51,7 @@ final class JwtTokenVersionSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $cached = $this->cache->get('user_token_version:' . $user->getId(), function () use ($user) {
+        $cached = $this->cache->get('user_token_version_' . $user->getId(), function () use ($user) {
             return $user->getTokenVersion();
         });
 
