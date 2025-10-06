@@ -1,0 +1,69 @@
+---
+alwaysApply: false
+---
+# Политика Customer Auth (email, JWT, cookies)
+
+Назначение: правила и якоря для работы ИИ с пользовательской аутентификацией. Бэкенд — Symfony 7/API Platform/LexikJWT; фронт — Twig/FSD (Catalog). Не менять Admin SPA.
+
+## Область действия
+- Пути: `^/api/customer/auth/*` (публичные операции), `^/api/customer/*` (под JWT), страницы `/auth/*`, `/account`.
+- Исключить: admin SPA (`assets/admin/**`), общий публичный `^/api` (не затрагивать).
+
+## Ключевые файлы
+- Контроллеры: `src/Controller/Api/Customer/{AuthController.php,MeController.php}`
+- Страницы: `src/Controller/Site/AuthPageController.php`, `src/Controller/Account/AccountController.php`
+- Сервисы: `src/Service/Auth/{RefreshTokenManager.php,OneTimeTokenManager.php,DisposableEmailChecker.php,MailerService.php,AntiTimingService.php}`
+- JWT: `src/Security/Jwt/CookieFirstChainExtractor.php`, `src/EventSubscriber/JwtTokenVersionSubscriber.php`
+- Сущности: `src/Entity/{User.php,UserRefreshToken.php,UserOneTimeToken.php}`
+- Конфиги: `config/packages/{security.yaml,lexik_jwt_authentication.yaml,nelmio_cors.yaml,framework.yaml}`, `config/services.yaml`
+- Фронт (Catalog): `assets/catalog/src/features/{auth-login,auth-register,auth-password}`, `assets/catalog/src/app/registry.ts`
+
+## Инварианты (обязательные)
+- Cookie‑first: JWT извлекается из cookie `__Host-acc` с приоритетом над Authorization.
+- Cookies: access=`__Host-acc` (Lax), refresh=`__Host-ref` (Strict), httpOnly, Secure (prod), не хранить токены в `localStorage`.
+- Refresh: своя таблица и ротация, сохранён только хеш (HMAC+salt+pepper); повтор прежнего refresh → отзыв/401/409.
+- Anti‑enumeration: на register/password request одинаковые ответы.
+- Anti‑timing: случайная задержка неуспешных логинов.
+- Verify/reset: одноразовые opaque‑токены, TTL, POST эндпоинты.
+- TokenVersion: claim `tv` в access и проверка на каждом запросе; `revoke-all` → `tokenVersion++`.
+- Не ломать Admin SPA и публичные API Platform ресурсы.
+
+## Эндпойнты (TL;DR)
+- POST `/api/customer/auth/register` — { email, password } → 201
+- POST `/api/customer/auth/login` — { email, password } → 200 + Set‑Cookie `__Host-acc`/`__Host-ref`
+- POST `/api/customer/auth/refresh` — cookie‑based → 200 + ротация
+- POST `/api/customer/auth/logout` — 204 (expire refresh)
+- POST `/api/customer/auth/password/request` — { email } → 202
+- POST `/api/customer/auth/password/confirm` — { token, password } → 200
+- POST `/api/customer/auth/email/verify` — { token, email } → 200
+- POST `/api/customer/auth/revoke-all` — 204
+- GET `/api/customer/me` — под JWT
+
+## Конфигурация (сигналы)
+- `security.yaml`: firewalls `api_customer_auth` (public), `api_customer` (jwt), `account` (jwt); access_control — как в ТЗ.
+- `lexik_jwt_authentication.yaml`: `remove_token_from_body_when_cookies_used: true`, cookie extractor включён; `set_cookies.__Host-acc`.
+- `framework.yaml` rate_limiter: `auth_{register,login,refresh,pwd_request}`.
+- `nelmio_cors.yaml` профиль для `^/api/customer/auth` c `allow_credentials: true`, origin — `%app.frontend_base_url%`.
+- `services.yaml`: параметры `app.auth.*`, почтовый `app.notification.from_email`, декоратор `CookieFirstChainExtractor`.
+
+## Frontend (Catalog)
+- Модули: `auth-login`, `auth-register`, `auth-password` (FSD), зарегистрированы в `app/registry.ts`.
+- Страницы: `/auth/login`, `/auth/register`, `/auth/password/{request,reset}`. Без inline JS — только FSD/Stimulus.
+- UX: после регистрации → `/auth/login`; на логине с `verify_token` → POST `/email/verify` и редирект `/account`.
+
+## Чек‑лист правок
+- Не менять пути админки и общий `^/api`.
+- Соблюдать cookie‑флаги и имена `__Host-*`.
+- На бэкенде — никакого хранения raw токенов/паролей в логах.
+- Регистрация/логин/refresh/pwd_request — ограничены RateLimiter.
+- Новые значения/адреса — только через ENV/parameters/DI.
+
+## Приёмка
+- Cookie‑first работает; доступ к `/api/customer/me` с `__Host-acc` без Header.
+- Ротация refresh и отзыв всех сессий работают; повтор старого refresh отклоняется.
+- Verify/reset одноразовые, TTL соблюдён.
+- Catalog формы работают через FSD, без inline скриптов.
+
+## Связь с документацией
+- Подробности и контракты: `docs/customer_auth_system.md`
+

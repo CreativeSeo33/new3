@@ -21,6 +21,7 @@ alwaysApply: true
 - @pages_index.mdc
 - @admin_spa_task_guide.mdc
 - @wishlist.mdc
+ - @customer_auth_policy.mdc
 
 ## Избранное (Wishlist) — краткая карта
 - Бэкенд: `src/Entity/Wishlist.php`, `src/Entity/WishlistItem.php`, `src/Service/WishlistManager.php`, `src/Service/WishlistContext.php`, `src/Http/WishlistCookieFactory.php`, `src/EventSubscriber/WishlistLoginSubscriber.php`, `src/Controller/Api/WishlistApiController.php`.
