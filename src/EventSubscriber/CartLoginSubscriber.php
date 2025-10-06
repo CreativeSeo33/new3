@@ -75,10 +75,15 @@ final class CartLoginSubscriber implements EventSubscriberInterface
         $finalCart = null;
 
         if ($userCart && $guestCart) {
+            if ($userCart->getId() && $guestCart->getId() && $userCart->getId()->equals($guestCart->getId())) {
+                // Нечего сливать — это одна и та же корзина
+                $finalCart = $userCart;
+            } else {
             // 5. Сливаем гостевую в корзину юзера
-            $finalCart = $this->manager->merge($userCart, $guestCart);
-            // УДАЛЯЕМ гостевую корзину
-            $this->em->remove($guestCart);
+                $finalCart = $this->manager->merge($userCart, $guestCart);
+                // УДАЛЯЕМ гостевую корзину
+                $this->em->remove($guestCart);
+            }
         } elseif ($guestCart) {
             // Просто привязываем гостевую корзину к пользователю
             $guestCart->setUserId($userId);

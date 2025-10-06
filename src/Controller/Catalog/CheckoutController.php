@@ -214,12 +214,16 @@ final class CheckoutController extends AbstractController
                 $payload,
                 $sanitize,
                 $inventory,
+                $user,
                 &$createdOrder
             ) {
 				$order = new Order();
 				$order->setOrderId($orders->getNextOrderId());
 				$order->setComment($comment ?: null);
-				$order->setTotal($cart->getTotal());
+                $order->setTotal($cart->getTotal());
+                if ($user instanceof AppUser) {
+                    $order->setUser($user);
+                }
 
 				$customer = new OrderCustomer();
 				$customer->setName($name);

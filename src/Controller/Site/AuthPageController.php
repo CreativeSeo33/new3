@@ -12,6 +12,10 @@ final class AuthPageController extends AbstractController
     #[Route('/auth/login', name: 'customer_login', methods: ['GET'])]
     public function login(): Response
     {
+        if (null !== $this->getUser()) {
+            return $this->redirectToRoute('account_index');
+        }
+
         return $this->render('security/customer_login.html.twig');
     }
 

@@ -25,6 +25,7 @@ final class Version20251006130900 extends AbstractMigration
             ADD token_version INT NOT NULL DEFAULT 0");
         $this->addSql('CREATE UNIQUE INDEX UNIQ_USERS_EMAIL ON users (email)');
 
+
         // user_refresh_token
         $this->addSql("CREATE TABLE user_refresh_token (
             id INT AUTO_INCREMENT NOT NULL,
@@ -63,6 +64,8 @@ final class Version20251006130900 extends AbstractMigration
 
     public function down(Schema $schema): void
     {
+
+
         // Drop token tables
         $this->addSql('ALTER TABLE user_refresh_token DROP FOREIGN KEY FK_URT_USER');
         $this->addSql('ALTER TABLE user_one_time_token DROP FOREIGN KEY FK_UOTT_USER');

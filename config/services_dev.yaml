@@ -1,0 +1,5 @@
+parameters:
+    # В dev отключаем __Host- префикс, т.к. на http такие cookie не сохраняются
+    wishlist.cookie.use_host_prefix: false
+
+

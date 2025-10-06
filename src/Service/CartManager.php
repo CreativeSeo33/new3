@@ -539,11 +539,16 @@ final class CartManager
 
 	public function merge(Cart $target, Cart $source): Cart
 	{
+		// Защита от самослияния
+		if ($target->getId() && $source->getId() && $target->getId()->equals($source->getId())) {
+			return $target;
+		}
+
 		return $this->executeWithLock($target, function() use ($target, $source) {
 			foreach ($source->getItems() as $srcItem) {
-				// Ищем существующий товар с учетом опций
+				// Ищем существующий товар с учетом опций (сначала в памяти, затем в БД)
 				$optionsHash = $srcItem->getOptionsHash();
-				$existing = $this->carts->findItemForUpdate($target, $srcItem->getProduct(), $optionsHash);
+				$existing = $this->findExistingCartItem($target, $srcItem->getProduct(), $optionsHash);
 
 				$qty = $existing ? $existing->getQty() + $srcItem->getQty() : $srcItem->getQty();
 
@@ -555,7 +560,8 @@ final class CartManager
 					$existing->setQty($qty);
 				} else {
 					$clone = new CartItem();
-					$clone->setCart($target);
+					// Добавляем через addItem, чтобы коллекция target->items видела клон немедленно
+					$target->addItem($clone);
 					$clone->setProduct($srcItem->getProduct());
 					$clone->setProductName($srcItem->getProductName());
 					$clone->setUnitPrice($srcItem->getUnitPrice());
@@ -576,7 +582,17 @@ final class CartManager
 						$clone->addOptionAssignment($assignment);
 					}
 
-					$this->em->persist($clone);
+					try {
+						$this->em->persist($clone);
+					} catch (UniqueConstraintViolationException $e) {
+						// На случай гонки/дубликата в рамках слияния
+						$conflict = $this->findExistingCartItem($target, $srcItem->getProduct(), $optionsHash);
+						if ($conflict) {
+							$conflict->setQty($conflict->getQty() + $srcItem->getQty());
+						} else {
+							throw $e;
+						}
+					}
 				}
 			}
 

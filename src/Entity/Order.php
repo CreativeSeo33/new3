@@ -85,6 +85,11 @@ class Order
     #[Groups(['order:get'])]
     private ?int $total = null;
 
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
+    #[Groups(['order:get'])]
+    private ?User $user = null;
+
     public function __construct()
     {
         $this->products = new ArrayCollection();
@@ -214,6 +219,18 @@ class Order
     public function setTotal(?int $total): self
     {
         $this->total = $total;
+
+        return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): self
+    {
+        $this->user = $user;
 
         return $this;
     }
