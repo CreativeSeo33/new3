@@ -16,8 +16,8 @@ import '../bootstrap.js';
 // Регистрируем Swiper Element
 register();
 
-// Инициализация модульной системы
-document.addEventListener('DOMContentLoaded', (): void => {
+// Инициализация модульной системы (работает как после, так и до DOMContentLoaded)
+function startApp(): void {
   // Запускаем модульную систему
   bootstrap();
 
@@ -28,7 +28,14 @@ document.addEventListener('DOMContentLoaded', (): void => {
   setTimeout((): void => {
     initGallery();
   }, 100);
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', startApp);
+} else {
+  // DOM уже готов — запускаем немедленно
+  startApp();
+}
 
 /**
  * Инициализация галереи изображений товара

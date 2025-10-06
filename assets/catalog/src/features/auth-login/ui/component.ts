@@ -7,6 +7,9 @@ export interface AuthLoginOptions {
 
 export class AuthLoginComponent extends Component {
   private submitHandler = this.handleSubmit.bind(this);
+  private clickHandler = this.handleSubmit.bind(this);
+  private formEl: HTMLFormElement | null = null;
+  private submitBtnEl: HTMLButtonElement | null = null;
 
   constructor(el: HTMLElement, opts: AuthLoginOptions = {}) {
     super(el, opts);
@@ -16,17 +19,26 @@ export class AuthLoginComponent extends Component {
   init(): void {
     const form = this.$('form');
     if (!form) return;
-    this.on('submit', this.submitHandler);
+    this.formEl = form as HTMLFormElement;
+    this.formEl.noValidate = true;
+    this.formEl.addEventListener('submit', this.submitHandler, { capture: true });
+    this.submitBtnEl = this.formEl.querySelector('[type="submit"], button:not([type])') as HTMLButtonElement | null;
+    if (this.submitBtnEl) {
+      this.submitBtnEl.addEventListener('click', this.clickHandler, { capture: true });
+    }
   }
 
   private async handleSubmit(event: Event): Promise<void> {
-    event.preventDefault();
+    try { event.preventDefault(); } catch {}
+    try { (event as any).stopImmediatePropagation?.(); } catch {}
+    try { event.stopPropagation(); } catch {}
 
-    const form = event.currentTarget as HTMLFormElement;
+    const form = this.formEl;
+    if (!form) return;
     const email = (form.querySelector('[name="email"]') as HTMLInputElement | null)?.value?.trim() || '';
     const password = (form.querySelector('[name="password"]') as HTMLInputElement | null)?.value || '';
 
-    const submitBtn = form.querySelector('[type="submit"]') as HTMLButtonElement | null;
+    const submitBtn = this.submitBtnEl || (form.querySelector('[type="submit"], button:not([type])') as HTMLButtonElement | null);
     if (submitBtn) submitBtn.disabled = true;
 
     try {
@@ -45,8 +57,10 @@ export class AuthLoginComponent extends Component {
           });
         } catch {}
       }
-      // Редирект в личный кабинет
-      location.href = '/account';
+      // Редирект: учитываем параметр next, безопасно только на относительные пути
+      const next = params.get('next');
+      const target = next && next.startsWith('/') ? next : '/account';
+      location.href = target;
     } catch (error) {
       if (this.options.showErrors !== false) {
         const box = this.$('[data-error]');
@@ -62,8 +76,10 @@ export class AuthLoginComponent extends Component {
   }
 
   destroy(): void {
-    const form = this.$('form');
-    if (form) this.off('submit', this.submitHandler);
+    if (this.formEl) {
+      this.formEl.removeEventListener('submit', this.submitHandler);
+      this.formEl = null;
+    }
     super.destroy();
   }
 }

@@ -31,6 +31,13 @@ security:
             provider: app_user_provider
             jwt: ~
 
+        api_cart:
+            # Корзина: опциональная JWT-аутентификация по cookie для привязки user_id
+            pattern: ^/api/cart
+            stateless: true
+            provider: app_user_provider
+            jwt: ~
+
         api:
             pattern: ^/api(?!/admin)
             security: false

@@ -1,0 +1,5 @@
+lexik_jwt_authentication:
+    set_cookies:
+        __Host-acc:
+            secure: true
+
