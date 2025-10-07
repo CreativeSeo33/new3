@@ -17,7 +17,11 @@
         </div>
       </div>
       <div class="flex items-center space-x-4">
-        <a href="{{ path('customer_login') }}" class="hover:text-gray-300">Войти</a>
+        {% if app.user %}
+          <a href="/account" class="hover:text-gray-300">{{ app.user.name }}</a>
+        {% else %}
+          <a href="{{ path('customer_login') }}" class="hover:text-gray-300">Войти</a>
+        {% endif %}
         <a href="{{ path('customer_register') }}" class="hover:text-gray-300">Регистрация</a>
         <div class="flex items-center space-x-2">
           <span>RU</span>
@@ -103,7 +107,11 @@
             </div>
             <div class="hidden md:flex flex-col text-xs">
               <span class="text-gray-500">Привет</span>
-              <a href="{{ path('customer_login') }}" class="text-gray-800 font-medium hover:text-blue-600">Войти</a>
+              {% if app.user %}
+                <a href="/account" class="text-gray-800 font-medium hover:text-blue-600">{{ app.user.name }}</a>
+              {% else %}
+                <a href="{{ path('customer_login') }}" class="text-gray-800 font-medium hover:text-blue-600">Войти</a>
+              {% endif %}
             </div>
           </div>
 
@@ -192,7 +200,11 @@
         <div>
           <h3 class="text-lg font-semibold text-gray-900 mb-3">Аккаунт</h3>
           <ul class="space-y-2">
-            <li><a href="{{ path('customer_login') }}" class="nav-link">Войти</a></li>
+            {% if app.user %}
+              <li><a href="/account" class="nav-link">{{ app.user.name }}</a></li>
+            {% else %}
+              <li><a href="{{ path('customer_login') }}" class="nav-link">Войти</a></li>
+            {% endif %}
             <li><a href="{{ path('customer_register') }}" class="nav-link">Регистрация</a></li>
           </ul>
         </div>
@@ -203,7 +215,11 @@
         <div class="flex items-center justify-between">
           <span class="text-gray-600">RU</span>
           <div class="flex items-center space-x-4">
-            <a href="{{ path('customer_login') }}" class="text-gray-600 hover:text-blue-600">Войти</a>
+            {% if app.user %}
+              <a href="/account" class="text-gray-600 hover:text-blue-600">{{ app.user.name }}</a>
+            {% else %}
+              <a href="{{ path('customer_login') }}" class="text-gray-600 hover:text-blue-600">Войти</a>
+            {% endif %}
             <a href="{{ path('customer_register') }}" class="text-gray-600 hover:text-blue-600">Регистрация</a>
           </div>
         </div>
