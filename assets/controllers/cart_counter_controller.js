@@ -1,7 +1,7 @@
 import { Controller } from '@hotwired/stimulus';
 
 export default class extends Controller {
-  static targets = ['badge','total','dropdown','list','dropdownTotal','shipping'];
+  static targets = ['badge','total','dropdown','list','dropdownTotal','shipping','totalsBlock','actionsBlock','skeleton'];
   static values = {
     count: Number,
     total: Number,
@@ -9,6 +9,8 @@ export default class extends Controller {
     url: String,
     poll: Number // опционально, если решим включить периодическое обновление
   };
+  
+  lastItemsCount = 0; // храним последнее известное количество позиций
 
   connect() {
     if (this.countValue == null) {
@@ -18,6 +20,9 @@ export default class extends Controller {
       this.totalValue = this.safeParseInt(this.totalTarget?.textContent);
     }
     this.render();
+    
+    // Скрыть блоки если корзина пустая при загрузке
+    this.updateBlocksVisibility(this.countValue === 0);
 
     // Lazy load items on first hover
     this.hoverHandler = () => {
@@ -175,10 +180,18 @@ export default class extends Controller {
   renderItems(items, currency) {
     if (!this.hasListTarget) return;
     this.hideSkeleton(); // Скрываем skeleton перед рендерингом
-    if (!items.length) {
-      this.listTarget.innerHTML = '<div class="text-sm text-gray-500">Корзина пуста</div>';
+    
+    const isEmpty = !items.length;
+    this.updateBlocksVisibility(isEmpty);
+    
+    // Сохраняем количество позиций для будущих skeleton
+    this.lastItemsCount = items.length;
+    
+    if (isEmpty) {
+      this.listTarget.innerHTML = '<div class="min-h-24 flex items-center justify-center"><div class="text-sm text-gray-500">Корзина пуста</div></div>';
       return;
     }
+    
     const html = items.map((i) => {
       const qty = Number(i.qty || 0);
       const price = Number((i.effectiveUnitPrice ?? i.unitPrice) || 0);
@@ -204,15 +217,29 @@ export default class extends Controller {
     this.listTarget.innerHTML = html;
   }
 
-  skeletonElement() {
-    try { return this.element.querySelector('#cart-counter-skeleton'); } catch { return null; }
-  }
-
   showSpinner() {
-    // Показываем skeleton вместо спиннера
-    const el = this.skeletonElement();
-    if (!el) return;
-    el.classList.remove('hidden');
+    // Показываем skeleton с динамическим количеством элементов
+    if (!this.hasSkeletonTarget) return;
+    
+    // Используем lastItemsCount (количество позиций, не общее qty)
+    // Если еще не известно — дефолт 2
+    const count = this.lastItemsCount > 0 ? this.lastItemsCount : 2;
+    
+    // Генерируем skeleton элементы
+    const skeletonItems = Array.from({ length: count }, () => `
+      <div class="flex items-center gap-3 py-2">
+        <div class="w-12 h-12 bg-gray-200 rounded"></div>
+        <div class="flex-1">
+          <div class="h-2.5 bg-gray-200 rounded-full w-32 mb-2"></div>
+          <div class="h-2 bg-gray-200 rounded-full w-20 mb-1.5"></div>
+          <div class="h-2 bg-gray-200 rounded-full w-24"></div>
+        </div>
+        <div class="h-2.5 bg-gray-200 rounded-full w-16"></div>
+      </div>
+    `).join('');
+    
+    this.skeletonTarget.innerHTML = `${skeletonItems}<span class="sr-only">Загрузка...</span>`;
+    this.skeletonTarget.classList.remove('hidden');
   }
 
   hideSpinner() {
@@ -221,9 +248,8 @@ export default class extends Controller {
   }
 
   hideSkeleton() {
-    const el = this.skeletonElement();
-    if (!el) return;
-    el.classList.add('hidden');
+    if (!this.hasSkeletonTarget) return;
+    this.skeletonTarget.classList.add('hidden');
   }
 
   updateShippingAndGrandTotal(data) {
@@ -354,6 +380,15 @@ export default class extends Controller {
       // В проекте изображения лежат в /img/ или уже /media/cache/.., оставляем как есть
       return url;
     } catch { return ''; }
+  }
+
+  updateBlocksVisibility(isEmpty) {
+    if (this.hasTotalsBlockTarget) {
+      this.totalsBlockTarget.style.display = isEmpty ? 'none' : '';
+    }
+    if (this.hasActionsBlockTarget) {
+      this.actionsBlockTarget.style.display = isEmpty ? 'none' : '';
+    }
   }
 
   escapeHtml(s) {
