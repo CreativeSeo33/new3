@@ -1,13 +1,13 @@
 <template>
   <div class="space-y-6">
     <div class="flex items-center justify-between">
-      <h1 class="text-xl font-semibold">Пользователи</h1>
+      <h1 class="text-xl font-semibold">Покупатели</h1>
       <button
         type="button"
         class="inline-flex h-9 items-center rounded-md bg-neutral-900 px-3 text-sm font-medium text-white shadow hover:bg-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100"
         @click="openCreate = true"
       >
-        Создать пользователя
+        Создать покупателя
       </button>
     </div>
 
@@ -20,7 +20,6 @@
         <thead class="bg-neutral-50 text-neutral-600 dark:bg-neutral-900/40 dark:text-neutral-300">
           <tr>
             <th class="px-4 py-2 text-left">Имя</th>
-            <th class="px-4 py-2 text-left">Роли</th>
             <th class="px-4 py-2 text-left w-28">Действия</th>
           </tr>
         </thead>
@@ -28,15 +27,6 @@
           <tr v-for="row in rows" :key="row.id" class="border-t">
             <td class="px-4 py-2">
               <Input v-model="row.nameProxy" placeholder="Имя пользователя" @blur="() => saveRow(row)" />
-            </td>
-            <td class="px-4 py-2">
-              <div class="flex flex-wrap gap-3">
-                <label v-for="role in rolesOptions" :key="role" class="inline-flex items-center gap-2 text-xs">
-                  <input type="checkbox" class="h-4 w-4" :value="role" v-model="row.rolesChecked" @change="() => saveRow(row)" />
-                  <span>{{ role }}</span>
-                </label>
-              </div>
-              <div class="mt-1 text-[11px] text-neutral-500">ROLE_USER назначается автоматически</div>
             </td>
             <td class="px-4 py-2">
               <button
@@ -49,7 +39,7 @@
             </td>
           </tr>
           <tr v-if="!loading && rows.length === 0">
-            <td colspan="3" class="px-4 py-6 text-center text-neutral-500">Нет пользователей</td>
+            <td colspan="2" class="px-4 py-6 text-center text-neutral-500">Нет покупателей</td>
           </tr>
         </tbody>
       </table>
@@ -63,7 +53,7 @@
           class="fixed left-1/2 top-1/2 w-[92vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-md border bg-white p-4 shadow-lg focus:outline-none dark:border-neutral-800 dark:bg-neutral-900"
         >
           <div class="mb-2">
-            <DialogTitle class="text-base font-semibold text-neutral-900 dark:text-neutral-100">Новый пользователь</DialogTitle>
+            <DialogTitle class="text-base font-semibold text-neutral-900 dark:text-neutral-100">Новый покупатель</DialogTitle>
             <DialogDescription class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">Заполните поля ниже</DialogDescription>
           </div>
 
@@ -91,16 +81,7 @@
               :error="passwordConfirmError"
               @blur="confirmTouched = true"
             />
-            <div class="text-sm">
-              <div class="mb-1 text-neutral-600 dark:text-neutral-300">Роли</div>
-              <div class="flex flex-wrap gap-3">
-                <label v-for="role in rolesOptions" :key="role" class="inline-flex items-center gap-2 text-xs">
-                  <input type="checkbox" class="h-4 w-4" :value="role" v-model="createForm.rolesChecked" />
-                  <span>{{ role }}</span>
-                </label>
-              </div>
-              <div class="mt-1 text-[11px] text-neutral-500">ROLE_USER назначается автоматически</div>
-            </div>
+            
 
             <div class="flex justify-end gap-2 pt-2">
               <button type="button" class="h-9 rounded-md px-3 text-sm hover:bg-neutral-100 dark:hover:bg-white/10" @click="openCreate = false">Отмена</button>
@@ -124,7 +105,7 @@
     <ToastRoot v-for="n in toastCount" :key="n" type="foreground" :duration="2200">
       <ToastDescription>{{ lastToastMessage }}</ToastDescription>
     </ToastRoot>
-    <ConfirmDialog v-model="deleteOpen" :title="'Удалить пользователя?'" :description="'Это действие необратимо'" confirm-text="Удалить" :danger="true" @confirm="performDelete" />
+    <ConfirmDialog v-model="deleteOpen" :title="'Удалить покупателя?'" :description="'Это действие необратимо'" confirm-text="Удалить" :danger="true" @confirm="performDelete" />
   </div>
 </template>
 
@@ -139,7 +120,6 @@ import { UserRepository, type User } from '@admin/repositories/UserRepository'
 type EditableRow = {
   id: number
   nameProxy: string
-  rolesChecked: string[]
 }
 
 const repo = new UserRepository()
@@ -148,7 +128,7 @@ const state = crud.state
 const loading = computed(() => !!state.loading)
 
 const rows = ref<EditableRow[]>([])
-const rolesOptions = ['ROLE_ADMIN', 'ROLE_MANAGER'] as const
+// роли не редактируются на этой странице
 
 onMounted(async () => {
   await crud.fetchAll({ itemsPerPage: 500 })
@@ -161,24 +141,22 @@ watch(
   { deep: true }
 )
 
-function isAdminOrManager(u: User): boolean {
+function isCustomer(u: User): boolean {
   const roles = (u.roles || []).filter((r) => r !== 'ROLE_USER')
-  return roles.includes('ROLE_ADMIN') || roles.includes('ROLE_MANAGER')
+  return roles.length === 0
 }
 
 function syncRows() {
-  const items = ((state.items ?? []) as User[]).slice().filter(isAdminOrManager)
+  const items = ((state.items ?? []) as User[]).slice().filter(isCustomer)
   items.sort((a, b) => String((a as any).name || '').localeCompare(String((b as any).name || '')))
   rows.value = items.map((u) => ({
     id: Number(u.id),
     nameProxy: String((u as any).name ?? ''),
-    rolesChecked: (u.roles || []).filter((r) => r !== 'ROLE_USER'),
   }))
 }
 
 async function saveRow(row: EditableRow) {
-  const roles = (row.rolesChecked || []).slice()
-  const payload: Partial<User> = { name: row.nameProxy.trim() || null, roles }
+  const payload: Partial<User> = { name: row.nameProxy.trim() || null }
   await crud.update(row.id, payload)
   publishToast('Сохранено')
 }
@@ -186,7 +164,7 @@ async function saveRow(row: EditableRow) {
 // Create form
 const openCreate = ref(false)
 const submitting = ref(false)
-const createForm = reactive({ name: '', password: '', passwordConfirm: '', rolesChecked: [] as string[] })
+const createForm = reactive({ name: '', password: '', passwordConfirm: '' })
 
 // validation for password + confirm
 const nameTouched = ref(false)
@@ -228,15 +206,14 @@ async function createSubmit() {
   if (!canSubmitCreate.value) return
   submitting.value = true
   try {
-    const roles = (createForm.rolesChecked || []).slice()
-    await crud.create({ name: createForm.name.trim() || null, plainPassword: createForm.password.trim(), roles } as Partial<User>)
+    await crud.create({ name: createForm.name.trim() || null, plainPassword: createForm.password.trim() } as Partial<User>)
     syncRows()
     openCreate.value = false
-    Object.assign(createForm, { name: '', password: '', passwordConfirm: '', rolesChecked: [] })
+    Object.assign(createForm, { name: '', password: '', passwordConfirm: '' })
     nameTouched.value = false
     passwordTouched.value = false
     confirmTouched.value = false
-    publishToast('Пользователь создан')
+    publishToast('Покупатель создан')
   } finally {
     submitting.value = false
   }
@@ -261,10 +238,12 @@ async function performDelete() {
   if (pendingDeleteId.value == null) return
   await crud.remove(pendingDeleteId.value)
   rows.value = rows.value.filter(r => r.id !== pendingDeleteId.value!)
-  publishToast('Пользователь удалён')
+  publishToast('Покупатель удалён')
   pendingDeleteId.value = null
   deleteOpen.value = false
 }
 </script>
+
+
 
 

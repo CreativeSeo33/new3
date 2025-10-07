@@ -85,6 +85,12 @@ export const adminRoutes: RouteRecordRaw[] = [
         meta: { requiresAuth: true }
       },
       {
+        path: 'customers',
+        name: 'admin-customers',
+        component: () => import(/* webpackChunkName: "admin-customers" */ '@admin/views/Customers.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
         path: 'orders',
         name: 'admin-orders',
         component: () => import(/* webpackChunkName: "admin-orders" */ '@admin/views/Orders.vue'),
@@ -200,14 +206,20 @@ export const adminSidebarItems: AdminSidebarItem[] = [
     ]
   },
   {
+    label: 'Пользователи',
+    children: [
+      { to: { name: 'admin-users' }, label: 'Администраторы', colorClass: 'bg-slate-500' },
+      { to: { name: 'admin-customers' }, label: 'Покупатели', colorClass: 'bg-slate-400' }
+    ]
+  },
+  {
     label: 'Система',
     children: [
       { to: { name: 'admin-facets' }, label: 'Фасетный фильтр', colorClass: 'bg-amber-600' },
       { to: { name: 'admin-orders' }, label: 'Заказы', colorClass: 'bg-purple-500' },
       { to: { name: 'admin-settings' }, label: 'Настройки', colorClass: 'bg-emerald-700' },
       { to: { name: 'admin-order-statuses' }, label: 'Статусы заказов', colorClass: 'bg-indigo-500' },
-      { to: { name: 'admin-design-system' }, label: 'Design System', colorClass: 'bg-amber-500' },
-      { to: { name: 'admin-users' }, label: 'Пользователи', colorClass: 'bg-slate-500' }
+      { to: { name: 'admin-design-system' }, label: 'Design System', colorClass: 'bg-amber-500' }
     ]
   }
 ];
