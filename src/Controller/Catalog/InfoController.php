@@ -18,6 +18,18 @@ final class InfoController extends AbstractController
         private readonly DeliveryContext $deliveryContext,
     ) {}
 
+    #[Route(path: '/about', name: 'catalog_about', methods: ['GET'])]
+    public function about(): Response
+    {
+        return $this->render('catalog/information/about.html.twig');
+    }
+
+    #[Route(path: '/contacts', name: 'catalog_contacts', methods: ['GET'])]
+    public function contacts(): Response
+    {
+        return $this->render('catalog/information/contacts.html.twig');
+    }
+
     #[Route(path: '/dostavka', name: 'catalog_dostavka', methods: ['GET'])]
     public function dostavka(): Response
     {

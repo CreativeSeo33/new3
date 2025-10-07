@@ -4,12 +4,12 @@
 
 {% block catalog_body %}
 {# ai:page=checkout map=@page_checkout_map.mdc v=1 #}
-  <div class="container mx-auto px-4 py-6" data-module="checkout-form" data-submit-url="{{ path('checkout_submit') }}" data-testid="checkout-root">
+  <div class="container mx-auto py-6" data-module="checkout-form" data-submit-url="{{ path('checkout_submit') }}" data-testid="checkout-root">
     <h1 class="text-2xl font-semibold mb-6">Оформление заказа</h1>
 
     <div class="relative grid grid-cols-1 md:grid-cols-3 gap-6">
       <div class="md:col-span-2 space-y-6">
-        {% include '@App/catalog/components/checkout/contact-form.html.twig' %}
+        {% include 'components/checkout/contact-form.html.twig' %}
         
         {% include 'catalog/_delivery_selector.html.twig' ignore missing %}
         
@@ -20,16 +20,16 @@
       <aside class="md:col-span-1 p-4 border rounded h-fit">
         <h2 class="text-lg font-medium mb-4">Ваш заказ</h2>
         {% if cart.items|length > 0 %}
-          {% include '@App/catalog/components/cart/items.html.twig' with { items: cart.items } %}
-          {% include '@App/catalog/components/cart/summary.html.twig' with { cart: cart, delivery: delivery } %}
+          {% include 'components/cart/items.html.twig' with { items: cart.items } %}
+          {% include 'components/cart/summary.html.twig' with { cart: cart, delivery: delivery } %}
         {% else %}
           <div class="text-gray-500 text-sm">Корзина пуста</div>
         {% endif %}
-        {% include '@App/catalog/components/checkout/submit-button.html.twig' with { disabled: cart.items|length == 0 } %}
+        {% include 'components/checkout/submit-button.html.twig' with { disabled: cart.items|length == 0 } %}
       </aside>
 
       {# Overlay spinner over the whole grid #}
-      {% include '@App/catalog/components/spinner.html.twig' with {
+      {% include 'components/spinner.html.twig' with {
         id: 'checkout-spinner',
         overlay: true,
         visible: false,
@@ -53,7 +53,7 @@
 {% block catalog_header %}
 <header class="bg-white shadow-sm">
   <div class="py-4 border-b border-gray-100">
-    <div class="container mx-auto px-4">
+    <div class="container mx-auto">
       <div class="flex items-center justify-between">
         <div class="flex items-center">
           <a href="{{ path('catalog_index') }}" class="flex items-center gap-3">

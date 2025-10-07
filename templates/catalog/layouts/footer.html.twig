@@ -1,5 +1,5 @@
 <footer class="w-full bg-gray-100 border-t mt-10">
-  <div class="container mx-auto px-4 py-12">
+  <div class="container mx-auto py-12">
     
     <!-- Footer Middle - Links -->
     {% set categories = footer_categories.getFooterCategories() %}
@@ -59,24 +59,27 @@
       <div>
         <div class="h3 text-lg font-semibold text-gray-900 mb-4 lg:hidden">ИНФОРМАЦИЯ</div>
         <ul class="space-y-2">
-          <li><a href="#" class="footer-link">О нас</a></li>
-          <li><a href="#" class="footer-link">Контакты</a></li>
+          <li><a href="{{ path('catalog_about') }}" class="footer-link">О нас</a></li>
+          <li><a href="{{ path('catalog_contacts') }}" class="footer-link">Контакты</a></li>
           <li><a href="{{ path('catalog_dostavka') }}" class="footer-link">Доставка</a></li>
-          <li><a href="#" class="footer-link">Политика возврата</a></li>
-          <li><a href="#" class="footer-link">Условия и положения</a></li>
-          <li><a href="#" class="footer-link">Политика конфиденциальности</a></li>
+          
         </ul>
       </div>
       
       <!-- Column 4 - No Title -->
       <div>
-        <ul class="space-y-2">
-          <li><a href="#" class="footer-link">Помощь и FAQ</a></li>
-          <li><a href="#" class="footer-link">Мой аккаунт</a></li>
-          <li><a href="#" class="footer-link">Заказы и возвраты</a></li>
-          <li><a href="#" class="footer-link">Карьера</a></li>
-          <li><a href="#" class="footer-link">Центр поддержки</a></li>
-        </ul>
+        <!-- Logo Section -->
+        <div class="flex items-center">
+          <a href="{{ path('catalog_index') }}" class="flex items-center gap-3">
+            {% if logo_url is defined and logo_url %}
+              <img src="{{ logo_url }}" alt="{{ site_name|default('Shop') }}" class="h-12 w-auto" />
+            {% else %}
+              <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                <span class="text-white font-bold text-xl">L</span>
+              </div>
+            {% endif %}         
+          </a>
+        </div>
       </div>
     </div>
     
