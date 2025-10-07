@@ -429,3 +429,8 @@ swiper-container.product-gallery-swiper {
     @apply bg-gray-50 p-6;
   }
 }
+
+.active-tab\:tab-active[data-tab].active:not([disabled]) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}

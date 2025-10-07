@@ -54,6 +54,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'string', length: 180, unique: true, nullable: true)]
     private ?string $email = null;
 
+    #[ORM\Column(type: 'string', length: 32, unique: true, nullable: true)]
+    #[Groups(['user:get','user:post','user:patch'])]
+    private ?string $phone = null;
+    
     /**
      * @var list<string>
      */
@@ -162,6 +166,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setEmail(?string $email): self
     {
         $this->email = $email ? mb_strtolower(trim($email)) : null;
+        return $this;
+    }
+
+    public function getPhone(): ?string
+    {
+        return $this->phone;
+    }
+
+    public function setPhone(?string $phone): self
+    {
+        $this->phone = $phone !== null ? trim($phone) : null;
         return $this;
     }
 

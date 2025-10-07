@@ -14,199 +14,245 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
--- Дамп данных таблицы new3.attribute: ~2 rows (приблизительно)
-INSERT INTO `attribute` (`id`, `attribute_group_id`, `name`, `sort_order`, `show_in_category`, `short_name`, `code`) VALUES
-	(3, 1, 'Диаметр', 1, NULL, NULL, 'diametr'),
-	(4, 2, 'Высота', 2, NULL, NULL, 'vysota'),
-	(5, 2, 'Вес', 2, NULL, NULL, 'ves');
 
--- Дамп данных таблицы new3.attribute_group: ~2 rows (приблизительно)
+-- Дамп структуры базы данных new3
+CREATE DATABASE IF NOT EXISTS `new3` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+USE `new3`;
+
+-- Дамп структуры для таблица new3.attribute
+CREATE TABLE IF NOT EXISTS `attribute` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `attribute_group_id` int DEFAULT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `sort_order` int DEFAULT NULL,
+  `show_in_category` tinyint(1) DEFAULT NULL,
+  `short_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `code` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UNIQ_FA7AEFFB77153098` (`code`),
+  KEY `IDX_FA7AEFFB62D643B7` (`attribute_group_id`),
+  CONSTRAINT `FK_FA7AEFFB62D643B7` FOREIGN KEY (`attribute_group_id`) REFERENCES `attribute_group` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.attribute: ~18 rows (приблизительно)
+INSERT INTO `attribute` (`id`, `attribute_group_id`, `name`, `sort_order`, `show_in_category`, `short_name`, `code`) VALUES
+	(3, 2, 'Диаметр', 1, NULL, NULL, 'diametr'),
+	(4, 2, 'Высота', 2, NULL, NULL, 'vysota'),
+	(5, 2, 'Вес', 3, NULL, NULL, 'ves'),
+	(6, 2, 'Количество лампочек', 4, NULL, NULL, 'kolicestvo_lampocek'),
+	(7, 3, 'Площадь освещения (м²)', 1, NULL, NULL, 'plosad_osvesenia_m2'),
+	(8, 3, 'Тип лампы', 2, NULL, NULL, 'tip_lampy'),
+	(9, 3, 'Тип цоколя', 3, NULL, NULL, 'tip_cokola'),
+	(10, 3, 'Максимальная мощность лампочки (Вт)', 4, NULL, NULL, 'maksimal_naa_mosnost_lampocki_vt'),
+	(11, 1, 'Зеркало', 1, NULL, NULL, 'zerkalo'),
+	(12, 1, 'Стиль', 2, NULL, NULL, 'stil'),
+	(13, 1, 'Материал кронштейна', 3, NULL, NULL, 'material_kronstejna'),
+	(14, 4, 'Производство (завод)', 1, NULL, NULL, 'proizvodstvo_zavod'),
+	(15, 4, 'Регулировка высоты', 2, NULL, NULL, 'regulirovka_vysoty'),
+	(16, 4, 'Крепление', 3, NULL, NULL, 'kreplenie'),
+	(17, 4, 'Страна производства', 5, NULL, NULL, 'strana_proizvodstva'),
+	(18, 4, 'Гарантия', 6, NULL, NULL, 'garantia'),
+	(19, 5, 'Инструкция', 1, NULL, NULL, 'instrukcia'),
+	(20, 5, 'Лампы в комплекте', 2, NULL, NULL, 'lampy_v_komplekte');
+
+-- Дамп структуры для таблица new3.attribute_group
+CREATE TABLE IF NOT EXISTS `attribute_group` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `sort_order` int DEFAULT NULL,
+  `code` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UNIQ_8EF8A77377153098` (`code`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.attribute_group: ~4 rows (приблизительно)
 INSERT INTO `attribute_group` (`id`, `name`, `sort_order`, `code`) VALUES
 	(1, 'Внешний вид', 1, NULL),
-	(2, 'Размеры', 2, NULL);
+	(2, 'Размеры', 2, NULL),
+	(3, 'Электрика', 3, NULL),
+	(4, 'Дополнительно', 4, NULL),
+	(5, 'Комплектация', 5, NULL);
+
+-- Дамп структуры для таблица new3.carousel
+CREATE TABLE IF NOT EXISTS `carousel` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `product_id` int DEFAULT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `products_id` json DEFAULT NULL,
+  `sort` int DEFAULT NULL,
+  `place` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `IDX_1DD747004584665A` (`product_id`),
+  KEY `carousel_place_idx` (`place`),
+  KEY `carousel_sort_idx` (`sort`),
+  CONSTRAINT `FK_1DD747004584665A` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Дамп данных таблицы new3.carousel: ~0 rows (приблизительно)
 
--- Дамп данных таблицы new3.cart: ~37 rows (приблизительно)
+-- Дамп структуры для таблица new3.cart
+CREATE TABLE IF NOT EXISTS `cart` (
+  `id` binary(16) NOT NULL COMMENT '(DC2Type:ulid)',
+  `user_id` int DEFAULT NULL,
+  `token` varchar(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `currency` varchar(3) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `subtotal` int NOT NULL DEFAULT '0',
+  `discount_total` int NOT NULL DEFAULT '0',
+  `total` int NOT NULL DEFAULT '0',
+  `created_at` datetime NOT NULL COMMENT '(DC2Type:datetime_immutable)',
+  `updated_at` datetime NOT NULL COMMENT '(DC2Type:datetime_immutable)',
+  `expires_at` datetime DEFAULT NULL COMMENT '(DC2Type:datetime_immutable)',
+  `version` int NOT NULL DEFAULT '1',
+  `shipping_method` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `shipping_cost` int NOT NULL DEFAULT '0',
+  `ship_to_city` varchar(128) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `shipping_data` json DEFAULT NULL,
+  `pricing_policy` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'SNAPSHOT',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UNIQ_BA388B75F37A13B` (`token`),
+  KEY `IDX_BA388B75F37A13B` (`token`),
+  KEY `IDX_BA388B7A76ED395` (`user_id`),
+  KEY `IDX_BA388B7F9D83E2` (`expires_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.cart: ~2 rows (приблизительно)
 INSERT INTO `cart` (`id`, `user_id`, `token`, `currency`, `subtotal`, `discount_total`, `total`, `created_at`, `updated_at`, `expires_at`, `version`, `shipping_method`, `shipping_cost`, `ship_to_city`, `shipping_data`, `pricing_policy`) VALUES
-	(_binary 0x01994c18060a4e17fb504e0136c31b24, NULL, 'ed0e40a5-f1f1-44df-81e8-bf3cd70876c3', 'RUB', 26400, 0, 26400, '2025-09-15 06:37:46', '2025-09-15 10:29:43', '2026-03-14 10:29:39', 14, 'courier', 0, 'Санкт-Петербург', '[]', 'SNAPSHOT'),
-	(_binary 0x01994e086c9d27e2b0da3da72403fad3, NULL, '62620904-4233-42bf-ad09-acbcb9431efa', 'RUB', 3900, 0, 0, '2025-09-15 15:39:59', '2025-09-15 15:39:59', '2026-03-14 15:39:59', 3, NULL, 0, NULL, NULL, 'SNAPSHOT'),
-	(_binary 0x01995159bd4033b64d24cdfccb85add4, NULL, '41ef5615-a2d8-4826-aa9e-ead4e2d8986f', 'RUB', 3900, 0, 3900, '2025-09-16 07:07:39', '2025-09-16 10:52:14', '2026-03-15 07:07:41', 7, NULL, 0, 'Москва', '[]', 'SNAPSHOT'),
-	(_binary 0x01995159c2808b160b8cc93dca529e9d, NULL, '04dba3f5-736e-400a-8374-b882b75be370', 'RUB', 0, 0, 0, '2025-09-16 07:07:41', '2025-09-16 07:07:41', '2026-03-15 07:07:41', 1, NULL, 0, NULL, NULL, 'SNAPSHOT'),
-	(_binary 0x019952a7c3544f23748adaff00b69fc5, NULL, '4b404c11-6d4b-4e01-8bf1-a2f43d118382', 'RUB', 9800, 0, 9800, '2025-09-16 13:12:30', '2025-09-16 14:29:15', '2026-03-15 13:12:30', 9, 'pvz', 0, 'Пермь', '{"address": "", "pickupPointId": "01949409356477b4917fc767fe62c22c"}', 'SNAPSHOT'),
-	(_binary 0x019952f8e7d769bd55626481e03457bd, NULL, '8d4ae3ae-0344-48b1-b786-590a290c21ae', 'RUB', 9800, 0, 9800, '2025-09-16 14:41:08', '2025-09-16 15:27:47', '2025-09-16 15:27:46', 16, 'courier', 1480, 'Пермь', '{"address": "Влдаимир"}', 'SNAPSHOT'),
-	(_binary 0x01995324032e7496175d0a312016eff0, NULL, '6a3a96a2-ffbf-4c31-aecb-9a4e0e7c0675', 'RUB', 4900, 0, 0, '2025-09-16 15:28:13', '2025-09-16 15:28:13', '2026-03-15 15:28:13', 3, NULL, 0, NULL, NULL, 'SNAPSHOT'),
-	(_binary 0x019956aef5ce8b2dac0a5de8d756feb2, NULL, '7948d857-8346-46d4-abc6-782f217a0c1f', 'RUB', 38100, 0, 3900, '2025-09-17 07:58:50', '2025-09-17 08:33:24', '2026-03-16 08:33:24', 31, 'courier', 490, 'Москва', '[]', 'SNAPSHOT'),
-	(_binary 0x019970604f85f00fd1ea996ea3a2e0e4, NULL, '28c7a10c-9ba5-4871-9be0-60434a121368', 'RUB', 19900, 0, 3900, '2025-09-22 07:43:04', '2025-09-22 08:37:40', '2026-03-21 08:37:40', 12, 'courier', 490, 'Москва', '[]', 'SNAPSHOT'),
-	(_binary 0x01997077db6ddc4c19157df0ffae9b91, NULL, '60de2832-dbc8-46dd-ad1b-b23a3a5ac1aa', 'RUB', 0, 0, 0, '2025-09-22 08:08:47', '2025-09-22 08:08:47', '2026-03-21 08:08:47', 2, NULL, 0, NULL, NULL, 'SNAPSHOT'),
-	(_binary 0x0199707a952991646105524aa640193d, NULL, '8d19229b-bae9-4e16-8afe-001945051296', 'RUB', 0, 0, 0, '2025-09-22 08:11:45', '2025-09-22 08:11:45', '2026-03-21 08:11:45', 2, NULL, 0, NULL, NULL, 'SNAPSHOT'),
-	(_binary 0x0199707c3418d74f0f1552b18b92b93b, NULL, '2e6f2eea-8ae3-430d-9578-a0b123c97744', 'RUB', 0, 0, 0, '2025-09-22 08:13:32', '2025-09-22 08:13:32', '2026-03-21 08:13:32', 2, NULL, 0, NULL, NULL, 'SNAPSHOT'),
-	(_binary 0x0199707c57f1a3a76bc95a36d3810694, NULL, '3e2ff475-7b4b-45f6-9bef-4fd736ed13b5', 'RUB', 0, 0, 0, '2025-09-22 08:13:41', '2025-09-22 08:13:41', '2026-03-21 08:13:41', 2, NULL, 0, NULL, NULL, 'SNAPSHOT'),
-	(_binary 0x0199707d06d1b2d5bda77b95f5b24b0e, NULL, '1c5509da-4270-4793-9c0c-4a39a31fbd3d', 'RUB', 0, 0, 0, '2025-09-22 08:14:26', '2025-09-22 08:14:26', '2026-03-21 08:14:26', 2, NULL, 0, NULL, NULL, 'SNAPSHOT'),
-	(_binary 0x0199763fcb512b05af40d02d1aa812cf, NULL, 'c6226592-cf43-4ee1-b9b2-7894609b3db7', 'RUB', 6000, 0, 6000, '2025-09-23 11:05:16', '2025-09-23 11:05:52', '2025-09-23 11:05:51', 6, 'pvz', 0, 'Москва', '{"address": "", "pickupPointId": "0193b503fd067427991f830d375f0ccf"}', 'SNAPSHOT'),
-	(_binary 0x019976492c00e533be9e984fb5cf101c, NULL, 'c512014a-5bad-44a0-bb7c-f507837d4b19', 'RUB', 19700, 0, 19700, '2025-09-23 11:15:30', '2025-09-23 11:17:24', '2025-09-23 11:17:23', 17, 'courier', 1860, 'Казань', '{"address": "Владимир, ул. Восточная 80, кв 99"}', 'SNAPSHOT'),
-	(_binary 0x0199766eacdfa0561b8070fef87a93e1, NULL, '3f74b18f-7cc7-4223-a253-87ca9a08e090', 'RUB', 3900, 0, 3900, '2025-09-23 11:56:28', '2025-09-23 11:56:55', '2025-09-23 11:56:54', 8, 'pvz', 190, 'Москва', '{"address": "", "pickupPointId": "0193e48b000a77c6932d288a15a05b7c"}', 'SNAPSHOT'),
-	(_binary 0x019976743b14d395158c2c68c96a1bc0, NULL, 'e8bc5fcc-88d5-4788-a124-f031dcf94837', 'RUB', 9800, 0, 9800, '2025-09-23 12:02:32', '2025-09-23 12:07:06', '2025-09-23 12:07:05', 7, 'pvz', 0, 'Москва', '{"address": "", "pickupPointId": "0193de5cdd7e70528566db5c920ebb70"}', 'SNAPSHOT'),
-	(_binary 0x01997678af9d161063e4b2ca8864ffed, NULL, '3e9dc4f5-4734-4e2e-a767-3363eb18d827', 'RUB', 14700, 0, 14700, '2025-09-23 12:07:24', '2025-09-23 12:08:03', '2025-09-23 12:08:02', 10, 'courier', 0, 'Нижний Новгород', '{"address": "Горького 25"}', 'SNAPSHOT'),
-	(_binary 0x01997c28687fc2a513ee496ddd478407, 1, '946a49fc-a090-46f1-a7e8-f3cc32df61c4', 'RUB', 46800, 0, 46800, '2025-09-24 14:37:27', '2025-09-29 16:31:42', '2026-03-26 09:28:02', 9, NULL, 0, 'Киров', '[]', 'SNAPSHOT'),
-	(_binary 0x0199857e11eb4506329e3fc9667c3b7e, NULL, '86f4aa0c-ce78-4988-b920-04f643042830', 'RUB', 15600, 0, 15600, '2025-09-26 10:07:35', '2025-09-26 10:10:54', '2025-09-26 10:10:53', 5, 'pvz', 0, 'Москва', '[]', 'SNAPSHOT'),
-	(_binary 0x01998585b4db132a1e2003e705a4d88d, NULL, 'eeac7722-1d1b-40e0-a8b5-a13c118269e3', 'RUB', 0, 0, 0, '2025-09-26 10:15:56', '2025-09-26 10:15:56', '2026-03-25 10:15:56', 1, NULL, 0, NULL, NULL, 'SNAPSHOT'),
-	(_binary 0x0199868820002a95c3c120810c77bf20, NULL, '153a46d1-6f19-4dfd-8840-773df86dbd80', 'RUB', 0, 0, 0, '2025-09-26 14:58:12', '2025-09-26 14:58:12', '2026-03-25 14:58:12', 1, NULL, 0, 'Санкт-Петербург', '[]', 'SNAPSHOT'),
-	(_binary 0x019986882336ee96a75bf085a5c130fa, NULL, '0f19aeb5-1cbc-4c9b-82ad-e498ddf2894e', 'RUB', 31200, 0, 31200, '2025-09-26 14:58:12', '2025-09-26 14:58:42', '2025-09-26 14:58:41', 8, 'pvz', 0, 'Москва', '[]', 'SNAPSHOT'),
-	(_binary 0x0199868da1b4e58bcf4a848fc0ac1cdd, NULL, '5027fb0f-19b2-4215-9c5c-da0b7785c30f', 'RUB', 0, 0, 0, '2025-09-26 15:04:12', '2025-09-26 15:04:13', '2026-03-25 15:04:13', 2, NULL, 0, NULL, NULL, 'SNAPSHOT'),
-	(_binary 0x0199868ddaabddad6e4511ae3405b495, NULL, '211ce5fc-124d-48fb-8f56-0abad83bb3c7', 'RUB', 0, 0, 0, '2025-09-26 15:04:27', '2025-09-26 15:04:27', '2026-03-25 15:04:27', 2, NULL, 0, NULL, NULL, 'SNAPSHOT'),
-	(_binary 0x0199868e08acfec9b9f5c412d0a0314d, NULL, '4155417b-356d-4e98-ac6e-242079713e96', 'RUB', 3900, 0, 3900, '2025-09-26 15:04:39', '2025-09-26 15:04:58', '2025-09-26 15:04:57', 5, 'pvz', 190, 'Москва', '[]', 'SNAPSHOT'),
-	(_binary 0x01998692d626620aa3570849bb6accb4, NULL, 'f3d03000-0441-4de2-a14d-9ee6d8bc6086', 'RUB', 3900, 0, 3900, '2025-09-26 15:09:54', '2025-09-26 15:10:12', '2025-09-26 15:10:11', 5, 'pvz', 190, 'Москва', '[]', 'SNAPSHOT'),
-	(_binary 0x01998693ab97453336802e48f10af7e1, NULL, 'a2769872-e6d6-4aae-a57e-a44310a5504d', 'RUB', 0, 0, 0, '2025-09-26 15:10:48', '2025-09-26 15:10:48', '2026-03-25 15:10:48', 1, NULL, 0, 'Санкт-Петербург', '[]', 'SNAPSHOT'),
-	(_binary 0x01998693aec3a461458631ea3ad0527e, NULL, 'fb8b7271-84c1-4343-a551-26be185bac59', 'RUB', 3900, 0, 3900, '2025-09-26 15:10:49', '2025-09-26 15:11:08', '2025-09-26 15:11:07', 5, 'pvz', 190, 'Санкт-Петербург', '[]', 'SNAPSHOT'),
-	(_binary 0x01998699573da0cb972c76f45bcdae43, NULL, '0d75d6ae-f4c3-498a-92ae-cb9be55563e9', 'RUB', 0, 0, 0, '2025-09-26 15:17:00', '2025-09-26 15:17:00', '2026-03-25 15:17:00', 1, NULL, 0, 'Санкт-Петербург', '[]', 'SNAPSHOT'),
-	(_binary 0x019986995a5219dcb451d463d0d4baae, NULL, '8d7500b8-a211-420d-9851-447dbed3fe33', 'RUB', 3900, 0, 3900, '2025-09-26 15:17:01', '2025-09-26 15:17:23', '2025-09-26 15:17:22', 5, 'pvz', 190, 'Санкт-Петербург', '[]', 'SNAPSHOT'),
-	(_binary 0x0199869b05e20abbbc1fb31dc318ff57, NULL, 'dfe072c0-a88d-4a42-b62e-674efce4c585', 'RUB', 15600, 0, 0, '2025-09-26 15:18:50', '2025-09-26 15:19:40', '2026-03-25 15:19:40', 6, NULL, 0, NULL, NULL, 'SNAPSHOT'),
-	(_binary 0x019986a7ae4d86fba9449b43097e3c52, NULL, '575ccab1-48e4-4fbe-8651-822fb16b71e3', 'RUB', 16500, 0, 16500, '2025-09-26 15:32:40', '2025-09-26 15:34:52', '2025-09-26 15:34:51', 13, 'courier', 0, 'Москва', '{"address": "Восточная 80, 99"}', 'SNAPSHOT'),
-	(_binary 0x019986afaaa77c8b547b2c542a31e023, NULL, 'fef90a9e-ac5a-4d7b-a2e0-ced290fb1314', 'RUB', 16500, 0, 16500, '2025-09-26 15:41:23', '2025-09-26 15:45:08', '2025-09-26 15:45:07', 10, 'pvz', 0, 'Владимир', '{"address": "", "pickupPointId": "433f67d3-4e76-49c5-b569-c1db46aa38e9"}', 'SNAPSHOT'),
-	(_binary 0x019986b6f9976bb9547be71960e37d31, NULL, '9ffa7996-7180-4322-8427-ee3577c59786', 'RUB', 19600, 0, 19600, '2025-09-26 15:49:22', '2025-09-26 15:49:50', '2025-09-26 15:49:49', 7, 'pvz', 1560, 'Казань', '{"address": "", "pickupPointId": "13214084-89a3-485b-9583-f2bbc97afd32"}', 'SNAPSHOT'),
-	(_binary 0x019986c3177e744607615fa128854dcd, NULL, '3267e460-be98-46d2-af82-edac38c33db3', 'RUB', 0, 0, 0, '2025-09-26 16:02:36', '2025-09-26 16:02:36', '2026-03-25 16:02:36', 1, NULL, 0, 'Ростов-на-Дону', '[]', 'SNAPSHOT'),
-	(_binary 0x01999444da1b1bd61cf0ca01afd06fe3, NULL, '74e43463-ad62-444f-8f7b-8eabfb8f1844', 'RUB', 15600, 0, 15600, '2025-09-29 06:59:24', '2025-09-29 06:59:47', '2025-09-29 06:59:46', 5, 'pvz', 0, 'Москва', '[]', 'SNAPSHOT'),
-	(_binary 0x0199944c8e208426225c1e300988aad9, NULL, '6ffcc9e3-ca67-4812-b14c-2920bb531578', 'RUB', 78000, 0, 78000, '2025-09-29 07:07:49', '2025-09-29 07:08:05', '2025-09-29 07:08:04', 5, 'pvz', 0, 'Москва', '[]', 'SNAPSHOT'),
-	(_binary 0x0199944dd812f410ccaed1d032d35f6e, NULL, '652fbcbc-9e44-4631-bf47-d3b1aedb62f6', 'RUB', 5000, 0, 5000, '2025-09-29 07:09:13', '2025-09-29 07:10:12', '2025-09-29 07:10:11', 5, 'pvz', 190, 'Москва', '[]', 'SNAPSHOT'),
-	(_binary 0x019994556e4509d9155cd223e291a4b6, NULL, 'cc6ca138-76cb-4dea-b303-72b7ca9dc126', 'RUB', 32000, 0, 32000, '2025-09-29 07:17:30', '2025-09-29 07:17:56', '2025-09-29 07:17:55', 5, 'pvz', 0, 'Москва', '[]', 'SNAPSHOT'),
-	(_binary 0x0199946ccfda4d81d0472f8f9039b515, NULL, '3e5f1e81-1aff-4a4c-b23e-d0bfb255689c', 'RUB', 41000, 0, 0, '2025-09-29 07:43:03', '2025-09-29 07:52:14', '2026-03-28 07:52:14', 5, NULL, 0, NULL, NULL, 'SNAPSHOT');
+	(_binary 0x0199ba49ee438e8455a5db8740c7157a, 5, 'c29c74f8-1b6b-407a-ab72-2338cc8fdb08', 'RUB', 85000, 0, 85000, '2025-10-06 16:10:31', '2025-10-07 14:24:18', '2025-10-07 14:24:17', 10, 'pvz', 0, 'Москва', '{"address": "", "pickupPointId": "0004ccff-edea-46fa-a1c0-30c34178fb0c"}', 'SNAPSHOT'),
+	(_binary 0x0199ba606cf7f46ffcb8a5468338e3ea, NULL, '554f8039-2ad9-4585-aa59-451d999b17c5', 'RUB', 58000, 0, 0, '2025-10-06 16:35:05', '2025-10-06 16:35:18', '2026-04-04 16:35:17', 5, NULL, 0, NULL, NULL, 'SNAPSHOT'),
+	(_binary 0x0199bf0e2ba1360b089b5662c9754a25, NULL, '7dc37954-3723-40f0-a8c5-fdca16a3e0f2', 'RUB', 0, 0, 0, '2025-10-07 14:23:21', '2025-10-07 14:23:21', '2026-04-05 14:23:20', 1, NULL, 0, NULL, NULL, 'SNAPSHOT'),
+	(_binary 0x0199bf0e40c3ee4eae7f72e65d1cc770, NULL, '195e980b-aa5b-4639-a7d3-fb3cf00374b9', 'RUB', 0, 0, 0, '2025-10-07 14:23:26', '2025-10-07 14:23:26', '2026-04-05 14:23:26', 1, NULL, 0, NULL, NULL, 'SNAPSHOT'),
+	(_binary 0x0199bf34701e6c5de4abf675e6185592, 5, '21eb951d-96fe-41af-93c1-e83157e507e5', 'RUB', 64500, 0, 64500, '2025-10-07 15:05:08', '2025-10-07 15:05:59', '2025-10-07 15:05:58', 10, 'courier', 0, 'Москва', '{"address": "Восточная 80, кв 99"}', 'SNAPSHOT'),
+	(_binary 0x0199bf522c4dc3d911fd871be0770cb3, 5, 'fc3fc9a9-c590-49bf-b88b-a1565553c56b', 'RUB', 36000, 0, 0, '2025-10-07 15:37:37', '2025-10-07 15:37:37', '2026-04-05 15:37:37', 4, NULL, 0, NULL, NULL, 'SNAPSHOT');
 
--- Дамп данных таблицы new3.cart_idempotency: ~52 rows (приблизительно)
+-- Дамп структуры для таблица new3.cart_idempotency
+CREATE TABLE IF NOT EXISTS `cart_idempotency` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `idempotency_key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `cart_id` varchar(26) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `endpoint` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `request_hash` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `status` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `http_status` smallint unsigned DEFAULT NULL,
+  `response_data` json DEFAULT NULL,
+  `instance_id` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` datetime(3) NOT NULL COMMENT '(DC2Type:datetime_immutable)',
+  `expires_at` datetime(3) NOT NULL COMMENT '(DC2Type:datetime_immutable)',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_idem_key` (`idempotency_key`)
+) ENGINE=InnoDB AUTO_INCREMENT=163 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.cart_idempotency: ~4 rows (приблизительно)
 INSERT INTO `cart_idempotency` (`id`, `idempotency_key`, `cart_id`, `endpoint`, `request_hash`, `status`, `http_status`, `response_data`, `instance_id`, `created_at`, `expires_at`) VALUES
-	(65, 'cart-add-b26d4ec9-86a1-442a-ae76-33410233b290', '01K561G1GA9RBZPM2E04VC66S4', 'POST /api/cart/items', '9318caac765c077543813357f29845dae0a61fbb560631f8888133dabf8e4942', 'done', 201, '{"totals": {"total": 3900, "subtotal": 3900, "itemsCount": 1, "discountTotal": 0}, "version": 3, "changedItems": [{"id": 291, "qty": 1, "rowTotal": 3900, "effectiveUnitPrice": 3900}], "removedItemIds": [], "totalItemQuantity": 1}', NULL, '2025-09-15 06:37:46.985', '2025-09-17 06:37:46.985'),
-	(66, 'cart-add-8044e237-47e1-4347-8d08-d39bf0fedafc', '01K561G1GA9RBZPM2E04VC66S4', 'POST /api/cart/items', 'd1d616c347ef0cb21a41235d30fb906915c65776aed1582f07c88bc250783722', 'done', 201, '{"totals": {"total": 13700, "subtotal": 13700, "itemsCount": 2, "discountTotal": 0}, "version": 5, "changedItems": [{"id": 292, "qty": 2, "rowTotal": 9800, "effectiveUnitPrice": 4900}], "removedItemIds": [], "totalItemQuantity": 3}', NULL, '2025-09-15 06:37:55.050', '2025-09-17 06:37:55.050'),
-	(67, 'cart-add-63ed1136-9edb-4275-90d0-e53dda492c13', '01K561G1GA9RBZPM2E04VC66S4', 'POST /api/cart/items', '6dd310685f71731ac792599abd5a71b82255c866063442acaccf906abadbc1de', 'done', 201, '{"totals": {"total": 18600, "subtotal": 18600, "itemsCount": 3, "discountTotal": 0}, "version": 7, "changedItems": [{"id": 293, "qty": 1, "rowTotal": 4900, "effectiveUnitPrice": 4900}], "removedItemIds": [], "totalItemQuantity": 4}', NULL, '2025-09-15 09:46:09.054', '2025-09-17 09:46:09.054'),
-	(68, 'cart-add-e7dea625-65a0-488c-9887-cec0095ab904', '01K570GV4X4ZHB1PHXMWJ07YPK', 'POST /api/cart/items', '9318caac765c077543813357f29845dae0a61fbb560631f8888133dabf8e4942', 'done', 201, '{"totals": {"total": 3900, "subtotal": 3900, "itemsCount": 1, "discountTotal": 0}, "version": 3, "changedItems": [{"id": 294, "qty": 1, "rowTotal": 3900, "effectiveUnitPrice": 3900}], "removedItemIds": [], "totalItemQuantity": 1}', NULL, '2025-09-15 15:39:59.223', '2025-09-17 15:39:59.223'),
-	(69, 'cart-add-9753472d-cbad-4ecb-9ce2-7b2930725f3f', '01K58NKFA06EV4T96DZK5RBBEM', 'POST /api/cart/items', '9318caac765c077543813357f29845dae0a61fbb560631f8888133dabf8e4942', 'done', 201, '{"totals": {"total": 3900, "subtotal": 3900, "itemsCount": 1, "discountTotal": 0}, "version": 3, "changedItems": [{"id": 295, "qty": 1, "rowTotal": 3900, "effectiveUnitPrice": 3900}], "removedItemIds": [], "totalItemQuantity": 1}', NULL, '2025-09-16 07:07:41.761', '2025-09-18 07:07:41.761'),
-	(70, 'cart-add-08c7f8a8-2138-448f-8dd9-fcf9fbfc46b2', '01K59AFGTM9WHQ92PTZW0BD7Y5', 'POST /api/cart/items', '72208697790f9a0570c85c06436bab5c897acf59539ab82d02f684ef2f4694ee', 'done', 201, '{"totals": {"total": 9800, "subtotal": 9800, "itemsCount": 1, "discountTotal": 0}, "version": 3, "changedItems": [{"id": 296, "qty": 2, "rowTotal": 9800, "effectiveUnitPrice": 4900}], "removedItemIds": [], "totalItemQuantity": 2}', NULL, '2025-09-16 13:12:30.458', '2025-09-18 13:12:30.458'),
-	(71, 'cart-add-110cb1f2-b36f-4037-bba3-bfc4b28db881', '01K59FHSYQD6YNARK4G7G38NXX', 'POST /api/cart/items', '72208697790f9a0570c85c06436bab5c897acf59539ab82d02f684ef2f4694ee', 'done', 201, '{"totals": {"total": 9800, "subtotal": 9800, "itemsCount": 1, "discountTotal": 0}, "version": 4, "changedItems": [{"id": 297, "qty": 2, "rowTotal": 9800, "effectiveUnitPrice": 4900}], "removedItemIds": [], "totalItemQuantity": 2}', NULL, '2025-09-16 14:41:20.577', '2025-09-18 14:41:20.577'),
-	(72, 'cart-add-0380a417-7510-469a-820d-924656ff3a20', '01K59J80SEEJB1EQ8A64G1DVZG', 'POST /api/cart/items', '6dd310685f71731ac792599abd5a71b82255c866063442acaccf906abadbc1de', 'done', 201, '{"totals": {"total": 4900, "subtotal": 4900, "itemsCount": 1, "discountTotal": 0}, "version": 3, "changedItems": [{"id": 298, "qty": 1, "rowTotal": 4900, "effectiveUnitPrice": 4900}], "removedItemIds": [], "totalItemQuantity": 1}', NULL, '2025-09-16 15:28:13.132', '2025-09-18 15:28:13.132'),
-	(73, 'cart-add-60569ff6-1456-40d0-bfee-5c1b5cbb9408', '01K5BAXXEEHCPTR2JXX3BNDZNJ', 'POST /api/cart/items', '9318caac765c077543813357f29845dae0a61fbb560631f8888133dabf8e4942', 'done', 201, '{"totals": {"total": 3900, "subtotal": 3900, "itemsCount": 1, "discountTotal": 0}, "version": 3, "changedItems": [{"id": 299, "qty": 1, "rowTotal": 3900, "effectiveUnitPrice": 3900}], "removedItemIds": [], "totalItemQuantity": 1}', NULL, '2025-09-17 07:58:50.948', '2025-09-19 07:58:50.948'),
-	(74, 'cart-add-d14d5464-e796-40e7-a734-d7b0045c1de0', '01K5BAXXEEHCPTR2JXX3BNDZNJ', 'POST /api/cart/items', '72208697790f9a0570c85c06436bab5c897acf59539ab82d02f684ef2f4694ee', 'done', 201, '{"totals": {"total": 13700, "subtotal": 13700, "itemsCount": 2, "discountTotal": 0}, "version": 11, "changedItems": [{"id": 300, "qty": 2, "rowTotal": 9800, "effectiveUnitPrice": 4900}], "removedItemIds": [], "totalItemQuantity": 3}', NULL, '2025-09-17 08:17:41.808', '2025-09-19 08:17:41.808'),
-	(75, 'cart-add-6e42077d-5049-493b-ba9d-94a2f3ebde48', '01K5BAXXEEHCPTR2JXX3BNDZNJ', 'POST /api/cart/items', '0f67482d3e75f274e88c7127655ccae729931a9b315c48ba0d952afb7b966a1e', 'done', 201, '{"totals": {"total": 17600, "subtotal": 17600, "itemsCount": 3, "discountTotal": 0}, "version": 13, "changedItems": [{"id": 301, "qty": 1, "rowTotal": 3900, "effectiveUnitPrice": 3900}], "removedItemIds": [], "totalItemQuantity": 4}', NULL, '2025-09-17 08:17:55.152', '2025-09-19 08:17:55.152'),
-	(76, 'cart-add-d4706b0c-b3d0-4893-98e9-52beaad7ca91', '01K5BAXXEEHCPTR2JXX3BNDZNJ', 'POST /api/cart/items', '9318caac765c077543813357f29845dae0a61fbb560631f8888133dabf8e4942', 'done', 201, '{"totals": {"total": 21500, "subtotal": 21500, "itemsCount": 3, "discountTotal": 0}, "version": 15, "changedItems": [{"id": 299, "qty": 2, "rowTotal": 7800, "effectiveUnitPrice": 3900}], "removedItemIds": [], "totalItemQuantity": 5}', NULL, '2025-09-17 08:19:01.817', '2025-09-19 08:19:01.817'),
-	(77, 'cart-add-360309bd-cb47-4f7a-998d-c22fee11198d', '01K5BAXXEEHCPTR2JXX3BNDZNJ', 'POST /api/cart/items', '9318caac765c077543813357f29845dae0a61fbb560631f8888133dabf8e4942', 'done', 201, '{"totals": {"total": 25400, "subtotal": 25400, "itemsCount": 3, "discountTotal": 0}, "version": 17, "changedItems": [{"id": 299, "qty": 3, "rowTotal": 11700, "effectiveUnitPrice": 3900}], "removedItemIds": [], "totalItemQuantity": 6}', NULL, '2025-09-17 08:20:08.227', '2025-09-19 08:20:08.227'),
-	(78, 'cart-add-08c59cee-b758-4195-b5b2-48ffffa252a7', '01K5BAXXEEHCPTR2JXX3BNDZNJ', 'POST /api/cart/items', '9318caac765c077543813357f29845dae0a61fbb560631f8888133dabf8e4942', 'done', 201, '{"totals": {"total": 29300, "subtotal": 29300, "itemsCount": 3, "discountTotal": 0}, "version": 19, "changedItems": [{"id": 299, "qty": 4, "rowTotal": 15600, "effectiveUnitPrice": 3900}], "removedItemIds": [], "totalItemQuantity": 7}', NULL, '2025-09-17 08:20:15.932', '2025-09-19 08:20:15.932'),
-	(79, 'cart-add-25fb08b2-bac1-4122-8b1c-dc30c82b1994', '01K5BAXXEEHCPTR2JXX3BNDZNJ', 'POST /api/cart/items', '9318caac765c077543813357f29845dae0a61fbb560631f8888133dabf8e4942', 'done', 201, '{"totals": {"total": 33200, "subtotal": 33200, "itemsCount": 3, "discountTotal": 0}, "version": 21, "changedItems": [{"id": 299, "qty": 5, "rowTotal": 19500, "effectiveUnitPrice": 3900}], "removedItemIds": [], "totalItemQuantity": 8}', NULL, '2025-09-17 08:21:54.982', '2025-09-19 08:21:54.982'),
-	(80, 'cart-add-e0dcd17d-4b48-403a-8a18-d74b102e5043', '01K5BAXXEEHCPTR2JXX3BNDZNJ', 'POST /api/cart/items', '9318caac765c077543813357f29845dae0a61fbb560631f8888133dabf8e4942', 'done', 201, '{"totals": {"total": 23400, "subtotal": 23400, "itemsCount": 1, "discountTotal": 0}, "version": 27, "changedItems": [{"id": 299, "qty": 6, "rowTotal": 23400, "effectiveUnitPrice": 3900}], "removedItemIds": [], "totalItemQuantity": 6}', NULL, '2025-09-17 08:32:55.124', '2025-09-19 08:32:55.124'),
-	(81, 'cart-add-ebe83248-7d29-465a-81b1-d3baa72f34be', '01K5BAXXEEHCPTR2JXX3BNDZNJ', 'POST /api/cart/items', 'd1d616c347ef0cb21a41235d30fb906915c65776aed1582f07c88bc250783722', 'done', 201, '{"totals": {"total": 33200, "subtotal": 33200, "itemsCount": 2, "discountTotal": 0}, "version": 29, "changedItems": [{"id": 302, "qty": 2, "rowTotal": 9800, "effectiveUnitPrice": 4900}], "removedItemIds": [], "totalItemQuantity": 8}', NULL, '2025-09-17 08:33:03.950', '2025-09-19 08:33:03.950'),
-	(82, 'cart-add-438c83e0-901e-4060-a0f9-41185514051e', '01K5BAXXEEHCPTR2JXX3BNDZNJ', 'POST /api/cart/items', '6dd310685f71731ac792599abd5a71b82255c866063442acaccf906abadbc1de', 'done', 201, '{"totals": {"total": 38100, "subtotal": 38100, "itemsCount": 3, "discountTotal": 0}, "version": 31, "changedItems": [{"id": 303, "qty": 1, "rowTotal": 4900, "effectiveUnitPrice": 4900}], "removedItemIds": [], "totalItemQuantity": 9}', NULL, '2025-09-17 08:33:24.814', '2025-09-19 08:33:24.814'),
-	(83, 'cart-add-6abc961b-d423-47c8-9e21-270112e8162a', '01K5R60KW5Y07X3TMSDTHT5R74', 'POST /api/cart/items', 'db12d0239faff5e38bb71375d148a3bf556dd71004b0904e8f0cd04c6617a7b1', 'done', 201, '{"totals": {"total": 3900, "subtotal": 3900, "itemsCount": 1, "discountTotal": 0}, "version": 3, "changedItems": [{"id": 304, "qty": 1, "rowTotal": 3900, "effectiveUnitPrice": 3900}], "removedItemIds": [], "totalItemQuantity": 1}', NULL, '2025-09-22 07:43:04.175', '2025-09-24 07:43:04.175'),
-	(84, 'cart-add-0a3f0696-a51c-4025-bc01-8fdba3f5fdbd', '01K5R7FPVDVH61J5BXY3ZTX6WH', 'POST /api/cart/items', 'c7d2e7640bd4f85e1b548ab2fb67fbfa899deb8d469007d662018c4aa813e96e', 'processing', NULL, NULL, NULL, '2025-09-22 08:08:47.241', '2025-09-24 08:08:47.241'),
-	(85, 'cart-add-3b00e82f-9b9d-4fc9-9605-0d33bf8c4e34', '01K5R7N599J5J621AJ9AK4069X', 'POST /api/cart/items', 'c7d2e7640bd4f85e1b548ab2fb67fbfa899deb8d469007d662018c4aa813e96e', 'processing', NULL, NULL, NULL, '2025-09-22 08:11:45.868', '2025-09-24 08:11:45.868'),
-	(86, 'cart-add-cedcce24-c6fd-458b-bcd0-f1cbb3a8d8dc', '01K5R7RD0RTX7GY5AJP65S5E9V', 'POST /api/cart/items', 'a1eb2d2b4e140e61715bb5439eda5aab65710666dcd9f3985cfb284bd43c9c3b', 'processing', NULL, NULL, NULL, '2025-09-22 08:13:32.088', '2025-09-24 08:13:32.088'),
-	(87, 'cart-add-82df418c-33f7-44c9-9443-2ab221a91b05', '01K5R7RNZHMEKPQJAT6V9R21MM', 'POST /api/cart/items', 'a1eb2d2b4e140e61715bb5439eda5aab65710666dcd9f3985cfb284bd43c9c3b', 'processing', NULL, NULL, NULL, '2025-09-22 08:13:41.265', '2025-09-24 08:13:41.265'),
-	(88, 'cart-add-952512e3-c6cb-41ca-9d5d-9b924cf4e778', '01K5R7T1PHPBAVV9VVJQTV4JRE', 'POST /api/cart/items', '244012e718dd4b35842f88f94c7c69e74a9ab3f0975040c48bf73330243dd52d', 'processing', NULL, NULL, NULL, '2025-09-22 08:14:26.046', '2025-09-24 08:14:26.046'),
-	(89, 'cart-add-077a2a44-a705-4fbf-8f9b-580eec57777f', '01K5R60KW5Y07X3TMSDTHT5R74', 'POST /api/cart/items', '244012e718dd4b35842f88f94c7c69e74a9ab3f0975040c48bf73330243dd52d', 'processing', NULL, NULL, NULL, '2025-09-22 08:30:29.151', '2025-09-24 08:30:29.151'),
-	(90, 'cart-add-9838e730-b56d-4f33-9282-c1c655888e5c', '01K5R60KW5Y07X3TMSDTHT5R74', 'POST /api/cart/items', '244012e718dd4b35842f88f94c7c69e74a9ab3f0975040c48bf73330243dd52d', 'done', 201, '{"totals": {"total": 9900, "subtotal": 9900, "itemsCount": 2, "discountTotal": 0}, "version": 8, "changedItems": [{"id": 305, "qty": 1, "rowTotal": 6000, "effectiveUnitPrice": 6000}], "removedItemIds": [], "totalItemQuantity": 2}', NULL, '2025-09-22 08:36:05.780', '2025-09-24 08:36:05.780'),
-	(91, 'cart-add-e026f9ca-7387-4cac-bba3-78f5259df343', '01K5R60KW5Y07X3TMSDTHT5R74', 'POST /api/cart/items', '4a1374dfa33fbce16cca728ba93d4b25f131f92c7eed4d1ac20bf92ac9af1997', 'done', 201, '{"totals": {"total": 14900, "subtotal": 14900, "itemsCount": 3, "discountTotal": 0}, "version": 10, "changedItems": [{"id": 306, "qty": 1, "rowTotal": 5000, "effectiveUnitPrice": 5000}], "removedItemIds": [], "totalItemQuantity": 3}', NULL, '2025-09-22 08:37:14.326', '2025-09-24 08:37:14.326'),
-	(92, 'cart-add-8eb156ef-301f-4271-b692-4f1c1d032494', '01K5V3ZJTH5C2TYG6G5MDAG4PF', 'POST /api/cart/items', '244012e718dd4b35842f88f94c7c69e74a9ab3f0975040c48bf73330243dd52d', 'done', 201, '{"totals": {"total": 6000, "subtotal": 6000, "itemsCount": 1, "discountTotal": 0}, "version": 3, "changedItems": [{"id": 307, "qty": 1, "rowTotal": 6000, "effectiveUnitPrice": 6000}], "removedItemIds": [], "totalItemQuantity": 1}', NULL, '2025-09-23 11:05:16.564', '2025-09-25 11:05:16.564'),
-	(93, 'cart-add-0bd55563-c5e5-483b-9f0d-29d5d5b07c4a', '01K5V4JB00WMSVX7MR9YTWY40W', 'POST /api/cart/items', '244012e718dd4b35842f88f94c7c69e74a9ab3f0975040c48bf73330243dd52d', 'done', 201, '{"totals": {"total": 6000, "subtotal": 6000, "itemsCount": 1, "discountTotal": 0}, "version": 3, "changedItems": [{"id": 308, "qty": 1, "rowTotal": 6000, "effectiveUnitPrice": 6000}], "removedItemIds": [], "totalItemQuantity": 1}', NULL, '2025-09-23 11:15:30.981', '2025-09-25 11:15:30.981'),
-	(94, 'cart-add-637a6396-1234-4a39-af63-3c5cdc632471', '01K5V4JB00WMSVX7MR9YTWY40W', 'POST /api/cart/items', 'f2d08fa4d091f7df2296e037da012d33ac67711b919f54e11c8623122484fed0', 'processing', NULL, NULL, NULL, '2025-09-23 11:15:44.171', '2025-09-25 11:15:44.171'),
-	(95, 'cart-add-0963dde3-e7b6-4980-a288-c7c63a7790cd', '01K5V4JB00WMSVX7MR9YTWY40W', 'POST /api/cart/items', 'f759b56601a7f493b902cd6504650c6fc8f327fc71dddd37e993f91655ab8b7c', 'processing', NULL, NULL, NULL, '2025-09-23 11:16:07.533', '2025-09-25 11:16:07.533'),
-	(96, 'cart-add-0df389e4-d780-4eb8-a1b5-d41c0f33b097', '01K5V4JB00WMSVX7MR9YTWY40W', 'POST /api/cart/items', 'db12d0239faff5e38bb71375d148a3bf556dd71004b0904e8f0cd04c6617a7b1', 'done', 201, '{"totals": {"total": 9900, "subtotal": 9900, "itemsCount": 2, "discountTotal": 0}, "version": 7, "changedItems": [{"id": 309, "qty": 1, "rowTotal": 3900, "effectiveUnitPrice": 3900}], "removedItemIds": [], "totalItemQuantity": 2}', NULL, '2025-09-23 11:16:19.024', '2025-09-25 11:16:19.024'),
-	(97, 'cart-add-490238cc-5988-4d27-9861-4cb62b08b5d7', '01K5V4JB00WMSVX7MR9YTWY40W', 'POST /api/cart/items', 'b5e8ce304b547e838130fd5e93fa308d3a8fac0e614d6cf231ceefe5ee045b5c', 'done', 201, '{"totals": {"total": 19700, "subtotal": 19700, "itemsCount": 3, "discountTotal": 0}, "version": 9, "changedItems": [{"id": 310, "qty": 2, "rowTotal": 9800, "effectiveUnitPrice": 4900}], "removedItemIds": [], "totalItemQuantity": 4}', NULL, '2025-09-23 11:16:24.846', '2025-09-25 11:16:24.846'),
-	(98, 'cart-add-3791bb02-098e-4e97-8e4b-69f03ec74f00', '01K5V6XB6ZM1B1Q03GZVW7N4Z1', 'POST /api/cart/items', 'db12d0239faff5e38bb71375d148a3bf556dd71004b0904e8f0cd04c6617a7b1', 'done', 201, '{"totals": {"total": 3900, "subtotal": 3900, "itemsCount": 1, "discountTotal": 0}, "version": 3, "changedItems": [{"id": 311, "qty": 1, "rowTotal": 3900, "effectiveUnitPrice": 3900}], "removedItemIds": [], "totalItemQuantity": 1}', NULL, '2025-09-23 11:56:28.803', '2025-09-25 11:56:28.803'),
-	(99, 'cart-add-18ef9bce-e321-4f7a-bc74-2b24e066d88d', '01K5V78ERMTEAHB31CD34PM6Y0', 'POST /api/cart/items', 'b5e8ce304b547e838130fd5e93fa308d3a8fac0e614d6cf231ceefe5ee045b5c', 'done', 201, '{"totals": {"total": 9800, "subtotal": 9800, "itemsCount": 1, "discountTotal": 0}, "version": 3, "changedItems": [{"id": 312, "qty": 2, "rowTotal": 9800, "effectiveUnitPrice": 4900}], "removedItemIds": [], "totalItemQuantity": 2}', NULL, '2025-09-23 12:02:32.886', '2025-09-25 12:02:32.886'),
-	(100, 'cart-add-9245b105-5a01-4606-a4a5-18f3b8e85d53', '01K5V7HBWX2R867S5JSA469ZZD', 'POST /api/cart/items', '0c651873f7a6d6833ca50b06dd56e13d1e31ef49f18bb58ffb891171d5cdcb67', 'done', 201, '{"totals": {"total": 9800, "subtotal": 9800, "itemsCount": 1, "discountTotal": 0}, "version": 3, "changedItems": [{"id": 313, "qty": 2, "rowTotal": 9800, "effectiveUnitPrice": 4900}], "removedItemIds": [], "totalItemQuantity": 2}', NULL, '2025-09-23 12:07:24.859', '2025-09-25 12:07:24.859'),
-	(101, 'cart-add-bba35e0a-5521-45f0-931a-be6355347576', '01K5Y2GT3ZRAJH7VJ9DQEMF107', 'POST /api/cart/items', '0e621dcdedd6accf77f54d240c729d91815182174eff158ab198e0e9af947e95', 'done', 201, '{"totals": {"total": 15600, "subtotal": 15600, "itemsCount": 1, "discountTotal": 0}, "version": 3, "changedItems": [{"id": 314, "qty": 1, "rowTotal": 15600, "effectiveUnitPrice": 15600}], "removedItemIds": [], "totalItemQuantity": 1}', NULL, '2025-09-24 14:37:27.077', '2025-09-26 14:37:27.077'),
-	(102, 'cart-add-99720522-9b12-411b-b0b1-f8a1048f5c8f', '01K62QW4FB8M3357HZS5K7REVY', 'POST /api/cart/items', 'dbc0ec39059c30c4eb4212ccdde6712a79b0d065b23971f8e4bbf32a863d008a', 'done', 201, '{"totals": {"total": 15600, "subtotal": 15600, "itemsCount": 1, "discountTotal": 0}, "version": 3, "changedItems": [{"id": 315, "qty": 1, "rowTotal": 15600, "effectiveUnitPrice": 15600}], "removedItemIds": [], "totalItemQuantity": 1}', NULL, '2025-09-26 10:07:36.119', '2025-09-28 10:07:36.119'),
-	(103, 'cart-add-e8e4d5a5-086b-4a52-98a1-4727f71a2e07', '01K638G8SPXTBAEPZGGPJW2C7T', 'POST /api/cart/items', 'dbc0ec39059c30c4eb4212ccdde6712a79b0d065b23971f8e4bbf32a863d008a', 'done', 201, '{"totals": {"total": 15600, "subtotal": 15600, "itemsCount": 1, "discountTotal": 0}, "version": 4, "changedItems": [{"id": 316, "qty": 1, "rowTotal": 15600, "effectiveUnitPrice": 15600}], "removedItemIds": [], "totalItemQuantity": 1}', NULL, '2025-09-26 14:58:19.078', '2025-09-28 14:58:19.078'),
-	(104, 'cart-add-7655510f-209e-4644-b010-1c33d4cfb640', '01K638G8SPXTBAEPZGGPJW2C7T', 'POST /api/cart/items', 'dbc0ec39059c30c4eb4212ccdde6712a79b0d065b23971f8e4bbf32a863d008a', 'done', 201, '{"totals": {"total": 31200, "subtotal": 31200, "itemsCount": 1, "discountTotal": 0}, "version": 6, "changedItems": [{"id": 316, "qty": 2, "rowTotal": 31200, "effectiveUnitPrice": 15600}], "removedItemIds": [], "totalItemQuantity": 2}', NULL, '2025-09-26 14:58:22.098', '2025-09-28 14:58:22.098'),
-	(105, 'cart-add-6e81d838-9347-431a-948c-02a7253f020f', '01K638V8DMWP5WYJM4HZ0AR76X', 'POST /api/cart/items', '57d833f744eb4baebfa6a2a6206fdca4b268050a06fe012b9e1226665258982d', 'processing', NULL, NULL, NULL, '2025-09-26 15:04:13.008', '2025-09-28 15:04:13.008'),
-	(106, 'cart-add-673f8dad-b831-4556-9075-8c5b17fd5bec', '01K638VPNBVPPPWH8HNRT0BD4N', 'POST /api/cart/items', '5cbd940e98c83b86fd7928ac9383195e3468faedfec97150f5de295ae1b552b0', 'processing', NULL, NULL, NULL, '2025-09-26 15:04:27.592', '2025-09-28 15:04:27.592'),
-	(107, 'cart-add-6080674d-6f9f-491c-a569-a3fd13376368', '01K638W25CZV4VKXE42B8A0CAD', 'POST /api/cart/items', 'c6acc747a654a8b470bf8a9dcc90603b6297830a424fb92b78be46011e1febed', 'done', 201, '{"totals": {"total": 3900, "subtotal": 3900, "itemsCount": 1, "discountTotal": 0}, "version": 3, "changedItems": [{"id": 317, "qty": 1, "rowTotal": 3900, "effectiveUnitPrice": 3900}], "removedItemIds": [], "totalItemQuantity": 1}', NULL, '2025-09-26 15:04:39.367', '2025-09-28 15:04:39.367'),
-	(108, 'cart-add-bb4eda0a-e355-4796-9bd9-4e3d19c1e143', '01K6395NH6C85A6NR896XPNK5M', 'POST /api/cart/items', 'c6acc747a654a8b470bf8a9dcc90603b6297830a424fb92b78be46011e1febed', 'done', 201, '{"totals": {"total": 3900, "subtotal": 3900, "itemsCount": 1, "discountTotal": 0}, "version": 3, "changedItems": [{"id": 318, "qty": 1, "rowTotal": 3900, "effectiveUnitPrice": 3900}], "removedItemIds": [], "totalItemQuantity": 1}', NULL, '2025-09-26 15:09:54.116', '2025-09-28 15:09:54.116'),
-	(109, 'cart-add-acd6b86e-658f-4b6a-8f89-6405abfbf354', '01K6397BP3MHGMB1HHX8XD0MKY', 'POST /api/cart/items', 'c6acc747a654a8b470bf8a9dcc90603b6297830a424fb92b78be46011e1febed', 'done', 201, '{"totals": {"total": 3900, "subtotal": 3900, "itemsCount": 1, "discountTotal": 0}, "version": 3, "changedItems": [{"id": 319, "qty": 1, "rowTotal": 3900, "effectiveUnitPrice": 3900}], "removedItemIds": [], "totalItemQuantity": 1}', NULL, '2025-09-26 15:10:54.682', '2025-09-28 15:10:54.682'),
-	(110, 'cart-add-528cc60f-d40f-4a96-8375-54691a84746e', '01K639JPJJ37EB8MEMCF8D9ENE', 'POST /api/cart/items', 'c6acc747a654a8b470bf8a9dcc90603b6297830a424fb92b78be46011e1febed', 'done', 201, '{"totals": {"total": 3900, "subtotal": 3900, "itemsCount": 1, "discountTotal": 0}, "version": 3, "changedItems": [{"id": 320, "qty": 1, "rowTotal": 3900, "effectiveUnitPrice": 3900}], "removedItemIds": [], "totalItemQuantity": 1}', NULL, '2025-09-26 15:17:07.947', '2025-09-28 15:17:07.947'),
-	(111, 'cart-add-32615ef5-ce9f-40ce-9b66-35395cf758b6', '01K5Y2GT3ZRAJH7VJ9DQEMF107', 'POST /api/cart/items', 'dbc0ec39059c30c4eb4212ccdde6712a79b0d065b23971f8e4bbf32a863d008a', 'done', 201, '{"totals": {"total": 31200, "subtotal": 31200, "itemsCount": 2, "discountTotal": 0}, "version": 6, "changedItems": [{"id": 321, "qty": 1, "rowTotal": 15600, "effectiveUnitPrice": 15600}], "removedItemIds": [], "totalItemQuantity": 2}', NULL, '2025-09-26 15:18:41.534', '2025-09-28 15:18:41.534'),
-	(112, 'cart-add-f6af9e72-f837-481e-8f77-483418c92b3c', '01K639P1F21AXVR7XK3Q1HHZTQ', 'POST /api/cart/items', 'dbc0ec39059c30c4eb4212ccdde6712a79b0d065b23971f8e4bbf32a863d008a', 'done', 201, '{"totals": {"total": 15600, "subtotal": 15600, "itemsCount": 1, "discountTotal": 0}, "version": 3, "changedItems": [{"id": 322, "qty": 1, "rowTotal": 15600, "effectiveUnitPrice": 15600}], "removedItemIds": [], "totalItemQuantity": 1}', NULL, '2025-09-26 15:18:50.626', '2025-09-28 15:18:50.626'),
-	(113, 'cart-add-7eb58db5-c884-4d4a-8d55-bacf24685580', '01K639P1F21AXVR7XK3Q1HHZTQ', 'POST /api/cart/items', '4b3d0cd3c1919263e2123b543f44cef34477f2aede1f84369c926ef1783c051d', 'done', 201, '{"totals": {"total": 15600, "subtotal": 15600, "itemsCount": 2, "discountTotal": 0}, "version": 5, "changedItems": [{"id": 323, "qty": 1, "rowTotal": 0, "effectiveUnitPrice": 0}], "removedItemIds": [], "totalItemQuantity": 2}', NULL, '2025-09-26 15:19:29.958', '2025-09-28 15:19:29.958'),
-	(114, 'cart-add-92df8a89-8b5c-4913-ae1e-7e3533f1978c', '01K639P1F21AXVR7XK3Q1HHZTQ', 'POST /api/cart/items', '5cbd940e98c83b86fd7928ac9383195e3468faedfec97150f5de295ae1b552b0', 'processing', NULL, NULL, NULL, '2025-09-26 15:19:40.114', '2025-09-28 15:19:40.114'),
-	(115, 'cart-add-62de39a7-a795-4cc0-b8c5-5748a952b3bb', '01K63AFBJDGVXTJH4V8C4QWF2J', 'POST /api/cart/items', '4b3d0cd3c1919263e2123b543f44cef34477f2aede1f84369c926ef1783c051d', 'done', 201, '{"totals": {"total": 0, "subtotal": 0, "itemsCount": 1, "discountTotal": 0}, "version": 3, "changedItems": [{"id": 324, "qty": 1, "rowTotal": 0, "effectiveUnitPrice": 0}], "removedItemIds": [], "totalItemQuantity": 1}', NULL, '2025-09-26 15:32:40.219', '2025-09-28 15:32:40.219'),
-	(116, 'cart-add-e5bd2bb6-e5cc-4783-8ee7-5e8926953854', '01K63AFBJDGVXTJH4V8C4QWF2J', 'POST /api/cart/items', 'c3fb513c42635fd36876e8e76285df3e9db7d222debfde2889f79a2def8512c1', 'done', 201, '{"totals": {"total": 16500, "subtotal": 16500, "itemsCount": 1, "discountTotal": 0}, "version": 9, "changedItems": [{"id": 325, "qty": 1, "rowTotal": 16500, "effectiveUnitPrice": 16500}], "removedItemIds": [], "totalItemQuantity": 1}', NULL, '2025-09-26 15:34:21.599', '2025-09-28 15:34:21.599'),
-	(117, 'cart-add-4af4f37b-5f47-4439-9e03-d41e611beb8d', '01K63AZAN7FJ5N8YSCAGN33R13', 'POST /api/cart/items', 'c3fb513c42635fd36876e8e76285df3e9db7d222debfde2889f79a2def8512c1', 'done', 201, '{"totals": {"total": 16500, "subtotal": 16500, "itemsCount": 1, "discountTotal": 0}, "version": 3, "changedItems": [{"id": 326, "qty": 1, "rowTotal": 16500, "effectiveUnitPrice": 16500}], "removedItemIds": [], "totalItemQuantity": 1}', NULL, '2025-09-26 15:41:23.526', '2025-09-28 15:41:23.526'),
-	(118, 'cart-add-595b1966-fd56-4a37-9cf1-e3e2b8009012', '01K63BDYCQDEWN8YZ735GE6Z9H', 'POST /api/cart/items', '6a6dde177c81208f4865bf764adac916c855546baa59db047762dd508eb06373', 'done', 201, '{"totals": {"total": 19600, "subtotal": 19600, "itemsCount": 1, "discountTotal": 0}, "version": 3, "changedItems": [{"id": 327, "qty": 4, "rowTotal": 19600, "effectiveUnitPrice": 4900}], "removedItemIds": [], "totalItemQuantity": 4}', NULL, '2025-09-26 15:49:22.493', '2025-09-28 15:49:22.493'),
-	(119, 'cart-add-15f9ce40-c509-4855-b8de-6914272b68d6', '01K5Y2GT3ZRAJH7VJ9DQEMF107', 'POST /api/cart/items', '5b83852feb28a9996300249574b3696e1bb74c69518230996f7b44ef63e4235d', 'done', 201, '{"totals": {"total": 46800, "subtotal": 46800, "itemsCount": 3, "discountTotal": 0}, "version": 8, "changedItems": [{"id": 328, "qty": 1, "rowTotal": 15600, "effectiveUnitPrice": 15600}], "removedItemIds": [], "totalItemQuantity": 3}', NULL, '2025-09-27 09:28:02.823', '2025-09-29 09:28:02.823'),
-	(120, 'cart-add-f8f463e9-9561-4230-be83-0ae98516b4be', '01K6A49PGV3FB1SW6A06QX0VZ3', 'POST /api/cart/items', '5b83852feb28a9996300249574b3696e1bb74c69518230996f7b44ef63e4235d', 'done', 201, '{"totals": {"total": 15600, "subtotal": 15600, "itemsCount": 1, "discountTotal": 0}, "version": 3, "changedItems": [{"id": 329, "qty": 1, "rowTotal": 15600, "effectiveUnitPrice": 15600}], "removedItemIds": [], "totalItemQuantity": 1}', NULL, '2025-09-29 06:59:24.385', '2025-10-01 06:59:24.385'),
-	(121, 'cart-add-b1917b8f-4193-4bf6-a914-36e03b013b29', '01K6A4S3H0GGK24Q0Y604RHAPS', 'POST /api/cart/items', '329774a7c6a2ad2ebdf4dd8d031f991ac36029d2665b4c792c0fada431addf28', 'done', 201, '{"totals": {"total": 78000, "subtotal": 78000, "itemsCount": 1, "discountTotal": 0}, "version": 3, "changedItems": [{"id": 330, "qty": 5, "rowTotal": 78000, "effectiveUnitPrice": 15600}], "removedItemIds": [], "totalItemQuantity": 5}', NULL, '2025-09-29 07:07:49.184', '2025-10-01 07:07:49.184'),
-	(122, 'cart-add-2ddfbf9d-bf9e-435a-9ea2-319fc48e493f', '01K6A4VP0JYG8CSBPHT0SD6QVE', 'POST /api/cart/items', '4a1374dfa33fbce16cca728ba93d4b25f131f92c7eed4d1ac20bf92ac9af1997', 'done', 201, '{"totals": {"total": 5000, "subtotal": 5000, "itemsCount": 1, "discountTotal": 0}, "version": 3, "changedItems": [{"id": 331, "qty": 1, "rowTotal": 5000, "effectiveUnitPrice": 5000}], "removedItemIds": [], "totalItemQuantity": 1}', NULL, '2025-09-29 07:09:13.642', '2025-10-01 07:09:13.642'),
-	(123, 'cart-add-cd564e58-68cc-4b1b-bc1a-e76a969168f9', '01K6A5AVJ517CHAQ6J4FH9395P', 'POST /api/cart/items', '1dbe76e94b8d1b46dabcaa0a6d1fe0352341f0644d23ef76cf1b965ded83184b', 'done', 201, '{"totals": {"total": 32000, "subtotal": 32000, "itemsCount": 1, "discountTotal": 0}, "version": 3, "changedItems": [{"id": 332, "qty": 2, "rowTotal": 32000, "effectiveUnitPrice": 16000}], "removedItemIds": [], "totalItemQuantity": 2}', NULL, '2025-09-29 07:17:30.855', '2025-10-01 07:17:30.855'),
-	(124, 'cart-add-23a2a64f-cc43-4db6-a94d-34d6ce13af5d', '01K6A6SKYT9P0X0HSFHY83KD8N', 'POST /api/cart/items', '1dbe76e94b8d1b46dabcaa0a6d1fe0352341f0644d23ef76cf1b965ded83184b', 'done', 201, '{"totals": {"total": 32000, "subtotal": 32000, "itemsCount": 1, "discountTotal": 0}, "version": 3, "changedItems": [{"id": 333, "qty": 2, "rowTotal": 32000, "effectiveUnitPrice": 16000}], "removedItemIds": [], "totalItemQuantity": 2}', NULL, '2025-09-29 07:43:03.161', '2025-10-01 07:43:03.161'),
-	(125, 'cart-add-3bacdfe0-5b40-468f-9257-50b3ab7eb136', '01K6A6SKYT9P0X0HSFHY83KD8N', 'POST /api/cart/items', '8b477a23f34ef04c173eeb56badf9231adf6eecfd5c5035e4182cea82feb56f6', 'done', 201, '{"totals": {"total": 41000, "subtotal": 41000, "itemsCount": 2, "discountTotal": 0}, "version": 5, "changedItems": [{"id": 334, "qty": 2, "rowTotal": 9000, "effectiveUnitPrice": 4500}], "removedItemIds": [], "totalItemQuantity": 4}', NULL, '2025-09-29 07:52:14.421', '2025-10-01 07:52:14.421');
+	(155, 'cart-add-37e93d13-69f2-4c6e-98f0-4d72a3dcfa67', '01K6X4KVJ3HT25B9EVGX0CE5BT', 'POST /api/cart/items', '6e5f240459f846509a704056ffaada4cad857e369cb72c86a4e3a4ec86be8685', 'done', 201, '{"totals": {"total": 35000, "subtotal": 35000, "itemsCount": 1, "discountTotal": 0}, "version": 3, "changedItems": [{"id": 394, "qty": 1, "rowTotal": 35000, "effectiveUnitPrice": 35000}], "removedItemIds": [], "totalItemQuantity": 1}', NULL, '2025-10-06 16:10:31.388', '2025-10-08 16:10:31.388'),
+	(156, 'cart-add-f8223b3a-b041-4294-bd64-ab746e39e427', '01K6X4KVJ3HT25B9EVGX0CE5BT', 'POST /api/cart/items', '4cb0f8f0d6a4232691a13a9aabfdddf05daa1df1a23a587b63732dc4d93a6589', 'done', 201, '{"totals": {"total": 60000, "subtotal": 60000, "itemsCount": 2, "discountTotal": 0}, "version": 5, "changedItems": [{"id": 397, "qty": 1, "rowTotal": 25000, "effectiveUnitPrice": 25000}], "removedItemIds": [], "totalItemQuantity": 2}', NULL, '2025-10-06 16:34:03.581', '2025-10-08 16:34:03.581'),
+	(157, 'cart-add-03b15267-15dd-4880-803c-56453c19bdeb', '01K6X60V7QYHQZSE558T1KHRZA', 'POST /api/cart/items', '4cb0f8f0d6a4232691a13a9aabfdddf05daa1df1a23a587b63732dc4d93a6589', 'done', 201, '{"totals": {"total": 25000, "subtotal": 25000, "itemsCount": 1, "discountTotal": 0}, "version": 3, "changedItems": [{"id": 398, "qty": 1, "rowTotal": 25000, "effectiveUnitPrice": 25000}], "removedItemIds": [], "totalItemQuantity": 1}', NULL, '2025-10-06 16:35:08.179', '2025-10-08 16:35:08.179'),
+	(158, 'cart-add-4148f48e-21b0-4592-91ef-f344adda43a9', '01K6X60V7QYHQZSE558T1KHRZA', 'POST /api/cart/items', '10f4b984973e2d43b467bfbda23c58b746f75265ba94ea50243bbe3c3feeb04d', 'done', 201, '{"totals": {"total": 58000, "subtotal": 58000, "itemsCount": 2, "discountTotal": 0}, "version": 5, "changedItems": [{"id": 399, "qty": 2, "rowTotal": 33000, "effectiveUnitPrice": 16500}], "removedItemIds": [], "totalItemQuantity": 3}', NULL, '2025-10-06 16:35:17.966', '2025-10-08 16:35:17.966'),
+	(159, 'cart-add-236271ee-a5b7-4720-817d-8c5d7bd2ac3f', '01K6ZGWEJNG76FK8EPXT8ZDN9D', 'POST /api/cart/items', '4cb0f8f0d6a4232691a13a9aabfdddf05daa1df1a23a587b63732dc4d93a6589', 'done', 201, '{"totals": {"total": 25000, "subtotal": 25000, "itemsCount": 1, "discountTotal": 0}, "version": 3, "changedItems": [{"id": 400, "qty": 1, "rowTotal": 25000, "effectiveUnitPrice": 25000}], "removedItemIds": [], "totalItemQuantity": 1}', NULL, '2025-10-07 14:23:27.751', '2025-10-09 14:23:27.751'),
+	(160, 'cart-add-c3a0fb0f-a259-4bcf-b638-85feaf28fd22', '01K6ZK8W0YDHEY9AZPEQK1GNCJ', 'POST /api/cart/items', '9a72f9ae04123d58f2adacf0fe6c5ebd06ab4200d119baeec21d357107eb03c2', 'done', 201, '{"totals": {"total": 16500, "subtotal": 16500, "itemsCount": 1, "discountTotal": 0}, "version": 3, "changedItems": [{"id": 401, "qty": 1, "rowTotal": 16500, "effectiveUnitPrice": 16500}], "removedItemIds": [], "totalItemQuantity": 1}', NULL, '2025-10-07 15:05:08.918', '2025-10-09 15:05:08.918'),
+	(161, 'cart-add-8bbb04c9-5e6f-4088-acba-20d1255b475d', '01K6ZK8W0YDHEY9AZPEQK1GNCJ', 'POST /api/cart/items', '072e165bd27327f8bb943fa0323de89d1200f495394b750028cc69cb732a177d', 'done', 201, '{"totals": {"total": 64500, "subtotal": 64500, "itemsCount": 2, "discountTotal": 0}, "version": 5, "changedItems": [{"id": 402, "qty": 3, "rowTotal": 48000, "effectiveUnitPrice": 16000}], "removedItemIds": [], "totalItemQuantity": 4}', NULL, '2025-10-07 15:05:21.977', '2025-10-09 15:05:21.977'),
+	(162, 'cart-add-ab4233d3-9cdb-4a39-b882-66781b325228', '01K6ZN4B2DRFCH3ZC73FG7E35K', 'POST /api/cart/items', '03429d45019b104c0d5085e06c5bd886433ee4b4bb0ada279659c5779245a806', 'done', 201, '{"totals": {"total": 36000, "subtotal": 36000, "itemsCount": 1, "discountTotal": 0}, "version": 3, "changedItems": [{"id": 403, "qty": 1, "rowTotal": 36000, "effectiveUnitPrice": 36000}], "removedItemIds": [], "totalItemQuantity": 1}', NULL, '2025-10-07 15:37:37.648', '2025-10-09 15:37:37.648');
 
--- Дамп данных таблицы new3.cart_item: ~33 rows (приблизительно)
+-- Дамп структуры для таблица new3.cart_item
+CREATE TABLE IF NOT EXISTS `cart_item` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `cart_id` binary(16) NOT NULL COMMENT '(DC2Type:ulid)',
+  `product_id` int NOT NULL,
+  `product_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `unit_price` int NOT NULL,
+  `qty` int NOT NULL,
+  `row_total` int NOT NULL,
+  `version` int NOT NULL DEFAULT '1',
+  `options_price_modifier` int NOT NULL DEFAULT '0',
+  `effective_unit_price` int NOT NULL DEFAULT '0',
+  `options_hash` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `selected_options_data` json DEFAULT NULL,
+  `options_snapshot` json DEFAULT NULL,
+  `priced_at` datetime NOT NULL COMMENT '(DC2Type:datetime_immutable)',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_cart_product_options` (`cart_id`,`product_id`,`options_hash`),
+  KEY `IDX_F0FE25271AD5CDBF` (`cart_id`),
+  KEY `IDX_F0FE25274584665A` (`product_id`),
+  CONSTRAINT `FK_F0FE25271AD5CDBF` FOREIGN KEY (`cart_id`) REFERENCES `cart` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_F0FE25274584665A` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=404 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.cart_item: ~4 rows (приблизительно)
 INSERT INTO `cart_item` (`id`, `cart_id`, `product_id`, `product_name`, `unit_price`, `qty`, `row_total`, `version`, `options_price_modifier`, `effective_unit_price`, `options_hash`, `selected_options_data`, `options_snapshot`, `priced_at`) VALUES
-	(291, _binary 0x01994c18060a4e17fb504e0136c31b24, 19, 'Люстра Кольцо', 5000, 3, 11700, 4, -1100, 3900, '7d4540e162ec0331f7a273f965ac45b4', '[{"sku": "2423423", "price": 3900, "valueCode": "diametr", "valueName": "450", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 143}, {"sku": null, "price": 0, "valueCode": "cvet_armatury", "valueName": "Золото", "optionCode": "cvet_armatury", "optionName": "Цвет арматуры", "assignmentId": 144}]', '[{"sku": "2423423", "price": 5000, "height": 200, "attributes": [], "sale_price": 3900, "value_code": "diametr", "value_name": "450", "bulbs_count": 5, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 143, "lighting_area": null}, {"sku": null, "price": null, "height": null, "attributes": [], "sale_price": null, "value_code": "cvet_armatury", "value_name": "Золото", "bulbs_count": null, "option_code": "cvet_armatury", "option_name": "Цвет арматуры", "original_sku": null, "assignment_id": 144, "lighting_area": null}]', '2025-09-15 06:37:47'),
-	(292, _binary 0x01994c18060a4e17fb504e0136c31b24, 19, 'Люстра Кольцо', 5000, 2, 9800, 2, -100, 4900, '70a432de35cf202856e93d9d5d8db301', '[{"sku": null, "price": 0, "valueCode": "cvet_armatury", "valueName": "Серебро", "optionCode": "cvet_armatury", "optionName": "Цвет арматуры", "assignmentId": 142}, {"sku": "234234", "price": 4900, "valueCode": "diametr", "valueName": "500", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 145}]', '[{"sku": null, "price": null, "height": null, "attributes": [], "sale_price": null, "value_code": "cvet_armatury", "value_name": "Серебро", "bulbs_count": null, "option_code": "cvet_armatury", "option_name": "Цвет арматуры", "original_sku": null, "assignment_id": 142, "lighting_area": null}, {"sku": "234234", "price": 6000, "height": 250, "attributes": [], "sale_price": 4900, "value_code": "diametr", "value_name": "500", "bulbs_count": 6, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 145, "lighting_area": null}]', '2025-09-15 06:37:55'),
-	(293, _binary 0x01994c18060a4e17fb504e0136c31b24, 19, 'Люстра Кольцо', 5000, 1, 4900, 2, -100, 4900, '33aaa8090346d701adda53871ce098b8', '[{"sku": null, "price": 0, "valueCode": "cvet_armatury", "valueName": "Золото", "optionCode": "cvet_armatury", "optionName": "Цвет арматуры", "assignmentId": 144}, {"sku": "234234", "price": 4900, "valueCode": "diametr", "valueName": "500", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 145}]', '[{"sku": null, "price": null, "height": null, "attributes": [], "sale_price": null, "value_code": "cvet_armatury", "value_name": "Золото", "bulbs_count": null, "option_code": "cvet_armatury", "option_name": "Цвет арматуры", "original_sku": null, "assignment_id": 144, "lighting_area": null}, {"sku": "234234", "price": 6000, "height": 250, "attributes": [], "sale_price": 4900, "value_code": "diametr", "value_name": "500", "bulbs_count": 6, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 145, "lighting_area": null}]', '2025-09-15 09:46:09'),
-	(294, _binary 0x01994e086c9d27e2b0da3da72403fad3, 19, 'Люстра Кольцо', 5000, 1, 3900, 2, -1100, 3900, '7d4540e162ec0331f7a273f965ac45b4', '[{"sku": "2423423", "price": 3900, "valueCode": "diametr", "valueName": "450", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 143}, {"sku": null, "price": 0, "valueCode": "cvet_armatury", "valueName": "Золото", "optionCode": "cvet_armatury", "optionName": "Цвет арматуры", "assignmentId": 144}]', '[{"sku": "2423423", "price": 5000, "height": 200, "attributes": [], "sale_price": 3900, "value_code": "diametr", "value_name": "450", "bulbs_count": 5, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 143, "lighting_area": null}, {"sku": null, "price": null, "height": null, "attributes": [], "sale_price": null, "value_code": "cvet_armatury", "value_name": "Золото", "bulbs_count": null, "option_code": "cvet_armatury", "option_name": "Цвет арматуры", "original_sku": null, "assignment_id": 144, "lighting_area": null}]', '2025-09-15 15:39:59'),
-	(295, _binary 0x01995159bd4033b64d24cdfccb85add4, 19, 'Люстра Кольцо', 5000, 1, 3900, 2, -1100, 3900, '7d4540e162ec0331f7a273f965ac45b4', '[{"sku": "2423423", "price": 3900, "valueCode": "diametr", "valueName": "450", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 143}, {"sku": null, "price": 0, "valueCode": "cvet_armatury", "valueName": "Золото", "optionCode": "cvet_armatury", "optionName": "Цвет арматуры", "assignmentId": 144}]', '[{"sku": "2423423", "price": 5000, "height": 200, "attributes": [], "sale_price": 3900, "value_code": "diametr", "value_name": "450", "bulbs_count": 5, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 143, "lighting_area": null}, {"sku": null, "price": null, "height": null, "attributes": [], "sale_price": null, "value_code": "cvet_armatury", "value_name": "Золото", "bulbs_count": null, "option_code": "cvet_armatury", "option_name": "Цвет арматуры", "original_sku": null, "assignment_id": 144, "lighting_area": null}]', '2025-09-16 07:07:41'),
-	(296, _binary 0x019952a7c3544f23748adaff00b69fc5, 19, 'Люстра Кольцо', 5000, 2, 9800, 2, -100, 4900, '33aaa8090346d701adda53871ce098b8', '[{"sku": null, "price": 0, "valueCode": "cvet_armatury", "valueName": "Золото", "optionCode": "cvet_armatury", "optionName": "Цвет арматуры", "assignmentId": 144}, {"sku": "234234", "price": 4900, "valueCode": "diametr", "valueName": "500", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 145}]', '[{"sku": null, "price": null, "height": null, "attributes": [], "sale_price": null, "value_code": "cvet_armatury", "value_name": "Золото", "bulbs_count": null, "option_code": "cvet_armatury", "option_name": "Цвет арматуры", "original_sku": null, "assignment_id": 144, "lighting_area": null}, {"sku": "234234", "price": 6000, "height": 250, "attributes": [], "sale_price": 4900, "value_code": "diametr", "value_name": "500", "bulbs_count": 6, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 145, "lighting_area": null}]', '2025-09-16 13:12:30'),
-	(297, _binary 0x019952f8e7d769bd55626481e03457bd, 19, 'Люстра Кольцо', 5000, 2, 9800, 2, -100, 4900, '33aaa8090346d701adda53871ce098b8', '[{"sku": null, "price": 0, "valueCode": "cvet_armatury", "valueName": "Золото", "optionCode": "cvet_armatury", "optionName": "Цвет арматуры", "assignmentId": 144}, {"sku": "234234", "price": 4900, "valueCode": "diametr", "valueName": "500", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 145}]', '[{"sku": null, "price": null, "height": null, "attributes": [], "sale_price": null, "value_code": "cvet_armatury", "value_name": "Золото", "bulbs_count": null, "option_code": "cvet_armatury", "option_name": "Цвет арматуры", "original_sku": null, "assignment_id": 144, "lighting_area": null}, {"sku": "234234", "price": 6000, "height": 250, "attributes": [], "sale_price": 4900, "value_code": "diametr", "value_name": "500", "bulbs_count": 6, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 145, "lighting_area": null}]', '2025-09-16 14:41:20'),
-	(298, _binary 0x01995324032e7496175d0a312016eff0, 19, 'Люстра Кольцо', 5000, 1, 4900, 2, -100, 4900, '33aaa8090346d701adda53871ce098b8', '[{"sku": null, "price": 0, "valueCode": "cvet_armatury", "valueName": "Золото", "optionCode": "cvet_armatury", "optionName": "Цвет арматуры", "assignmentId": 144}, {"sku": "234234", "price": 4900, "valueCode": "diametr", "valueName": "500", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 145}]', '[{"sku": null, "price": null, "height": null, "attributes": [], "sale_price": null, "value_code": "cvet_armatury", "value_name": "Золото", "bulbs_count": null, "option_code": "cvet_armatury", "option_name": "Цвет арматуры", "original_sku": null, "assignment_id": 144, "lighting_area": null}, {"sku": "234234", "price": 6000, "height": 250, "attributes": [], "sale_price": 4900, "value_code": "diametr", "value_name": "500", "bulbs_count": 6, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 145, "lighting_area": null}]', '2025-09-16 15:28:13'),
-	(299, _binary 0x019956aef5ce8b2dac0a5de8d756feb2, 19, 'Люстра Кольцо', 5000, 6, 23400, 7, -1100, 3900, '7d4540e162ec0331f7a273f965ac45b4', '[{"sku": "2423423", "price": 3900, "valueCode": "diametr", "valueName": "450", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 143}, {"sku": null, "price": 0, "valueCode": "cvet_armatury", "valueName": "Золото", "optionCode": "cvet_armatury", "optionName": "Цвет арматуры", "assignmentId": 144}]', '[{"sku": "2423423", "price": 5000, "height": 200, "attributes": [], "sale_price": 3900, "value_code": "diametr", "value_name": "450", "bulbs_count": 5, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 143, "lighting_area": null}, {"sku": null, "price": null, "height": null, "attributes": [], "sale_price": null, "value_code": "cvet_armatury", "value_name": "Золото", "bulbs_count": null, "option_code": "cvet_armatury", "option_name": "Цвет арматуры", "original_sku": null, "assignment_id": 144, "lighting_area": null}]', '2025-09-17 07:58:51'),
-	(302, _binary 0x019956aef5ce8b2dac0a5de8d756feb2, 19, 'Люстра Кольцо', 5000, 2, 9800, 2, -100, 4900, '70a432de35cf202856e93d9d5d8db301', '[{"sku": null, "price": 0, "valueCode": "cvet_armatury", "valueName": "Серебро", "optionCode": "cvet_armatury", "optionName": "Цвет арматуры", "assignmentId": 142}, {"sku": "234234", "price": 4900, "valueCode": "diametr", "valueName": "500", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 145}]', '[{"sku": null, "price": null, "height": null, "attributes": [], "sale_price": null, "value_code": "cvet_armatury", "value_name": "Серебро", "bulbs_count": null, "option_code": "cvet_armatury", "option_name": "Цвет арматуры", "original_sku": null, "assignment_id": 142, "lighting_area": null}, {"sku": "234234", "price": 6000, "height": 250, "attributes": [], "sale_price": 4900, "value_code": "diametr", "value_name": "500", "bulbs_count": 6, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 145, "lighting_area": null}]', '2025-09-17 08:33:03'),
-	(303, _binary 0x019956aef5ce8b2dac0a5de8d756feb2, 19, 'Люстра Кольцо', 5000, 1, 4900, 2, -100, 4900, '33aaa8090346d701adda53871ce098b8', '[{"sku": null, "price": 0, "valueCode": "cvet_armatury", "valueName": "Золото", "optionCode": "cvet_armatury", "optionName": "Цвет арматуры", "assignmentId": 144}, {"sku": "234234", "price": 4900, "valueCode": "diametr", "valueName": "500", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 145}]', '[{"sku": null, "price": null, "height": null, "attributes": [], "sale_price": null, "value_code": "cvet_armatury", "value_name": "Золото", "bulbs_count": null, "option_code": "cvet_armatury", "option_name": "Цвет арматуры", "original_sku": null, "assignment_id": 144, "lighting_area": null}, {"sku": "234234", "price": 6000, "height": 250, "attributes": [], "sale_price": 4900, "value_code": "diametr", "value_name": "500", "bulbs_count": 6, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 145, "lighting_area": null}]', '2025-09-17 08:33:24'),
-	(304, _binary 0x019970604f85f00fd1ea996ea3a2e0e4, 19, 'Люстра Кольцо', 5000, 1, 3900, 2, -1100, 3900, 'e5206463631ba93945cadfaca501213d', '[{"sku": "2423423", "price": 3900, "valueCode": "diametr", "valueName": "700", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 191}, {"sku": null, "price": 0, "valueCode": "cvet_armatury", "valueName": "Золото", "optionCode": "cvet_armatury", "optionName": "Цвет арматуры", "assignmentId": 192}]', '[{"sku": "2423423", "price": 5000, "height": 200, "attributes": [], "sale_price": 3900, "value_code": "diametr", "value_name": "700", "bulbs_count": 5, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 191, "lighting_area": null}, {"sku": null, "price": null, "height": null, "attributes": [], "sale_price": null, "value_code": "cvet_armatury", "value_name": "Золото", "bulbs_count": null, "option_code": "cvet_armatury", "option_name": "Цвет арматуры", "original_sku": null, "assignment_id": 192, "lighting_area": null}]', '2025-09-22 07:43:04'),
-	(305, _binary 0x019970604f85f00fd1ea996ea3a2e0e4, 52, 'Кольцо №5', 6000, 1, 6000, 2, 0, 6000, '3644a684f98ea8fe223c713b77189a77', '[{"sku": "345435", "price": 6000, "valueCode": "diametr", "valueName": "450", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 200}]', '[{"sku": "345435", "price": 6000, "height": 250, "attributes": [], "sale_price": null, "value_code": "diametr", "value_name": "450", "bulbs_count": 4, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 200, "lighting_area": null}]', '2025-09-22 08:36:05'),
-	(306, _binary 0x019970604f85f00fd1ea996ea3a2e0e4, 53, 'Кольцо №7', 5000, 2, 10000, 3, 0, 5000, '', NULL, NULL, '2025-09-22 08:37:14'),
-	(307, _binary 0x0199763fcb512b05af40d02d1aa812cf, 52, 'Кольцо №5', 6000, 1, 6000, 2, 0, 6000, '3644a684f98ea8fe223c713b77189a77', '[{"sku": "345435", "price": 6000, "valueCode": "diametr", "valueName": "450", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 200}]', '[{"sku": "345435", "price": 6000, "height": 250, "attributes": [], "sale_price": null, "value_code": "diametr", "value_name": "450", "bulbs_count": 4, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 200, "lighting_area": null}]', '2025-09-23 11:05:16'),
-	(308, _binary 0x019976492c00e533be9e984fb5cf101c, 52, 'Кольцо №5', 6000, 1, 6000, 2, 0, 6000, '3644a684f98ea8fe223c713b77189a77', '[{"sku": "345435", "price": 6000, "valueCode": "diametr", "valueName": "450", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 200}]', '[{"sku": "345435", "price": 6000, "height": 250, "attributes": [], "sale_price": null, "value_code": "diametr", "value_name": "450", "bulbs_count": 4, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 200, "lighting_area": null}]', '2025-09-23 11:15:31'),
-	(309, _binary 0x019976492c00e533be9e984fb5cf101c, 19, 'Люстра Кольцо', 5000, 1, 3900, 2, -1100, 3900, 'e5206463631ba93945cadfaca501213d', '[{"sku": "2423423", "price": 3900, "valueCode": "diametr", "valueName": "700", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 191}, {"sku": null, "price": 0, "valueCode": "cvet_armatury", "valueName": "Золото", "optionCode": "cvet_armatury", "optionName": "Цвет арматуры", "assignmentId": 192}]', '[{"sku": "2423423", "price": 5000, "height": 200, "attributes": [], "sale_price": 3900, "value_code": "diametr", "value_name": "700", "bulbs_count": 5, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 191, "lighting_area": null}, {"sku": null, "price": null, "height": null, "attributes": [], "sale_price": null, "value_code": "cvet_armatury", "value_name": "Золото", "bulbs_count": null, "option_code": "cvet_armatury", "option_name": "Цвет арматуры", "original_sku": null, "assignment_id": 192, "lighting_area": null}]', '2025-09-23 11:16:19'),
-	(310, _binary 0x019976492c00e533be9e984fb5cf101c, 19, 'Люстра Кольцо', 5000, 2, 9800, 2, -100, 4900, 'b9f3b355c4e99266921b46537c95c91a', '[{"sku": null, "price": 0, "valueCode": "cvet_armatury", "valueName": "Серебро", "optionCode": "cvet_armatury", "optionName": "Цвет арматуры", "assignmentId": 190}, {"sku": "234234", "price": 4900, "valueCode": "diametr", "valueName": "500", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 193}]', '[{"sku": null, "price": null, "height": null, "attributes": [], "sale_price": null, "value_code": "cvet_armatury", "value_name": "Серебро", "bulbs_count": null, "option_code": "cvet_armatury", "option_name": "Цвет арматуры", "original_sku": null, "assignment_id": 190, "lighting_area": null}, {"sku": "234234", "price": 6000, "height": 250, "attributes": [], "sale_price": 4900, "value_code": "diametr", "value_name": "500", "bulbs_count": 6, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 193, "lighting_area": null}]', '2025-09-23 11:16:24'),
-	(311, _binary 0x0199766eacdfa0561b8070fef87a93e1, 19, 'Люстра Кольцо', 5000, 1, 3900, 2, -1100, 3900, 'e5206463631ba93945cadfaca501213d', '[{"sku": "2423423", "price": 3900, "valueCode": "diametr", "valueName": "700", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 191}, {"sku": null, "price": 0, "valueCode": "cvet_armatury", "valueName": "Золото", "optionCode": "cvet_armatury", "optionName": "Цвет арматуры", "assignmentId": 192}]', '[{"sku": "2423423", "price": 5000, "height": 200, "attributes": [], "sale_price": 3900, "value_code": "diametr", "value_name": "700", "bulbs_count": 5, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 191, "lighting_area": null}, {"sku": null, "price": null, "height": null, "attributes": [], "sale_price": null, "value_code": "cvet_armatury", "value_name": "Золото", "bulbs_count": null, "option_code": "cvet_armatury", "option_name": "Цвет арматуры", "original_sku": null, "assignment_id": 192, "lighting_area": null}]', '2025-09-23 11:56:28'),
-	(312, _binary 0x019976743b14d395158c2c68c96a1bc0, 19, 'Люстра Кольцо', 5000, 2, 9800, 2, -100, 4900, 'b9f3b355c4e99266921b46537c95c91a', '[{"sku": null, "price": 0, "valueCode": "cvet_armatury", "valueName": "Серебро", "optionCode": "cvet_armatury", "optionName": "Цвет арматуры", "assignmentId": 190}, {"sku": "234234", "price": 4900, "valueCode": "diametr", "valueName": "500", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 193}]', '[{"sku": null, "price": null, "height": null, "attributes": [], "sale_price": null, "value_code": "cvet_armatury", "value_name": "Серебро", "bulbs_count": null, "option_code": "cvet_armatury", "option_name": "Цвет арматуры", "original_sku": null, "assignment_id": 190, "lighting_area": null}, {"sku": "234234", "price": 6000, "height": 250, "attributes": [], "sale_price": 4900, "value_code": "diametr", "value_name": "500", "bulbs_count": 6, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 193, "lighting_area": null}]', '2025-09-23 12:02:32'),
-	(313, _binary 0x01997678af9d161063e4b2ca8864ffed, 19, 'Люстра Кольцо', 5000, 3, 14700, 3, -100, 4900, '69f85134e0b087e8b2cd1a120db0c479', '[{"sku": null, "price": 0, "valueCode": "cvet_armatury", "valueName": "Золото", "optionCode": "cvet_armatury", "optionName": "Цвет арматуры", "assignmentId": 192}, {"sku": "234234", "price": 4900, "valueCode": "diametr", "valueName": "500", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 193}]', '[{"sku": null, "price": null, "height": null, "attributes": [], "sale_price": null, "value_code": "cvet_armatury", "value_name": "Золото", "bulbs_count": null, "option_code": "cvet_armatury", "option_name": "Цвет арматуры", "original_sku": null, "assignment_id": 192, "lighting_area": null}, {"sku": "234234", "price": 6000, "height": 250, "attributes": [], "sale_price": 4900, "value_code": "diametr", "value_name": "500", "bulbs_count": 6, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 193, "lighting_area": null}]', '2025-09-23 12:07:24'),
-	(314, _binary 0x01997c28687fc2a513ee496ddd478407, 71, 'Кольцо 20', 15600, 1, 15600, 2, 0, 15600, '53c3bce66e43be4f209556518c2fcb54', '[{"sku": null, "price": 15600, "valueCode": "diametr", "valueName": "700", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 293}]', '[{"sku": null, "price": 15600, "height": 350, "attributes": [], "sale_price": null, "value_code": "diametr", "value_name": "700", "bulbs_count": 5, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 293, "lighting_area": null}]', '2025-09-24 14:37:27'),
-	(315, _binary 0x0199857e11eb4506329e3fc9667c3b7e, 72, 'Копия Кольцо 20', 15600, 1, 15600, 2, 0, 15600, 'ef0d3930a7b6c95bd2b32ed45989c61f', '[{"sku": null, "price": 15600, "valueCode": "diametr", "valueName": "700", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 299}]', '[{"sku": null, "price": 15600, "height": 350, "attributes": [], "sale_price": null, "value_code": "diametr", "value_name": "700", "bulbs_count": 5, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 299, "lighting_area": null}]', '2025-09-26 10:07:36'),
-	(316, _binary 0x019986882336ee96a75bf085a5c130fa, 72, 'Копия Кольцо 20', 15600, 2, 31200, 3, 0, 15600, 'ef0d3930a7b6c95bd2b32ed45989c61f', '[{"sku": null, "price": 15600, "valueCode": "diametr", "valueName": "700", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 299}]', '[{"sku": null, "price": 15600, "height": 350, "attributes": [], "sale_price": null, "value_code": "diametr", "value_name": "700", "bulbs_count": 5, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 299, "lighting_area": null}]', '2025-09-26 14:58:19'),
-	(317, _binary 0x0199868e08acfec9b9f5c412d0a0314d, 19, 'Люстра Кольцо 5 - 3 лампа', 3900, 1, 3900, 2, 0, 3900, 'bf799e3a047321ed6447e9cc48bc36da', '[{"sku": null, "price": 0, "valueCode": "cvet_armatury", "valueName": "Серебро", "optionCode": "cvet_armatury", "optionName": "Цвет арматуры", "assignmentId": 225}, {"sku": "2423423", "price": 3900, "valueCode": "diametr", "valueName": "700", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 226}]', '[{"sku": null, "price": null, "height": null, "attributes": [], "sale_price": null, "value_code": "cvet_armatury", "value_name": "Серебро", "bulbs_count": null, "option_code": "cvet_armatury", "option_name": "Цвет арматуры", "original_sku": null, "assignment_id": 225, "lighting_area": null}, {"sku": "2423423", "price": 5000, "height": 200, "attributes": [], "sale_price": 3900, "value_code": "diametr", "value_name": "700", "bulbs_count": 5, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 226, "lighting_area": null}]', '2025-09-26 15:04:39'),
-	(318, _binary 0x01998692d626620aa3570849bb6accb4, 19, 'Люстра Кольцо 5 - 3 лампа', 3900, 1, 3900, 2, 0, 3900, 'bf799e3a047321ed6447e9cc48bc36da', '[{"sku": null, "price": 0, "valueCode": "cvet_armatury", "valueName": "Серебро", "optionCode": "cvet_armatury", "optionName": "Цвет арматуры", "assignmentId": 225}, {"sku": "2423423", "price": 3900, "valueCode": "diametr", "valueName": "700", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 226}]', '[{"sku": null, "price": null, "height": null, "attributes": [], "sale_price": null, "value_code": "cvet_armatury", "value_name": "Серебро", "bulbs_count": null, "option_code": "cvet_armatury", "option_name": "Цвет арматуры", "original_sku": null, "assignment_id": 225, "lighting_area": null}, {"sku": "2423423", "price": 5000, "height": 200, "attributes": [], "sale_price": 3900, "value_code": "diametr", "value_name": "700", "bulbs_count": 5, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 226, "lighting_area": null}]', '2025-09-26 15:09:54'),
-	(319, _binary 0x01998693aec3a461458631ea3ad0527e, 19, 'Люстра Кольцо 5 - 3 лампа', 3900, 1, 3900, 2, 0, 3900, 'bf799e3a047321ed6447e9cc48bc36da', '[{"sku": null, "price": 0, "valueCode": "cvet_armatury", "valueName": "Серебро", "optionCode": "cvet_armatury", "optionName": "Цвет арматуры", "assignmentId": 225}, {"sku": "2423423", "price": 3900, "valueCode": "diametr", "valueName": "700", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 226}]', '[{"sku": null, "price": null, "height": null, "attributes": [], "sale_price": null, "value_code": "cvet_armatury", "value_name": "Серебро", "bulbs_count": null, "option_code": "cvet_armatury", "option_name": "Цвет арматуры", "original_sku": null, "assignment_id": 225, "lighting_area": null}, {"sku": "2423423", "price": 5000, "height": 200, "attributes": [], "sale_price": 3900, "value_code": "diametr", "value_name": "700", "bulbs_count": 5, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 226, "lighting_area": null}]', '2025-09-26 15:10:54'),
-	(320, _binary 0x019986995a5219dcb451d463d0d4baae, 19, 'Люстра Кольцо 5 - 3 лампа', 3900, 1, 3900, 2, 0, 3900, 'bf799e3a047321ed6447e9cc48bc36da', '[{"sku": null, "price": 0, "valueCode": "cvet_armatury", "valueName": "Серебро", "optionCode": "cvet_armatury", "optionName": "Цвет арматуры", "assignmentId": 225}, {"sku": "2423423", "price": 3900, "valueCode": "diametr", "valueName": "700", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 226}]', '[{"sku": null, "price": null, "height": null, "attributes": [], "sale_price": null, "value_code": "cvet_armatury", "value_name": "Серебро", "bulbs_count": null, "option_code": "cvet_armatury", "option_name": "Цвет арматуры", "original_sku": null, "assignment_id": 225, "lighting_area": null}, {"sku": "2423423", "price": 5000, "height": 200, "attributes": [], "sale_price": 3900, "value_code": "diametr", "value_name": "700", "bulbs_count": 5, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 226, "lighting_area": null}]', '2025-09-26 15:17:07'),
-	(321, _binary 0x01997c28687fc2a513ee496ddd478407, 72, 'Копия Кольцо 20', 15600, 1, 15600, 2, 0, 15600, 'ef0d3930a7b6c95bd2b32ed45989c61f', '[{"sku": null, "price": 15600, "valueCode": "diametr", "valueName": "700", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 299}]', '[{"sku": null, "price": 15600, "height": 350, "attributes": [], "sale_price": null, "value_code": "diametr", "value_name": "700", "bulbs_count": 5, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 299, "lighting_area": null}]', '2025-09-26 15:18:41'),
-	(322, _binary 0x0199869b05e20abbbc1fb31dc318ff57, 72, 'Копия Кольцо 20', 15600, 1, 15600, 2, 0, 15600, 'ef0d3930a7b6c95bd2b32ed45989c61f', '[{"sku": null, "price": 15600, "valueCode": "diametr", "valueName": "700", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 299}]', '[{"sku": null, "price": 15600, "height": 350, "attributes": [], "sale_price": null, "value_code": "diametr", "value_name": "700", "bulbs_count": 5, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 299, "lighting_area": null}]', '2025-09-26 15:18:50'),
-	(323, _binary 0x0199869b05e20abbbc1fb31dc318ff57, 70, 'Кольцо 19', 0, 1, 0, 1, 0, 0, '94f6d7e04a4d452035300f18b984988c', '[{"sku": null, "price": 0, "valueCode": "diametr", "valueName": "450", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 300}]', '[{"sku": null, "price": null, "height": null, "attributes": [], "sale_price": null, "value_code": "diametr", "value_name": "450", "bulbs_count": null, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 300, "lighting_area": null}]', '2025-09-26 15:19:30'),
-	(325, _binary 0x019986a7ae4d86fba9449b43097e3c52, 70, 'Кольцо 19', 0, 1, 16500, 2, 16500, 16500, '34ed066df378efacc9b924ec161e7639', '[{"sku": null, "price": 16500, "valueCode": "diametr", "valueName": "450", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 301}]', '[{"sku": null, "price": 16500, "height": null, "attributes": [], "sale_price": null, "value_code": "diametr", "value_name": "450", "bulbs_count": null, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 301, "lighting_area": null}]', '2025-09-26 15:34:21'),
-	(326, _binary 0x019986afaaa77c8b547b2c542a31e023, 70, 'Кольцо 19', 0, 1, 16500, 2, 16500, 16500, '34ed066df378efacc9b924ec161e7639', '[{"sku": null, "price": 16500, "valueCode": "diametr", "valueName": "450", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 301}]', '[{"sku": null, "price": 16500, "height": null, "attributes": [], "sale_price": null, "value_code": "diametr", "value_name": "450", "bulbs_count": null, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 301, "lighting_area": null}]', '2025-09-26 15:41:23'),
-	(327, _binary 0x019986b6f9976bb9547be71960e37d31, 19, 'Люстра Кольцо 5 - 3 лампа', 3900, 4, 19600, 2, 1000, 4900, 'd7e33585b30371c9e0833441c0bdd3d0', '[{"sku": null, "price": 0, "valueCode": "cvet_armatury", "valueName": "Серебро", "optionCode": "cvet_armatury", "optionName": "Цвет арматуры", "assignmentId": 225}, {"sku": "234234", "price": 4900, "valueCode": "diametr", "valueName": "500", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 227}]', '[{"sku": null, "price": null, "height": null, "attributes": [], "sale_price": null, "value_code": "cvet_armatury", "value_name": "Серебро", "bulbs_count": null, "option_code": "cvet_armatury", "option_name": "Цвет арматуры", "original_sku": null, "assignment_id": 225, "lighting_area": null}, {"sku": "234234", "price": 6000, "height": 250, "attributes": [], "sale_price": 4900, "value_code": "diametr", "value_name": "500", "bulbs_count": 6, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 227, "lighting_area": null}]', '2025-09-26 15:49:22'),
-	(328, _binary 0x01997c28687fc2a513ee496ddd478407, 71, 'Кольцо 20', 15600, 1, 15600, 2, 0, 15600, 'b2eb7349035754953b57a32e2841bda5', '[{"sku": null, "price": 15600, "valueCode": "diametr", "valueName": "700", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 306}]', '[{"sku": null, "price": 15600, "height": 350, "attributes": [], "sale_price": null, "value_code": "diametr", "value_name": "700", "bulbs_count": 5, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 306, "lighting_area": null}]', '2025-09-27 09:28:02'),
-	(329, _binary 0x01999444da1b1bd61cf0ca01afd06fe3, 71, 'Кольцо 20', 15600, 1, 15600, 2, 0, 15600, 'b2eb7349035754953b57a32e2841bda5', '[{"sku": null, "price": 15600, "valueCode": "diametr", "valueName": "700", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 306}]', '[{"sku": null, "price": 15600, "height": 350, "attributes": [], "sale_price": null, "value_code": "diametr", "value_name": "700", "bulbs_count": 5, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 306, "lighting_area": null}]', '2025-09-29 06:59:24'),
-	(330, _binary 0x0199944c8e208426225c1e300988aad9, 72, 'Копия Кольцо 20', 15600, 5, 78000, 2, 0, 15600, 'ef0d3930a7b6c95bd2b32ed45989c61f', '[{"sku": null, "price": 15600, "valueCode": "diametr", "valueName": "700", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 299}]', '[{"sku": null, "price": 15600, "height": 350, "attributes": [], "sale_price": null, "value_code": "diametr", "value_name": "700", "bulbs_count": 5, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 299, "lighting_area": null}]', '2025-09-29 07:07:49'),
-	(331, _binary 0x0199944dd812f410ccaed1d032d35f6e, 53, 'Кольцо №7', 5000, 1, 5000, 2, 0, 5000, '', NULL, NULL, '2025-09-29 07:09:13'),
-	(332, _binary 0x019994556e4509d9155cd223e291a4b6, 69, 'Кольцо 17', 0, 2, 32000, 2, 16000, 16000, '77151263a32ad7dfb627efb41e00486a', '[{"sku": "4561521", "price": 16000, "valueCode": "diametr", "valueName": "500", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 308}, {"sku": null, "price": 0, "valueCode": "cvet_armatury", "valueName": "Серебро", "optionCode": "cvet_armatury", "optionName": "Цвет арматуры", "assignmentId": 310}]', '[{"sku": "4561521", "price": 18950, "height": 250, "attributes": [], "sale_price": 16000, "value_code": "diametr", "value_name": "500", "bulbs_count": 6, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 308, "lighting_area": null}, {"sku": null, "price": null, "height": null, "attributes": [], "sale_price": null, "value_code": "cvet_armatury", "value_name": "Серебро", "bulbs_count": null, "option_code": "cvet_armatury", "option_name": "Цвет арматуры", "original_sku": null, "assignment_id": 310, "lighting_area": null}]', '2025-09-29 07:17:30'),
-	(333, _binary 0x0199946ccfda4d81d0472f8f9039b515, 69, 'Кольцо 17', 0, 2, 32000, 2, 16000, 16000, '77151263a32ad7dfb627efb41e00486a', '[{"sku": "4561521", "price": 16000, "valueCode": "diametr", "valueName": "500", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 308}, {"sku": null, "price": 0, "valueCode": "cvet_armatury", "valueName": "Серебро", "optionCode": "cvet_armatury", "optionName": "Цвет арматуры", "assignmentId": 310}]', '[{"sku": "4561521", "price": 18950, "height": 250, "attributes": [], "sale_price": 16000, "value_code": "diametr", "value_name": "500", "bulbs_count": 6, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 308, "lighting_area": null}, {"sku": null, "price": null, "height": null, "attributes": [], "sale_price": null, "value_code": "cvet_armatury", "value_name": "Серебро", "bulbs_count": null, "option_code": "cvet_armatury", "option_name": "Цвет арматуры", "original_sku": null, "assignment_id": 310, "lighting_area": null}]', '2025-09-29 07:43:03'),
-	(334, _binary 0x0199946ccfda4d81d0472f8f9039b515, 53, 'Кольцо №7', 4500, 2, 9000, 2, 0, 4500, '', NULL, NULL, '2025-09-29 07:52:14');
+	(394, _binary 0x0199ba49ee438e8455a5db8740c7157a, 83, 'Бронзовая люстра Атланта №2', 36000, 1, 35000, 2, -1000, 35000, '58238e9ae2dd305d79c2ebc8c1883422', '[{"sku": "23487_2", "price": 35000, "valueCode": "diametr", "valueName": "500", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 342}]', '[{"sku": "23487_2", "price": 35000, "height": 500, "attributes": [], "sale_price": null, "value_code": "diametr", "value_name": "500", "bulbs_count": 5, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 342, "lighting_area": 15}]', '2025-10-06 16:10:31'),
+	(397, _binary 0x0199ba49ee438e8455a5db8740c7157a, 73, 'Бронзовая люстра Артемида №6 шар', 25000, 2, 50000, 3, 0, 25000, '158f3069a435b314a80bdcb024f8e422', '[{"sku": "456789", "price": 25000, "valueCode": "diametr", "valueName": "600", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 313}]', '[{"sku": "456789", "price": 25000, "height": 650, "attributes": [], "sale_price": null, "value_code": "diametr", "value_name": "600", "bulbs_count": 6, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 313, "lighting_area": 18}]', '2025-10-06 16:34:03'),
+	(398, _binary 0x0199ba606cf7f46ffcb8a5468338e3ea, 73, 'Бронзовая люстра Артемида №6 шар', 25000, 1, 25000, 2, 0, 25000, '158f3069a435b314a80bdcb024f8e422', '[{"sku": "456789", "price": 25000, "valueCode": "diametr", "valueName": "600", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 313}]', '[{"sku": "456789", "price": 25000, "height": 650, "attributes": [], "sale_price": null, "value_code": "diametr", "value_name": "600", "bulbs_count": 6, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 313, "lighting_area": 18}]', '2025-10-06 16:35:08'),
+	(399, _binary 0x0199ba606cf7f46ffcb8a5468338e3ea, 70, 'Кольцо 19', 0, 2, 33000, 2, 16500, 16500, 'aa942ab2bfa6ebda4840e7360ce6e7ef', '[{"sku": null, "price": 16500, "valueCode": "diametr", "valueName": "450", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 358}]', '[{"sku": null, "price": 16500, "height": null, "attributes": [], "sale_price": null, "value_code": "diametr", "value_name": "450", "bulbs_count": null, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 358, "lighting_area": null}]', '2025-10-06 16:35:18'),
+	(401, _binary 0x0199bf34701e6c5de4abf675e6185592, 70, 'Кольцо 19', 0, 1, 16500, 2, 16500, 16500, 'aa942ab2bfa6ebda4840e7360ce6e7ef', '[{"sku": null, "price": 16500, "valueCode": "diametr", "valueName": "450", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 358}]', '[{"sku": null, "price": 16500, "height": null, "attributes": [], "sale_price": null, "value_code": "diametr", "value_name": "450", "bulbs_count": null, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 358, "lighting_area": null}]', '2025-10-07 15:05:08'),
+	(402, _binary 0x0199bf34701e6c5de4abf675e6185592, 69, 'Кольцо 17', 0, 3, 48000, 2, 16000, 16000, '77151263a32ad7dfb627efb41e00486a', '[{"sku": "4561521", "price": 16000, "valueCode": "diametr", "valueName": "500", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 308}, {"sku": null, "price": 0, "valueCode": "cvet_armatury", "valueName": "Серебро", "optionCode": "cvet_armatury", "optionName": "Цвет арматуры", "assignmentId": 310}]', '[{"sku": "4561521", "price": 18950, "height": 250, "attributes": [], "sale_price": 16000, "value_code": "diametr", "value_name": "500", "bulbs_count": 6, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 308, "lighting_area": null}, {"sku": null, "price": null, "height": null, "attributes": [], "sale_price": null, "value_code": "cvet_armatury", "value_name": "Серебро", "bulbs_count": null, "option_code": "cvet_armatury", "option_name": "Цвет арматуры", "original_sku": null, "assignment_id": 310, "lighting_area": null}]', '2025-10-07 15:05:22'),
+	(403, _binary 0x0199bf522c4dc3d911fd871be0770cb3, 82, 'Бронзовая люстра Атланта №1', 42900, 1, 36000, 2, -6900, 36000, '40008b9a5380fcacce3976bf7c08af5b', '[{"sku": "23487", "price": 36000, "valueCode": "diametr", "valueName": "500", "optionCode": "diametr", "optionName": "Диаметр", "assignmentId": 340}]', '[{"sku": "23487", "price": 36000, "height": 550, "attributes": [], "sale_price": null, "value_code": "diametr", "value_name": "500", "bulbs_count": 5, "option_code": "diametr", "option_name": "Диаметр", "original_sku": null, "assignment_id": 340, "lighting_area": 15}]', '2025-10-07 15:37:37');
 
--- Дамп данных таблицы new3.cart_item_option_assignment: ~15 rows (приблизительно)
+-- Дамп структуры для таблица new3.cart_item_option_assignment
+CREATE TABLE IF NOT EXISTS `cart_item_option_assignment` (
+  `cart_item_id` int NOT NULL,
+  `product_option_value_assignment_id` int NOT NULL,
+  PRIMARY KEY (`cart_item_id`,`product_option_value_assignment_id`),
+  KEY `IDX_9CAE0419E9B59A59` (`cart_item_id`),
+  KEY `IDX_9CAE04194859DA71` (`product_option_value_assignment_id`),
+  CONSTRAINT `FK_9CAE04194859DA71` FOREIGN KEY (`product_option_value_assignment_id`) REFERENCES `product_option_value_assignment` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_9CAE0419E9B59A59` FOREIGN KEY (`cart_item_id`) REFERENCES `cart_item` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.cart_item_option_assignment: ~4 rows (приблизительно)
 INSERT INTO `cart_item_option_assignment` (`cart_item_id`, `product_option_value_assignment_id`) VALUES
-	(317, 225),
-	(317, 226),
-	(318, 225),
-	(318, 226),
-	(319, 225),
-	(319, 226),
-	(320, 225),
-	(320, 226),
-	(325, 301),
-	(326, 301),
-	(327, 225),
-	(327, 227),
-	(328, 306),
-	(329, 306),
-	(332, 308),
-	(332, 310),
-	(333, 308),
-	(333, 310);
+	(394, 342),
+	(397, 313),
+	(398, 313),
+	(399, 358),
+	(401, 358),
+	(402, 308),
+	(402, 310),
+	(403, 340);
+
+-- Дамп структуры для таблица new3.category
+CREATE TABLE IF NOT EXISTS `category` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `slug` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `visibility` tinyint(1) DEFAULT NULL,
+  `parent_category_id` int DEFAULT NULL,
+  `meta_title` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `meta_description` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `meta_keywords` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `sort_order` int DEFAULT NULL,
+  `meta_h1` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `description` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `navbar_visibility` tinyint(1) DEFAULT '1',
+  `footer_visibility` tinyint(1) DEFAULT '1',
+  PRIMARY KEY (`id`),
+  KEY `category_name_idx` (`name`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Дамп данных таблицы new3.category: ~3 rows (приблизительно)
 INSERT INTO `category` (`id`, `name`, `slug`, `visibility`, `parent_category_id`, `meta_title`, `meta_description`, `meta_keywords`, `sort_order`, `meta_h1`, `description`, `navbar_visibility`, `footer_visibility`) VALUES
 	(1, 'Потолочные люстры', 'potolochnye-lyustry', 1, NULL, 'Потолочные люстры', '', '', 1, 'Потолочные люстры', '', 1, 1),
 	(2, 'Цветные люстры', 'cvetnye-lyustry', 1, 1, 'Цветные люстры', '', '', 1, 'Цветные люстры', '', 1, 1),
 	(3, 'Большие люстры', 'bolshie-lyustry', 1, NULL, 'Большие люстры', '', '', 2, 'Большие люстры', '', 1, 1),
-	(4, 'Бронзовые люстры', 'bronzovye-lyustry', 1, NULL, 'Бронзовые люстры', '', '', 3, 'Бронзовые люстры', '', 1, 1);
+	(4, 'Бронзовые люстры', 'bronzovye-lyustry', 1, NULL, 'Бронзовые люстры', '', '', 3, 'Бронзовые люстры', '', 1, 1),
+	(5, 'Подвесные люстры', 'podvesnye-lyustry', 1, NULL, 'Подвесные люстры', '', '', 2, 'Подвесные люстры', '', 1, 1);
+
+-- Дамп структуры для таблица new3.city
+CREATE TABLE IF NOT EXISTS `city` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `address` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `postal_code` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `federal_district` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `region_type` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `region` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `city_type` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `city` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `kladr_id` bigint DEFAULT NULL,
+  `fias_level` int DEFAULT NULL,
+  `capital_marker` int DEFAULT NULL,
+  `geo_lat` double DEFAULT NULL,
+  `geo_lon` double DEFAULT NULL,
+  `population` bigint DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1118 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Дамп данных таблицы new3.city: ~1 117 rows (приблизительно)
 INSERT INTO `city` (`id`, `address`, `postal_code`, `federal_district`, `region_type`, `region`, `city_type`, `city`, `kladr_id`, `fias_level`, `capital_marker`, `geo_lat`, `geo_lon`, `population`) VALUES
@@ -1328,6 +1374,15 @@ INSERT INTO `city` (`id`, `address`, `postal_code`, `federal_district`, `region_
 	(1116, 'Ярославская обл, г Углич', '152610', 'Центральный', 'обл', 'Ярославская', 'г', 'Углич', 7601700100000, 4, 1, 57.5224249, 38.3020044, 34505),
 	(1117, 'г Ярославль', '150000', 'Центральный', 'обл', 'Ярославская', 'г', 'Ярославль', 7600000100000, 4, 2, 57.6215477, 39.8977411, 591486);
 
+-- Дамп структуры для таблица new3.city_modal
+CREATE TABLE IF NOT EXISTS `city_modal` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `fias_id` bigint DEFAULT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `sort` int NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Дамп данных таблицы new3.city_modal: ~11 rows (приблизительно)
 INSERT INTO `city_modal` (`id`, `fias_id`, `name`, `sort`) VALUES
 	(4, 3300000100000, 'Владимир', 6),
@@ -1342,27 +1397,72 @@ INSERT INTO `city_modal` (`id`, `fias_id`, `name`, `sort`) VALUES
 	(19, 7800000000000, 'Санкт-Петербург', 1),
 	(20, 6900000100000, 'Тверь', 1);
 
+-- Дамп структуры для таблица new3.delivery_type
+CREATE TABLE IF NOT EXISTS `delivery_type` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `code` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `active` tinyint(1) NOT NULL,
+  `sort_order` int NOT NULL,
+  `is_default` tinyint(1) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UNIQ_5D429FB377153098` (`code`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Дамп данных таблицы new3.delivery_type: ~2 rows (приблизительно)
 INSERT INTO `delivery_type` (`id`, `name`, `code`, `active`, `sort_order`, `is_default`) VALUES
 	(1, 'Пункт выдачи', 'pvz', 1, 1, 1),
 	(2, 'Курьерская доставка', 'courier', 1, 2, 0);
 
--- Дамп данных таблицы new3.doctrine_migration_versions: ~0 rows (приблизительно)
+-- Дамп структуры для таблица new3.doctrine_migration_versions
+CREATE TABLE IF NOT EXISTS `doctrine_migration_versions` (
+  `version` varchar(191) COLLATE utf8mb3_unicode_ci NOT NULL,
+  `executed_at` datetime DEFAULT NULL,
+  `execution_time` int DEFAULT NULL,
+  PRIMARY KEY (`version`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
+
+-- Дамп данных таблицы new3.doctrine_migration_versions: ~1 rows (приблизительно)
 INSERT INTO `doctrine_migration_versions` (`version`, `executed_at`, `execution_time`) VALUES
-	('DoctrineMigrations\\Version20250929063258', '2025-09-29 06:33:21', 194),
-	('DoctrineMigrations\\Version20250929090000', '2025-09-29 08:36:06', 180),
-	('DoctrineMigrations\\Version20250929090500', '2025-09-29 08:51:53', 75);
+	('DoctrineMigrations\\Version20251006130900', '2025-10-06 10:17:14', 181),
+	('DoctrineMigrations\\Version20251006152100', '2025-10-06 15:21:48', 305),
+	('DoctrineMigrations\\Version20251007154907', '2025-10-07 15:49:12', 78);
 
--- Дамп данных таблицы new3.facet_config: ~0 rows (приблизительно)
+-- Дамп структуры для таблица new3.facet_config
+CREATE TABLE IF NOT EXISTS `facet_config` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `category_id` int DEFAULT NULL,
+  `scope` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `attributes` json DEFAULT NULL,
+  `options` json DEFAULT NULL,
+  `show_zeros` tinyint(1) NOT NULL DEFAULT '0',
+  `collapsed_by_default` tinyint(1) NOT NULL DEFAULT '1',
+  `values_limit` int NOT NULL DEFAULT '20',
+  `values_sort` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'popularity',
+  PRIMARY KEY (`id`),
+  KEY `IDX_990BB50C12469DE2` (`category_id`),
+  CONSTRAINT `FK_FC_CATEGORY` FOREIGN KEY (`category_id`) REFERENCES `category` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.facet_config: ~1 rows (приблизительно)
 INSERT INTO `facet_config` (`id`, `category_id`, `scope`, `attributes`, `options`, `show_zeros`, `collapsed_by_default`, `values_limit`, `values_sort`) VALUES
-	(1, NULL, 'GLOBAL', '[{"id": null, "bins": null, "code": "vysota", "label": "Высота, мм", "order": 2, "widget": "checkbox", "enabled": false, "operator": null}, {"id": null, "bins": null, "code": "diametr", "label": null, "order": null, "widget": "checkbox", "enabled": false, "operator": null}, {"id": null, "bins": null, "code": "ves", "label": null, "order": null, "widget": "checkbox", "enabled": false, "operator": null}]', '[{"id": null, "bins": null, "code": "diametr", "label": "Диаметр, мм", "order": 1, "widget": "checkbox", "enabled": true, "operator": null}, {"id": null, "bins": null, "code": "height", "label": "Высота, мм", "order": 2, "widget": "checkbox", "enabled": true, "operator": null}, {"id": null, "bins": null, "code": "bulbs_count", "label": "Лампочки, шт", "order": 3, "widget": "checkbox", "enabled": true, "operator": null}, {"id": null, "bins": null, "code": "cvet_armatury", "label": null, "order": null, "widget": "checkbox", "enabled": false, "operator": null}, {"id": null, "bins": null, "code": "lighting_area", "label": null, "order": null, "widget": "checkbox", "enabled": false, "operator": null}]', 0, 1, 20, 'popularity');
+	(1, NULL, 'GLOBAL', '[{"id": null, "bins": null, "code": "vysota", "label": "Высота, мм", "order": 2, "widget": "checkbox", "enabled": false, "operator": null}, {"id": null, "bins": null, "code": "diametr", "label": null, "order": null, "widget": "checkbox", "enabled": false, "operator": null}, {"id": null, "bins": null, "code": "garantia", "label": null, "order": null, "widget": "checkbox", "enabled": false, "operator": null}, {"id": null, "bins": null, "code": "instrukcia", "label": null, "order": null, "widget": "checkbox", "enabled": false, "operator": null}, {"id": null, "bins": null, "code": "kolicestvo_lampocek", "label": null, "order": null, "widget": "checkbox", "enabled": false, "operator": null}, {"id": null, "bins": null, "code": "kreplenie", "label": null, "order": null, "widget": "checkbox", "enabled": false, "operator": null}, {"id": null, "bins": null, "code": "lampy_v_komplekte", "label": null, "order": null, "widget": "checkbox", "enabled": false, "operator": null}, {"id": null, "bins": null, "code": "maksimal_naa_mosnost_lampocki_vt", "label": null, "order": null, "widget": "checkbox", "enabled": false, "operator": null}, {"id": null, "bins": null, "code": "material_kronstejna", "label": null, "order": null, "widget": "checkbox", "enabled": false, "operator": null}, {"id": null, "bins": null, "code": "plosad_osvesenia_m2", "label": null, "order": null, "widget": "checkbox", "enabled": false, "operator": null}, {"id": null, "bins": null, "code": "proizvodstvo_zavod", "label": null, "order": null, "widget": "checkbox", "enabled": false, "operator": null}, {"id": null, "bins": null, "code": "regulirovka_vysoty", "label": null, "order": null, "widget": "checkbox", "enabled": false, "operator": null}, {"id": null, "bins": null, "code": "stil", "label": null, "order": null, "widget": "checkbox", "enabled": false, "operator": null}, {"id": null, "bins": null, "code": "strana_proizvodstva", "label": null, "order": null, "widget": "checkbox", "enabled": false, "operator": null}, {"id": null, "bins": null, "code": "tip_cokola", "label": null, "order": null, "widget": "checkbox", "enabled": false, "operator": null}, {"id": null, "bins": null, "code": "tip_lampy", "label": null, "order": null, "widget": "checkbox", "enabled": false, "operator": null}, {"id": null, "bins": null, "code": "ves", "label": null, "order": null, "widget": "checkbox", "enabled": false, "operator": null}, {"id": null, "bins": null, "code": "zerkalo", "label": null, "order": null, "widget": "checkbox", "enabled": false, "operator": null}]', '[{"id": null, "bins": null, "code": "diametr", "label": "Диаметр, мм", "order": 1, "widget": "checkbox", "enabled": true, "operator": null}, {"id": null, "bins": null, "code": "height", "label": "Высота, мм", "order": 2, "widget": "checkbox", "enabled": true, "operator": null}, {"id": null, "bins": null, "code": "bulbs_count", "label": "Лампочки, шт", "order": 3, "widget": "checkbox", "enabled": true, "operator": null}, {"id": null, "bins": null, "code": "lighting_area", "label": "Площадь освещения", "order": 4, "widget": "checkbox", "enabled": true, "operator": null}, {"id": null, "bins": null, "code": "cvet_armatury", "label": null, "order": null, "widget": "checkbox", "enabled": false, "operator": null}]', 0, 1, 20, 'popularity');
 
--- Дамп данных таблицы new3.facet_dictionary: ~0 rows (приблизительно)
-INSERT INTO `facet_dictionary` (`id`, `category_id`, `attributes_json`, `options_json`, `price_min`, `price_max`, `updated_at`) VALUES
-	(5, 1, '{"items": []}', '[{"code": "diametr", "name": "Диаметр, мм", "sort": 1, "values": [{"code": "diametr", "label": "700"}, {"code": "diametr", "label": "500"}, {"code": "diametr", "label": "800"}, {"code": "diametr", "label": "450"}]}]', 3900, 15600, '2025-09-29 16:27:40'),
-	(6, 2, '{"items": []}', '[{"code": "diametr", "name": "Диаметр, мм", "sort": 1, "values": [{"code": "diametr", "label": "450"}, {"code": "diametr", "label": "500"}]}]', NULL, NULL, '2025-09-29 16:27:40'),
-	(7, 3, '{"items": []}', '[{"code": "diametr", "name": "Диаметр, мм", "sort": 1, "values": [{"code": "diametr", "label": "700"}, {"code": "diametr", "label": "500"}, {"code": "diametr", "label": "800"}, {"code": "diametr", "label": "450"}]}]', 3900, 15600, '2025-09-29 16:27:40'),
-	(8, 4, '{"items": []}', '[{"code": "diametr", "name": "Диаметр, мм", "sort": 1, "values": [{"code": "diametr", "label": "700"}, {"code": "diametr", "label": "500"}]}]', 15600, 15600, '2025-09-29 16:27:40');
+-- Дамп структуры для таблица new3.fias
+CREATE TABLE IF NOT EXISTS `fias` (
+  `fias_id` int NOT NULL AUTO_INCREMENT,
+  `parent_id` int NOT NULL,
+  `postalcode` varchar(6) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `offname` varchar(120) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `shortname` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `level` smallint NOT NULL,
+  PRIMARY KEY (`fias_id`),
+  KEY `postalcode_idx` (`postalcode`),
+  KEY `offname_idx` (`offname`),
+  KEY `level_idx` (`level`),
+  KEY `parent_id_idx` (`parent_id`),
+  KEY `osl_idx` (`offname`,`shortname`,`level`)
+) ENGINE=InnoDB AUTO_INCREMENT=206220 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Дамп данных таблицы new3.fias: ~7 818 rows (приблизительно)
 INSERT INTO `fias` (`fias_id`, `parent_id`, `postalcode`, `offname`, `shortname`, `level`) VALUES
@@ -9068,12 +9168,43 @@ INSERT INTO `fias` (`fias_id`, `parent_id`, `postalcode`, `offname`, `shortname`
 	(206217, 708, '429260', 'Таутовское сельское поселение', 'с/п', 4),
 	(206219, 494, '429420', 'Тюрлеминское сельское поселение', 'с/п', 4);
 
+-- Дамп структуры для таблица new3.manufacturer
+CREATE TABLE IF NOT EXISTS `manufacturer` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UNIQ_3D0AE6DC5E237E06` (`name`),
+  KEY `manufacturer_name_idx` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Дамп данных таблицы new3.manufacturer: ~0 rows (приблизительно)
+
+-- Дамп структуры для таблица new3.option
+CREATE TABLE IF NOT EXISTS `option` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `sort_order` int NOT NULL,
+  `code` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UNIQ_5A8600B077153098` (`code`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Дамп данных таблицы new3.option: ~2 rows (приблизительно)
 INSERT INTO `option` (`id`, `name`, `sort_order`, `code`) VALUES
 	(5, 'Диаметр', 1, 'diametr'),
 	(6, 'Цвет арматуры', 2, 'cvet_armatury');
+
+-- Дамп структуры для таблица new3.option_value
+CREATE TABLE IF NOT EXISTS `option_value` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `option_id` int NOT NULL,
+  `value` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `sort_order` int NOT NULL,
+  `code` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `IDX_249CE55CA7C41D6F` (`option_id`),
+  CONSTRAINT `FK_249CE55CA7C41D6F` FOREIGN KEY (`option_id`) REFERENCES `option` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Дамп данных таблицы new3.option_value: ~7 rows (приблизительно)
 INSERT INTO `option_value` (`id`, `option_id`, `value`, `sort_order`, `code`) VALUES
@@ -9085,18 +9216,56 @@ INSERT INTO `option_value` (`id`, `option_id`, `value`, `sort_order`, `code`) VA
 	(11, 5, '700', 4, 'diametr'),
 	(12, 5, '800', 5, 'diametr');
 
--- Дамп данных таблицы new3.order: ~3 rows (приблизительно)
-INSERT INTO `order` (`id`, `customer_id`, `delivery_id`, `order_id`, `date_added`, `comment`, `status`, `total`) VALUES
-	(16, 16, 15, 11, '2025-09-26 15:17:23', NULL, 1, 3900),
-	(17, 17, 16, 12, '2025-09-26 15:34:52', NULL, 1, 16500),
-	(18, 18, 17, 13, '2025-09-26 15:45:08', NULL, 1, 16500),
-	(19, 19, 18, 14, '2025-09-26 15:49:50', NULL, 1, 19600),
-	(20, 20, 19, 15, '2025-09-29 06:59:47', NULL, 1, 15600),
-	(21, 21, 20, 16, '2025-09-29 07:08:05', NULL, 1, 78000),
-	(22, 22, 21, 17, '2025-09-29 07:10:12', NULL, 1, 5000),
-	(23, 23, 22, 18, '2025-09-29 07:17:56', NULL, 1, 32000);
+-- Дамп структуры для таблица new3.order
+CREATE TABLE IF NOT EXISTS `order` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `customer_id` int DEFAULT NULL,
+  `delivery_id` int DEFAULT NULL,
+  `order_id` int NOT NULL,
+  `date_added` datetime NOT NULL,
+  `comment` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `status` int DEFAULT NULL,
+  `total` int DEFAULT NULL,
+  `user_id` int DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `customer_id` (`customer_id`),
+  UNIQUE KEY `delivery_id` (`delivery_id`),
+  KEY `IDX_F5299398A76ED395` (`user_id`),
+  CONSTRAINT `FK_F529939812136921` FOREIGN KEY (`delivery_id`) REFERENCES `order_delivery` (`id`),
+  CONSTRAINT `FK_F52993989395C3F3` FOREIGN KEY (`customer_id`) REFERENCES `order_customer` (`id`),
+  CONSTRAINT `FK_F5299398A76ED395` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Дамп данных таблицы new3.order_customer: ~3 rows (приблизительно)
+-- Дамп данных таблицы new3.order: ~12 rows (приблизительно)
+INSERT INTO `order` (`id`, `customer_id`, `delivery_id`, `order_id`, `date_added`, `comment`, `status`, `total`, `user_id`) VALUES
+	(16, 16, 15, 11, '2025-09-26 15:17:23', NULL, 1, 3900, NULL),
+	(17, 17, 16, 12, '2025-09-26 15:34:52', NULL, 1, 16500, NULL),
+	(18, 18, 17, 13, '2025-09-26 15:45:08', NULL, 1, 16500, NULL),
+	(19, 19, 18, 14, '2025-09-26 15:49:50', NULL, 1, 19600, NULL),
+	(20, 20, 19, 15, '2025-09-29 06:59:47', NULL, 1, 15600, NULL),
+	(21, 21, 20, 16, '2025-09-29 07:08:05', NULL, 1, 78000, NULL),
+	(22, 22, 21, 17, '2025-09-29 07:10:12', NULL, 1, 5000, NULL),
+	(23, 23, 22, 18, '2025-09-29 07:17:56', NULL, 1, 32000, NULL),
+	(24, 24, 23, 19, '2025-10-06 07:30:56', NULL, 1, 21800, NULL),
+	(25, 25, 24, 20, '2025-10-06 07:35:28', NULL, 1, 50000, NULL),
+	(26, 27, 26, 21, '2025-10-06 15:22:29', NULL, 1, 61300, NULL),
+	(27, 28, 27, 22, '2025-10-07 14:24:18', NULL, 1, 85000, 5),
+	(28, 29, 28, 23, '2025-10-07 15:05:59', NULL, 1, 64500, 5);
+
+-- Дамп структуры для таблица new3.order_customer
+CREATE TABLE IF NOT EXISTS `order_customer` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `phone` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `email` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ip` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `user_agent` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `phone_normal` bigint DEFAULT NULL,
+  `comment` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.order_customer: ~11 rows (приблизительно)
 INSERT INTO `order_customer` (`id`, `name`, `phone`, `email`, `ip`, `user_agent`, `phone_normal`, `comment`) VALUES
 	(16, 'Test 6', '89209217054', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', NULL, NULL),
 	(17, 'Алексей Федотов', '89209217054', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', NULL, NULL),
@@ -9105,9 +9274,35 @@ INSERT INTO `order_customer` (`id`, `name`, `phone`, `email`, `ip`, `user_agent`
 	(20, 'FFFF', '89209217054', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', NULL, NULL),
 	(21, 'Алекс', '89209217054', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', NULL, NULL),
 	(22, 'Алекс 2', '89209217054', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', NULL, NULL),
-	(23, 'Алексй', '89209217054', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', NULL, NULL);
+	(23, 'Алексй', '89209217054', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', NULL, NULL),
+	(24, 'Test Admin', '+7 (920) 950-95-09', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', NULL, NULL),
+	(25, 'Тест Гость', '+7 (545) 564-65-46', 'guest@ya.ru', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', NULL, NULL),
+	(27, 'Alex', '+7 (920) 921-70-54', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', NULL, NULL),
+	(28, 'Alex', '+7 (920) 921-70-54', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36', NULL, NULL),
+	(29, 'Alex', '+7 (920) 218-04-08', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36', NULL, NULL);
 
--- Дамп данных таблицы new3.order_delivery: ~3 rows (приблизительно)
+-- Дамп структуры для таблица new3.order_delivery
+CREATE TABLE IF NOT EXISTS `order_delivery` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `type` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `address` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `city` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `cost` int DEFAULT NULL,
+  `pvz` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `is_free` tinyint(1) NOT NULL DEFAULT '0',
+  `is_custom_calculate` tinyint(1) NOT NULL DEFAULT '0',
+  `pvz_code` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `delivery_date` date DEFAULT NULL,
+  `delivery_time` time DEFAULT NULL,
+  `city_id` int DEFAULT NULL,
+  `pricing_source` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `pricing_trace` json DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `IDX_D6790EA18BAC62AF` (`city_id`),
+  CONSTRAINT `FK_D6790EA18BAC62AF` FOREIGN KEY (`city_id`) REFERENCES `fias` (`fias_id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.order_delivery: ~10 rows (приблизительно)
 INSERT INTO `order_delivery` (`id`, `type`, `address`, `city`, `cost`, `pvz`, `is_free`, `is_custom_calculate`, `pvz_code`, `delivery_date`, `delivery_time`, `city_id`, `pricing_source`, `pricing_trace`) VALUES
 	(15, 'pvz', NULL, 'Санкт-Петербург', 190, NULL, 0, 1, NULL, NULL, NULL, NULL, 'pvz_price', '{"method": "pvz", "source": "pvz_price", "baseCost": 190, "itemsQty": 1, "cartSubtotal": 3900, "effectiveCost": 190, "freeThreshold": 7000, "calculationType": "cost_per_item"}'),
 	(16, 'courier', 'Восточная 80, 99', 'Москва', 0, NULL, 1, 0, NULL, NULL, NULL, NULL, 'pvz_price', '{"method": "courier", "reason": "free_threshold", "source": "pvz_price", "baseCost": 190, "itemsQty": 1, "cartSubtotal": 16500, "effectiveCost": 0, "freeThreshold": 6000, "calculationType": "cost_per_item", "defaultFreeThreshold": 3000, "effectiveFreeThreshold": 6000}'),
@@ -9116,9 +9311,28 @@ INSERT INTO `order_delivery` (`id`, `type`, `address`, `city`, `cost`, `pvz`, `i
 	(19, 'pvz', NULL, 'Москва', 0, NULL, 1, 1, NULL, NULL, NULL, NULL, 'pvz_price', '{"method": "pvz", "reason": "free_threshold", "source": "pvz_price", "baseCost": 190, "itemsQty": 1, "cartSubtotal": 15600, "effectiveCost": 0, "freeThreshold": 6000, "calculationType": "cost_per_item", "defaultFreeThreshold": 3000, "effectiveFreeThreshold": 6000}'),
 	(20, 'pvz', NULL, 'Москва', 0, NULL, 1, 1, NULL, NULL, NULL, NULL, 'pvz_price', '{"method": "pvz", "reason": "free_threshold", "source": "pvz_price", "baseCost": 190, "itemsQty": 5, "cartSubtotal": 78000, "effectiveCost": 0, "freeThreshold": 6000, "calculationType": "cost_per_item", "defaultFreeThreshold": 3000, "effectiveFreeThreshold": 6000}'),
 	(21, 'pvz', NULL, 'Москва', 190, NULL, 0, 1, NULL, NULL, NULL, NULL, 'pvz_price', '{"method": "pvz", "source": "pvz_price", "baseCost": 190, "itemsQty": 1, "cartSubtotal": 5000, "effectiveCost": 190, "freeThreshold": 6000, "calculationType": "cost_per_item"}'),
-	(22, 'pvz', NULL, 'Москва', 0, NULL, 1, 1, NULL, NULL, NULL, NULL, 'pvz_price', '{"method": "pvz", "reason": "free_threshold", "source": "pvz_price", "baseCost": 190, "itemsQty": 2, "cartSubtotal": 32000, "effectiveCost": 0, "freeThreshold": 6000, "calculationType": "cost_per_item", "defaultFreeThreshold": 3000, "effectiveFreeThreshold": 6000}');
+	(22, 'pvz', NULL, 'Москва', 0, NULL, 1, 1, NULL, NULL, NULL, NULL, 'pvz_price', '{"method": "pvz", "reason": "free_threshold", "source": "pvz_price", "baseCost": 190, "itemsQty": 2, "cartSubtotal": 32000, "effectiveCost": 0, "freeThreshold": 6000, "calculationType": "cost_per_item", "defaultFreeThreshold": 3000, "effectiveFreeThreshold": 6000}'),
+	(23, 'pvz', NULL, 'Рязань', 780, NULL, 0, 1, NULL, NULL, NULL, NULL, 'pvz_price', '{"method": "pvz", "source": "pvz_price", "baseCost": 390, "itemsQty": 2, "cartSubtotal": 21800, "effectiveCost": 780, "freeThreshold": null, "calculationType": "cost_per_item"}'),
+	(24, 'pvz', NULL, 'Рязань', 780, 'Рязань улица Есенина 61', 0, 0, '3846cb2e-c473-4fc2-9e0b-09af067d8fff', NULL, NULL, NULL, 'pvz_price', '{"method": "pvz", "source": "pvz_price", "baseCost": 390, "itemsQty": 2, "cartSubtotal": 50000, "effectiveCost": 780, "freeThreshold": null, "calculationType": "cost_per_item"}'),
+	(26, 'pvz', NULL, 'Москва', 0, 'Москва Ленинградское шоссе 128', 1, 0, '0004ccff-edea-46fa-a1c0-30c34178fb0c', NULL, NULL, NULL, 'pvz_price', '{"method": "pvz", "reason": "free_threshold", "source": "pvz_price", "baseCost": 190, "itemsQty": 2, "cartSubtotal": 61300, "effectiveCost": 0, "freeThreshold": 6000, "calculationType": "cost_per_item", "defaultFreeThreshold": 3000, "effectiveFreeThreshold": 6000}'),
+	(27, 'pvz', NULL, 'Москва', 0, 'Москва Ленинградское шоссе 128', 1, 0, '0004ccff-edea-46fa-a1c0-30c34178fb0c', NULL, NULL, NULL, 'pvz_price', '{"method": "pvz", "reason": "free_threshold", "source": "pvz_price", "baseCost": 190, "itemsQty": 3, "cartSubtotal": 85000, "effectiveCost": 0, "freeThreshold": 6000, "calculationType": "cost_per_item", "defaultFreeThreshold": 3000, "effectiveFreeThreshold": 6000}'),
+	(28, 'courier', 'Восточная 80, кв 99', 'Москва', 0, NULL, 1, 0, NULL, NULL, NULL, NULL, 'pvz_price', '{"method": "courier", "reason": "free_threshold", "source": "pvz_price", "baseCost": 190, "itemsQty": 4, "cartSubtotal": 64500, "effectiveCost": 0, "freeThreshold": 6000, "calculationType": "cost_per_item", "defaultFreeThreshold": 3000, "effectiveFreeThreshold": 6000}');
 
--- Дамп данных таблицы new3.order_products: ~3 rows (приблизительно)
+-- Дамп структуры для таблица new3.order_products
+CREATE TABLE IF NOT EXISTS `order_products` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `orders_id` int DEFAULT NULL,
+  `product_id` int NOT NULL,
+  `product_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `price` int DEFAULT NULL,
+  `quantity` int NOT NULL,
+  `sale_price` int DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `orders_id` (`orders_id`),
+  CONSTRAINT `FK_5242B8EBCFFE9AD6` FOREIGN KEY (`orders_id`) REFERENCES `order` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.order_products: ~11 rows (приблизительно)
 INSERT INTO `order_products` (`id`, `orders_id`, `product_id`, `product_name`, `price`, `quantity`, `sale_price`) VALUES
 	(19, 16, 19, 'Люстра Кольцо 5 - 3 лампа', 3900, 1, NULL),
 	(20, 17, 70, 'Кольцо 19', 16500, 1, NULL),
@@ -9127,9 +9341,32 @@ INSERT INTO `order_products` (`id`, `orders_id`, `product_id`, `product_name`, `
 	(23, 20, 71, 'Кольцо 20', 15600, 1, NULL),
 	(24, 21, 72, 'Копия Кольцо 20', 15600, 5, NULL),
 	(25, 22, 53, 'Кольцо №7', 5000, 1, NULL),
-	(26, 23, 69, 'Кольцо 17', 16000, 2, NULL);
+	(26, 23, 69, 'Кольцо 17', 16000, 2, NULL),
+	(27, 24, 19, 'Люстра Кольцо 5 - 3 лампа', 3900, 1, NULL),
+	(28, 24, 75, 'Бронзовая люстра Артемида №6 ', 17900, 1, NULL),
+	(29, 25, 73, 'Бронзовая люстра Артемида №6 шар', 25000, 2, NULL),
+	(30, 26, 78, 'Бронзовая люстра Оникс №2', 26300, 1, NULL),
+	(31, 26, 83, 'Бронзовая люстра Атланта №2', 35000, 1, NULL),
+	(32, 27, 73, 'Бронзовая люстра Артемида №6 шар', 25000, 2, NULL),
+	(33, 27, 83, 'Бронзовая люстра Атланта №2', 35000, 1, NULL),
+	(34, 28, 69, 'Кольцо 17', 16000, 3, NULL),
+	(35, 28, 70, 'Кольцо 19', 16500, 1, NULL);
 
--- Дамп данных таблицы new3.order_product_options: ~6 rows (приблизительно)
+-- Дамп структуры для таблица new3.order_product_options
+CREATE TABLE IF NOT EXISTS `order_product_options` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `product_id` int DEFAULT NULL,
+  `option_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `value` json DEFAULT NULL,
+  `price` int DEFAULT NULL,
+  `order_product_id` int NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `product_id` (`product_id`),
+  KEY `IDX_CAE5226BF65E9B0F` (`order_product_id`),
+  CONSTRAINT `FK_CAE5226BF65E9B0F` FOREIGN KEY (`order_product_id`) REFERENCES `order_products` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=46 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.order_product_options: ~13 rows (приблизительно)
 INSERT INTO `order_product_options` (`id`, `product_id`, `option_name`, `value`, `price`, `order_product_id`) VALUES
 	(25, 19, 'Цвет арматуры', '{"sku": null, "valueCode": "cvet_armatury", "valueName": "Серебро", "optionCode": "cvet_armatury", "valueSortOrder": 2, "optionSortOrder": 2}', 0, 19),
 	(26, 19, 'Диаметр', '{"sku": "2423423", "valueCode": "diametr", "valueName": "700", "optionCode": "diametr", "valueSortOrder": 4, "optionSortOrder": 1}', 3900, 19),
@@ -9140,7 +9377,26 @@ INSERT INTO `order_product_options` (`id`, `product_id`, `option_name`, `value`,
 	(31, 71, 'Диаметр', '{"sku": null, "valueCode": "diametr", "valueName": "700", "optionCode": "diametr", "valueSortOrder": 4, "optionSortOrder": 1}', 15600, 23),
 	(32, 72, 'Диаметр', '{"sku": null, "valueCode": "diametr", "valueName": "700", "optionCode": "diametr", "valueSortOrder": 4, "optionSortOrder": 1}', 15600, 24),
 	(33, 69, 'Диаметр', '{"sku": "4561521", "valueCode": "diametr", "valueName": "500", "optionCode": "diametr", "valueSortOrder": 2, "optionSortOrder": 1}', 16000, 26),
-	(34, 69, 'Цвет арматуры', '{"sku": null, "valueCode": "cvet_armatury", "valueName": "Серебро", "optionCode": "cvet_armatury", "valueSortOrder": 2, "optionSortOrder": 2}', 0, 26);
+	(34, 69, 'Цвет арматуры', '{"sku": null, "valueCode": "cvet_armatury", "valueName": "Серебро", "optionCode": "cvet_armatury", "valueSortOrder": 2, "optionSortOrder": 2}', 0, 26),
+	(35, 19, 'Цвет арматуры', '{"sku": null, "valueCode": "cvet_armatury", "valueName": "Серебро", "optionCode": "cvet_armatury", "valueSortOrder": 2, "optionSortOrder": 2}', 0, 27),
+	(36, 19, 'Диаметр', '{"sku": "2423423", "valueCode": "diametr", "valueName": "700", "optionCode": "diametr", "valueSortOrder": 4, "optionSortOrder": 1}', 3900, 27),
+	(37, 75, 'Диаметр', '{"sku": "465789_6", "valueCode": "diametr", "valueName": "500", "optionCode": "diametr", "valueSortOrder": 2, "optionSortOrder": 1}', 17900, 28),
+	(38, 73, 'Диаметр', '{"sku": "456789", "valueCode": "diametr", "valueName": "600", "optionCode": "diametr", "valueSortOrder": 3, "optionSortOrder": 1}', 25000, 29),
+	(39, 78, 'Диаметр', '{"sku": "45678_1", "valueCode": "diametr", "valueName": "600", "optionCode": "diametr", "valueSortOrder": 3, "optionSortOrder": 1}', 26300, 30),
+	(40, 83, 'Диаметр', '{"sku": "23487_2", "valueCode": "diametr", "valueName": "500", "optionCode": "diametr", "valueSortOrder": 2, "optionSortOrder": 1}', 35000, 31),
+	(41, 73, 'Диаметр', '{"sku": "456789", "valueCode": "diametr", "valueName": "600", "optionCode": "diametr", "valueSortOrder": 3, "optionSortOrder": 1}', 25000, 32),
+	(42, 83, 'Диаметр', '{"sku": "23487_2", "valueCode": "diametr", "valueName": "500", "optionCode": "diametr", "valueSortOrder": 2, "optionSortOrder": 1}', 35000, 33),
+	(43, 69, 'Диаметр', '{"sku": "4561521", "valueCode": "diametr", "valueName": "500", "optionCode": "diametr", "valueSortOrder": 2, "optionSortOrder": 1}', 16000, 34),
+	(44, 69, 'Цвет арматуры', '{"sku": null, "valueCode": "cvet_armatury", "valueName": "Серебро", "optionCode": "cvet_armatury", "valueSortOrder": 2, "optionSortOrder": 2}', 0, 34),
+	(45, 70, 'Диаметр', '{"sku": null, "valueCode": "diametr", "valueName": "450", "optionCode": "diametr", "valueSortOrder": 1, "optionSortOrder": 1}', 16500, 35);
+
+-- Дамп структуры для таблица new3.order_status
+CREATE TABLE IF NOT EXISTS `order_status` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `sort` int NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Дамп данных таблицы new3.order_status: ~5 rows (приблизительно)
 INSERT INTO `order_status` (`id`, `name`, `sort`) VALUES
@@ -9150,7 +9406,40 @@ INSERT INTO `order_status` (`id`, `name`, `sort`) VALUES
 	(5, 'Не дозвонился', 4),
 	(6, 'Пока думает', 5);
 
--- Дамп данных таблицы new3.product: ~11 rows (приблизительно)
+-- Дамп структуры для таблица new3.product
+CREATE TABLE IF NOT EXISTS `product` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `manufacturer_id` int DEFAULT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `slug` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `sort_order` int DEFAULT NULL,
+  `effective_price` int DEFAULT NULL,
+  `status` tinyint(1) NOT NULL DEFAULT '0',
+  `quantity` int DEFAULT NULL,
+  `options_json` json DEFAULT NULL,
+  `attribute_json` json DEFAULT NULL,
+  `code` binary(16) DEFAULT NULL COMMENT '(DC2Type:ulid)',
+  `description` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `price` int DEFAULT NULL,
+  `sale_price` int DEFAULT NULL,
+  `currency` varchar(3) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'RUB',
+  `date_added` datetime DEFAULT NULL,
+  `date_edited` datetime DEFAULT NULL,
+  `type` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'simple',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UNIQ_D34A04AD989D9B62` (`slug`),
+  UNIQUE KEY `UNIQ_D34A04AD77153098` (`code`),
+  KEY `IDX_D34A04ADA23B42D` (`manufacturer_id`),
+  KEY `name` (`name`),
+  KEY `product_status_idx` (`status`),
+  KEY `product_date_added_idx` (`date_added`),
+  KEY `product_sort_order_idx` (`sort_order`),
+  KEY `idx_product_status_created` (`status`,`date_added`),
+  KEY `product_effective_price_idx` (`effective_price`),
+  CONSTRAINT `FK_D34A04ADA23B42D` FOREIGN KEY (`manufacturer_id`) REFERENCES `manufacturer` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=90 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.product: ~23 rows (приблизительно)
 INSERT INTO `product` (`id`, `manufacturer_id`, `name`, `slug`, `sort_order`, `effective_price`, `status`, `quantity`, `options_json`, `attribute_json`, `code`, `description`, `price`, `sale_price`, `currency`, `date_added`, `date_edited`, `type`) VALUES
 	(19, NULL, 'Люстра Кольцо 5 - 3 лампа', 'lyustra-kolco-5-3-lampa', 1, 3900, 1, NULL, '[]', '[]', _binary 0x019915076ebf1391d765c560b27c14a2, '', NULL, NULL, 'RUB', '2025-09-04 14:00:32', '2025-09-24 08:30:28', 'variable'),
 	(51, NULL, 'Люстра Астра Ажур', 'lyustra-astra-azhur', 2, 5000, 1, NULL, '[]', '[]', _binary 0x019918f69f9a7b4d760df9cd701968f6, '', NULL, NULL, 'RUB', '2025-09-05 08:20:39', '2025-09-17 10:32:30', 'variable'),
@@ -9162,9 +9451,47 @@ INSERT INTO `product` (`id`, `manufacturer_id`, `name`, `slug`, `sort_order`, `e
 	(69, NULL, 'Кольцо 17', 'kolco-17', 0, NULL, 1, NULL, '[]', '[]', _binary 0x01997c1e236b6f53e50bb79a294e936a, '', NULL, NULL, 'RUB', '2025-09-24 14:26:13', '2025-09-29 07:17:12', 'variable'),
 	(70, NULL, 'Кольцо 19', 'kolco-19', 0, NULL, 1, NULL, '[]', '[]', _binary 0x01997c23a396a480fc641a5cf4802326, '', NULL, NULL, 'RUB', '2025-09-24 14:32:14', NULL, 'variable'),
 	(71, NULL, 'Кольцо 20', 'kolco-20', 16, 15600, 1, NULL, '[]', '[]', _binary 0x01997c2769aa4da2c5160538d228b229, '', NULL, NULL, 'RUB', '2025-09-24 14:36:21', '2025-09-27 09:22:29', 'variable'),
-	(72, NULL, 'Копия Кольцо 20', 'kopiya-kolco-20', 16, 15600, 1, NULL, '[]', '[]', _binary 0x01997c2967292dd1e44306a50f72f98c, '', NULL, NULL, 'RUB', '2025-09-24 14:38:32', '2025-09-24 14:49:45', 'variable');
+	(72, NULL, 'Копия Кольцо 20', 'kopiya-kolco-20', 16, 15600, 1, NULL, '[]', '[]', _binary 0x01997c2967292dd1e44306a50f72f98c, '', NULL, NULL, 'RUB', '2025-09-24 14:38:32', '2025-09-24 14:49:45', 'variable'),
+	(73, NULL, 'Бронзовая люстра Артемида №6 шар', 'bronzovaya-lyustra-artemida-6-shar', 1, 25000, 1, NULL, '[]', '[]', _binary 0x019999c442cd19358e41c30a85509d24, '', NULL, NULL, 'RUB', '2025-09-30 08:36:40', NULL, 'variable'),
+	(75, NULL, 'Бронзовая люстра Артемида №6 ', 'bronzovaya-lyustra-artemida-6', 2, NULL, 1, NULL, '[]', '[]', _binary 0x019999ce7cb4ac30f9203d01b2265b67, '', NULL, NULL, 'RUB', '2025-09-30 08:47:50', '2025-09-30 08:49:39', 'variable'),
+	(76, NULL, 'Бронзовая люстра Артемида журавлик', 'bronzovaya-lyustra-artemida-zhuravlik', 3, NULL, 1, NULL, '[]', '[]', _binary 0x019999d4b6d64d4dce9913586b37b6fe, '', NULL, NULL, 'RUB', '2025-09-30 08:54:38', NULL, 'variable'),
+	(77, NULL, 'Бронзовая люстра Оникс №1', 'bronzovaya-lyustra-oniks-1', 1, 17900, 1, NULL, '[]', '[]', _binary 0x019999d89b32a5d4efff2bda6c186ea6, '', NULL, NULL, 'RUB', '2025-09-30 08:58:53', '2025-09-30 09:01:47', 'variable'),
+	(78, NULL, 'Бронзовая люстра Оникс №2', 'bronzovaya-lyustra-oniks-2', 5, 26300, 1, NULL, '[]', '[]', _binary 0x019999e0468fddcd9de512957178c9fd, '', NULL, NULL, 'RUB', '2025-09-30 09:07:16', '2025-09-30 09:08:35', 'variable'),
+	(79, NULL, 'Бронзовая люстра Оникс №3', 'bronzovaya-lyustra-oniks-3', 5, 26300, 1, NULL, '[]', '[]', _binary 0x019999e26cbefcc6463bb516439ba3bd, '', NULL, NULL, 'RUB', '2025-09-30 09:09:37', '2025-09-30 09:10:18', 'variable'),
+	(80, NULL, 'Бронзовая люстра Оникс №4', 'bronzovaya-lyustra-oniks-4', 6, 29000, 1, NULL, '[]', '[]', _binary 0x019999e33f8ca8418fc851f8a315c4cd, '', NULL, NULL, 'RUB', '2025-09-30 09:10:31', '2025-09-30 09:11:19', 'variable'),
+	(81, NULL, 'Бронзовая люстра Оникс №5', 'bronzovaya-lyustra-oniks-5', 6, 50000, 1, NULL, '[]', '[]', _binary 0x019999e42721406286aa811e18da33f1, '', NULL, NULL, 'RUB', '2025-09-30 09:11:30', '2025-09-30 09:12:17', 'variable'),
+	(82, NULL, 'Бронзовая люстра Атланта №1', 'bronzovaya-lyustra-atlanta-1', 1, 42900, 1, NULL, '[]', '[]', _binary 0x019999e6c8322d0cd27ba070ec18885e, '', NULL, NULL, 'RUB', '2025-09-30 09:14:22', '2025-09-30 09:15:27', 'variable'),
+	(83, NULL, 'Бронзовая люстра Атланта №2', 'bronzovaya-lyustra-atlanta-2', 1, 36000, 1, NULL, '[]', '[]', _binary 0x019999e7e36c33da7a7b26972b07305d, '', NULL, NULL, 'RUB', '2025-09-30 09:15:35', '2025-09-30 09:16:25', 'variable'),
+	(84, NULL, 'Бронзовая люстра Атланта №3', 'bronzovaya-lyustra-atlanta-3', 1, 4500, 1, NULL, '[]', '[]', _binary 0x019999ec6781a30d85472aa423794070, '', 5000, 4500, 'RUB', '2025-09-30 09:20:31', '2025-10-01 16:06:41', 'variable_no_prices'),
+	(85, NULL, 'Копия Бронзовая люстра Атланта №3', 'kopiya-bronzovaya-lyustra-atlanta-3', 7, 37000, 0, NULL, '[]', '[]', _binary 0x019999ed4ba5c278e7266fa45ec30136, '', NULL, NULL, 'RUB', '2025-09-30 09:21:29', '2025-10-01 14:30:09', 'variable');
 
--- Дамп данных таблицы new3.product_attribute_assignment: ~13 rows (приблизительно)
+-- Дамп структуры для таблица new3.product_attribute_assignment
+CREATE TABLE IF NOT EXISTS `product_attribute_assignment` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `product_id` int NOT NULL,
+  `attribute_id` int NOT NULL,
+  `attribute_group_id` int DEFAULT NULL,
+  `data_type` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'string',
+  `string_value` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `text_value` longtext COLLATE utf8mb4_unicode_ci,
+  `int_value` int DEFAULT NULL,
+  `decimal_value` decimal(15,4) DEFAULT NULL,
+  `bool_value` tinyint(1) DEFAULT NULL,
+  `date_value` date DEFAULT NULL,
+  `json_value` json DEFAULT NULL,
+  `unit` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `position` int NOT NULL DEFAULT '0',
+  `sort_order` int DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `IDX_2AFBF05C4584665A` (`product_id`),
+  KEY `IDX_2AFBF05CB6E62EFA` (`attribute_id`),
+  KEY `IDX_2AFBF05C62D643B7` (`attribute_group_id`),
+  CONSTRAINT `FK_2AFBF05C4584665A` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_2AFBF05C62D643B7` FOREIGN KEY (`attribute_group_id`) REFERENCES `attribute_group` (`id`) ON DELETE RESTRICT,
+  CONSTRAINT `FK_2AFBF05CB6E62EFA` FOREIGN KEY (`attribute_id`) REFERENCES `attribute` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB AUTO_INCREMENT=218 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.product_attribute_assignment: ~134 rows (приблизительно)
 INSERT INTO `product_attribute_assignment` (`id`, `product_id`, `attribute_id`, `attribute_group_id`, `data_type`, `string_value`, `text_value`, `int_value`, `decimal_value`, `bool_value`, `date_value`, `json_value`, `unit`, `position`, `sort_order`) VALUES
 	(20, 19, 3, 1, 'string', '500', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
 	(21, 19, 4, 2, 'string', '200', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
@@ -9178,9 +9505,142 @@ INSERT INTO `product_attribute_assignment` (`id`, `product_id`, `attribute_id`, 
 	(45, 71, 5, 2, 'string', '5', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
 	(46, 72, 3, 1, 'string', '500', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
 	(47, 72, 4, 2, 'string', '250', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
-	(48, 72, 5, 2, 'string', '5', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL);
+	(48, 72, 5, 2, 'string', '5', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(49, 73, 3, 1, 'string', '500', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(50, 75, 11, 1, 'string', 'нет', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(51, 75, 12, 1, 'string', 'классический', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(52, 75, 13, 1, 'string', 'бронза', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(53, 75, 3, 2, 'string', '500', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(54, 75, 4, 2, 'string', '550', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(55, 75, 5, 2, 'string', '8', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(56, 75, 6, 2, 'string', '6', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(57, 75, 7, 3, 'string', '18', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(58, 75, 8, 3, 'string', 'накаливания', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(59, 75, 9, 3, 'string', 'Е14', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(60, 75, 10, 3, 'string', '60', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(61, 75, 15, 4, 'string', 'нет', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(62, 77, 11, 1, 'string', 'нет', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(63, 77, 12, 1, 'string', 'классический', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(64, 77, 13, 1, 'string', 'бронза', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(65, 77, 3, 2, 'string', '600', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(66, 77, 4, 2, 'string', '700', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(67, 77, 5, 2, 'string', '8', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(68, 77, 6, 2, 'string', '8', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(69, 77, 7, 3, 'string', '24', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(70, 77, 8, 3, 'string', 'накаливания', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(71, 77, 9, 3, 'string', 'Е14', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(72, 77, 10, 3, 'string', '60', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(73, 77, 15, 4, 'string', 'нет', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(74, 78, 11, 1, 'string', 'нет', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(75, 78, 12, 1, 'string', 'классический', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(76, 78, 13, 1, 'string', 'бронза', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(77, 78, 3, 2, 'string', '600', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(78, 78, 4, 2, 'string', '700', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(79, 78, 5, 2, 'string', '8', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(80, 78, 6, 2, 'string', '8', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(81, 78, 7, 3, 'string', '24', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(82, 78, 8, 3, 'string', 'накаливания', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(83, 78, 9, 3, 'string', 'Е14', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(84, 78, 10, 3, 'string', '60', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(85, 78, 15, 4, 'string', 'нет', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(86, 79, 11, 1, 'string', 'нет', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(87, 79, 12, 1, 'string', 'классический', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(88, 79, 13, 1, 'string', 'бронза', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(89, 79, 3, 2, 'string', '600', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(90, 79, 4, 2, 'string', '700', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(91, 79, 5, 2, 'string', '8', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(92, 79, 6, 2, 'string', '8', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(93, 79, 7, 3, 'string', '24', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(94, 79, 8, 3, 'string', 'накаливания', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(95, 79, 9, 3, 'string', 'Е14', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(96, 79, 10, 3, 'string', '60', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(97, 79, 15, 4, 'string', 'нет', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(98, 80, 11, 1, 'string', 'нет', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(99, 80, 12, 1, 'string', 'классический', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(100, 80, 13, 1, 'string', 'бронза', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(101, 80, 3, 2, 'string', '600', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(102, 80, 4, 2, 'string', '700', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(103, 80, 5, 2, 'string', '8', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(104, 80, 6, 2, 'string', '8', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(105, 80, 7, 3, 'string', '24', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(106, 80, 8, 3, 'string', 'накаливания', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(107, 80, 9, 3, 'string', 'Е14', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(108, 80, 10, 3, 'string', '60', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(109, 80, 15, 4, 'string', 'нет', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(110, 81, 11, 1, 'string', 'нет', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(111, 81, 12, 1, 'string', 'классический', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(112, 81, 13, 1, 'string', 'бронза', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(113, 81, 3, 2, 'string', '600', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(114, 81, 4, 2, 'string', '700', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(115, 81, 5, 2, 'string', '8', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(116, 81, 6, 2, 'string', '8', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(117, 81, 7, 3, 'string', '24', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(118, 81, 8, 3, 'string', 'накаливания', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(119, 81, 9, 3, 'string', 'Е14', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(120, 81, 10, 3, 'string', '60', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(121, 81, 15, 4, 'string', 'нет', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(122, 82, 11, 1, 'string', 'нет', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(123, 82, 12, 1, 'string', 'классический', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(124, 82, 13, 1, 'string', 'бронза', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(125, 82, 3, 2, 'string', '600', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(126, 82, 4, 2, 'string', '700', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(127, 82, 5, 2, 'string', '8', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(128, 82, 6, 2, 'string', '8', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(129, 82, 7, 3, 'string', '24', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(130, 82, 8, 3, 'string', 'накаливания', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(131, 82, 9, 3, 'string', 'Е14', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(132, 82, 10, 3, 'string', '60', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(133, 82, 15, 4, 'string', 'нет', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(134, 83, 11, 1, 'string', 'нет', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(135, 83, 12, 1, 'string', 'классический', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(136, 83, 13, 1, 'string', 'бронза', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(137, 83, 3, 2, 'string', '600', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(138, 83, 4, 2, 'string', '700', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(139, 83, 5, 2, 'string', '8', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(140, 83, 6, 2, 'string', '8', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(141, 83, 7, 3, 'string', '24', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(142, 83, 8, 3, 'string', 'накаливания', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(143, 83, 9, 3, 'string', 'Е14', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(144, 83, 10, 3, 'string', '60', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(145, 83, 15, 4, 'string', 'нет', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(146, 84, 11, 1, 'string', 'нет', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(147, 84, 12, 1, 'string', 'классический', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(148, 84, 13, 1, 'string', 'бронза', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(149, 84, 3, 2, 'string', '600', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(150, 84, 4, 2, 'string', '700', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(151, 84, 5, 2, 'string', '8', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(152, 84, 6, 2, 'string', '8', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(153, 84, 7, 3, 'string', '24', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(154, 84, 8, 3, 'string', 'накаливания', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(155, 84, 9, 3, 'string', 'Е14', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(156, 84, 10, 3, 'string', '60', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(157, 84, 15, 4, 'string', 'нет', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(158, 85, 11, 1, 'string', 'нет', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(159, 85, 12, 1, 'string', 'классический', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(160, 85, 13, 1, 'string', 'бронза', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(161, 85, 3, 2, 'string', '600', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(162, 85, 4, 2, 'string', '700', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(163, 85, 5, 2, 'string', '8', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(164, 85, 6, 2, 'string', '8', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(165, 85, 7, 3, 'string', '24', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(166, 85, 8, 3, 'string', 'накаливания', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(167, 85, 9, 3, 'string', 'Е14', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(168, 85, 10, 3, 'string', '60', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL),
+	(169, 85, 15, 4, 'string', 'нет', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL);
 
--- Дамп данных таблицы new3.product_image: ~31 rows (приблизительно)
+-- Дамп структуры для таблица new3.product_image
+CREATE TABLE IF NOT EXISTS `product_image` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `product_id` int DEFAULT NULL,
+  `image_url` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `sort_order` int NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `product_id` (`product_id`),
+  KEY `product_image_sort_idx` (`sort_order`),
+  CONSTRAINT `FK_64617F034584665A` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=238 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.product_image: ~63 rows (приблизительно)
 INSERT INTO `product_image` (`id`, `product_id`, `image_url`, `sort_order`) VALUES
 	(42, NULL, '/media/cache/md2/img/tokkata/lyustra-tokkata-piramida-zhuravlik-600-serebro-1.jpg', 1),
 	(43, NULL, '/media/cache/md2/img/tokkata/lyustra-tokkata-piramida-zhuravlik-600-serebro-2.jpg', 2),
@@ -9212,9 +9672,62 @@ INSERT INTO `product_image` (`id`, `product_id`, `image_url`, `sort_order`) VALU
 	(190, 72, '/media/cache/md2/img/diana-6-zhuravlik-pod-bronzu-zelenaya-1.jpg', 1),
 	(191, 72, '/media/cache/md2/img/photo_2025-08-13_12-05-25.jpg', 2),
 	(192, 72, '/media/cache/md2/img/astra-buton-1-pod-bronzu-zelenaya-1.jpg', 3),
-	(193, 53, '/media/cache/md2/img/anzhelika-3-lampy-niz-1-zoloto-1.jpg', 1);
+	(193, 53, '/media/cache/md2/img/anzhelika-3-lampy-niz-1-zoloto-1.jpg', 1),
+	(194, 73, '/media/cache/md2/img/bronza/artemida-6-shar/lyustra-artemida-6-shar-1.jpg', 1),
+	(195, 73, '/media/cache/md2/img/bronza/artemida-6-shar/lyustra-artemida-6-shar-2.jpg', 2),
+	(196, 73, '/media/cache/md2/img/bronza/artemida-6-shar/lyustra-artemida-6-shar-3.jpg', 3),
+	(197, 73, '/media/cache/md2/img/bronza/artemida-6-shar/lyustra-artemida-6-shar-4.jpg', 4),
+	(198, 73, '/media/cache/md2/img/bronza/artemida-6-shar/lyustra-artemida-6-shar-5.jpg', 5),
+	(199, 75, '/media/cache/md2/img/bronza/artemida-6-shar/lyustra-artemida-6-shar-2.jpg', 1),
+	(200, 76, '/media/cache/md2/img/bronza/artemida-6-shar/lyustra-artemida-6-shar-5.jpg', 1),
+	(201, 76, '/media/cache/md2/img/bronza/artemida-6-shar/lyustra-artemida-6-shar-4.jpg', 2),
+	(203, 77, '/media/cache/md2/img/bronza/oniks-6/lyustra-alfeya-oniks-8-shary-1.jpg', 1),
+	(204, 77, '/media/cache/md2/img/bronza/oniks-6/lyustra-alfeya-oniks-8-shary-2.jpg', 2),
+	(205, 77, '/media/cache/md2/img/bronza/oniks-6/lyustra-alfeya-oniks-8-shary-3.jpg', 3),
+	(206, 77, '/media/cache/md2/img/bronza/oniks-6/lyustra-alfeya-oniks-8-shary-4.jpg', 4),
+	(207, 77, '/media/cache/md2/img/bronza/oniks-6/lyustra-alfeya-oniks-8-shary-5.jpg', 5),
+	(209, 78, '/media/cache/md2/img/bronza/oniks-6/lyustra-alfeya-oniks-8-shary-2.jpg', 1),
+	(210, 78, '/media/cache/md2/img/bronza/oniks-6/lyustra-alfeya-oniks-8-shary-3.jpg', 2),
+	(211, 78, '/media/cache/md2/img/bronza/oniks-6/lyustra-alfeya-oniks-8-shary-4.jpg', 3),
+	(212, 78, '/media/cache/md2/img/bronza/oniks-6/lyustra-alfeya-oniks-8-shary-5.jpg', 4),
+	(214, 79, '/media/cache/md2/img/bronza/oniks-6/lyustra-alfeya-oniks-8-shary-3.jpg', 1),
+	(215, 79, '/media/cache/md2/img/bronza/oniks-6/lyustra-alfeya-oniks-8-shary-4.jpg', 2),
+	(216, 79, '/media/cache/md2/img/bronza/oniks-6/lyustra-alfeya-oniks-8-shary-5.jpg', 3),
+	(218, 80, '/media/cache/md2/img/bronza/oniks-6/lyustra-alfeya-oniks-8-shary-4.jpg', 1),
+	(219, 80, '/media/cache/md2/img/bronza/oniks-6/lyustra-alfeya-oniks-8-shary-5.jpg', 2),
+	(221, 81, '/media/cache/md2/img/bronza/oniks-6/lyustra-alfeya-oniks-8-shary-5.jpg', 1),
+	(223, 82, '/media/cache/md2/img/bronza/atlanta/lyustra-atlanta-iz-mramora-shar-5-1-1.jpg', 1),
+	(225, 83, '/media/cache/md2/img/bronza/atlanta/lyustra-atlanta-iz-mramora-shar-5-1-2.jpg', 1),
+	(227, 84, '/media/cache/md2/img/bronza/oniks-6/lyustra-alfeya-oniks-8-shary-3.jpg', 1),
+	(229, 85, '/media/cache/md2/img/bronza/oniks-6/lyustra-alfeya-oniks-8-shary-4.jpg', 1);
 
--- Дамп данных таблицы new3.product_option_value_assignment: ~21 rows (приблизительно)
+-- Дамп структуры для таблица new3.product_option_value_assignment
+CREATE TABLE IF NOT EXISTS `product_option_value_assignment` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `product_id` int NOT NULL,
+  `option_id` int NOT NULL,
+  `value_id` int NOT NULL,
+  `height` int DEFAULT NULL,
+  `price` int DEFAULT NULL,
+  `bulbs_count` int DEFAULT NULL,
+  `lighting_area` int DEFAULT NULL,
+  `sku` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `attributes` json DEFAULT NULL,
+  `original_sku` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `sale_price` int DEFAULT NULL,
+  `sort_order` int DEFAULT NULL,
+  `quantity` int DEFAULT NULL,
+  `set_price` tinyint(1) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `IDX_E85761E84584665A` (`product_id`),
+  KEY `IDX_E85761E8A7C41D6F` (`option_id`),
+  KEY `IDX_E85761E8F920BBA2` (`value_id`),
+  CONSTRAINT `FK_E85761E84584665A` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_E85761E8A7C41D6F` FOREIGN KEY (`option_id`) REFERENCES `option` (`id`),
+  CONSTRAINT `FK_E85761E8F920BBA2` FOREIGN KEY (`value_id`) REFERENCES `option_value` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=359 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.product_option_value_assignment: ~34 rows (приблизительно)
 INSERT INTO `product_option_value_assignment` (`id`, `product_id`, `option_id`, `value_id`, `height`, `price`, `bulbs_count`, `lighting_area`, `sku`, `attributes`, `original_sku`, `sale_price`, `sort_order`, `quantity`, `set_price`) VALUES
 	(185, 51, 5, 6, 400, 4590, NULL, NULL, NULL, '[]', NULL, NULL, NULL, NULL, 0),
 	(186, 51, 5, 12, NULL, NULL, NULL, NULL, NULL, '[]', NULL, NULL, NULL, NULL, 0),
@@ -9223,23 +9736,47 @@ INSERT INTO `product_option_value_assignment` (`id`, `product_id`, `option_id`, 
 	(189, 51, 6, 8, NULL, NULL, NULL, NULL, NULL, '[]', NULL, NULL, NULL, NULL, NULL),
 	(204, 52, 5, 10, 250, 6000, 4, NULL, '345435', '[]', NULL, NULL, 1, 100, 0),
 	(205, 52, 5, 11, 200, 5600, NULL, NULL, NULL, '[]', NULL, NULL, 2, NULL, 0),
-	(225, 19, 6, 9, NULL, NULL, NULL, NULL, NULL, '[]', NULL, NULL, NULL, 10, 0),
-	(226, 19, 5, 11, 200, 5000, 5, NULL, '2423423', '[]', NULL, 3900, 1, 10, 1),
+	(225, 19, 6, 9, NULL, NULL, NULL, NULL, NULL, '[]', NULL, NULL, NULL, 9, 0),
+	(226, 19, 5, 11, 200, 5000, 5, NULL, '2423423', '[]', NULL, 3900, 1, 9, 1),
 	(227, 19, 5, 6, 250, 6000, 6, NULL, '234234', '[]', NULL, 4900, 2, 10, 0),
 	(269, 67, 5, 6, NULL, NULL, NULL, NULL, NULL, '[]', NULL, NULL, NULL, NULL, 0),
 	(270, 66, 5, 6, NULL, NULL, NULL, NULL, NULL, '[]', NULL, NULL, NULL, NULL, 0),
 	(271, 66, 6, 8, NULL, NULL, NULL, NULL, NULL, '[]', NULL, NULL, NULL, NULL, 0),
 	(272, 66, 5, 7, NULL, NULL, NULL, NULL, NULL, '[]', NULL, NULL, NULL, NULL, 0),
 	(274, 68, 5, 10, NULL, NULL, NULL, NULL, NULL, '[]', NULL, NULL, NULL, NULL, 0),
-	(301, 70, 5, 10, NULL, 16500, NULL, NULL, NULL, '[]', NULL, NULL, NULL, 10, 0),
 	(306, 71, 5, 11, 350, 15600, 5, NULL, NULL, '[]', NULL, NULL, 2, 49, 1),
 	(307, 71, 5, 6, 350, 9990, 8, NULL, '', '[]', NULL, NULL, 1, 0, 0),
-	(308, 69, 5, 6, 250, 18950, 6, NULL, '4561521', '[]', NULL, 16000, 1, 98, 1),
+	(308, 69, 5, 6, 250, 18950, 6, NULL, '4561521', '[]', NULL, 16000, 1, 95, 1),
 	(309, 69, 6, 8, NULL, NULL, NULL, NULL, NULL, '[]', NULL, NULL, 1, 100, 0),
-	(310, 69, 6, 9, NULL, NULL, NULL, NULL, NULL, '[]', NULL, NULL, 2, 98, 0),
-	(311, 72, 5, 11, 350, 15600, 5, NULL, NULL, '[]', NULL, NULL, NULL, 50, 0);
+	(310, 69, 6, 9, NULL, NULL, NULL, NULL, NULL, '[]', NULL, NULL, 2, 95, 0),
+	(311, 72, 5, 11, 350, 15600, 5, NULL, NULL, '[]', NULL, NULL, NULL, 50, 0),
+	(313, 73, 5, 7, 650, 25000, 6, 18, '456789', '[]', NULL, NULL, 1, 6, 1),
+	(318, 75, 5, 6, 550, 18900, 6, 18, '465789_6', '[]', NULL, 17900, 2, 99, 1),
+	(322, 76, 5, 6, 560, 18880, 6, 18, '456123', '[]', NULL, NULL, 4, 10, 1),
+	(326, 77, 5, 7, 700, 26300, 8, 24, '45678', '[]', NULL, NULL, 1, 100, 0),
+	(330, 78, 5, 7, 750, 26300, 8, 24, '45678_1', '[]', NULL, NULL, 1, 99, 0),
+	(333, 79, 5, 11, 800, 36000, 10, 30, '45678_3', '[]', NULL, 29000, 1, 100, 1),
+	(336, 80, 5, 12, 900, 50000, 12, 36, '45678_6', '[]', NULL, NULL, 1, 100, 1),
+	(338, 81, 5, 11, 750, 45000, 10, 30, '45678_7', '[]', NULL, 42900, 1, 100, 1),
+	(340, 82, 5, 6, 550, 36000, 5, 15, '23487', '[]', NULL, NULL, 1, 100, 1),
+	(342, 83, 5, 6, 500, 35000, 5, 15, '23487_2', '[]', NULL, NULL, 1, 98, 1),
+	(347, 85, 5, 7, 600, 37000, 5, 15, '23487_3_copy', '[]', NULL, NULL, 1, 100, 0),
+	(356, 84, 5, 7, 600, 37000, 5, 15, '23487_3', '[]', NULL, NULL, 2, 100, 0),
+	(357, 84, 5, 6, NULL, NULL, NULL, NULL, NULL, '[]', NULL, NULL, 1, 100, 0),
+	(358, 70, 5, 10, NULL, 16500, NULL, NULL, NULL, '[]', NULL, NULL, NULL, 9, 1);
 
--- Дамп данных таблицы new3.product_seo: ~9 rows (приблизительно)
+-- Дамп структуры для таблица new3.product_seo
+CREATE TABLE IF NOT EXISTS `product_seo` (
+  `product_id` int NOT NULL,
+  `meta_title` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `meta_description` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `meta_keywords` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `h1` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`product_id`),
+  CONSTRAINT `FK_8C5EB82F4584665A` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.product_seo: ~25 rows (приблизительно)
 INSERT INTO `product_seo` (`product_id`, `meta_title`, `meta_description`, `meta_keywords`, `h1`) VALUES
 	(19, '', '', NULL, 'Люстра Кольцо 5 - 2 лампа'),
 	(51, NULL, NULL, NULL, 'Люстра Астра Ажур'),
@@ -9250,9 +9787,36 @@ INSERT INTO `product_seo` (`product_id`, `meta_title`, `meta_description`, `meta
 	(69, '', '', NULL, 'Кольцо 17'),
 	(70, '', '', NULL, 'Кольцо 19'),
 	(71, 'Кольцо 20', '', NULL, 'Кольцо 20'),
-	(72, 'Кольцо 20', '', NULL, 'Кольцо 20');
+	(72, 'Кольцо 20', '', NULL, 'Кольцо 20'),
+	(73, 'Бронзовая люстра Артемида №6 шар', '', NULL, 'Бронзовая люстра Артемида №6 шар'),
+	(75, '', '', NULL, 'Бронзовая люстра Артемида №6 '),
+	(76, 'Бронзовая люстра Артемида журавлик', '', NULL, 'Бронзовая люстра Артемида журавлик'),
+	(77, '', '', NULL, 'Бронзовая люстра Артемида №6 '),
+	(78, '', '', NULL, 'Бронзовая люстра Оникс №2'),
+	(79, '', '', NULL, 'Бронзовая люстра Оникс №3'),
+	(80, '', '', NULL, 'Бронзовая люстра Оникс №4'),
+	(81, '', '', NULL, 'Бронзовая люстра Оникс №5'),
+	(82, '', '', NULL, 'Бронзовая люстра Атланта №1'),
+	(83, '', '', NULL, 'Бронзовая люстра Атланта №2'),
+	(84, '', '', NULL, 'Бронзовая люстра Атланта №3'),
+	(85, '', '', NULL, 'Бронзовая люстра Атланта №3');
 
--- Дамп данных таблицы new3.product_to_category: ~19 rows (приблизительно)
+-- Дамп структуры для таблица new3.product_to_category
+CREATE TABLE IF NOT EXISTS `product_to_category` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `product_id` int NOT NULL,
+  `category_id` int NOT NULL,
+  `is_parent` tinyint(1) DEFAULT '0',
+  `position` int DEFAULT '1',
+  `visibility` tinyint(1) DEFAULT '1',
+  PRIMARY KEY (`id`),
+  KEY `IDX_673A19704584665A` (`product_id`),
+  KEY `IDX_673A197012469DE2` (`category_id`),
+  CONSTRAINT `FK_673A197012469DE2` FOREIGN KEY (`category_id`) REFERENCES `category` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_673A19704584665A` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=136 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.product_to_category: ~61 rows (приблизительно)
 INSERT INTO `product_to_category` (`id`, `product_id`, `category_id`, `is_parent`, `position`, `visibility`) VALUES
 	(36, 19, 1, 1, NULL, 1),
 	(37, 19, 3, 0, NULL, 1),
@@ -9273,7 +9837,71 @@ INSERT INTO `product_to_category` (`id`, `product_id`, `category_id`, `is_parent
 	(85, 71, 3, 0, NULL, 1),
 	(86, 72, 4, 1, NULL, 1),
 	(87, 72, 3, 0, NULL, 1),
-	(88, 72, 1, 0, NULL, 1);
+	(88, 72, 1, 0, NULL, 1),
+	(89, 73, 3, 0, NULL, 1),
+	(90, 73, 4, 1, NULL, 1),
+	(91, 75, 3, 0, NULL, 1),
+	(92, 75, 4, 1, NULL, 1),
+	(93, 75, 5, 0, NULL, 1),
+	(94, 76, 3, 0, NULL, 1),
+	(95, 76, 4, 1, NULL, 1),
+	(96, 76, 5, 0, NULL, 1),
+	(97, 77, 3, 0, NULL, 1),
+	(98, 77, 4, 1, NULL, 1),
+	(99, 77, 5, 0, NULL, 1),
+	(100, 78, 3, 0, NULL, 1),
+	(101, 78, 4, 1, NULL, 1),
+	(102, 78, 5, 0, NULL, 1),
+	(103, 79, 3, 0, NULL, 1),
+	(104, 79, 4, 1, NULL, 1),
+	(105, 79, 5, 0, NULL, 1),
+	(106, 80, 3, 0, NULL, 1),
+	(107, 80, 4, 1, NULL, 1),
+	(108, 80, 5, 0, NULL, 1),
+	(109, 81, 3, 0, NULL, 1),
+	(110, 81, 4, 1, NULL, 1),
+	(111, 81, 5, 0, NULL, 1),
+	(112, 82, 3, 0, NULL, 1),
+	(113, 82, 4, 1, NULL, 1),
+	(114, 82, 5, 0, NULL, 1),
+	(115, 83, 3, 0, NULL, 1),
+	(116, 83, 4, 1, NULL, 1),
+	(117, 83, 5, 0, NULL, 1),
+	(118, 84, 3, 0, NULL, 1),
+	(119, 84, 4, 1, NULL, 1),
+	(120, 84, 5, 0, NULL, 1),
+	(121, 85, 3, 0, NULL, 1),
+	(122, 85, 4, 1, NULL, 1),
+	(123, 85, 5, 0, NULL, 1);
+
+-- Дамп структуры для таблица new3.pvz_points
+CREATE TABLE IF NOT EXISTS `pvz_points` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `code` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `city_code` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `address` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `tariff_zone` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `price` int DEFAULT NULL,
+  `delivery_period` int DEFAULT NULL,
+  `phone` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `region` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `type_of_office` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `metro` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `only_prepaid_orders` varchar(5) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `postal` int DEFAULT NULL,
+  `city` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `time` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `card` int DEFAULT NULL,
+  `shirota` double DEFAULT NULL,
+  `dolgota` double DEFAULT NULL,
+  `company` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `city_id` int DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `city` (`city`),
+  KEY `IDX_E80F6C3D8BAC62AF` (`city_id`),
+  CONSTRAINT `FK_E80F6C3D8BAC62AF` FOREIGN KEY (`city_id`) REFERENCES `fias` (`fias_id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=46884 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Дамп данных таблицы new3.pvz_points: ~4 444 rows (приблизительно)
 INSERT INTO `pvz_points` (`id`, `code`, `name`, `city_code`, `address`, `tariff_zone`, `price`, `delivery_period`, `phone`, `region`, `type_of_office`, `metro`, `only_prepaid_orders`, `postal`, `city`, `time`, `card`, `shirota`, `dolgota`, `company`, `city_id`) VALUES
@@ -9427,8 +10055,7 @@ INSERT INTO `pvz_points` (`id`, `code`, `name`, `city_code`, `address`, `tariff_
 	(42353, '01944df18f09744489422761204c2abe', 'Пункт выдачи заказов Яндекс Маркета', '117698', 'деревня Голубое Трёхсвятская улица 18', NULL, NULL, NULL, '+74951570020', '', NULL, NULL, NULL, 141551, 'деревня Голубое', NULL, 1, 55.979696, 37.101523, NULL, NULL),
 	(42354, '01944f8dae60715e96903c71f4fac5e7', 'Пункт выдачи заказов Яндекс Маркета', '120548', 'Москва Люблинская улица 76 к2', NULL, NULL, NULL, '+74951570020', 'Москва', NULL, NULL, NULL, 109382, 'Москва', NULL, 1, 55.663203, 37.733712, NULL, NULL),
 	(42355, '01944f8daea4732a9d1fb8048c0a9c89', 'Пункт выдачи заказов Яндекс Маркета', '102045', 'Самара Пугачёвский тракт 66', NULL, NULL, NULL, '+74951570020', 'Самарская область', NULL, NULL, NULL, 443065, 'Самара', NULL, 1, 53.117819, 50.084975, NULL, NULL),
-	(42356, '01944f8daedc745886561a441a337d8a', 'Пункт выдачи заказов Яндекс Маркета', '117028', 'Москва улица Дубки 4А', NULL, NULL, NULL, '+74951570020', 'Москва', NULL, NULL, NULL, 127434, 'Москва', NULL, 1, 55.818097, 37.569167, NULL, NULL);
-INSERT INTO `pvz_points` (`id`, `code`, `name`, `city_code`, `address`, `tariff_zone`, `price`, `delivery_period`, `phone`, `region`, `type_of_office`, `metro`, `only_prepaid_orders`, `postal`, `city`, `time`, `card`, `shirota`, `dolgota`, `company`, `city_id`) VALUES
+	(42356, '01944f8daedc745886561a441a337d8a', 'Пункт выдачи заказов Яндекс Маркета', '117028', 'Москва улица Дубки 4А', NULL, NULL, NULL, '+74951570020', 'Москва', NULL, NULL, NULL, 127434, 'Москва', NULL, 1, 55.818097, 37.569167, NULL, NULL),
 	(42357, '0194514bc77573d998872b400e492b0f', 'Пункт выдачи заказов Яндекс Маркета', '120680', 'Санкт-Петербург улица Радищева 18', NULL, NULL, NULL, '+74951570020', 'Санкт-Петербург', NULL, NULL, NULL, 191014, 'Санкт-Петербург', NULL, 1, 59.938297, 30.36303, NULL, NULL),
 	(42358, '0194514bc79075ed8c5190157bcf50cd', 'Пункт выдачи заказов Яндекс Маркета', '217090', 'Тверь улица Софьи Перовской 30', NULL, NULL, NULL, '+74951570020', 'Тверская область', NULL, NULL, NULL, 170006, 'Тверь', NULL, 1, 56.858152, 35.883512, NULL, NULL),
 	(42359, '0194517b890f7387a7548d00643d0150', 'Пункт выдачи заказов Яндекс Маркета', '215293', 'район Коммунарка улица Лобановский Лес 9', NULL, NULL, NULL, '+74951570020', 'Москва', NULL, NULL, NULL, 108802, 'район Коммунарка', NULL, 1, 55.594915, 37.429691, NULL, NULL),
@@ -11929,7 +12556,8 @@ INSERT INTO `pvz_points` (`id`, `code`, `name`, `city_code`, `address`, `tariff_
 	(44854, '691491ce-355b-4181-a357-61f11d251983', 'Пункт выдачи заказов Яндекс Маркета', '116980', 'Москва Краснобогатырская улица 9', NULL, NULL, NULL, '+74951570020', 'Москва', NULL, NULL, NULL, 107564, 'Москва', NULL, 1, 55.816932678223, 37.692668914795, NULL, NULL),
 	(44855, '691a2971-d08c-4005-ad60-4d99ccfbfceb', 'Пункт выдачи заказов Яндекс Маркета', '10716', 'Балашиха Речная 5', NULL, NULL, NULL, '+74951570020', 'Московская область', NULL, NULL, NULL, 143981, 'Балашиха', NULL, 1, 55.747417449951, 37.961902618408, NULL, NULL),
 	(44856, '692ef476-c5fa-4717-a1fd-23bd106c09eb', 'Пункт выдачи заказов Яндекс Маркета', '217026', 'Ижевск улица Михаила Петрова 33', NULL, NULL, NULL, '+74951570020', 'Удмуртская Республика', NULL, NULL, NULL, 426065, 'Ижевск', NULL, 1, 56.86935043335, 53.290042877197, NULL, NULL),
-	(44857, '6940624d-77bb-4181-ba74-221c181be769', 'Пункт выдачи заказов Яндекс Маркета', '120601', 'Санкт-Петербург Вознесенский проспект 51', NULL, NULL, NULL, '+74951570020', 'Санкт-Петербург', NULL, NULL, NULL, 190068, 'Санкт-Петербург', NULL, 1, 59.921131134033, 30.307622909546, NULL, NULL),
+	(44857, '6940624d-77bb-4181-ba74-221c181be769', 'Пункт выдачи заказов Яндекс Маркета', '120601', 'Санкт-Петербург Вознесенский проспект 51', NULL, NULL, NULL, '+74951570020', 'Санкт-Петербург', NULL, NULL, NULL, 190068, 'Санкт-Петербург', NULL, 1, 59.921131134033, 30.307622909546, NULL, NULL);
+INSERT INTO `pvz_points` (`id`, `code`, `name`, `city_code`, `address`, `tariff_zone`, `price`, `delivery_period`, `phone`, `region`, `type_of_office`, `metro`, `only_prepaid_orders`, `postal`, `city`, `time`, `card`, `shirota`, `dolgota`, `company`, `city_id`) VALUES
 	(44858, '694def3f-025a-4cb0-a220-6f9f1b459893', 'Пункт выдачи заказов партнёра', '20257', 'Гаврилов-Ям улица Чапаева 13', NULL, NULL, NULL, '+74951570020', 'Ярославская область', NULL, NULL, NULL, 152240, 'Гаврилов-Ям', NULL, 1, 57.307441711426, 39.857406616211, NULL, NULL),
 	(44859, '69545cd2-316a-4975-a8ac-5e4b50a672b7', 'Пункт выдачи заказов Яндекс Маркета', '120683', 'Пермь улица Газеты Звезда 12А', NULL, NULL, NULL, '+74951570020', 'Пермский край', NULL, NULL, NULL, 614000, 'Пермь', NULL, 1, 58.014995574951, 56.241264343262, NULL, NULL),
 	(44860, '6963921c-d319-4c53-a4ae-b684f6ddd1ae', 'Пункт выдачи заказов партнёра', '217444', 'Калуга улица Никитина 93А', NULL, NULL, NULL, '+74951570020', 'Калужская область', NULL, NULL, NULL, 248003, 'Калуга', NULL, 1, 54.509178161621, 36.289367675781, NULL, NULL),
@@ -12074,8 +12702,7 @@ INSERT INTO `pvz_points` (`id`, `code`, `name`, `city_code`, `address`, `tariff_
 	(44999, '73949ebd-8907-4056-8501-f2ee98b8f9f7', 'Пункт выдачи заказов Яндекс Маркета', '10710', 'Железногорск улица Энтузиастов 3 к2', NULL, NULL, NULL, '+74951570020', 'Курская область', NULL, NULL, NULL, 307178, 'Железногорск', NULL, 1, 52.35147857666, 35.355152130127, NULL, NULL),
 	(45000, '73aa328e-6dd7-4f22-87b4-b334d9a4b2e3', 'Пункт выдачи заказов Яндекс Маркета', '217082', 'Кемерово улица Марковцева 22', NULL, NULL, NULL, '+74951570020', 'Кемеровская область - Кузбасс', NULL, NULL, NULL, 650003, 'Кемерово', NULL, 1, 55.336399078369, 86.190200805664, NULL, NULL),
 	(45001, '73bf8955-9974-421b-81fc-297165b5cfc1', 'Пункт выдачи заказов Яндекс Маркета', '20595', 'Сысерть улица Карла Либкнехта 65', NULL, NULL, NULL, '+74951570020', 'Свердловская область', NULL, NULL, NULL, 624022, 'Сысерть', NULL, 1, 56.501567840576, 60.817565917969, NULL, NULL),
-	(45002, '73d6abc9-4255-49e4-85e0-361764cdd08a', 'Пункт выдачи заказов Яндекс Маркета', '117022', 'Москва Ангарская улица 57 к1', NULL, NULL, NULL, '+74951570020', 'Москва', NULL, NULL, NULL, 125412, 'Москва', NULL, 1, 55.88321685791, 37.52759552002, NULL, NULL);
-INSERT INTO `pvz_points` (`id`, `code`, `name`, `city_code`, `address`, `tariff_zone`, `price`, `delivery_period`, `phone`, `region`, `type_of_office`, `metro`, `only_prepaid_orders`, `postal`, `city`, `time`, `card`, `shirota`, `dolgota`, `company`, `city_id`) VALUES
+	(45002, '73d6abc9-4255-49e4-85e0-361764cdd08a', 'Пункт выдачи заказов Яндекс Маркета', '117022', 'Москва Ангарская улица 57 к1', NULL, NULL, NULL, '+74951570020', 'Москва', NULL, NULL, NULL, 125412, 'Москва', NULL, 1, 55.88321685791, 37.52759552002, NULL, NULL),
 	(45003, '73e72de7-dc66-4f60-8db2-e2e01c526efc', 'Пункт выдачи заказов Яндекс Маркета', '20237', 'Березники улица Карла Маркса 60', NULL, NULL, NULL, '+74951570020', 'Пермский край', NULL, NULL, NULL, 618417, 'Березники', NULL, 1, 59.408912658691, 56.80570602417, NULL, NULL),
 	(45004, '73f96f22-ff50-4c7d-802f-d9be3e69a614', 'Пункт выдачи заказов Яндекс Маркета', '10750', 'Раменское Дергаевская улица 26', NULL, NULL, NULL, '+74951570020', 'Московская область', NULL, NULL, NULL, 140103, 'Раменское', NULL, 1, 55.578712463379, 38.246646881104, NULL, NULL),
 	(45005, '740065d6-ddfe-449a-bdca-cbbea4eddff1', 'Пункт выдачи заказов Яндекс Маркета', '10959', 'Камышин Пролетарская улица 105', NULL, NULL, NULL, '+74951570020', 'Волгоградская область', NULL, NULL, NULL, 403873, 'Камышин', NULL, 1, 50.075393676758, 45.39900970459, NULL, NULL),
@@ -13958,10 +14585,29 @@ INSERT INTO `pvz_points` (`id`, `code`, `name`, `city_code`, `address`, `tariff_
 	(46882, 'ffcf6029-4255-4932-b7f5-47872abb5355', 'Пункт выдачи заказов Яндекс Маркета', '117049', 'Москва Митинская улица 39', NULL, NULL, NULL, '+74951570020', 'Москва', NULL, NULL, NULL, 125368, 'Москва', NULL, 1, 55.849025726318, 37.354038238525, NULL, NULL),
 	(46883, 'ffe22c6e-6a85-45a7-a04f-2dcc3f16327f', 'Пункт выдачи заказов Яндекс Маркета', '117673', 'деревня Глинка Центральная улица 35 к3', NULL, NULL, NULL, '+74951570020', 'Ленинградская область', NULL, NULL, NULL, 187021, 'деревня Глинка', NULL, 1, 59.677433013916, 30.502948760986, NULL, NULL);
 
+-- Дамп структуры для таблица new3.pvz_price
+CREATE TABLE IF NOT EXISTS `pvz_price` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `city` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `srok` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `city2` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `code` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `alias` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `region` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `cost` int DEFAULT NULL,
+  `free` int DEFAULT NULL,
+  `calculate_price` int DEFAULT NULL,
+  `calculate_delivery_period` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `city_id` int DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `city` (`city`),
+  KEY `IDX_C5BFAFEF8BAC62AF` (`city_id`),
+  CONSTRAINT `FK_C5BFAFEF8BAC62AF` FOREIGN KEY (`city_id`) REFERENCES `fias` (`fias_id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=596 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Дамп данных таблицы new3.pvz_price: ~594 rows (приблизительно)
 INSERT INTO `pvz_price` (`id`, `city`, `srok`, `city2`, `code`, `alias`, `region`, `cost`, `free`, `calculate_price`, `calculate_delivery_period`, `city_id`) VALUES
-	(1, 'Москва', 'от 2 до 4 дней', 'Москве', '', 'moscow', '', 190, 6000, 609, '3', NULL);
-INSERT INTO `pvz_price` (`id`, `city`, `srok`, `city2`, `code`, `alias`, `region`, `cost`, `free`, `calculate_price`, `calculate_delivery_period`, `city_id`) VALUES
+	(1, 'Москва', 'от 2 до 4 дней', 'Москве', '', 'moscow', '', 190, 6000, 609, '3', NULL),
 	(2, 'Тамбов', 'от 5 до 6 дней', 'Тамбове', '', 'tambov', '', 490, 0, 644, '5', NULL),
 	(3, 'Санкт-Петербург', 'от 4 до 6 дней	', 'Санкт-Петербурге', '', 'spb', '', 190, 7000, 609, '4', NULL),
 	(4, 'Новосибирск', 'от 7 до 9 дней', 'Новосибирске', '', 'novosibirsk', '', 490, 0, 859, '7', NULL),
@@ -14556,33 +15202,154 @@ INSERT INTO `pvz_price` (`id`, `city`, `srok`, `city2`, `code`, `alias`, `region
 	(594, 'Приморский', 'от 2 до 4 дней', NULL, NULL, 'primorskiy', NULL, NULL, NULL, 772, '1', NULL),
 	(595, 'Смышляевка', 'от 9 до 11 дней', NULL, NULL, 'smyshlyaevka', NULL, NULL, NULL, 772, '8', NULL);
 
--- Дамп данных таблицы new3.settings: ~1 rows (приблизительно)
+-- Дамп структуры для таблица new3.settings
+CREATE TABLE IF NOT EXISTS `settings` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `value` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.settings: ~2 rows (приблизительно)
 INSERT INTO `settings` (`id`, `name`, `value`) VALUES
-	(1, 'phone', '899933000');
-INSERT INTO `settings` (`id`, `name`, `value`) VALUES
+	(1, 'phone', '899933000'),
 	(2, 'email', 'info@site.ru');
 
--- Дамп данных таблицы new3.users: ~0 rows (приблизительно)
-INSERT INTO `users` (`id`, `name`, `roles`, `password`) VALUES
-	(1, 'admin', '["ROLE_ADMIN", "ROLE_USER"]', '$2y$13$qJp9xcw0zgGd7IJqMHvS/.mr32.nobYRv4nUGZJz3amLZDzR/1aqW');
+-- Дамп структуры для таблица new3.users
+CREATE TABLE IF NOT EXISTS `users` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(180) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `roles` json NOT NULL,
+  `password` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `email` varchar(180) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `is_verified` tinyint(1) NOT NULL DEFAULT '0',
+  `failed_login_attempts` int NOT NULL DEFAULT '0',
+  `locked_until` datetime DEFAULT NULL COMMENT '(DC2Type:datetime_immutable)',
+  `last_login_at` datetime DEFAULT NULL COMMENT '(DC2Type:datetime_immutable)',
+  `token_version` int NOT NULL DEFAULT '0',
+  `phone` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UNIQ_1483A5E95E237E06` (`name`),
+  UNIQUE KEY `UNIQ_1483A5E9E7927C74` (`email`),
+  UNIQUE KEY `UNIQ_1483A5E9444F97DD` (`phone`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Дамп данных таблицы new3.wishlist: ~3 rows (приблизительно)
-INSERT INTO `wishlist` (`id`, `user_id`, `token`, `created_at`, `updated_at`, `expires_at`) VALUES
-	(1, NULL, '08fb95f597697d4ac84aaad212e523e4', '2025-09-29 06:34:29', '2025-09-29 06:34:29', '2026-09-29 06:34:29');
-INSERT INTO `wishlist` (`id`, `user_id`, `token`, `created_at`, `updated_at`, `expires_at`) VALUES
-	(2, NULL, '762771aa9d7291f40bbb5adbf0539f57', '2025-09-29 06:34:29', '2025-09-29 06:34:29', '2026-09-29 06:34:29'),
-	(3, NULL, 'c056a5dbf482b7eb3ff21f90b09d1365', '2025-09-29 06:34:38', '2025-09-29 06:43:31', '2026-09-29 06:34:38'),
-	(4, NULL, 'a4d16f7ba997deeef493ee06dc91e50d', '2025-09-29 06:59:21', '2025-09-29 06:59:21', '2026-09-29 06:59:21'),
-	(5, NULL, 'fec0321806b26e4ff2aa16c6e9845c21', '2025-09-29 06:59:21', '2025-09-29 06:59:21', '2026-09-29 06:59:21'),
-	(6, NULL, 'c10a767394ac059dc26f4416fa4d68cd', '2025-09-29 06:59:23', '2025-09-29 06:59:23', '2026-09-29 06:59:23'),
-	(7, 1, NULL, '2025-09-29 07:07:34', '2025-09-29 07:07:34', NULL),
-	(8, NULL, 'c5e1a8ce9b715d4f1cb8bd7f7426830c', '2025-09-29 07:08:48', '2025-09-29 16:31:54', '2026-09-29 07:08:48');
+-- Дамп данных таблицы new3.users: ~3 rows (приблизительно)
+INSERT INTO `users` (`id`, `name`, `roles`, `password`, `email`, `is_verified`, `failed_login_attempts`, `locked_until`, `last_login_at`, `token_version`, `phone`) VALUES
+	(1, 'admin', '["ROLE_ADMIN", "ROLE_USER"]', '$2y$13$qJp9xcw0zgGd7IJqMHvS/.mr32.nobYRv4nUGZJz3amLZDzR/1aqW', NULL, 0, 0, NULL, NULL, 0, NULL),
+	(3, 'alexeyfedotof@gmail.com', '["ROLE_USER"]', '$2y$13$u95FuKhBIpXElXywr8UoueJ3S5/DygfskDkc011uFBkz9p5R.BsiG', 'alexeyfedotof@gmail.com', 0, 0, NULL, '2025-10-06 11:56:29', 0, NULL),
+	(5, 'patent33@ya.ru', '["ROLE_USER"]', '$2y$13$z7NYvISS.E3nGHo4.G6SvuxnanNddcy/1FAxoT.TO/pqZnoOiwQES', 'patent33@ya.ru', 0, 0, NULL, '2025-10-07 16:07:18', 0, NULL);
 
--- Дамп данных таблицы new3.wishlist_item: ~0 rows (приблизительно)
+-- Дамп структуры для таблица new3.user_one_time_token
+CREATE TABLE IF NOT EXISTS `user_one_time_token` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `type` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `token_hash` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `salt` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `used` tinyint(1) NOT NULL DEFAULT '0',
+  `expires_at` datetime NOT NULL COMMENT '(DC2Type:datetime_immutable)',
+  `created_at` datetime NOT NULL COMMENT '(DC2Type:datetime_immutable)',
+  PRIMARY KEY (`id`),
+  KEY `IDX_361A51648CDE5729` (`type`),
+  KEY `IDX_361A5164F9D83E2` (`expires_at`),
+  KEY `IDX_361A5164A76ED395` (`user_id`),
+  CONSTRAINT `FK_UOTT_USER` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.user_one_time_token: ~2 rows (приблизительно)
+INSERT INTO `user_one_time_token` (`id`, `user_id`, `type`, `token_hash`, `salt`, `used`, `expires_at`, `created_at`) VALUES
+	(2, 3, 'verify_email', 'a884ad029abc1c7e2a42202c43c52eaf0c74f24a2b80e1b9d979e0b82fd85e63', 'fnrH5Px4ynZ8lfV-n6TfRA', 0, '2025-10-07 11:51:10', '2025-10-06 11:51:10'),
+	(4, 5, 'verify_email', '39271695f82f87b754973199cac9effedd02da3cb4825c879d8c0fa8de656595', 'gzYDot2RPFQlKSFYtf-k-w', 0, '2025-10-07 12:27:22', '2025-10-06 12:27:22');
+
+-- Дамп структуры для таблица new3.user_refresh_token
+CREATE TABLE IF NOT EXISTS `user_refresh_token` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `token_hash` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `salt` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `revoked` tinyint(1) NOT NULL DEFAULT '0',
+  `expires_at` datetime NOT NULL COMMENT '(DC2Type:datetime_immutable)',
+  `rotated_at` datetime DEFAULT NULL COMMENT '(DC2Type:datetime_immutable)',
+  `created_at` datetime NOT NULL COMMENT '(DC2Type:datetime_immutable)',
+  `ua_hash` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ip_hash` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `IDX_29C18CC5A76ED395` (`user_id`),
+  KEY `IDX_29C18CC5F9D83E2` (`expires_at`),
+  CONSTRAINT `FK_URT_USER` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.user_refresh_token: ~18 rows (приблизительно)
+INSERT INTO `user_refresh_token` (`id`, `user_id`, `token_hash`, `salt`, `revoked`, `expires_at`, `rotated_at`, `created_at`, `ua_hash`, `ip_hash`) VALUES
+	(1, 3, '58540eab38a68a802cd71f748adb0195dcb3def8ea55c5dba9ff9cee54334e1c', 'KRKFv6A5jEYxP5tHHYZpIA', 0, '2025-11-05 11:56:29', NULL, '2025-10-06 11:56:29', 'b5696a699925e22006af19488170e4e2ab139f50a49cff1cea664b7bd6f67a2e', '12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0'),
+	(3, 5, '757698bf27750d6ab2633be7274985b62723120be243f4c3edc6b7f8f323f0b1', '3AuyEw7SscB4L0gLG788MQ', 0, '2025-11-05 12:27:32', NULL, '2025-10-06 12:27:32', 'b5696a699925e22006af19488170e4e2ab139f50a49cff1cea664b7bd6f67a2e', '12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0'),
+	(4, 5, 'a699bebb5e1f436b1fc7c595c97996fc3034ed9a0cd14bf61be33f7212b91c3c', 'EKY8m_MRFQ-iWc2lLKbotg', 0, '2025-11-05 12:27:48', NULL, '2025-10-06 12:27:48', 'b5696a699925e22006af19488170e4e2ab139f50a49cff1cea664b7bd6f67a2e', '12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0'),
+	(5, 5, '0cabfd48eee59beec00b20dbe206a7cbc57f29decec86a83504ba27a325ec367', 'tOqEUwfLHFTTk9gerbiKAQ', 0, '2025-11-05 12:29:02', NULL, '2025-10-06 12:29:02', 'b5696a699925e22006af19488170e4e2ab139f50a49cff1cea664b7bd6f67a2e', '12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0'),
+	(6, 5, '5c080da76b322cec8ca02f0d546f3e2923a3be25822bc12ad60948a60bcb11fc', 'qHepPlJ7edRmplvdnRDovQ', 0, '2025-11-05 12:34:58', NULL, '2025-10-06 12:34:58', 'b5696a699925e22006af19488170e4e2ab139f50a49cff1cea664b7bd6f67a2e', '12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0'),
+	(7, 5, '11c42ddf9da6ecdb4e648447df068578c34d4892ffe2e2214f13d88d10d4e636', 'OtxGzOmfvWOaQshvswesig', 0, '2025-11-05 12:35:19', NULL, '2025-10-06 12:35:19', 'b5696a699925e22006af19488170e4e2ab139f50a49cff1cea664b7bd6f67a2e', '12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0'),
+	(8, 5, 'b1545325b0968221d2dade7d77f3fbecfac59daaba1e970df67da3dd3f39a61c', 'kRGow7HxBCD3N45qtCFXZA', 0, '2025-11-05 12:40:55', NULL, '2025-10-06 12:40:55', 'b5696a699925e22006af19488170e4e2ab139f50a49cff1cea664b7bd6f67a2e', '12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0'),
+	(9, 5, 'a207447e1f48bb52d0ef7e7ea380b77d74dd5d30fb726004df1aad6f8388734a', '8_pkjj8K-Vb0Ym6oJzDQww', 0, '2025-11-05 14:27:39', NULL, '2025-10-06 14:27:39', 'b5696a699925e22006af19488170e4e2ab139f50a49cff1cea664b7bd6f67a2e', '12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0'),
+	(10, 5, '318c8cfdab216a778e09f80a22659aef46d7dee79b8411d484a27c13468f4534', 'Nifogbdg-udrV4E4MsNB8g', 0, '2025-11-05 14:51:03', NULL, '2025-10-06 14:51:03', 'b5696a699925e22006af19488170e4e2ab139f50a49cff1cea664b7bd6f67a2e', '12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0'),
+	(11, 5, '273f7b9a505069afe1c6edfc5e1ae388269cab29193720af36bc030e13b7f0ef', '8akO5aDgmtUBl1UiFq425g', 0, '2025-11-05 15:01:38', NULL, '2025-10-06 15:01:38', 'b5696a699925e22006af19488170e4e2ab139f50a49cff1cea664b7bd6f67a2e', '12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0'),
+	(12, 5, 'fd8f441720fc36735d879c6203a74dd473948f15b8dc75ecd546a68edcd3c618', 'd_Q21KI_unL0nw0JB-AzUQ', 0, '2025-11-05 15:17:24', NULL, '2025-10-06 15:17:24', 'b5696a699925e22006af19488170e4e2ab139f50a49cff1cea664b7bd6f67a2e', '12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0'),
+	(13, 5, '786d1fcc4b252a2ad046a8c16501a7955eb1d94240947d4e31d8488a8effe4a9', 's4KKA0dWxvqRysMPo_GeMQ', 0, '2025-11-05 15:24:41', NULL, '2025-10-06 15:24:41', 'b5696a699925e22006af19488170e4e2ab139f50a49cff1cea664b7bd6f67a2e', '12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0'),
+	(14, 5, '6921064e09a950774e08b302b0d7638e584b653cc07d7b1472b6df63f1efc7d6', 'iGYjDEF7b26kA9vD5yrIqA', 0, '2025-11-05 15:29:23', NULL, '2025-10-06 15:29:23', 'b5696a699925e22006af19488170e4e2ab139f50a49cff1cea664b7bd6f67a2e', '12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0'),
+	(15, 5, '77df519f4e7f85fddf10200fda8f5c487f22928ba4460f472315b61cfae8817d', 'jKQ6IzS7oO_X_7spEAhcLg', 0, '2025-11-05 15:32:52', NULL, '2025-10-06 15:32:52', 'b5696a699925e22006af19488170e4e2ab139f50a49cff1cea664b7bd6f67a2e', '12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0'),
+	(16, 5, '9fcfef99ad77eec210983baa7be794cc83df720cc8d3188b7570f612e55053ea', 'QaLHKrQCKYxGBQBVr_y4Tw', 0, '2025-11-05 15:35:21', NULL, '2025-10-06 15:35:21', 'b5696a699925e22006af19488170e4e2ab139f50a49cff1cea664b7bd6f67a2e', '12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0'),
+	(17, 5, '208613f67e6505ceb1f9b10fc716dcc57c28ea600bcaaf0338438c78bcd7c9a5', 'WXnDu7sGhDzzMC_Ea13TWw', 0, '2025-11-05 15:40:52', NULL, '2025-10-06 15:40:52', 'b5696a699925e22006af19488170e4e2ab139f50a49cff1cea664b7bd6f67a2e', '12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0'),
+	(18, 5, '1122ebf987a98db0e6862561235d3f924fe6703a552d8db4cd8e97f628231573', 'o0dHAZMLqr-jB_k_guHxtw', 0, '2025-11-05 15:56:38', NULL, '2025-10-06 15:56:38', 'b5696a699925e22006af19488170e4e2ab139f50a49cff1cea664b7bd6f67a2e', '12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0'),
+	(19, 5, 'cec17791804ec47d4c632ea8737cee893e1c6311b94fff97d5c99d3a791e52b2', '2CZz0HfsKond3SX5sqdrKg', 0, '2025-11-05 16:10:23', NULL, '2025-10-06 16:10:23', 'b5696a699925e22006af19488170e4e2ab139f50a49cff1cea664b7bd6f67a2e', '12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0'),
+	(20, 5, 'b3bc5b09ad02d5e6536538bd561fdc623fde39f3783124faa61f8d76bcb72ce2', 'Clr02eVOXt7-yj0H-_4S6w', 0, '2025-11-06 14:23:53', NULL, '2025-10-07 14:23:53', '8d3a4310782ed11654708481a971289b2b41320c78fe2ca10c0be5d9c3af9b5b', '12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0'),
+	(21, 5, '16b442934ee614f5af8b6de5b42a9b0baa2f02ece3aa00008956d7d0c2db32da', 'PadJHcBRCHO-G1-3_5hGHQ', 0, '2025-11-06 14:43:22', NULL, '2025-10-07 14:43:22', '8d3a4310782ed11654708481a971289b2b41320c78fe2ca10c0be5d9c3af9b5b', '12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0'),
+	(22, 5, '1ca74f8401a77dcd57d9fd4e78bd91607d810c675d170c08933f25f5b7f0b036', 'qkImkbSO4lqlRA6mC8ya7w', 0, '2025-11-06 15:04:49', NULL, '2025-10-07 15:04:49', '8d3a4310782ed11654708481a971289b2b41320c78fe2ca10c0be5d9c3af9b5b', '12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0'),
+	(23, 5, '2042c83681aac05821a9e228f557071fe0350af73a66f4943e6a9a773aece9f8', 'J48iTl1iZ8_OHHNZeGrOhQ', 0, '2025-11-06 16:06:08', NULL, '2025-10-07 16:06:08', '8d3a4310782ed11654708481a971289b2b41320c78fe2ca10c0be5d9c3af9b5b', '12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0'),
+	(24, 5, '0fcb0f13ab31d48d17bf7e8c4d0480373472dd4713a3c7f9a1e9996a1fe63af6', '7HFP1RJBT6i-GGqmAwWrtA', 0, '2025-11-06 16:07:19', NULL, '2025-10-07 16:07:19', '8d3a4310782ed11654708481a971289b2b41320c78fe2ca10c0be5d9c3af9b5b', '12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0');
+
+-- Дамп структуры для таблица new3.wishlist
+CREATE TABLE IF NOT EXISTS `wishlist` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int DEFAULT NULL,
+  `token` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` datetime NOT NULL COMMENT '(DC2Type:datetime_immutable)',
+  `updated_at` datetime NOT NULL COMMENT '(DC2Type:datetime_immutable)',
+  `expires_at` datetime DEFAULT NULL COMMENT '(DC2Type:datetime_immutable)',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UNIQ_9CE12A315F37A13B` (`token`),
+  UNIQUE KEY `UNIQ_9CE12A31A76ED395` (`user_id`),
+  CONSTRAINT `FK_9CE12A31A76ED395` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=1579 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.wishlist: ~4 rows (приблизительно)
+INSERT INTO `wishlist` (`id`, `user_id`, `token`, `created_at`, `updated_at`, `expires_at`) VALUES
+	(1570, 5, NULL, '2025-10-06 15:57:10', '2025-10-06 15:57:10', NULL),
+	(1571, NULL, '6dbf4f39bddb318fec9f2307a3487f78', '2025-10-06 16:07:18', '2025-10-06 16:07:43', '2026-10-06 16:07:18'),
+	(1572, NULL, '954bf31bfd0db6889f9b02af6ee15a6d', '2025-10-06 16:10:08', '2025-10-06 16:10:08', '2026-10-06 16:10:08'),
+	(1573, NULL, '9bacf467939b6da34fcdeba5120d9169', '2025-10-06 16:34:48', '2025-10-06 16:34:48', '2026-10-06 16:34:48'),
+	(1574, NULL, 'a5a6acd9e3886772c92b869ced93f317', '2025-10-06 16:35:01', '2025-10-06 16:35:01', '2026-10-06 16:35:01'),
+	(1575, 1, NULL, '2025-10-07 14:05:57', '2025-10-07 14:05:57', NULL),
+	(1576, NULL, '52015b265842f1a59b8b68cadacc69ed', '2025-10-07 14:23:22', '2025-10-07 14:23:22', '2026-10-07 14:23:22'),
+	(1577, NULL, '5bbfcbc80ab4b5a66a2dc28765d17140', '2025-10-07 14:43:05', '2025-10-07 14:43:05', '2026-10-07 14:43:05'),
+	(1578, NULL, 'd1a291162c2fe1538e7a01377d63cf5f', '2025-10-07 16:06:51', '2025-10-07 16:06:51', '2026-10-07 16:06:51');
+
+-- Дамп структуры для таблица new3.wishlist_item
+CREATE TABLE IF NOT EXISTS `wishlist_item` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `wishlist_id` int NOT NULL,
+  `product_id` int NOT NULL,
+  `created_at` datetime NOT NULL COMMENT '(DC2Type:datetime_immutable)',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_wishlist_product` (`wishlist_id`,`product_id`),
+  KEY `IDX_6424F4E8FB8E54CD` (`wishlist_id`),
+  KEY `IDX_6424F4E84584665A` (`product_id`),
+  CONSTRAINT `FK_6424F4E84584665A` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`),
+  CONSTRAINT `FK_6424F4E8FB8E54CD` FOREIGN KEY (`wishlist_id`) REFERENCES `wishlist` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Дамп данных таблицы new3.wishlist_item: ~2 rows (приблизительно)
 INSERT INTO `wishlist_item` (`id`, `wishlist_id`, `product_id`, `created_at`) VALUES
-	(2, 8, 68, '2025-09-29 14:01:13');
-INSERT INTO `wishlist_item` (`id`, `wishlist_id`, `product_id`, `created_at`) VALUES
-	(3, 8, 70, '2025-09-29 16:31:54');
+	(18, 1571, 77, '2025-10-06 16:07:33'),
+	(19, 1571, 83, '2025-10-06 16:07:43');
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
