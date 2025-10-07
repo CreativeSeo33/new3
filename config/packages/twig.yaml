@@ -5,6 +5,8 @@ twig:
         navbar_categories: '@App\Service\NavbarCategoryService'
         yandex_maps_api_key: '%app.yandex_maps.api_key%'
         theme_enabled: '%app_theme.enabled%'
+        logo_url: '/img/logo.png'
+        site_name: 'Shop'
     paths:
         '%kernel.project_dir%/themes/_shared/templates': 'Shared'
         '%kernel.project_dir%/templates': 'App'

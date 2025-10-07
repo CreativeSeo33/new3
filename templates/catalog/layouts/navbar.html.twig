@@ -1,8 +1,8 @@
-<nav class="w-full border-b bg-white shadow-sm">
-  <div class="container mx-auto px-4">
+<nav class="w-full border-b bg-white shadow-sm py-2">
+  <div class="container mx-auto">
     <div class="flex flex-wrap items-center justify-between">
       <!-- Main Navigation with Categories -->
-      <div class="flex-1 hidden md:flex items-center justify-center">
+      <div class="flex-1 hidden md:flex items-center justify-start">
         <ul class="flex flex-wrap gap-6 py-2 text-sm font-medium">
           <li>
             <a href="{{ path('catalog_index') }}" class="text-gray-700 hover:text-blue-600">Главная</a>
@@ -15,15 +15,7 @@
         </ul>
       </div>
 
-      <!-- Special Offers -->
-      <div class="hidden md:flex items-center">
-        <div class="flex items-center bg-red-50 text-red-600 px-3 py-1 rounded-full">
-          <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.567a18.849 18.849 0 0 0 5.223-5.223c.305-.827.132-1.907-.567-2.607l-9.58-9.58A2.25 2.25 0 0 0 9.568 3Z"/>
-          </svg>
-          <span class="text-sm font-medium">Скидки 50%</span>
-        </div>
-      </div>
+
     </div>
   </div>
 </nav>

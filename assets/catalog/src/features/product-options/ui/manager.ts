@@ -51,17 +51,7 @@ export class ProductOptionsManager extends Component {
    * Добавляет анимацию для выбранного лейбла
    */
   private animateLabelSelection(input: HTMLInputElement): void {
-    const label = input.nextElementSibling as HTMLElement;
-    if (label) {
-      label.style.transition = 'all 0.2s ease';
-      label.style.transform = 'scale(1.02)';
-      label.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.15)';
-
-      setTimeout(() => {
-        label.style.transform = 'scale(1)';
-        label.style.boxShadow = '';
-      }, 200);
-    }
+    // Анимация отключена для соответствия FlyonUI List Group
   }
 
   /**

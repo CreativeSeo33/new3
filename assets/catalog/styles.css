@@ -2,12 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+@import "../../node_modules/flyonui/themes.css";
 @import "../../node_modules/flyonui/variants.css";
 
 @layer base {
   :root {
     --primary: 239 84% 67%;
     --primary-foreground: 0 0% 100%;
+    --radius: 0.5rem;
   }
   .dark {
     --primary: 239 84% 67%;
