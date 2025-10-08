@@ -9,7 +9,7 @@
 
     <div class="relative grid grid-cols-1 md:grid-cols-3 gap-6">
       <div class="md:col-span-2 space-y-6">
-        {% include 'components/checkout/contact-form.html.twig' %}
+        {% include 'catalog/components/checkout/contact-form.html.twig' %}
         
         {% include 'catalog/_delivery_selector.html.twig' ignore missing %}
         
@@ -20,16 +20,16 @@
       <aside class="md:col-span-1 p-4 border rounded h-fit">
         <h2 class="text-lg font-medium mb-4">Ваш заказ</h2>
         {% if cart.items|length > 0 %}
-          {% include 'components/cart/items.html.twig' with { items: cart.items } %}
-          {% include 'components/cart/summary.html.twig' with { cart: cart, delivery: delivery } %}
+          {% include 'catalog/components/cart/items.html.twig' with { items: cart.items } %}
+          {% include 'catalog/components/cart/summary.html.twig' with { cart: cart, delivery: delivery } %}
         {% else %}
           <div class="text-gray-500 text-sm">Корзина пуста</div>
         {% endif %}
-        {% include 'components/checkout/submit-button.html.twig' with { disabled: cart.items|length == 0 } %}
+        {% include 'catalog/components/checkout/submit-button.html.twig' with { disabled: cart.items|length == 0 } %}
       </aside>
 
       {# Overlay spinner over the whole grid #}
-      {% include 'components/spinner.html.twig' with {
+      {% include 'catalog/components/spinner.html.twig' with {
         id: 'checkout-spinner',
         overlay: true,
         visible: false,
@@ -64,7 +64,7 @@
                 <span class="text-white font-bold text-xl">L</span>
               </div>
             {% endif %}
-            <span class="text-2xl font-bold text-gray-800 hidden sm:block">{{ site_name|default('ShopGrids') }}</span>
+           
           </a>
         </div>
       </div>

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "11fc4481aa10c2a66b462b1958cabf31",
+    "content-hash": "53543bccf170dd705e04c71e370435ad",
     "packages": [
         {
             "name": "api-platform/doctrine-common",
@@ -2808,22 +2808,23 @@
         },
         {
             "name": "liip/imagine-bundle",
-            "version": "2.12.3",
+            "version": "2.14.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/liip/LiipImagineBundle.git",
-                "reference": "fa2baa6262bb74038f01ac746dc3e2a8bc441e09"
+                "reference": "f80dc13e9a454682b8c2255b3487829d2f8a7fe4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/liip/LiipImagineBundle/zipball/fa2baa6262bb74038f01ac746dc3e2a8bc441e09",
-                "reference": "fa2baa6262bb74038f01ac746dc3e2a8bc441e09",
+                "url": "https://api.github.com/repos/liip/LiipImagineBundle/zipball/f80dc13e9a454682b8c2255b3487829d2f8a7fe4",
+                "reference": "f80dc13e9a454682b8c2255b3487829d2f8a7fe4",
                 "shasum": ""
             },
             "require": {
                 "ext-mbstring": "*",
                 "imagine/imagine": "^1.3.2",
                 "php": "^7.2|^8.0",
+                "symfony/deprecation-contracts": "^2.5 || ^3",
                 "symfony/filesystem": "^3.4|^4.4|^5.3|^6.0|^7.0",
                 "symfony/finder": "^3.4|^4.4|^5.3|^6.0|^7.0",
                 "symfony/framework-bundle": "^3.4.23|^4.4|^5.3|^6.0|^7.0",
@@ -2843,6 +2844,7 @@
                 "phpstan/phpstan": "^1.10.0",
                 "psr/cache": "^1.0|^2.0|^3.0",
                 "psr/log": "^1.0",
+                "symfony/asset": "^3.4|^4.4|^5.3|^6.0|^7.0",
                 "symfony/browser-kit": "^3.4|^4.4|^5.3|^6.0|^7.0",
                 "symfony/cache": "^3.4|^4.4|^5.3|^6.0|^7.0",
                 "symfony/console": "^3.4|^4.4|^5.3|^6.0|^7.0",
@@ -2864,10 +2866,12 @@
                 "ext-gd": "required to use gd driver",
                 "ext-gmagick": "required to use gmagick driver",
                 "ext-imagick": "required to use imagick driver",
+                "ext-json": "required to read JSON manifest versioning",
                 "ext-mongodb": "required for mongodb components",
                 "league/flysystem": "required to use FlySystem data loader or cache resolver",
                 "monolog/monolog": "A psr/log compatible logger is required to enable logging",
                 "rokka/imagine-vips": "required to use 'vips' driver",
+                "symfony/asset": "If you want to use asset versioning",
                 "symfony/messenger": "If you like to process images in background",
                 "symfony/templating": "required to use deprecated Templating component instead of Twig"
             },
@@ -2905,9 +2909,9 @@
             ],
             "support": {
                 "issues": "https://github.com/liip/LiipImagineBundle/issues",
-                "source": "https://github.com/liip/LiipImagineBundle/tree/2.12.3"
+                "source": "https://github.com/liip/LiipImagineBundle/tree/2.14.0"
             },
-            "time": "2024-05-16T08:51:30+00:00"
+            "time": "2025-09-03T06:33:10+00:00"
         },
         {
             "name": "monolog/monolog",
@@ -7687,16 +7691,16 @@
         },
         {
             "name": "symfony/string",
-            "version": "v7.3.0",
+            "version": "v7.3.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/string.git",
-                "reference": "f3570b8c61ca887a9e2938e85cb6458515d2b125"
+                "reference": "f96476035142921000338bad71e5247fbc138872"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/string/zipball/f3570b8c61ca887a9e2938e85cb6458515d2b125",
-                "reference": "f3570b8c61ca887a9e2938e85cb6458515d2b125",
+                "url": "https://api.github.com/repos/symfony/string/zipball/f96476035142921000338bad71e5247fbc138872",
+                "reference": "f96476035142921000338bad71e5247fbc138872",
                 "shasum": ""
             },
             "require": {
@@ -7711,7 +7715,6 @@
             },
             "require-dev": {
                 "symfony/emoji": "^7.1",
-                "symfony/error-handler": "^6.4|^7.0",
                 "symfony/http-client": "^6.4|^7.0",
                 "symfony/intl": "^6.4|^7.0",
                 "symfony/translation-contracts": "^2.5|^3.0",
@@ -7754,7 +7757,7 @@
                 "utf8"
             ],
             "support": {
-                "source": "https://github.com/symfony/string/tree/v7.3.0"
+                "source": "https://github.com/symfony/string/tree/v7.3.4"
             },
             "funding": [
                 {
@@ -7766,11 +7769,15 @@
                     "type": "github"
                 },
                 {
+                    "url": "https://github.com/nicolas-grekas",
+                    "type": "github"
+                },
+                {
                     "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-04-20T20:19:01+00:00"
+            "time": "2025-09-11T14:36:48+00:00"
         },
         {
             "name": "symfony/translation-contracts",
@@ -9008,27 +9015,27 @@
         },
         {
             "name": "teamtnt/tntsearch",
-            "version": "v5.0.0",
+            "version": "v5.0.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/teamtnt/tntsearch.git",
-                "reference": "3f6078c37d55feab3927d8f988f9e1e8b3aaa2a0"
+                "reference": "7ee319d9d96a043164571eab87db72071014d66b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/teamtnt/tntsearch/zipball/3f6078c37d55feab3927d8f988f9e1e8b3aaa2a0",
-                "reference": "3f6078c37d55feab3927d8f988f9e1e8b3aaa2a0",
+                "url": "https://api.github.com/repos/teamtnt/tntsearch/zipball/7ee319d9d96a043164571eab87db72071014d66b",
+                "reference": "7ee319d9d96a043164571eab87db72071014d66b",
                 "shasum": ""
             },
             "require": {
                 "ext-mbstring": "*",
                 "ext-pdo": "*",
-                "php": "~7.1|^8",
+                "php": "~7.4 || ^8",
                 "predis/predis": "^2.2"
             },
             "require-dev": {
-                "phpunit/phpunit": "7.*|8.*|9.*",
-                "symfony/var-dumper": "^4|^5.2"
+                "phpunit/phpunit": "7.* || 8.* || 9.*",
+                "symfony/var-dumper": "^4 || ^5.2"
             },
             "type": "library",
             "autoload": {
@@ -9066,7 +9073,7 @@
             ],
             "support": {
                 "issues": "https://github.com/teamtnt/tntsearch/issues",
-                "source": "https://github.com/teamtnt/tntsearch/tree/v5.0.0"
+                "source": "https://github.com/teamtnt/tntsearch/tree/v5.0.2"
             },
             "funding": [
                 {
@@ -9074,7 +9081,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2025-04-15T20:07:13+00:00"
+            "time": "2025-08-25T14:33:45+00:00"
         },
         {
             "name": "twig/twig",

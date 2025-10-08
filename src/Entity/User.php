@@ -50,6 +50,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Assert\Length(min: 2)]
     private string $name = '';
 
+    // Имя для отображения/профиля (первое имя из формы checkout)
+    #[ORM\Column(type: 'string', length: 180, nullable: true)]
+    #[Groups(['user:get','user:post','user:patch'])]
+    private ?string $firstName = null;
+
     // Email для клиентской аутентификации (нормализуется в lower)
     #[ORM\Column(type: 'string', length: 180, unique: true, nullable: true)]
     private ?string $email = null;
@@ -110,6 +115,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setName(string $name): self
     {
         $this->name = $name;
+        return $this;
+    }
+
+    public function getFirstName(): ?string
+    {
+        return $this->firstName;
+    }
+
+    public function setFirstName(?string $firstName): self
+    {
+        $this->firstName = $firstName !== null ? trim($firstName) : null;
         return $this;
     }
 

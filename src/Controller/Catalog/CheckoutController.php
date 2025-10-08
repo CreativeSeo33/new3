@@ -426,6 +426,8 @@ final class CheckoutController extends AbstractController
 					}
 				}
 
+				// ВАЖНО: не обновляем профиль пользователя из checkout.
+
 				// Фиксируем изменения
 				$em->flush();
 

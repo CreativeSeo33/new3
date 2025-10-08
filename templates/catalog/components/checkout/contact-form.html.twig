@@ -5,7 +5,7 @@
     <div class="grid grid-cols-1 gap-4">
       <div>
         <label for="firstName" class="block text-sm mb-1">Имя</label>
-        <input id="firstName" name="firstName" value="{{ (checkout.customer.name ?? '')|e }}" placeholder="Имя Отчество" class="w-full border rounded px-3 py-2" required />
+        <input id="firstName" name="firstName" value="{{ (app.user.firstName ?? checkout.customer.name ?? '')|e }}" placeholder="Имя Отчество" class="w-full border rounded px-3 py-2" required />
       </div>
     </div>
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -20,14 +20,14 @@
           pattern="^\+?[0-9\s\-\(\)]{10,20}$"
           placeholder="+7 (___) ___-__-__"
           class="w-full border rounded px-3 py-2"
-          value="{{ (checkout.customer.phone ?? '')|e }}"
+          value="{{ (app.user.phone ?? checkout.customer.phone ?? '')|e }}"
           required
           data-controller="phone-mask"
         />
       </div>
       <div>
         <label for="email" class="block text-sm mb-1">E-mail</label>
-        <input id="email" name="email" value="{{ (checkout.customer.email ?? '')|e }}" placeholder="E-mail" type="email" class="w-full border rounded px-3 py-2" />
+        <input id="email" name="email" value="{{ (app.user.email ?? checkout.customer.email ?? '')|e }}" placeholder="E-mail" type="email" class="w-full border rounded px-3 py-2" />
       </div>
     </div>
     <div>
