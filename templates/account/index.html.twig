@@ -33,10 +33,30 @@
                     <div><span class="text-gray-500">Дата:</span> {{ o.dateAdded ? o.dateAdded|date('d.m.Y') : '—' }}</div>
                     {% set isCancelled = o.status == constant('App\\Entity\\Order::STATUS_CANCELLED') %}
                     {% if not isCancelled %}
-                      <form action="{{ path('account_order_cancel', { orderId: o.orderId }) }}" method="post" class="ml-2">
-                        <input type="hidden" name="_token" value="{{ csrf_token('order_cancel_' ~ o.orderId) }}">
-                        <button type="submit" class="btn btn-xs btn-outline btn-error" onclick="return confirm('Отменить этот заказ?')">Отменить заказ</button>
-                      </form>
+                      <button type="button" class="btn btn-xs btn-outline btn-error ml-2" aria-haspopup="dialog" aria-expanded="false" aria-controls="cancel-modal-{{ o.orderId }}" data-overlay="#cancel-modal-{{ o.orderId }}">Отменить заказ</button>
+
+                      <div id="cancel-modal-{{ o.orderId }}" class="overlay modal overlay-open:opacity-100 hidden overlay-open:duration-300 z-[120]" role="dialog" tabindex="-1">
+                        <div class="modal-dialog">
+                          <div class="modal-content">
+                            <div class="modal-header">
+                              <h3 class="modal-title">Подтверждение</h3>
+                              <button type="button" class="btn btn-text btn-circle btn-sm absolute end-3 top-3" aria-label="Close" data-overlay="#cancel-modal-{{ o.orderId }}">
+                                <span class="icon-[tabler--x] size-4"></span>
+                              </button>
+                            </div>
+                            <div class="modal-body">
+                              Вы уверены, что хотите отменить заказ <span class="font-mono">#{{ o.orderId }}</span>?
+                            </div>
+                            <div class="modal-footer">
+                              <button type="button" class="btn btn-soft btn-secondary" data-overlay="#cancel-modal-{{ o.orderId }}">Отмена</button>
+                              <form action="{{ path('account_order_cancel', { orderId: o.orderId }) }}" method="post" class="inline">
+                                <input type="hidden" name="_token" value="{{ csrf_token('order_cancel_' ~ o.orderId) }}">
+                                <button type="submit" class="btn btn-primary">Да, отменить</button>
+                              </form>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     {% endif %}
                   </div>
                 </div>

@@ -8,7 +8,7 @@ if (typeof window !== 'undefined') { (window as any).noUiSlider = (noUiSliderMod
 import { Fancybox } from '@fancyapps/ui';
 import '@fancyapps/ui/dist/fancybox/fancybox.css';
 import { register } from 'swiper/element/bundle';
-import { bootstrap } from '@app/bootstrap';
+import { bootstrap } from '@/app/bootstrap';
 
 // Import Stimulus
 import '../bootstrap.js';
@@ -23,6 +23,9 @@ function startApp(): void {
 
   // Инициализируем раскрывающиеся блоки (el-disclosure)
   initDisclosureToggles();
+
+  // Гарантируем инициализацию FlyonUI overlays и делегирование открытия
+  initFlyonUIModals();
 
   // Инициализация галереи (оставляем как есть, так как это не модуль)
   setTimeout((): void => {
@@ -42,12 +45,12 @@ if (document.readyState === 'loading') {
  */
 function initGallery(): void {
   const mainSwiperEl = document.querySelector('.product-gallery-swiper');
-  const thumbnails = document.querySelectorAll('.thumbnail-item');
+  const thumbnails = document.querySelectorAll<HTMLElement>('.thumbnail-item');
 
   if (!mainSwiperEl) return;
 
   // Функция для обновления активного состояния миниатюр
-  const updateActiveThumbnail = (activeThumbnail) => {
+  const updateActiveThumbnail = (activeThumbnail: HTMLElement | null | undefined): void => {
     thumbnails.forEach(thumb => {
       thumb.classList.remove('active');
     });
@@ -58,36 +61,39 @@ function initGallery(): void {
   };
 
   // Обработчик клика по слайдам (открывает Fancybox)
-  const handleSlideClick = (e) => {
+  const handleSlideClick = (e: Event): void => {
     e.preventDefault();
 
-    const slide = e.target.closest('.gallery-slide');
+    const slide = (e.target as HTMLElement | null)?.closest('.gallery-slide');
     if (!slide) return;
 
     // Собираем все изображения для галереи
-    const allImages = [];
-    const slides = document.querySelectorAll('.gallery-slide');
+    const allImages: Array<{ src: string; caption?: string }> = [];
+    const slides = document.querySelectorAll<HTMLElement>('.gallery-slide');
 
     slides.forEach(slide => {
-      if (slide.dataset.imageSrc) {
+      const ds = (slide as HTMLElement).dataset;
+      if (ds.imageSrc) {
         allImages.push({
-          src: slide.dataset.imageSrc,
-          caption: slide.dataset.caption || 'Изображение товара'
+          src: ds.imageSrc,
+          caption: ds.caption || 'Изображение товара'
         });
       }
     });
 
     // Находим индекс текущего слайда
-    const currentIndex = Array.from(slides).indexOf(slide);
+    const currentIndex = Array.from(slides).indexOf(slide as HTMLElement);
 
     // Открываем Fancybox с текущим изображением
-    try {
-      Fancybox.show(allImages, {
+      try {
+        // @ts-ignore - типы Fancybox могут отличаться от установленной версии
+        Fancybox.show(allImages as any, {
         startIndex: currentIndex,
         Carousel: {
           infinite: false,
         },
-        Images: {
+          // @ts-ignore
+          Images: {
           zoom: true,
           Panzoom: {
             maxScale: 3,
@@ -115,11 +121,11 @@ function initGallery(): void {
   };
 
   // Обработчик клика по миниатюрам (переключает основное изображение)
-  const handleThumbnailClick = (e) => {
+  const handleThumbnailClick = (e: Event): void => {
     e.preventDefault();
 
-    const thumbnail = e.currentTarget;
-    const imageSrc = thumbnail.dataset.imageSrc;
+    const thumbnail = e.currentTarget as HTMLElement;
+    const imageSrc = thumbnail.dataset.imageSrc as string | undefined;
 
     if (!imageSrc) return;
 
@@ -128,8 +134,9 @@ function initGallery(): void {
     const thumbnailIndex = thumbsArray.indexOf(thumbnail);
 
     // Переключаем Swiper на соответствующий слайд
-    if (mainSwiperEl.swiper) {
-      mainSwiperEl.swiper.slideTo(thumbnailIndex);
+    const swiperEl = mainSwiperEl as any;
+    if (swiperEl.swiper) {
+      swiperEl.swiper.slideTo(thumbnailIndex);
     }
 
     // Обновляем активное состояние миниатюр
@@ -137,9 +144,9 @@ function initGallery(): void {
   };
 
   // Добавляем обработчики событий
-  const gallerySlides = document.querySelectorAll('.gallery-slide');
+  const gallerySlides = document.querySelectorAll<HTMLElement>('.gallery-slide');
   gallerySlides.forEach(slide => {
-    slide.addEventListener('click', handleSlideClick);
+    slide.addEventListener('click', handleSlideClick as EventListener);
   });
 
   thumbnails.forEach(thumb => {
@@ -147,8 +154,8 @@ function initGallery(): void {
   });
 
   // Синхронизация с Swiper
-  mainSwiperEl.addEventListener('swiperslidechange', (event) => {
-    const activeIndex = event.detail[0].activeIndex;
+  mainSwiperEl.addEventListener('swiperslidechange', (event: any) => {
+    const activeIndex = event.detail?.[0]?.activeIndex ?? 0;
     const activeThumbnail = thumbnails[activeIndex];
 
     if (activeThumbnail) {
@@ -162,6 +169,102 @@ function initGallery(): void {
   }
 
   console.log('Gallery initialized successfully');
+}
+
+/**
+ * Делегирование для FlyonUI overlays (HSOverlay)
+ * Обеспечивает работу data-overlay на динамических элементах и после SPA‑инициализаций.
+ */
+function initFlyonUIModals(): void {
+  try {
+    // Ничего не делаем, если нет DOM
+    if (typeof document === 'undefined') return;
+
+    // Перемещаем оверлеи в <body>, чтобы избежать проблем со stacking context/overflow
+    const overlaysToMove = Array.from(document.querySelectorAll<HTMLElement>('.overlay.modal'));
+    overlaysToMove.forEach((el) => {
+      try {
+        if (el.parentElement && el.parentElement !== document.body) {
+          document.body.appendChild(el);
+        }
+      } catch {}
+    });
+
+    // Инициализируем все overlays и триггеры
+    const overlaysToInit = Array.from(document.querySelectorAll<HTMLElement>('.overlay.modal'));
+    overlaysToInit.forEach((el) => {
+      try {
+        const HS = (window as any).HSOverlay;
+        if (HS) {
+          // Пробуем получить или создать инстанс
+          const existing = HS.getInstance?.(el, true);
+          if (!existing) {
+            try { new HS(el); } catch {}
+          }
+        }
+      } catch {}
+    });
+
+    const allOverlayTriggers = Array.from(document.querySelectorAll<HTMLElement>('[data-overlay]'));
+    allOverlayTriggers.forEach((trigger) => {
+      const targetSelector = trigger.getAttribute('data-overlay');
+      if (!targetSelector) return;
+      const targetEl = document.querySelector(targetSelector);
+      if (!targetEl) return;
+      try { (window as any).HSOverlay?.getInstance(targetEl, true); } catch {}
+    });
+
+    // Делегирование кликов: не мешаем другим обработчикам и не отменяем по умолчанию
+    const openHandler = (e: Event) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      const trigger = target.closest('[data-overlay]') as HTMLElement | null;
+      if (!trigger) return;
+
+      const selector = trigger.getAttribute('data-overlay');
+      if (!selector) return;
+
+      // Если клик по элементу с data-overlay произошёл ВНУТРИ самого модального окна —
+      // не перехватываем (даём HSOverlay закрыть модал), чтобы избежать повторного открытия
+      const overlayEl = document.querySelector(selector) as HTMLElement | null;
+      if (overlayEl && overlayEl.contains(trigger)) {
+        return;
+      }
+
+      // Пробуем открыть модал немедленно в capture-фазе
+      try {
+        const HS = (window as any).HSOverlay;
+        if (HS && typeof HS.open === 'function') {
+          HS.open(selector);
+          return;
+        }
+        const inst = HS?.getInstance?.(selector, true);
+        try { inst?.element?.open?.(); } catch {}
+        // Фоллбек: снять hidden у целевого элемента
+        try {
+          const el = document.querySelector(selector) as HTMLElement | null;
+          if (el) {
+            el.classList.remove('hidden');
+            // Закрытие по кнопкам с data-overlay="#id"
+            el.addEventListener('click', (evt) => {
+              const t = evt.target as HTMLElement | null;
+              if (!t) return;
+              const closeBtn = t.closest(`[data-overlay="${selector}"]`);
+              if (closeBtn) {
+                try { el.classList.add('hidden'); } catch {}
+              }
+            }, { once: true });
+          }
+        } catch {}
+      } catch {}
+    };
+    document.addEventListener('click', openHandler, { capture: true });
+    document.addEventListener('click', openHandler, { capture: false });
+    document.addEventListener('pointerdown', openHandler, { capture: true });
+    document.addEventListener('pointerup', openHandler, { capture: false });
+  } catch (err) {
+    console.warn('FlyonUI modal init warning:', err);
+  }
 }
 
 /**

@@ -2,8 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-@import "../../node_modules/flyonui/themes.css";
-@import "../../node_modules/flyonui/variants.css";
+@plugin "flyonui";
+
+@import "flyonui/themes.css";
+@import "flyonui/variants.css";
+@source "../../node_modules/flyonui/flyonui.js";
 
 @layer base {
   :root {
@@ -40,6 +43,13 @@ color-mix(in oklab, var(--color-neutral) 10%, transparent);
   .h4 { @apply text-lg sm:text-xl font-medium leading-snug; }
   .h5 { @apply text-base sm:text-lg font-medium leading-snug; }
   .h6 { @apply text-sm sm:text-base font-medium leading-snug; }
+}
+
+/* Fallback для FlyonUI overlay-open:* на Tailwind v3 (без CSS-плагина v4)
+   Делает модал видимым в состоянии .open, как в доке FlyonUI */
+@layer utilities {
+  .overlay-open\:opacity-100.open, .open .overlay-open\:opacity-100 { opacity: 1 !important; }
+  .overlay-open\:duration-300.open, .open .overlay-open\:duration-300 { transition-duration: .3s !important; }
 }
 
 /* Стили для Swiper Element галереи */
@@ -435,4 +445,9 @@ swiper-container.product-gallery-swiper {
 .active-tab\:tab-active[data-tab].active:not([disabled]) {
   border-color: var(--color-primary);
   color: var(--color-primary);
+}
+
+.bg-base-300\/60 {
+  background-color: 
+color-mix(in oklab, var(--color-base-300) 60%, transparent);
 }

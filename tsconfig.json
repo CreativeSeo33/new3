@@ -23,13 +23,15 @@
       "@entities/*": ["assets/catalog/src/entities/*"],
       "@widgets/*": ["assets/catalog/src/widgets/*"],
       "@pages/*": ["assets/catalog/src/pages/*"],
+      "@app/*": ["assets/catalog/src/app/*"],
       "@admin/*": ["assets/admin/*"]
     },
     "lib": ["dom", "dom.iterable", "es2019"],
     "types": ["node"]
   },
   "include": [
-    "assets/catalog/src/**/*"
+    "assets/catalog/src/**/*",
+    "assets/catalog/catalog.ts"
   ],
   "exclude": [
     "node_modules",

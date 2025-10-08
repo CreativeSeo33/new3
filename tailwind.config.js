@@ -8,6 +8,7 @@ module.exports = {
     './assets/admin/**/*.{js,vue,ts}',
     './assets/catalog/**/*.{js,vue,ts}',
     './assets/controllers/**/*.{js,ts}',
+    './node_modules/flyonui/**/*.js',
     // './assets/shared/**/*.{js,vue,ts}', // shared более не используется
   ],
   theme: {
@@ -261,6 +262,8 @@ module.exports = {
     { pattern: /(bg|text|border)-(primary|success|warning|danger|info)-(50|100|200|300|400|500|600|700|800|900)/ },
     { pattern: /(bg|text|border)-neutral-(50|100|200|300|400|500|600|700|800|900)/ },
     { pattern: /col-span-(1|2|3|4|5|6|7|8|9|10|11|12)/ },
+    // FlyonUI overlay backdrop (генерируется динамически JS ⇒ добавляем в safelist)
+    'bg-base-300/60',
   ],
 }
 
