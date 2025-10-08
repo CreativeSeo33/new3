@@ -13,17 +13,19 @@
 {% endblock %}
 
 {% block body %}
-  {% block catalog_header %}{% include 'catalog/layouts/header.html.twig' %}{% endblock %}
-  {% block catalog_navbar %}{% include 'catalog/layouts/navbar.html.twig' %}{% endblock %}
-  {% include 'catalog/layouts/breadcrumbs.html.twig' %}
+  <div data-theme="light">
+    {% block catalog_header %}{% include 'catalog/layouts/header.html.twig' %}{% endblock %}
+    {% block catalog_navbar %}{% include 'catalog/layouts/navbar.html.twig' %}{% endblock %}
+    {% include 'catalog/layouts/breadcrumbs.html.twig' %}
 
-  {% block catalog_body %}{% endblock %}
+    {% block catalog_body %}{% endblock %}
 
-  {% if app.request.get('_route') == 'catalog_index' %}
-    <div id="catalog-app"></div>
-  {% endif %}
+    {% if app.request.get('_route') == 'catalog_index' %}
+      <div id="catalog-app"></div>
+    {% endif %}
 
-  {% block catalog_footer %}{% include 'catalog/layouts/footer.html.twig' %}{% endblock %}
+    {% block catalog_footer %}{% include 'catalog/layouts/footer.html.twig' %}{% endblock %}
+  </div>
 {% endblock %}
 
 {% block javascripts %}

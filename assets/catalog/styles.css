@@ -2,7 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
-@plugin "flyonui";
+@plugin "flyonui" {
+  themes: light --default, dark --prefersdark, light;
+}
 
 @import "flyonui/themes.css";
 @import "flyonui/variants.css";

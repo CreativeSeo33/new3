@@ -22,112 +22,7 @@
         {% if ordersList|length > 0 %}
           <div class="space-y-6">
             {% for o in ordersList %}
-              <div class="p-4 border rounded">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-                  <div class="text-lg font-medium">Заказ <span class="font-mono">#{{ o.orderId }}</span></div>
-                  <div class="flex items-center gap-3 text-sm text-gray-700">
-                    <div>
-                      <span class="text-gray-500">Статус:</span>
-                      <span class="inline-flex items-center px-2 py-0.5 rounded bg-gray-100">{{ statusNameById[o.status]|default(o.status) }}</span>
-                    </div>
-                    <div><span class="text-gray-500">Дата:</span> {{ o.dateAdded ? o.dateAdded|date('d.m.Y') : '—' }}</div>
-                    {% set isCancelled = o.status == constant('App\\Entity\\Order::STATUS_CANCELLED') %}
-                    {% if not isCancelled %}
-                      <button type="button" class="btn btn-xs btn-outline btn-error ml-2" aria-haspopup="dialog" aria-expanded="false" aria-controls="cancel-modal-{{ o.orderId }}" data-overlay="#cancel-modal-{{ o.orderId }}">Отменить заказ</button>
-
-                      <div id="cancel-modal-{{ o.orderId }}" class="overlay modal overlay-open:opacity-100 hidden overlay-open:duration-300 z-[120]" role="dialog" tabindex="-1">
-                        <div class="modal-dialog">
-                          <div class="modal-content">
-                            <div class="modal-header">
-                              <h3 class="modal-title">Подтверждение</h3>
-                              <button type="button" class="btn btn-text btn-circle btn-sm absolute end-3 top-3" aria-label="Close" data-overlay="#cancel-modal-{{ o.orderId }}">
-                                <span class="icon-[tabler--x] size-4"></span>
-                              </button>
-                            </div>
-                            <div class="modal-body">
-                              Вы уверены, что хотите отменить заказ <span class="font-mono">#{{ o.orderId }}</span>?
-                            </div>
-                            <div class="modal-footer">
-                              <button type="button" class="btn btn-soft btn-secondary" data-overlay="#cancel-modal-{{ o.orderId }}">Отмена</button>
-                              <form action="{{ path('account_order_cancel', { orderId: o.orderId }) }}" method="post" class="inline">
-                                <input type="hidden" name="_token" value="{{ csrf_token('order_cancel_' ~ o.orderId) }}">
-                                <button type="submit" class="btn btn-primary">Да, отменить</button>
-                              </form>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    {% endif %}
-                  </div>
-                </div>
-
-                {% set orderProducts = o.products|default([]) %}
-                {% if orderProducts|length > 0 %}
-                  <div class="space-y-3" data-testid="order-items">
-                    {% set goodsSubtotal = 0 %}
-                    {% for p in orderProducts %}
-                      {% set unit = (p.salePrice is not null and p.salePrice > 0) ? p.salePrice : (p.price ?? 0) %}
-                      {% set row = unit * (p.quantity ?? 0) %}
-                      {% set goodsSubtotal = goodsSubtotal + row %}
-                      <div class="flex gap-3 items-start border-b pb-3" data-testid="order-item">
-                        <div class="w-16 h-16 shrink-0">
-                          {{ account.product_image(productMap[p.productId]|default(null), p.productName|default('')) }}
-                        </div>
-                        <div class="flex-1 min-w-0">
-                          <div class="text-sm font-medium">{{ p.productName }}</div>
-                          {{ account.product_options(p.options|default([])) }}
-                          <div class="text-sm text-gray-700 mt-1">{{ format_price(unit) }} × {{ p.quantity }} = <span class="font-medium">{{ format_price(row) }}</span></div>
-                        </div>
-                      </div>
-                    {% endfor %}
-                  </div>
-
-                  {% set d = o.delivery %}
-                  {% set showManager = d and d.isCustomCalculate %}
-                  {% set shippingCost = 0 %}
-                  {% if d and d.cost is not null and not d.isFree and not showManager %}
-                    {% set shippingCost = d.cost %}
-                  {% endif %}
-
-                  <div class="border-t mt-3 pt-3 text-sm">
-                    <div>Стоимость товаров: <span data-testid="subtotal">{{ goodsSubtotal|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
-                    {% if showManager or (d and d.cost is null) %}
-                      <div>Доставка: <span data-testid="shipping">Расчет менеджером</span></div>
-                      <div class="border-t pt-2 font-semibold">Итого: <span data-testid="total">{{ goodsSubtotal|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
-                    {% elseif d and d.isFree %}
-                      <div>Доставка: <span data-testid="shipping">Бесплатно</span></div>
-                      <div class="border-t pt-2 font-semibold">Итого: <span data-testid="total">{{ goodsSubtotal|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
-                    {% else %}
-                      <div>Доставка: <span data-testid="shipping">{{ shippingCost|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
-                      <div class="border-t pt-2 font-semibold">Итого: <span data-testid="total">{{ (goodsSubtotal + shippingCost)|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
-                    {% endif %}
-                  </div>
-                {% else %}
-                  <div class="text-gray-500 text-sm">Позиции заказа отсутствуют</div>
-                {% endif %}
-
-                <div class="p-4 border rounded h-fit mt-4">
-                  <h2 class="text-lg font-medium mb-3">Детали доставки</h2>
-                  {% set d = o.delivery %}
-                  {% if d %}
-                    <div class="space-y-1 text-sm">
-                      {{ account.delivery_row('Способ', delivery_type_name(d.type|default(null))) }}
-                      {{ account.delivery_row('Город', d.city|default(null)) }}
-                      {{ account.delivery_row('Адрес', d.address|default(null)) }}
-                      {{ account.delivery_row('ПВЗ', d.pvz|default(null)) }}
-                      {{ account.delivery_row('Дата доставки', d.deliveryDate ? d.deliveryDate|date('d.m.Y') : null) }}
-                      {{ account.delivery_row('Время доставки', d.deliveryTime ? d.deliveryTime|date('H:i') : null) }}
-                      {% if d.isCustomCalculate %}
-                        <div class="text-xs text-gray-500">Стоимость доставки будет рассчитана менеджером</div>
-                      {% elseif d.isFree %}
-                        <div class="text-xs text-gray-500">Доставка бесплатная</div>
-                      {% endif %}
-                    </div>
-                  {% else %}
-                    <div class="text-sm text-gray-500">Детали доставки недоступны</div>
-                  {% endif %}
-                </div>
-              </div>
+              {{ account.order_card(o, statusNameById, productMap) }}
             {% endfor %}
           </div>
         {% else %}
@@ -173,6 +68,130 @@
   </div>
 {% endblock %}
 
+{% macro order_card(order, statusMap, productMap) %}
+  {% set orderProducts = order.products|default([]) %}
+  {% set isCancelled = order.status == constant('App\\Entity\\Order::STATUS_CANCELLED') %}
+  {% set delivery = order.delivery %}
+
+  <div class="p-4 border rounded">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+      <div class="text-lg font-medium">Заказ <span class="font-mono">#{{ order.orderId }}</span></div>
+      <div class="flex items-center gap-3 text-sm text-gray-700">
+        <div>
+          <span class="text-gray-500">Статус:</span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded bg-gray-100">{{ statusMap[order.status]|default(order.status) }}</span>
+        </div>
+        <div><span class="text-gray-500">Дата:</span> {{ order.dateAdded ? order.dateAdded|date('d.m.Y') : '—' }}</div>
+        {% if not isCancelled %}
+          {{ account.order_cancel_button(order.orderId) }}
+        {% endif %}
+      </div>
+    </div>
+
+    {% if orderProducts|length > 0 %}
+      {% set goodsSubtotal = 0 %}
+      <div class="space-y-3" data-testid="order-items">
+        {% for p in orderProducts %}
+          {% set unit = (p.salePrice is not null and p.salePrice > 0) ? p.salePrice : (p.price ?? 0) %}
+          {% set row = unit * (p.quantity ?? 0) %}
+          {% set goodsSubtotal = goodsSubtotal + row %}
+          <div class="flex gap-3 items-start border-b pb-3" data-testid="order-item">
+            <div class="w-16 h-16 shrink-0">
+              {{ account.product_image(productMap[p.productId]|default(null), p.productName|default('')) }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-medium">{{ p.productName }}</div>
+              {{ account.product_options(p.options|default([])) }}
+              <div class="text-sm text-gray-700 mt-1">{{ format_price(unit) }} × {{ p.quantity }} = <span class="font-medium">{{ format_price(row) }}</span></div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      {% set showManager = delivery and delivery.isCustomCalculate %}
+      {% set shippingCost = 0 %}
+      {% if delivery and delivery.cost is not null and not delivery.isFree and not showManager %}
+        {% set shippingCost = delivery.cost %}
+      {% endif %}
+
+      <div class="border-t mt-3 pt-3 text-sm">
+        <div>Стоимость товаров: <span data-testid="subtotal">{{ goodsSubtotal|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
+        {% if showManager or (delivery and delivery.cost is null) %}
+          <div>Доставка: <span data-testid="shipping">Расчет менеджером</span></div>
+          <div class="border-t pt-2 font-semibold">Итого: <span data-testid="total">{{ goodsSubtotal|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
+        {% elseif delivery and delivery.isFree %}
+          <div>Доставка: <span data-testid="shipping">Бесплатно</span></div>
+          <div class="border-t pt-2 font-semibold">Итого: <span data-testid="total">{{ goodsSubtotal|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
+        {% else %}
+          <div>Доставка: <span data-testid="shipping">{{ shippingCost|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
+          <div class="border-t pt-2 font-semibold">Итого: <span data-testid="total">{{ (goodsSubtotal + shippingCost)|number_format(0, '.', ' ') ~ ' руб.' }}</span></div>
+        {% endif %}
+      </div>
+    {% else %}
+      <div class="text-gray-500 text-sm">Позиции заказа отсутствуют</div>
+    {% endif %}
+
+    {{ account.delivery_details(delivery) }}
+  </div>
+{% endmacro %}
+
+{% macro order_cancel_button(orderId) %}
+  <button type="button" class="btn btn-xs btn-outline btn-error ml-2" aria-haspopup="dialog" aria-expanded="false" aria-controls="cancel-modal-{{ orderId }}" data-overlay="#cancel-modal-{{ orderId }}">Отменить заказ</button>
+
+  <div id="cancel-modal-{{ orderId }}" class="overlay modal overlay-open:opacity-100 hidden overlay-open:duration-300 z-[120]" role="dialog" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Подтверждение</h3>
+          <button type="button" class="btn btn-text btn-circle btn-sm absolute end-3 top-3" aria-label="Close" data-overlay="#cancel-modal-{{ orderId }}">
+            <span class="icon-[tabler--x] size-4"></span>
+          </button>
+        </div>
+        <div class="modal-body">
+          Вы уверены, что хотите отменить заказ <span class="font-mono">#{{ orderId }}</span>?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-soft btn-secondary" data-overlay="#cancel-modal-{{ orderId }}">Отмена</button>
+          <form action="{{ path('account_order_cancel', { orderId: orderId }) }}" method="post" class="inline">
+            <input type="hidden" name="_token" value="{{ csrf_token('order_cancel_' ~ orderId) }}">
+            <button type="submit" class="btn btn-primary">Да, отменить</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endmacro %}
+
+{% macro delivery_details(delivery) %}
+  <div class="p-4 border rounded h-fit mt-4">
+    <h2 class="text-lg font-medium mb-3">Детали доставки</h2>
+    {% if delivery %}
+      <div class="space-y-1 text-sm">
+        {% set rows = {
+          'Способ': delivery_type_name(delivery.type|default(null)),
+          'Город': delivery.city|default(null),
+          'Адрес': delivery.address|default(null),
+          'ПВЗ': delivery.pvz|default(null),
+          'Дата доставки': delivery.deliveryDate ? delivery.deliveryDate|date('d.m.Y') : null,
+          'Время доставки': delivery.deliveryTime ? delivery.deliveryTime|date('H:i') : null
+        } %}
+        {% for label, value in rows %}
+          {% if value is not null and value is not same as(false) and value is not same as('') %}
+            <div><span class="text-gray-600">{{ label }}:</span> {{ value }}</div>
+          {% endif %}
+        {% endfor %}
+        {% if delivery.isCustomCalculate %}
+          <div class="text-xs text-gray-500">Стоимость доставки будет рассчитана менеджером</div>
+        {% elseif delivery.isFree %}
+          <div class="text-xs text-gray-500">Доставка бесплатная</div>
+        {% endif %}
+      </div>
+    {% else %}
+      <div class="text-sm text-gray-500">Детали доставки недоступны</div>
+    {% endif %}
+  </div>
+{% endmacro %}
+
 {% macro product_image(product, alt) %}
   {% if product and product.image|length > 0 %}
     {% set firstImage = product.image|sort((a,b) => a.sortOrder <=> b.sortOrder)|first %}
@@ -205,12 +224,6 @@
         <span class="inline-block bg-gray-100 rounded px-2 py-0.5 mr-1 mb-1">{{ option.optionName }}: {{ val.valueName ?? '-' }}</span>
       {% endfor %}
     </div>
-  {% endif %}
-{% endmacro %}
-
-{% macro delivery_row(label, value) %}
-  {% if value is not null and value is not same as(false) and value is not same as('') %}
-    <div><span class="text-gray-600">{{ label }}:</span> {{ value }}</div>
   {% endif %}
 {% endmacro %}
 
