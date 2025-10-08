@@ -526,14 +526,23 @@ export default class extends Controller {
     title.textContent = 'Выбранные фильтры:'
     wrap.appendChild(title)
     entries.forEach(({ code, value }) => {
-      const chip = document.createElement('button')
-      chip.type = 'button'
-      chip.className = 'inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-800 hover:bg-gray-200'
-      chip.dataset.action = 'click->facets#remove'
-      chip.dataset.facetsCode = code
-      chip.dataset.facetsValue = value
+      const chip = document.createElement('span')
+      chip.className = 'badge badge-soft badge-lg badge-primary removing:translate-x-5 removing:opacity-0 transition duration-300 ease-in-out'
+      
       const title = (this.meta && this.meta[code] && this.meta[code].title) ? String(this.meta[code].title) : String(code)
-      chip.innerHTML = `<span>${title}: ${value}</span><svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>`
+      const label = document.createElement('span')
+      label.textContent = `${title}: ${value}`
+      
+      const closeBtn = document.createElement('button')
+      closeBtn.type = 'button'
+      closeBtn.className = 'icon-[tabler--circle-x-filled] size-5 min-h-0 cursor-pointer px-0 opacity-70'
+      closeBtn.dataset.action = 'click->facets#remove'
+      closeBtn.dataset.facetsCode = code
+      closeBtn.dataset.facetsValue = value
+      closeBtn.setAttribute('aria-label', 'Close Button')
+      
+      chip.appendChild(label)
+      chip.appendChild(closeBtn)
       wrap.appendChild(chip)
     })
     const clear = document.createElement('button')

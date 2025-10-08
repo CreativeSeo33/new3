@@ -1,4 +1,5 @@
 {% extends 'catalog/base.html.twig' %}
+{% import _self as account %}
 
 {% block title %}Личный кабинет — {{ parent() }}{% endblock %}
 
@@ -17,9 +18,10 @@
 
     <div class="mt-3.5">
       <div id="tabs-basic-filled-1" role="tabpanel" aria-labelledby="tabs-basic-filled-item-1">
-        {% if orders is defined and orders|length > 0 %}
+        {% set ordersList = orders|default([]) %}
+        {% if ordersList|length > 0 %}
           <div class="space-y-6">
-            {% for o in orders %}
+            {% for o in ordersList %}
               <div class="p-4 border rounded">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
                   <div class="text-lg font-medium">Заказ <span class="font-mono">#{{ o.orderId }}</span></div>
@@ -29,47 +31,31 @@
                       <span class="inline-flex items-center px-2 py-0.5 rounded bg-gray-100">{{ statusNameById[o.status]|default(o.status) }}</span>
                     </div>
                     <div><span class="text-gray-500">Дата:</span> {{ o.dateAdded ? o.dateAdded|date('d.m.Y') : '—' }}</div>
+                    {% set isCancelled = o.status == constant('App\\Entity\\Order::STATUS_CANCELLED') %}
+                    {% if not isCancelled %}
+                      <form action="{{ path('account_order_cancel', { orderId: o.orderId }) }}" method="post" class="ml-2">
+                        <input type="hidden" name="_token" value="{{ csrf_token('order_cancel_' ~ o.orderId) }}">
+                        <button type="submit" class="btn btn-xs btn-outline btn-error" onclick="return confirm('Отменить этот заказ?')">Отменить заказ</button>
+                      </form>
+                    {% endif %}
                   </div>
                 </div>
 
-                {% if o.products|length > 0 %}
+                {% set orderProducts = o.products|default([]) %}
+                {% if orderProducts|length > 0 %}
                   <div class="space-y-3" data-testid="order-items">
                     {% set goodsSubtotal = 0 %}
-                    {% for p in o.products %}
+                    {% for p in orderProducts %}
                       {% set unit = (p.salePrice is not null and p.salePrice > 0) ? p.salePrice : (p.price ?? 0) %}
                       {% set row = unit * (p.quantity ?? 0) %}
                       {% set goodsSubtotal = goodsSubtotal + row %}
                       <div class="flex gap-3 items-start border-b pb-3" data-testid="order-item">
                         <div class="w-16 h-16 shrink-0">
-                          {% set prod = (productMap[p.productId] ?? null) %}
-                          {% if prod and prod.image|length > 0 %}
-                            {% set firstImage = prod.image|sort((a,b) => a.sortOrder <=> b.sortOrder)|first %}
-                            {% if firstImage %}
-                              {% set raw = firstImage.imageUrl %}
-                              {% if raw starts with '/media/cache/' %}
-                                {% set imgSrc = raw %}
-                              {% else %}
-                                {% set rel = raw|replace({'/img/':''})|trim('/') %}
-                                {% set imgSrc = asset('/img/' ~ rel) | imagine_filter('md2') %}
-                              {% endif %}
-                              <img src="{{ imgSrc }}" alt="{{ p.productName }}" class="w-16 h-16 object-cover rounded border">
-                            {% else %}
-                              <div class="w-16 h-16 bg-gray-200 rounded border flex items-center justify-center text-gray-500 text-xs">Нет фото</div>
-                            {% endif %}
-                          {% else %}
-                            <div class="w-16 h-16 bg-gray-200 rounded border flex items-center justify-center text-gray-500 text-xs">Нет фото</div>
-                          {% endif %}
+                          {{ account.product_image(productMap[p.productId]|default(null), p.productName|default('')) }}
                         </div>
                         <div class="flex-1 min-w-0">
                           <div class="text-sm font-medium">{{ p.productName }}</div>
-                          {% if p.options is defined and p.options|length > 0 %}
-                            <div class="mt-1 text-xs text-gray-600">
-                              {% for o2 in p.options|sort((a,b) => (a.value.optionSortOrder ?? 9999) <=> (b.value.optionSortOrder ?? 9999) ?: ((a.value.valueSortOrder ?? 9999) <=> (b.value.valueSortOrder ?? 9999))) %}
-                                {% set val = o2.value ?? {} %}
-                                <span class="inline-block bg-gray-100 rounded px-2 py-0.5 mr-1 mb-1">{{ o2.optionName }}: {{ val.valueName ?? '-' }}</span>
-                              {% endfor %}
-                            </div>
-                          {% endif %}
+                          {{ account.product_options(p.options|default([])) }}
                           <div class="text-sm text-gray-700 mt-1">{{ format_price(unit) }} × {{ p.quantity }} = <span class="font-medium">{{ format_price(row) }}</span></div>
                         </div>
                       </div>
@@ -105,22 +91,12 @@
                   {% set d = o.delivery %}
                   {% if d %}
                     <div class="space-y-1 text-sm">
-                      <div><span class="text-gray-600">Способ:</span> {{ delivery_type_name(d.type|default(null)) }}</div>
-                      {% if d.city %}
-                        <div><span class="text-gray-600">Город:</span> {{ d.city }}</div>
-                      {% endif %}
-                      {% if d.address %}
-                        <div><span class="text-gray-600">Адрес:</span> {{ d.address }}</div>
-                      {% endif %}
-                      {% if d.pvz %}
-                        <div><span class="text-gray-600">ПВЗ:</span> {{ d.pvz }}</div>
-                      {% endif %}
-                      {% if d.deliveryDate %}
-                        <div><span class="text-gray-600">Дата доставки:</span> {{ d.deliveryDate|date('d.m.Y') }}</div>
-                      {% endif %}
-                      {% if d.deliveryTime %}
-                        <div><span class="text-gray-600">Время доставки:</span> {{ d.deliveryTime|date('H:i') }}</div>
-                      {% endif %}
+                      {{ account.delivery_row('Способ', delivery_type_name(d.type|default(null))) }}
+                      {{ account.delivery_row('Город', d.city|default(null)) }}
+                      {{ account.delivery_row('Адрес', d.address|default(null)) }}
+                      {{ account.delivery_row('ПВЗ', d.pvz|default(null)) }}
+                      {{ account.delivery_row('Дата доставки', d.deliveryDate ? d.deliveryDate|date('d.m.Y') : null) }}
+                      {{ account.delivery_row('Время доставки', d.deliveryTime ? d.deliveryTime|date('H:i') : null) }}
                       {% if d.isCustomCalculate %}
                         <div class="text-xs text-gray-500">Стоимость доставки будет рассчитана менеджером</div>
                       {% elseif d.isFree %}
@@ -139,9 +115,83 @@
         {% endif %}
       </div>
       <div id="tabs-basic-filled-2" class="hidden" role="tabpanel" aria-labelledby="tabs-basic-filled-item-2">
+        <div class="max-w-xl">
+          {% for label, messages in app.flashes %}
+            {% for message in messages %}
+              <div class="alert {{ label == 'success' ? 'alert-success' : (label == 'error' ? 'alert-error' : 'alert-info') }} mb-4">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endfor %}
+
+          <form action="{{ path('account_profile_update') }}" method="post" class="space-y-4">
+            <input type="hidden" name="_token" value="{{ csrf_token('account_profile_update') }}">
+
+            <div>
+              <label for="firstName" class="label"><span class="label-text">Имя</span></label>
+              <input id="firstName" name="firstName" type="text" class="input input-bordered w-full" value="{{ app.user and app.user.firstName ? app.user.firstName : '' }}" autocomplete="given-name">
+            </div>
+
+            <div>
+              <label for="phone" class="label"><span class="label-text">Телефон</span></label>
+              <input id="phone" name="phone" type="tel" class="input input-bordered w-full" value="{{ app.user and app.user.phone ? app.user.phone : '' }}" autocomplete="tel">
+            </div>
+
+            <div>
+              <label for="email" class="label"><span class="label-text">Email</span></label>
+              <input id="email" name="email" type="email" class="input input-bordered w-full" value="{{ app.user and app.user.email ? app.user.email : '' }}" autocomplete="email">
+              <p class="text-xs text-gray-500 mt-1">Email используется для уведомлений и входа.</p>
+            </div>
+
+            <div class="pt-2">
+              <button type="submit" class="btn btn-primary">Сохранить</button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </div>
 {% endblock %}
+
+{% macro product_image(product, alt) %}
+  {% if product and product.image|length > 0 %}
+    {% set firstImage = product.image|sort((a,b) => a.sortOrder <=> b.sortOrder)|first %}
+    {% if firstImage and firstImage.imageUrl is defined %}
+      {% set raw = firstImage.imageUrl %}
+      {% if raw starts with '/media/cache/' %}
+        {% set imgSrc = raw %}
+      {% else %}
+        {% set rel = raw|replace({'/img/':''})|trim('/') %}
+        {% set imgSrc = asset('/img/' ~ rel)|imagine_filter('md2') %}
+      {% endif %}
+      <img src="{{ imgSrc }}" alt="{{ alt }}" class="w-16 h-16 object-cover rounded border">
+    {% else %}
+      {{ account.placeholder_image() }}
+    {% endif %}
+  {% else %}
+    {{ account.placeholder_image() }}
+  {% endif %}
+{% endmacro %}
+
+{% macro placeholder_image() %}
+  <div class="w-16 h-16 bg-gray-200 rounded border flex items-center justify-center text-gray-500 text-xs">Нет фото</div>
+{% endmacro %}
+
+{% macro product_options(options) %}
+  {% if options|length > 0 %}
+    <div class="mt-1 text-xs text-gray-600">
+      {% for option in options|sort((a,b) => (a.value.optionSortOrder ?? 9999) <=> (b.value.optionSortOrder ?? 9999) ?: ((a.value.valueSortOrder ?? 9999) <=> (b.value.valueSortOrder ?? 9999))) %}
+        {% set val = option.value ?? {} %}
+        <span class="inline-block bg-gray-100 rounded px-2 py-0.5 mr-1 mb-1">{{ option.optionName }}: {{ val.valueName ?? '-' }}</span>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endmacro %}
+
+{% macro delivery_row(label, value) %}
+  {% if value is not null and value is not same as(false) and value is not same as('') %}
+    <div><span class="text-gray-600">{{ label }}:</span> {{ value }}</div>
+  {% endif %}
+{% endmacro %}
 
 

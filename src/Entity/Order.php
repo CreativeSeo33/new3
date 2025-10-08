@@ -46,6 +46,7 @@ use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 class Order
 {
     public const STATUS_SUCCESS = 1;
+    public const STATUS_CANCELLED = 4;
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
