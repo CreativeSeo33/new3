@@ -1,0 +1,14 @@
+var/
+vendor/
+node_modules/
+public/build/
+public/media/cache/
+.env.local
+.git/
+.idea/
+*.md
+tests/
+
+
+
+

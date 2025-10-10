@@ -1,2 +1,2 @@
-debug:
-    dump_destination: "tcp://%env(VAR_DUMPER_SERVER)%"
+# debug:
+#     dump_destination: "tcp://%env(VAR_DUMPER_SERVER)%"

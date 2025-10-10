@@ -1,0 +1,110 @@
+services:
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    environment:
+      DATABASE_URL: "mysql://root:${MYSQL_ROOT_PASSWORD:-password}@db:3306/${MYSQL_DATABASE:-new3}?serverVersion=8.0&charset=utf8mb4"
+      APP_ENV: dev
+      APP_DEBUG: 1
+      APP_SECRET: "${APP_SECRET:-dev-secret-change-me}"
+      TRUSTED_PROXIES: "127.0.0.1,REMOTE_ADDR"
+      JWT_SECRET: "6f9d4dfe609d7038bf74cf78e64b8087d94ad68ed1a7a8f3a71e8ee929e2374a"
+      CORS_ALLOW_ORIGIN: "^https?://(localhost|127\\.0\\.0\\.1)(:[0-9]+)?$"
+      LOCK_DSN: "flock"
+      MAILER_DSN: "smtp://mailhog:1025"
+      ADMIN_FROM_EMAIL: "no-reply@example.com"
+      APP_THEME_ENABLED: "0"
+    volumes:
+      - ./.env:/app/.env
+      - ./var:/app/var
+      - ./public/media:/app/public/media
+      - ./config/jwt:/app/config/jwt
+      - ./themes:/app/themes
+      - ./public/build:/app/public/build
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "php -v >/dev/null 2>&1 && php -r 'exit(0);' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./public:/app/public:ro
+    depends_on:
+      php:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-new3}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-password}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./my.cnf:/etc/mysql/conf.d/custom.cnf:ro
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  adminer:
+    image: adminer:latest
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    environment:
+      MH_STORAGE: memory
+
+volumes:
+  mysql_data:
+  redis_data:
+
+
+
