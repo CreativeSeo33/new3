@@ -29,7 +29,32 @@ class FacetDictionaryRepository extends ServiceEntityRepository
         return $this->findOneBy(['category' => $category]);
     }
 
-    public function findByPriceRange(int $minPrice, int $maxPrice): array
+    public function findByCategoryIdOrCreate(int $categoryId): FacetDictionary
+    {
+        $facetDictionary = $this->findByCategoryId($categoryId);
+        
+        if (!$facetDictionary) {
+            $facetDictionary = new FacetDictionary();
+            $category = $this->getEntityManager()->getReference(Category::class, $categoryId);
+            $facetDictionary->setCategory($category);
+        }
+        
+        return $facetDictionary;
+    }
+
+    public function findByCategoryOrCreate(Category $category): FacetDictionary
+    {
+        $facetDictionary = $this->findByCategory($category);
+        
+        if (!$facetDictionary) {
+            $facetDictionary = new FacetDictionary();
+            $facetDictionary->setCategory($category);
+        }
+        
+        return $facetDictionary;
+    }
+
+    public function findAllByPriceRange(int $minPrice, int $maxPrice): array
     {
         return $this->createQueryBuilder('fd')
             ->where('fd.priceMin <= :maxPrice')
@@ -38,30 +63,6 @@ class FacetDictionaryRepository extends ServiceEntityRepository
             ->setParameter('maxPrice', $maxPrice)
             ->getQuery()
             ->getResult();
-    }
-
-    public function findByAttributes(array $attributes): array
-    {
-        $qb = $this->createQueryBuilder('fd');
-        
-        foreach ($attributes as $key => $value) {
-            $qb->andWhere("JSON_CONTAINS(fd.attributesJson, :attr_{$key}) = 1")
-               ->setParameter("attr_{$key}", json_encode([$key => $value]));
-        }
-        
-        return $qb->getQuery()->getResult();
-    }
-
-    public function findByOptions(array $options): array
-    {
-        $qb = $this->createQueryBuilder('fd');
-        
-        foreach ($options as $key => $value) {
-            $qb->andWhere("JSON_CONTAINS(fd.optionsJson, :opt_{$key}) = 1")
-               ->setParameter("opt_{$key}", json_encode([$key => $value]));
-        }
-        
-        return $qb->getQuery()->getResult();
     }
 
     public function save(FacetDictionary $entity, bool $flush = false): void
