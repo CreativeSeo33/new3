@@ -27,8 +27,9 @@ export class HttpClient {
     // baseURL из env при наличии, иначе '/api'
     let resolvedBaseURL = baseURL
     try {
-      const env = (import.meta as any)?.env
-      if (env?.VITE_API_URL) resolvedBaseURL = env.VITE_API_URL as string
+      if (import.meta.env?.VITE_API_URL) {
+        resolvedBaseURL = import.meta.env.VITE_API_URL
+      }
     } catch {}
 
     this.instance = axios.create({
