@@ -1,4 +1,4 @@
-import type { ApiResource } from '@admin/types/api';
+import type { ApiResource, HydraCollection } from '@admin/types/api';
 import { BaseRepository } from './BaseRepository';
 
 export interface ProductDto extends ApiResource {
@@ -49,6 +49,17 @@ export class ProductRepository extends BaseRepository<ProductDto> {
   constructor() {
     // v2 ProductResource endpoints
     super('/v2/products');
+  }
+
+  async searchProducts(query: string, limit: number = 10): Promise<HydraCollection<ProductDto>> {
+    const normalized = (query ?? '').trim();
+    if (normalized.length < 3) {
+      throw new Error('Минимальная длина запроса — 3 символа');
+    }
+    return this.findAll({
+      filters: { name: normalized },
+      itemsPerPage: limit,
+    });
   }
 }
 
