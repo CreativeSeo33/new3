@@ -10,6 +10,8 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Delete;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -19,7 +21,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Index(columns: ['product_id'], name: 'idx_bestseller_product')]
 #[ORM\Index(columns: ['sort_order'], name: 'idx_bestseller_sort_order')]
 #[ApiResource(
-    operations: [new Get(), new GetCollection(), new Post()],
+    operations: [new Get(), new GetCollection(), new Post(), new Patch(), new Delete()],
     normalizationContext: ['groups' => ['bestseller:read']],
     denormalizationContext: ['groups' => ['bestseller:write']]
 )]
@@ -40,7 +42,7 @@ class Bestseller
 
     #[ORM\Column(name: 'sort_order', nullable: true, options: ['default' => 0])]
     #[Assert\PositiveOrZero]
-    #[Groups(['bestseller:read'])]
+    #[Groups(['bestseller:read', 'bestseller:write'])]
     private ?int $sortOrder = 0;
 
     public function getId(): ?int
