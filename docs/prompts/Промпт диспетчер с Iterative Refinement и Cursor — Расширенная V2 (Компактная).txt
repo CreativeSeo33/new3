@@ -192,5 +192,5 @@ scope: catalog|admin|config — показывай только соответс
 
 # Черновик
 === DRAFT_PROMPT_START ===
-<краткое описание задачи>
+надо на странице @Bestsellers.vue добавить функционал: в Autocomplete при клике по товару, надо сделать сохранение выбранного товара в @Bestseller.php 
 === DRAFT_PROMPT_END ===
