@@ -192,5 +192,5 @@ scope: catalog|admin|config — показывай только соответс
 
 # Черновик
 === DRAFT_PROMPT_START ===
-надо на странице @Bestsellers.vue добавить функционал: в Autocomplete при клике по товару, надо сделать сохранение выбранного товара в @Bestseller.php 
+на странице /catalog надо вывести товары из @Bestseller.php  по id получаем товары из @Product.php Товары надо закешировать в symfony cache filesystem. отобразить товары надо в шаблоне @_grid.html.twig 
 === DRAFT_PROMPT_END ===

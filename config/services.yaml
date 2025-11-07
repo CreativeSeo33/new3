@@ -106,6 +106,9 @@ parameters:
     # Catalog pagination (category page)
     app.pagination.allowed_limits: [10, 20, 30]
     app.pagination.default_limit: 10
+    
+    # Catalog bestsellers cache
+    app.cache.bestsellers.ttl: 14400
 
 services:
     # default configuration for services in *this* file
@@ -378,6 +381,11 @@ services:
             $projectDir: '%kernel.project_dir%'
             $enabled: '%app_theme.enabled%'
         public: true
+
+    # Bestseller service with TTL parameter
+    App\Service\BestsellerService:
+        arguments:
+            $cacheTtl: '%app.cache.bestsellers.ttl%'
 
     # Prefer cookie-based token over Authorization header for JWT extraction
     # Decorate Lexik chain extractor with cookie-first behavior
