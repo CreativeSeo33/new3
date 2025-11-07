@@ -192,5 +192,5 @@ scope: catalog|admin|config — показывай только соответс
 
 # Черновик
 === DRAFT_PROMPT_START ===
-на странице /catalog надо вывести товары из @Bestseller.php  по id получаем товары из @Product.php Товары надо закешировать в symfony cache filesystem. отобразить товары надо в шаблоне @_grid.html.twig 
+надо товары на странице @index.html.twig которые показываются в сетке @_grid.html.twig поместить в слайдер https://swiperjs.com/demos#slides-per-view  swiper уже установлен в проекте. документация https://swiperjs.com/swiper-api  Надо показывать по 3 товара
 === DRAFT_PROMPT_END ===

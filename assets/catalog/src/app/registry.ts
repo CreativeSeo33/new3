@@ -30,6 +30,7 @@ export const registry: Record<string, () => Promise<ModuleInitFunction>> = {
   // Виджеты
   'cart-counter': () => import('../widgets/cart-counter').then(m => m.init),
   'wishlist-counter': () => import('../widgets/wishlist-counter').then(m => m.init),
+  'product-slider': () => import('../widgets/product-slider').then(m => m.init),
   'facets-panel': () => import('../widgets/facets-panel').then(m => m.init),
   'facets': () => import('../features/facets').then(m => m.init),
 

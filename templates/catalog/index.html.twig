@@ -4,7 +4,9 @@
 {% block catalog_body %}
   <div class="mx-auto max-w-2xl px-4 py-16 sm:px-6 sm:py-24 lg:max-w-7xl lg:px-8">
     {% set gridTitle = 'Хиты продаж' %}
-    {% include 'catalog/category/_grid.html.twig' with { products: products, gridTitle: gridTitle } %}
+    <div data-module="product-slider">
+      {% include 'catalog/category/_grid.html.twig' with { products: products, gridTitle: gridTitle } %}
+    </div>
   </div>
 {% endblock %}
 
