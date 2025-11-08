@@ -4,7 +4,7 @@
   <!-- Header Middle Section -->
   <div class="py-6 border-b border-gray-100">
     <div class="container mx-auto">
-      <div class="flex items-center justify-between">
+      <div class="flex items-center justify-between md:grid md:grid-cols-3 md:gap-4">
         
         <!-- Mobile Menu Toggle -->
         <div class="md:hidden flex items-center">
@@ -16,10 +16,10 @@
         </div>
         
         <!-- Logo Section -->
-        <div class="flex items-center">
+        <div class="flex items-center justify-center md:justify-start">
           <a href="{{ path('catalog_index') }}" class="flex items-center gap-3">
             {% if logo_url is defined and logo_url %}
-              <img src="{{ logo_url }}" alt="{{ site_name|default('Shop') }}" class="h-12 w-auto" />
+              <img src="{{ logo_url }}" alt="{{ site_name|default('Shop') }}" class="h-16 w-auto" />
             {% else %}
               <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
                 <span class="text-white font-bold text-xl">L</span>
@@ -29,8 +29,8 @@
         </div>
 
         <!-- Search Section -->
-        <div class="hidden lg:flex flex-1 max-w-2xl mx-8">
-          <form action="{{ path('catalog_search') }}" method="GET" class="relative w-full">
+        <div class="hidden lg:flex items-center justify-center">
+          <form action="{{ path('catalog_search') }}" method="GET" class="relative w-full max-w-2xl">
             <div class="join w-full">
               <!-- Search Input -->
               <input type="text"
@@ -52,7 +52,7 @@
         </div>
 
         <!-- Right Side Actions -->
-        <div class="flex items-center space-x-6">
+        <div class="flex items-center justify-end space-x-6">
           
           {# City from session #}
           {% set checkout = app.session.get('checkout') %}

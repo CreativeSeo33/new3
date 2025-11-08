@@ -244,19 +244,15 @@
             {% endif %}
 
             <!-- Выбор количества -->
-            <div class="space-y-4">
-              <div class="flex items-center justify-between">
-                <label for="product-quantity" class="text-sm font-medium text-gray-700">
-                  Количество:
-                </label>
-                <div data-module="quantity-selector"
-                     data-testid="qty-input"
-                     data-product-id="{{ product.id }}"
-                     data-min="1"
-                     data-max="{{ product.quantity ?? 999 }}"
-                     data-value="1"
-                     class="quantity-selector-container">
-                </div>
+            <div class="flex items-center mt-6 gap-4 w-full">
+              <!-- Селектор количества -->
+              <div data-module="quantity-selector"
+                   data-testid="qty-input"
+                   data-product-id="{{ product.id }}"
+                   data-min="1"
+                   data-max="{{ product.quantity ?? 999 }}"
+                   data-value="1"
+                   class="quantity-selector-container flex-shrink-0">
               </div>
 
               <!-- Кнопка покупки -->
@@ -264,7 +260,7 @@
                       data-quantity="1"
                       data-module="add-to-cart"
                       data-testid="add-to-cart"
-                      class="js-add-to-cart w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none disabled:transform-none relative overflow-hidden group">
+                      class="js-add-to-cart flex-1 h-10 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none disabled:transform-none relative overflow-hidden group">
                 <!-- Анимированный фон -->
                 <div class="absolute inset-0 bg-gradient-to-r from-blue-400 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
@@ -276,7 +272,7 @@
                   </svg>
 
                   <!-- Текст с анимацией -->
-                  <span class="text-lg transition-all duration-200 group-hover:tracking-wide">Добавить в корзину</span>
+                  <span class="text-base transition-all duration-200 group-hover:tracking-wide">Купить</span>
                 </div>
 
                 <!-- Эффект пульсации -->
@@ -290,27 +286,18 @@
                 </div>
               </button>
 
-              <div class="flex gap-3">
-                {% set inWishlist = wishlist_has(product.id) %}
-                <button type="button" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors{% if inWishlist %} is-active{% endif %}"
-                        data-module="wishlist-toggle"
-                        data-product-id="{{ product.id }}">
-                  <div class="flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z"/>
-                    </svg>
-                    <span class="{% if inWishlist %}text-red-600{% endif %}">{{ inWishlist ? 'Товар в избранном' : 'В избранное' }}</span>
-                  </div>
-                </button>
-                <button class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors">
-                  <div class="flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Z"/>
-                    </svg>
-                    <span>Поделиться</span>
-                  </div>
-                </button>
-              </div>
+              <!-- Кнопка избранного -->
+              {% set inWishlist = wishlist_has(product.id) %}
+              <button type="button" class="flex-shrink-0 h-10 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium px-4 rounded-lg transition-colors{% if inWishlist %} is-active{% endif %}"
+                      data-module="wishlist-toggle"
+                      data-product-id="{{ product.id }}">
+                <div class="flex items-center justify-center">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z"/>
+                  </svg>
+                  <span class="{% if inWishlist %}text-red-600{% endif %}"></span>
+                </div>
+              </button>
             </div>
           </form>
 
@@ -350,10 +337,10 @@
   
   <!-- Характеристики товара -->
   {% if product.attributeAssignments is defined and product.attributeAssignments|length > 0 %}
-    <div class="">
+    <div class="bg-white">
       <div class="container mx-auto py-12">
-        <div class="max-w-4xl mx-auto">
-          <h2 class="text-2xl font-bold text-gray-900 mb-8">Технические характеристики</h2>
+        <div class="max-w-4xl">
+          <h2 class="text-2xl font-bold text-gray-900 mb-6">Характеристики</h2>
 
           {# Группируем атрибуты по группам #}
           {% set grouped_attrs = {} %}
@@ -369,16 +356,16 @@
 
           {# Сортируем группы и выводим атрибуты #}
           {% for groupName, attributes in grouped_attrs|sort((a, b) => a <=> b) %}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 overflow-hidden">
-              <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-900">{{ groupName }}</h3>
+            <div class="mb-8">
+              <div class="mb-4">
+                <h3 class="text-xl font-semibold text-gray-900">{{ groupName }}</h3>
               </div>
-              <div class="p-6">
-                <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <dl class="space-y-3">
                   {% for pa in attributes|sort((a, b) => (a.attribute.sortOrder ?? 0) <=> (b.attribute.sortOrder ?? 0)) %}
-                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center py-2 border-b border-gray-100 last:border-b-0">
-                      <dt class="text-sm font-medium text-gray-600 mb-1 sm:mb-0">{{ pa.attribute.name }}</dt>
-                      <dd class="text-sm font-semibold text-gray-900">{{ pa.stringValue ?? '—' }}</dd>
+                    <div class="flex border-b border-gray-200 pb-3">
+                      <dt class="font-medium text-gray-700 w-1/3">{{ pa.attribute.name }}</dt>
+                      <dd class="text-gray-600 flex-1">{{ pa.stringValue ?? '—' }}</dd>
                     </div>
                   {% endfor %}
                 </dl>
