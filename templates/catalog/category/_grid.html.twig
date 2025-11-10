@@ -5,7 +5,7 @@
       <h2 class="text-2xl font-bold tracking-tight text-gray-900">{{ gridTitle }}</h2>
     {% endif %}
 
-    <div class="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4" data-testid="category-grid">
+    <div class="mt-6 grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4" data-testid="category-grid">
       {% for p in products %}
         {# Подготовка данных для вариаций #}
         {% set variationsToShow = [] %}
@@ -26,7 +26,7 @@
           {% endif %}
         {% endif %}
 
-        <div class="group relative border border-transparent hover:border-gray-200 hover:border-b-transparent hover:shadow-md rounded-t">
+        <div class="group relative p-2 category-shadow rounded-md">
           {% set firstImage = p.image|sort((a,b) => a.sortOrder <=> b.sortOrder)|first %}
           {% if firstImage %}
             {% set raw = firstImage.imageUrl %}
@@ -52,7 +52,7 @@
                   data-module="wishlist-toggle"
                   data-spinner="false"
                   data-product-id="{{ p.id }}"
-                  class="absolute right-2 top-2 z-10 rounded-full bg-white/80 p-2 text-gray-600 shadow-sm hover:text-red-500"
+                  class="absolute right-3 top-3 z-10 rounded-full bg-white/80 p-2 text-gray-600 shadow-sm hover:text-red-500"
                   {% if inWishlist %}data-state="active"{% endif %}>
             <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5">
               <path stroke-linecap="round" stroke-linejoin="round" d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z"/>

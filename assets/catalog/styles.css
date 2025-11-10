@@ -67,6 +67,14 @@ swiper-container.product-gallery-swiper {
   max-width: none;
 }
 
+.category-shadow:hover {
+  box-shadow: 0 5px 30px rgba(34, 34, 34, .1);
+  transition: box-shadow 
+ease .3s, border 
+ease .3s, background 
+ease .3s;
+}
+
 /* Стили для основного слайдера */
 .product-gallery-swiper::part(container) {
   height: 100%;
