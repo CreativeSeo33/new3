@@ -20,8 +20,10 @@ final class ProductRepository extends ServiceEntityRepository
 
     public function findOneActiveWithAttributesBySlug(string $slug): ?Product
     {
-        // Сначала загружаем товар без атрибутов
+        // Сначала загружаем товар без атрибутов, но с SEO данными
         $product = $this->createQueryBuilder('p')
+            ->leftJoin('p.seo', 'seo')
+            ->addSelect('seo')
             ->andWhere('p.slug = :slug')
             ->andWhere('p.status = true')
             ->setParameter('slug', $slug)

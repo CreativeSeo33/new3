@@ -1,7 +1,7 @@
 {% extends 'catalog/base.html.twig' %}
 
 {% block title %}
-  {{ product.metaTitle ?? product.name }} — {{ parent() }}
+  {{ (product.metaTitle|default(product.metaH1|default(product.name))) }}
 {% endblock %}
 
 {% block catalog_body %}
@@ -218,6 +218,10 @@
                               data-option-value="{{ a.value.value ?? ('Значение #' ~ a.value.id) }}"
                               data-set-price="{{ a.getSetPrice() ? 'true' : 'false' }}"
                               data-sale-price="{{ product.getType() == 'variable_no_prices' ? 0 : (a.salePrice is not null ? a.salePrice : 0) }}"
+                              data-height="{{ a.height ?? '' }}"
+                              data-bulbs-count="{{ a.bulbsCount ?? '' }}"
+                              data-lighting-area="{{ a.lightingArea ?? '' }}"
+                              data-sku="{{ a.sku ?? '' }}"
                               {% if isOut %}disabled{% endif %}
                               {% if not isOut and defaultOption and a.id == defaultOption.id %}checked{% endif %}
                             >
@@ -232,6 +236,18 @@
                                 {% else %}
                                   <span class="text-gray-900 ml-2">{{ a.price }} руб.</span>
                                 {% endif %}
+                              {% endif %}
+                              {% if a.height is not null %}
+                                <span class="text-gray-600 text-sm ml-2">Высота: {{ a.height }} мм</span>
+                              {% endif %}
+                              {% if a.bulbsCount is not null %}
+                                <span class="text-gray-600 text-sm ml-2">Ламп: {{ a.bulbsCount }}</span>
+                              {% endif %}
+                              {% if a.lightingArea is not null %}
+                                <span class="text-gray-600 text-sm ml-2">Площадь: {{ a.lightingArea }} м²</span>
+                              {% endif %}
+                              {% if a.sku is not null and a.sku != '' %}
+                                <span class="text-gray-500 text-xs ml-2">Арт: {{ a.sku }}</span>
                               {% endif %}
                             </span>
                           </label>
