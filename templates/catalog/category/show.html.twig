@@ -1,6 +1,12 @@
 {% extends 'catalog/base.html.twig' %}
 
-{% block title %}Категория {{ category.name ?? category.slug }} — {{ parent() }}{% endblock %}
+{% block title %}{{ category.metaTitle|default(category.metaH1|default(category.name ?? category.slug)) }}{% endblock %}
+
+{% block meta %}
+  {% if category.metaDescription %}
+    <meta name="description" content="{{ category.metaDescription }}">
+  {% endif %}
+{% endblock %}
 
 {% block catalog_body %}
   <section>
