@@ -4,6 +4,12 @@
   {{ (product.metaTitle|default(product.metaH1|default(product.name))) }}
 {% endblock %}
 
+{% block meta %}
+  {% if product.metaDescription %}
+    <meta name="description" content="{{ product.metaDescription }}">
+  {% endif %}
+{% endblock %}
+
 {% block catalog_body %}
 {# ai:page=product map=@page_product_map.mdc v=1 #}
   <!-- Основная информация о товаре -->
