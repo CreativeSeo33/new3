@@ -192,5 +192,5 @@ scope: catalog|admin|config — показывай только соответс
 
 # Черновик
 === DRAFT_PROMPT_START ===
-надо товары на странице @index.html.twig которые показываются в сетке @_grid.html.twig поместить в слайдер https://swiperjs.com/demos#slides-per-view  swiper уже установлен в проекте. документация https://swiperjs.com/swiper-api  Надо показывать по 3 товара
+надо добавить функционал в @_grid.html.twig при наведении мышки на <div class="flex-1 border-b-2 border-yellow-500 mx-1"></div> надо сделать подгрузку фото из коллекции p.image (если p.image|length > 0) в <img src="{{ imgSrc }}" alt="{{ p.name }}" class="aspect-square rounded-t w-full rounded-md bg-gray-200 object-cover lg:aspect-auto">
 === DRAFT_PROMPT_END ===
