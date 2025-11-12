@@ -27,29 +27,39 @@
         {% endif %}
 
         <div class="group relative px-2 pt-2 category-shadow rounded-t-md">
-          {% if p.image|length > 0 %}
-            {% set firstImage = p.image|sort((a,b) => a.sortOrder <=> b.sortOrder)|first %}
-            {% if firstImage %}
-              {% set raw = firstImage.imageUrl %}
-              {% if raw starts with '/media/cache/' %}
-                {% set imgSrc = raw %}
+          <div class="relative">
+            {% if p.image|length > 0 %}
+              {% set firstImage = p.image|sort((a,b) => a.sortOrder <=> b.sortOrder)|first %}
+              {% set imagesCount = p.image|length %}
+              {% if firstImage %}
+                {% set raw = firstImage.imageUrl %}
+                {% if raw starts with '/media/cache/' %}
+                  {% set imgSrc = raw %}
+                {% else %}
+                  {% set rel = raw|replace({'/img/':''})|trim('/') %}
+                  {% set imgSrc = asset('/img/' ~ rel) | imagine_filter('md2') %}
+                {% endif %}
+                <a href="{{ path('catalog_product_show', { slug: p.slug }) }}">
+                  <img src="{{ imgSrc }}" alt="{{ p.name }}" class="aspect-square rounded-t w-full rounded-md bg-gray-200 object-cover lg:aspect-auto">
+                </a>
+                {% if imagesCount > 1 %}
+                  <div class="absolute bottom-0 left-0 right-0 flex h-full mb-1">
+                    {% for i in 1..imagesCount %}
+                      <div class="flex-1 border-b-2 border-yellow-500 mx-1"></div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
               {% else %}
-                {% set rel = raw|replace({'/img/':''})|trim('/') %}
-                {% set imgSrc = asset('/img/' ~ rel) | imagine_filter('md2') %}
+                <a href="{{ path('catalog_product_show', { slug: p.slug }) }}">
+                  <img src="https://via.placeholder.com/500" alt="{{ p.name }}" class="aspect-square rounded-t w-full rounded-md bg-gray-200 object-cover lg:aspect-auto">
+                </a>
               {% endif %}
-              <a href="{{ path('catalog_product_show', { slug: p.slug }) }}">
-                <img src="{{ imgSrc }}" alt="{{ p.name }}" class="aspect-square rounded-t w-full rounded-md bg-gray-200 object-cover lg:aspect-auto">
-              </a>
             {% else %}
               <a href="{{ path('catalog_product_show', { slug: p.slug }) }}">
                 <img src="https://via.placeholder.com/500" alt="{{ p.name }}" class="aspect-square rounded-t w-full rounded-md bg-gray-200 object-cover lg:aspect-auto">
               </a>
             {% endif %}
-          {% else %}
-            <a href="{{ path('catalog_product_show', { slug: p.slug }) }}">
-              <img src="https://via.placeholder.com/500" alt="{{ p.name }}" class="aspect-square rounded-t w-full rounded-md bg-gray-200 object-cover lg:aspect-auto">
-            </a>
-          {% endif %}
+          </div>
 
           {% set inWishlist = wishlist_has(p.id) %}
           <button type="button"
