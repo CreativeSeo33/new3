@@ -54,7 +54,7 @@
                   {% set imgSrc = asset('/img/' ~ rel) | imagine_filter('md2') %}
                 {% endif %}
                 <a href="{{ path('catalog_product_show', { slug: p.slug }) }}">
-                  <img src="{{ imgSrc }}" alt="{{ p.name }}" class="aspect-square rounded-t w-full rounded-md bg-gray-200 object-cover lg:aspect-auto" data-product-gallery-target="image">
+                  <img src="{{ imgSrc }}" alt="{{ p.name }}" loading="lazy" decoding="async" class="aspect-square rounded-t w-full rounded-md bg-gray-200 object-cover lg:aspect-auto" data-product-gallery-target="image">
                 </a>
                 {% if imagesCount > 1 %}
                   <div class="absolute bottom-0 left-0 right-0 flex h-full mb-1">
@@ -65,12 +65,12 @@
                 {% endif %}
               {% else %}
                 <a href="{{ path('catalog_product_show', { slug: p.slug }) }}">
-                  <img src="https://via.placeholder.com/500" alt="{{ p.name }}" class="aspect-square rounded-t w-full rounded-md bg-gray-200 object-cover lg:aspect-auto">
+                  <img src="https://via.placeholder.com/500" alt="{{ p.name }}" loading="lazy" decoding="async" class="aspect-square rounded-t w-full rounded-md bg-gray-200 object-cover lg:aspect-auto">
                 </a>
               {% endif %}
             {% else %}
               <a href="{{ path('catalog_product_show', { slug: p.slug }) }}">
-                <img src="https://via.placeholder.com/500" alt="{{ p.name }}" class="aspect-square rounded-t w-full rounded-md bg-gray-200 object-cover lg:aspect-auto">
+                <img src="https://via.placeholder.com/500" alt="{{ p.name }}" loading="lazy" decoding="async" class="aspect-square rounded-t w-full rounded-md bg-gray-200 object-cover lg:aspect-auto">
               </a>
             {% endif %}
           </div>
