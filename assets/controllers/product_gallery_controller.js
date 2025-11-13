@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
+import { Fancybox } from '@fancyapps/ui';
 
 export default class extends Controller {
   static targets = ['image', 'indicator'];
@@ -28,6 +29,71 @@ export default class extends Controller {
       this.setActiveIndicator(index);
     } catch (_) {
       // noop: не ломаем UX на краевых случаях
+    }
+  }
+
+  openFancybox() {
+    try {
+      const urls = Array.isArray(this.imagesValue) ? this.imagesValue : [];
+      if (!urls.length) return;
+
+      // Преобразуем URLы md/sm/md2 -> xl для увеличенных фото
+      const toXl = (u) => {
+        try {
+          let s = String(u || '');
+          s = s.replace('/media/cache/resolve/md2/', '/media/cache/resolve/xl/')
+               .replace('/media/cache/resolve/md/', '/media/cache/resolve/xl/')
+               .replace('/media/cache/resolve/sm/', '/media/cache/resolve/xl/')
+               .replace('/media/cache/md2/', '/media/cache/xl/')
+               .replace('/media/cache/md/', '/media/cache/xl/')
+               .replace('/media/cache/sm/', '/media/cache/xl/');
+          return s;
+        } catch (_) {
+          return u;
+        }
+      };
+
+      const items = urls
+        .filter((u) => typeof u === 'string' && u)
+        .map((u) => ({
+          src: toXl(u),
+          caption: 'Изображение товара',
+        }));
+
+      if (!items.length) return;
+
+      // Открываем Fancybox с настройками как на странице товара
+      // (zoom, toolbar, thumbs, infinite: false), стартуем с первого слайда
+      Fancybox.show(items, {
+        startIndex: 0,
+        Carousel: {
+          infinite: false,
+        },
+        // @ts-ignore
+        Images: {
+          zoom: true,
+          Panzoom: {
+            maxScale: 3,
+          },
+        },
+        Toolbar: {
+          display: [
+            { id: 'prev', position: 'center' },
+            { id: 'counter', position: 'center' },
+            { id: 'next', position: 'center' },
+            'zoom',
+            'fullscreen',
+            'download',
+            'thumbs',
+            'close',
+          ],
+        },
+        Thumbs: {
+          type: 'modern',
+        },
+      });
+    } catch (_) {
+      // graceful degradation
     }
   }
 
