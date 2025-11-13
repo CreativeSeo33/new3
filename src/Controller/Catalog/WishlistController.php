@@ -19,7 +19,10 @@ final class WishlistController extends AbstractController
         $user = $this->getUser();
         $wishlist = $wishlistContext->getOrCreate($user instanceof AppUser ? $user : null);
 
+        // Собираем упрощённые элементы (для совместимости со старым шаблоном)
         $items = [];
+        // И одновременно — массив продуктов для использования общего грида категорий
+        $products = [];
         foreach ($wishlist->getItems() as $it) {
             $p = $it->getProduct();
             $img = null;
@@ -33,10 +36,17 @@ final class WishlistController extends AbstractController
                 'price' => $p->getSalePrice() ?? $p->getPrice(),
                 'image' => $imgUrl,
             ];
+
+            // Передаём в шаблон сами сущности продуктов — грид работает с ними напрямую
+            $products[] = $p;
         }
 
         $response = $this->render('catalog/wishlist/index.html.twig', [
             'items' => $items,
+            'products' => $products,
+            'total' => \count($products),
+            'page' => 1,
+            'limit' => \count($products) > 0 ? \count($products) : 1,
         ]);
         if ($wishlist->getToken()) {
             $req = $requestStack->getCurrentRequest();

@@ -5,7 +5,7 @@
       <h2 class="text-2xl font-bold tracking-tight text-gray-900">{{ gridTitle }}</h2>
     {% endif %}
 
-    <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4" data-testid="category-grid">
+    <div class="{{ gridClasses|default('mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4') }}" data-testid="category-grid">
       {% for p in products %}
         {# Подготовка данных для вариаций #}
         {% set variationsToShow = [] %}
