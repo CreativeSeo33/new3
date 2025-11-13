@@ -40,7 +40,7 @@
           {% set imageUrls = imageUrls|merge([imgUrl]) %}
         {% endfor %}
 
-        <div class="group relative px-2 pt-4 category-shadow border-b border-t border-gray-200" data-controller="product-gallery" data-product-gallery-images-value="{{ imageUrls|json_encode|e('html_attr') }}">
+        <div class="group relative px-2 pt-4 pb-4 category-shadow border-b border-t border-gray-200" data-controller="product-gallery" data-product-gallery-images-value="{{ imageUrls|json_encode|e('html_attr') }}">
           <div class="relative">
             {% if p.image|length > 0 %}
               {% set firstImage = sortedImages|first %}
@@ -103,9 +103,9 @@
             </svg>
           </button>
 
-          <div class="mt-4 flex justify-between">
+          <div class="mt-2 flex justify-between leading-4">
             <div>
-              <div class="text-sm text-gray-700">
+              <div class="text-base leading-4 text-blue-600">
                 <a href="{{ path('catalog_product_show', { slug: p.slug }) }}">                  
                   {{ p.name }}
                 </a>
@@ -115,12 +115,12 @@
             
           </div>
 
-<div class="mt-1 flex justify-between">
+<div class="mt-2 flex justify-between leading-4 text-lg ">
           <div class="text-left">
               {% if p.type == 'simple' or p.type == 'variable_no_prices' %}
                 {% set hasDiscount = p.salePrice is not null and p.price is not null and p.salePrice < p.price %}
                 {% if hasDiscount %}
-                  <div class="flex items-center gap-2 justify-end">
+                  <div class="flex items-center gap-2 justify-end align-bottom">
                     <span class="line-through text-gray-500 text-sm">{{ format_price(p.price)|replace({'₽':'руб.'}) }}</span>
                     <span class="text-red-600 font-medium">{{ format_price(p.salePrice)|replace({'₽':'руб.'}) }}</span>
                   </div>
@@ -160,7 +160,7 @@
             
           
 <div 
-            class="space-y-2 px-2 pb-2 block opacity-0 pointer-events-none transition-opacity duration-200 ease-out group-hover:opacity-100 group-hover:pointer-events-auto absolute inset-x-0 top-full -mt-px z-50 bg-white shadow-xl border-gray-200 border-t-0 rounded-b"
+            class="space-y-2 px-2 pb-2 block opacity-0 pointer-events-none transition-opacity duration-200 ease-out group-hover:opacity-100 group-hover:pointer-events-auto absolute inset-x-0 top-full -mt-px z-50 bg-white shadow-xl border-gray-200 border-t-0"
             style="width: 100%;"
             >
           {% if variationsToShow|length > 1 %}
