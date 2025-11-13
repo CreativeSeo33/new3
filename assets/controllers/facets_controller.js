@@ -1,5 +1,6 @@
 import { Controller } from '@hotwired/stimulus'
 import noUiSlider from 'nouislider'
+import { app } from '../bootstrap.js'
 
 export default class extends Controller {
   static targets = ['list', 'products', 'selected', 'limit', 'sort']
@@ -17,6 +18,8 @@ export default class extends Controller {
     this.priceMin = null
     this.priceMax = null
     this.priceSlider = null
+    // Инициализируем спиннер сразу, чтобы он был скрыт по умолчанию
+    this.getOrInitSpinner().catch(() => {})
     // Прочитать выбранные фильтры из URL при первой загрузке
     this.readSelectedFromUrl()
     this.readPriceFromUrl()
@@ -123,9 +126,27 @@ export default class extends Controller {
         if (spinnerRoot && ch === spinnerRoot) continue
         ch.remove()
       }
-      const frag = document.createDocumentFragment()
-      while (wrapper.firstChild) frag.appendChild(wrapper.firstChild)
-      this.productsTarget.appendChild(frag)
+      // Добавляем элементы напрямую в DOM, чтобы Stimulus мог их сразу увидеть
+      while (wrapper.firstChild) {
+        this.productsTarget.appendChild(wrapper.firstChild)
+      }
+      // Уведомляем Stimulus о новых элементах для подключения контроллеров
+      // В Stimulus 3.x контроллеры должны подключаться автоматически через MutationObserver,
+      // но для гарантии используем явный вызов после небольшой задержки
+      setTimeout(() => {
+        try {
+          // Проверяем наличие метода load в Stimulus Application
+          if (app && typeof app.load === 'function') {
+            app.load(this.productsTarget)
+          } else if (app && app.application && typeof app.application.load === 'function') {
+            // Альтернативный способ для некоторых версий Stimulus
+            app.application.load(this.productsTarget)
+          }
+        } catch (e) {
+          // Игнорируем ошибки при загрузке контроллеров
+          console.debug('Stimulus controllers auto-connect should handle this', e)
+        }
+      }, 0)
     } finally {
       try { this.spinner?.hide() } catch (e) {}
     }
