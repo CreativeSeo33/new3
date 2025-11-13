@@ -84,7 +84,7 @@ export class WishlistToggle extends Component {
     // Обновляем цвет иконки (если присутствует)
     if (this.iconEl) {
       this.iconEl.classList.toggle('text-red-600', active);
-      this.iconEl.classList.toggle('text-gray-600', !active);
+      this.iconEl.classList.toggle('text-gray-400', !active);
     }
   }
 
