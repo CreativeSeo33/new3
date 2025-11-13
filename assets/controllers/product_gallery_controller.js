@@ -114,6 +114,34 @@ export default class extends Controller {
       // noop
     }
   }
+
+  navigateToProduct(event) {
+    try {
+      // Не мешаем модификаторам/средней кнопке и т.п.
+      if (event.defaultPrevented) return;
+      if (event.button !== 0) return; // только левый клик
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+      event.preventDefault();
+
+      // Ищем ссылку внутри корневого элемента контроллера
+      const link = this.element.querySelector('a[href]');
+      if (!link) return;
+
+      const href = link.getAttribute('href');
+      if (!href) return;
+
+      // Уважим таргет, если вдруг он есть
+      const target = link.getAttribute('target');
+      if (target === '_blank') {
+        window.open(href, '_blank', 'noopener,noreferrer');
+      } else {
+        window.location.assign(href);
+      }
+    } catch (_) {
+      // graceful
+    }
+  }
 }
 
 

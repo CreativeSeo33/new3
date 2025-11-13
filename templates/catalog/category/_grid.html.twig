@@ -57,9 +57,9 @@
                   <img src="{{ imgSrc }}" alt="{{ p.name }}" loading="lazy" decoding="async" class="aspect-square rounded-t w-full rounded-md bg-gray-200 object-cover lg:aspect-auto" data-product-gallery-target="image">
                 </a>
                 {% if imagesCount > 1 %}
-                  <div class="absolute bottom-0 left-0 right-0 flex h-full mb-1">
+                  <div class="absolute bottom-0 left-0 right-0 flex h-full mb-1 pointer-events-none">
                     {% for i in 1..imagesCount %}
-                      <div class="flex-1 border-b-2 {{ loop.first ? 'border-yellow-500' : 'border-gray-300' }} hover:border-yellow-500 mx-1" data-action="mouseenter->product-gallery#showImage" data-product-gallery-image-index-value="{{ loop.index0 }}" data-product-gallery-target="indicator"></div>
+                      <div class="flex-1 border-b-2 {{ loop.first ? 'border-yellow-500' : 'border-gray-300' }} hover:border-yellow-500 hover:cursor-pointer mx-1 pointer-events-auto" data-action="mouseenter->product-gallery#showImage click->product-gallery#navigateToProduct" data-product-gallery-image-index-value="{{ loop.index0 }}" data-product-gallery-target="indicator"></div>
                     {% endfor %}
                   </div>
                 {% endif %}
