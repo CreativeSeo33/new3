@@ -5,7 +5,7 @@
       <h2 class="text-2xl font-bold tracking-tight text-gray-900">{{ gridTitle }}</h2>
     {% endif %}
 
-    <div class="mt-6 grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4" data-testid="category-grid">
+    <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4" data-testid="category-grid">
       {% for p in products %}
         {# Подготовка данных для вариаций #}
         {% set variationsToShow = [] %}
@@ -40,7 +40,7 @@
           {% set imageUrls = imageUrls|merge([imgUrl]) %}
         {% endfor %}
 
-        <div class="group relative px-2 pt-2 category-shadow rounded-t-md" data-controller="product-gallery" data-product-gallery-images-value="{{ imageUrls|json_encode|e('html_attr') }}">
+        <div class="group relative px-2 pt-4 category-shadow border-b border-t border-gray-200" data-controller="product-gallery" data-product-gallery-images-value="{{ imageUrls|json_encode|e('html_attr') }}">
           <div class="relative">
             {% if p.image|length > 0 %}
               {% set firstImage = sortedImages|first %}
@@ -146,7 +146,7 @@
             
           
 <div 
-            class="space-y-2 px-2 pb-2 block opacity-0 pointer-events-none transition-opacity duration-200 ease-out group-hover:opacity-100 group-hover:pointer-events-auto absolute inset-x-0 top-full -mt-px z-50 bg-white shadow-lg border-gray-200 border-t-0 rounded-b"
+            class="space-y-2 px-2 pb-2 block opacity-0 pointer-events-none transition-opacity duration-200 ease-out group-hover:opacity-100 group-hover:pointer-events-auto absolute inset-x-0 top-full -mt-px z-50 bg-white shadow-xl border-gray-200 border-t-0 rounded-b"
             style="width: 100%;"
             >
           {% if variationsToShow|length > 1 %}
@@ -182,7 +182,7 @@
                   data-product-id="{{ p.id }}"
                   data-module="add-to-cart"
                   data-testid="add-to-cart-grid"
-                  class="w-full h-10 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold px-4 rounded-lg shadow-md hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none disabled:transform-none relative overflow-hidden group">
+                  class="w-full h-10 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold px-4 rounded-lg shadow-md hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none disabled:transform-none relative overflow-hidden group">
             <div class="relative flex items-center justify-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 transition-transform duration-200 group-hover:scale-110">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
@@ -203,6 +203,11 @@
 
     {# Пагинация #}
     {% set totalPages = (total is defined and limit is defined and limit > 0) ? ((total + limit - 1) // limit) : 1 %}
+    {% set loadedCount = products|length %}
+    {% set totalCount = total|default(0) %}
+    {% set pageSize = limit|default(20) %}
+    {% set currentPage = page|default(1) %}
+    
     {% if totalPages > 1 %}
       {% set q = app.request.query.all %}
       {% set baseParams = q|merge({ 'limit': limit }) %}
@@ -212,6 +217,40 @@
       {% if baseParams['page'] is defined %}
         {% set baseParams = baseParams|merge({ 'page': null }) %}
       {% endif %}
+      
+      {# Кнопка "Показать еще товары" - логика управления в JavaScript #}
+      <div class="mt-8 flex items-center justify-center" 
+           data-module="load-more"
+           data-load-more-container
+           data-loaded-count="{{ loadedCount }}"
+           data-total-count="{{ totalCount }}"
+           data-page-size="{{ pageSize }}"
+           data-current-page="{{ currentPage }}">
+        {# Индикатор загрузки (скрыт по умолчанию, показывается через JS) #}
+        <div class="flex items-center justify-center gap-2 text-gray-600" 
+             data-load-more-loader
+             style="display: none;">
+          <svg class="animate-spin h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span class="text-sm">Загрузка...</span>
+        </div>
+        
+        {# Кнопка "Показать еще товары" (видимость управляется через JS) #}
+        <button type="button" 
+                class="btn btn-soft"
+                data-load-more-button>
+          <span class="btn-content">Показать еще товары</span>
+          <span class="btn-loader hidden flex items-center justify-center">
+            <svg class="animate-spin h-4 w-4 inline-block mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Загрузка...
+          </span>
+        </button>
+      </div>
       <nav aria-label="Pagination" class="mt-8 pt-8 flex items-center justify-center border-t border-gray-200">
         <div class="flex items-center gap-x-1">
           {% if page > 1 %}
