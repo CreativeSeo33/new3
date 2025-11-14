@@ -40,7 +40,7 @@
           {% set imageUrls = imageUrls|merge([imgUrl]) %}
         {% endfor %}
 
-        <div class="group relative px-2 pt-4 pb-3 category-shadow border-b border-t border-gray-200{% if isInSlider is defined and isInSlider %} border-l border-r{% endif %}" data-controller="product-gallery" data-product-gallery-images-value="{{ imageUrls|json_encode|e('html_attr') }}">
+        <div class="group relative {% if isInSlider is defined and isInSlider %}px-4{% else %}px-2{% endif %} pt-4 {% if isInSlider is defined and isInSlider %}pb-4{% else %}pb-3{% endif %} category-shadow border-b border-t border-gray-200{% if isInSlider is defined and isInSlider %} border-l border-r rounded{% endif %}" data-controller="product-gallery" data-product-gallery-images-value="{{ imageUrls|json_encode|e('html_attr') }}">
           <div class="group/image relative">
             {% if p.image|length > 0 %}
               {% set firstImage = sortedImages|first %}
