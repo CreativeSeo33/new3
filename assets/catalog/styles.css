@@ -230,6 +230,51 @@ ease .3s;
   transform: scale(1.2);
 }
 
+/* Стили для кнопок навигации слайдера товаров */
+[data-module="product-slider"] {
+  position: relative;
+}
+
+[data-module="product-slider"] .swiper-button-prev,
+[data-module="product-slider"] .swiper-button-next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #3b82f6;
+}
+
+[data-module="product-slider"] .swiper-button-prev {
+  left: 10px;
+}
+
+[data-module="product-slider"] .swiper-button-next {
+  right: 10px;
+}
+
+[data-module="product-slider"] .swiper-button-prev:hover,
+[data-module="product-slider"] .swiper-button-next:hover {
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  color: #1d4ed8;
+}
+
+[data-module="product-slider"] .swiper-button-prev svg,
+[data-module="product-slider"] .swiper-button-next svg {
+  width: 24px;
+  height: 24px;
+}
+
 /* Стили для компонента Spinner */
 .spinner-container {
   display: flex;

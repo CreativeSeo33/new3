@@ -159,8 +159,8 @@
             </div>
             {% endif %}
             
-          
-<div 
+          {% if not (isInSlider is defined and isInSlider) %}
+          <div 
             class="space-y-2 px-2 pb-2 block opacity-0 pointer-events-none transition-opacity duration-200 ease-out group-hover:opacity-100 group-hover:pointer-events-auto absolute inset-x-0 top-full -mt-px z-50 bg-white shadow-xl border-gray-200 border-t-0"
             style="width: 100%;"
             >
@@ -212,6 +212,7 @@
             </div>
           </button>
           </div>
+          {% endif %}
         </div>
       {% endfor %}
     </div>

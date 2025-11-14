@@ -3,6 +3,9 @@ export interface ProductSliderOptions {
 }
 
 export function init(rootEl: HTMLElement, opts: ProductSliderOptions = {}): () => void {
+  const skeletonEl = rootEl.querySelector<HTMLElement>('[data-product-slider-skeleton]');
+  const contentEl = rootEl.querySelector<HTMLElement>('[data-product-slider-content]');
+
   const containerSelector = opts.containerSelector || '[data-testid="category-grid"]';
   const gridContainer = rootEl.querySelector(containerSelector) as HTMLElement | null;
 
@@ -77,7 +80,28 @@ export function init(rootEl: HTMLElement, opts: ProductSliderOptions = {}): () =
   });
 
   // Инициализируем после установки свойств
-  try { (swiperContainer as any).initialize(); } catch {}
+  try {
+    (swiperContainer as any).initialize();
+
+    // После успешной инициализации скрываем Skeleton и показываем контент
+    try {
+      rootEl.classList.remove('max-h-[420px]');
+    } catch {}
+
+    if (skeletonEl) {
+      skeletonEl.classList.add('opacity-0', 'pointer-events-none');
+
+      // После анимации плавного скрытия удаляем skeleton из DOM
+      try {
+        window.setTimeout(() => {
+          try { skeletonEl.remove(); } catch {}
+        }, 300);
+      } catch {}
+    }
+    if (contentEl) {
+      contentEl.classList.remove('opacity-0', 'pointer-events-none');
+    }
+  } catch {}
 
   // Cleanup
   return () => {
