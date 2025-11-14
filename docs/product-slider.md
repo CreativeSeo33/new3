@@ -34,4 +34,20 @@
   - переключение видимости блоков `data-product-slider-skeleton` и `data-product-slider-content`;
   - настройку и управление слайдером (Swiper) и навигационными кнопками.
 
+### Секция «Похожие товары» на карточке
+- Контроллер `ProductCatalogController::show` подтягивает `Product[]` через `RelatedProductRepository::findRelatedProducts($productId, $limit)` и передаёт их в Twig как `relatedProducts`.
+- В шаблоне `templates/catalog/product/show.html.twig` блок слайдера выводится только при наличии связанных товаров:
+
+```twig
+{% if relatedProducts|length > 0 %}
+  {% include 'components/product-slider.html.twig' with {
+    products: relatedProducts,
+    gridTitle: 'Похожие товары'
+  } %}
+{% endif %}
+```
+
+- Лимит и сортировка определяются репозиторием, поэтому компоненту достаточно корректной коллекции `Product`.
+- Ту же схему можно переиспользовать для любых связанных подборок (например, акций) — главное, чтобы контроллер подготовил массив товаров и обернул include условием.
+
 

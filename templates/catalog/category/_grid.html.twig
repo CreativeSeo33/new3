@@ -122,7 +122,7 @@
                 {% set hasDiscount = p.salePrice is not null and p.price is not null and p.salePrice < p.price %}
                 {% if hasDiscount %}
                   <div class="flex items-center gap-2 justify-end align-bottom">
-                    <span class="line-through text-gray-500 text-sm">{{ format_price(p.price)|replace({'₽':'руб.'}) }}</span>
+                    <span class="line-through text-gray-500 text-sm leading-4">{{ format_price(p.price)|replace({'₽':'руб.'}) }}</span>
                     <span class="text-red-600 font-medium">{{ format_price(p.salePrice)|replace({'₽':'руб.'}) }}</span>
                   </div>
                 {% elseif p.price is not null %}
@@ -133,7 +133,7 @@
                   {% set hasDiscount = setPriceVariation.salePrice is not null and setPriceVariation.price is not null and setPriceVariation.salePrice < setPriceVariation.price %}
                   {% if hasDiscount %}
                     <div class="flex items-center gap-2 justify-end">
-                      <span class="line-through text-gray-500 text-sm">{{ format_price(setPriceVariation.price)|replace({'₽':'руб.'}) }}</span>
+                      <span class="line-through text-gray-500 text-sm leading-4">{{ format_price(setPriceVariation.price)|replace({'₽':'руб.'}) }}</span>
                       <span class="text-red-600 font-medium">{{ format_price(setPriceVariation.salePrice)|replace({'₽':'руб.'}) }}</span>
                     </div>
                   {% else %}
@@ -147,7 +147,7 @@
             </div>
             </div>
           
-          {% if p.type == 'variable' and setPriceVariation %}
+          {% if p.type == 'variable' and setPriceVariation and not (isInSlider is defined and isInSlider) %}
           <div class="flex justify-between">
               <p class="mt-1 text-sm text-gray-500">
                   
