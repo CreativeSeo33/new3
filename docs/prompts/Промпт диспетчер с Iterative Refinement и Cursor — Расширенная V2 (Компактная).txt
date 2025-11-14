@@ -192,5 +192,5 @@ scope: catalog|admin|config — показывай только соответс
 
 # Черновик
 === DRAFT_PROMPT_START ===
-в @_grid.html.twig есть кнопка Быстрый просмотр. надо добавить функционал: при нажатии на кнопку надо показывать увеличенные фото товара. надо сделать аналогично как в @show.html.twig с помошью fancybox 
+цель реализовать Прелоадер / Skeleton для слайдера на странице @index.html.twig <div data-module="product-slider" class="relative"> для шаблона skeleton использовать https://flyonui.com/docs/components/skeleton/#rectangle-with-content flyonui уже установлен в проекте
 === DRAFT_PROMPT_END ===

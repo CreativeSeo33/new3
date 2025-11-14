@@ -168,6 +168,106 @@ function initGallery(): void {
     updateActiveThumbnail(thumbnails[0]);
   }
 
+  // Заменяем иконки в кнопках навигации
+  const replaceNavigationIcons = (): void => {
+    const swiperEl = mainSwiperEl as any;
+    if (!swiperEl || !swiperEl.shadowRoot) return;
+
+    // SVG иконка для кнопок навигации
+    const iconSVG = `
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24" style="max-width: 24px;">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+      </svg>
+    `;
+
+    // Находим кнопки через shadow DOM
+    const buttonPrev = swiperEl.shadowRoot.querySelector('[part="button-prev"]');
+    const buttonNext = swiperEl.shadowRoot.querySelector('[part="button-next"]');
+
+    if (buttonPrev) {
+      // Проверяем, не заменены ли уже иконки
+      const existingSVG = buttonPrev.querySelector('svg[style*="max-width"]');
+      if (!existingSVG) {
+        buttonPrev.innerHTML = iconSVG;
+      }
+    }
+
+    if (buttonNext) {
+      // Проверяем, не заменены ли уже иконки
+      const existingSVG = buttonNext.querySelector('svg[style*="max-width"]');
+      if (!existingSVG) {
+        // Для кнопки "next" отражаем иконку по горизонтали
+        const nextIconSVG = `
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24" style="max-width: 24px; transform: scaleX(-1);">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+          </svg>
+        `;
+        buttonNext.innerHTML = nextIconSVG;
+      }
+    }
+  };
+
+  // Используем MutationObserver для отслеживания появления кнопок в shadow DOM
+  const observeSwiperButtons = (): void => {
+    const swiperEl = mainSwiperEl as any;
+    if (!swiperEl) {
+      setTimeout(observeSwiperButtons, 10);
+      return;
+    }
+
+    // Ждём появления shadowRoot
+    if (!swiperEl.shadowRoot) {
+      setTimeout(observeSwiperButtons, 10);
+      return;
+    }
+
+    // Сразу пытаемся заменить иконки
+    replaceNavigationIcons();
+
+    // Наблюдаем за изменениями в shadow DOM для немедленной замены
+    const observer = new MutationObserver((mutations) => {
+      let shouldReplace = false;
+      mutations.forEach((mutation) => {
+        if (mutation.addedNodes.length > 0) {
+          mutation.addedNodes.forEach((node) => {
+            if (node.nodeType === 1) {
+              const el = node as Element;
+              if (el.getAttribute && (el.getAttribute('part') === 'button-prev' || el.getAttribute('part') === 'button-next')) {
+                shouldReplace = true;
+              }
+              // Проверяем вложенные элементы
+              if (el.querySelector && (el.querySelector('[part="button-prev"]') || el.querySelector('[part="button-next"]'))) {
+                shouldReplace = true;
+              }
+            }
+          });
+        }
+      });
+      if (shouldReplace) {
+        replaceNavigationIcons();
+      }
+    });
+
+    // Наблюдаем за изменениями в shadowRoot
+    observer.observe(swiperEl.shadowRoot, {
+      childList: true,
+      subtree: true
+    });
+
+    // Также слушаем событие инициализации swiper
+    swiperEl.addEventListener('swiper', () => {
+      replaceNavigationIcons();
+    });
+
+    // Дополнительные попытки замены с небольшими задержками
+    setTimeout(replaceNavigationIcons, 50);
+    setTimeout(replaceNavigationIcons, 100);
+    setTimeout(replaceNavigationIcons, 200);
+  };
+
+  // Запускаем наблюдение сразу
+  observeSwiperButtons();
+
   console.log('Gallery initialized successfully');
 }
 

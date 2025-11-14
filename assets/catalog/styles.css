@@ -119,6 +119,19 @@ ease .3s;
   transition: all 0.3s ease;
 }
 
+/* Скрываем стандартные SVG иконки Swiper до замены */
+.product-gallery-swiper::part(button-next) svg,
+.product-gallery-swiper::part(button-prev) svg {
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+
+/* Показываем наши иконки после замены */
+.product-gallery-swiper::part(button-next) svg[style*="max-width"],
+.product-gallery-swiper::part(button-prev) svg[style*="max-width"] {
+  opacity: 1;
+}
+
 .product-gallery-swiper::part(button-next):hover,
 .product-gallery-swiper::part(button-prev):hover {
   background: rgba(255, 255, 255, 0.9);

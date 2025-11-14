@@ -33,13 +33,13 @@
           {% set mainImage = sortedImages|first %}
 
           <!-- Слайдер изображений с миниатюрами и loop -->
-          <div class="relative overflow-hidden rounded-xl bg-white group">
+          <div class="relative overflow-hidden bg-white group">
             {% if mainImage %}
               {% set sortedImages = product.image|sort((a,b) => a.sortOrder <=> b.sortOrder) %}
               {% set mainImg = sortedImages|first %}
 
               <!-- Основной слайдер -->
-              <div class="gallery-main-swiper mb-4">
+              <div class="gallery-main-swiper mb-4 rounded-md">
                 <swiper-container
                   class="product-gallery-swiper"
                   data-testid="gallery"
@@ -60,7 +60,7 @@
                     <swiper-slide>
                       <div class="gallery-slide cursor-pointer h-full flex items-center justify-center" data-image-src="{{ fullImgSrc }}" data-caption="{{ product.name }} - Изображение {{ loop.index }}">
                         <img src="{{ imgSrc }}" alt="{{ product.name }} - Изображение {{ loop.index }}"
-                             class="max-w-full max-h-full object-contain cursor-zoom-in transition-transform duration-300" />
+                             class="max-w-full max-h-full object-contain cursor-zoom-in transition-transform duration-300 rounded-md" />
                       </div>
                     </swiper-slide>
                   {% endfor %}
