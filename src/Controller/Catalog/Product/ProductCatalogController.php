@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controller\Catalog\Product;
 
 use App\Entity\Product;
+use App\Repository\RelatedProductRepository;
 use App\Service\BreadcrumbBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -18,7 +19,7 @@ final class ProductCatalogController extends AbstractController
     
 
     #[Route('/{slug}', name: 'show', requirements: ['slug' => '[a-z0-9\-]+' ], methods: ['GET'])]
-    public function show(string $slug, ManagerRegistry $registry, Request $request): Response
+    public function show(string $slug, ManagerRegistry $registry, Request $request, RelatedProductRepository $relatedProductRepository): Response
     {
         /** @var \App\Repository\ProductRepository $repository */
         $repository = $registry->getRepository(Product::class);
@@ -37,13 +38,14 @@ final class ProductCatalogController extends AbstractController
             ]);
         }
 
-        
+        $relatedProducts = $relatedProductRepository->findRelatedProducts((int) $product->getId());
 
         $breadcrumbs = $this->breadcrumbBuilder->buildForProduct($product);
 
         return $this->render('catalog/product/show.html.twig', [
             'product' => $product,
             'breadcrumbs' => $breadcrumbs,
+            'relatedProducts' => $relatedProducts,
         ]);
     }
 }
