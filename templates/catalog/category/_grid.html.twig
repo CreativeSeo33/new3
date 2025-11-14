@@ -10,6 +10,7 @@
         {# Подготовка данных для вариаций #}
         {% set variationsToShow = [] %}
         {% set setPriceVariation = null %}
+        {% set primaryVariation = null %}
         {% if p.type == 'variable' %}
           {% for assignment in p.optionAssignments %}
             {% if assignment.getSetPrice() %}
@@ -19,10 +20,21 @@
           {% if setPriceVariation %}
             {% set targetOptionId = setPriceVariation.option.id %}
             {% for assignment in p.optionAssignments %}
-              {% if assignment.option.id == targetOptionId %}
+              {% set hasStock = assignment.quantity is not null and assignment.quantity > 0 %}
+              {% if assignment.option.id == targetOptionId and hasStock %}
                 {% set variationsToShow = variationsToShow|merge([assignment]) %}
               {% endif %}
             {% endfor %}
+            {% if variationsToShow|length > 0 %}
+              {% if setPriceVariation.quantity is not null and setPriceVariation.quantity > 0 %}
+                {% set primaryVariation = setPriceVariation %}
+              {% else %}
+                {% set primaryVariation = variationsToShow|first %}
+              {% endif %}
+              {% set variationsToShow = [primaryVariation]|merge(
+                variationsToShow|filter(v => v.id != primaryVariation.id)
+              ) %}
+            {% endif %}
           {% endif %}
         {% endif %}
 
@@ -129,15 +141,15 @@
                   {{ format_price(p.price)|replace({'₽':'руб.'}) }}
                 {% endif %}
               {% elseif p.type == 'variable' %}
-                {% if setPriceVariation %}
-                  {% set hasDiscount = setPriceVariation.salePrice is not null and setPriceVariation.price is not null and setPriceVariation.salePrice < setPriceVariation.price %}
+                {% if primaryVariation %}
+                  {% set hasDiscount = primaryVariation.salePrice is not null and primaryVariation.price is not null and primaryVariation.salePrice < primaryVariation.price %}
                   {% if hasDiscount %}
                     <div class="flex items-center gap-2 justify-end">
-                      <span class="line-through text-gray-500 text-sm leading-4">{{ format_price(setPriceVariation.price)|replace({'₽':'руб.'}) }}</span>
-                      <span class="text-red-600 font-medium text-lg leading-4">{{ format_price(setPriceVariation.salePrice)|replace({'₽':'руб.'}) }}</span>
+                      <span class="line-through text-gray-500 text-sm leading-4">{{ format_price(primaryVariation.price)|replace({'₽':'руб.'}) }}</span>
+                      <span class="text-red-600 font-medium text-lg leading-4">{{ format_price(primaryVariation.salePrice)|replace({'₽':'руб.'}) }}</span>
                     </div>
                   {% else %}
-                    {% set basePrice = setPriceVariation.salePrice is not null ? setPriceVariation.salePrice : (setPriceVariation.price ?? null) %}
+                    {% set basePrice = primaryVariation.salePrice is not null ? primaryVariation.salePrice : (primaryVariation.price ?? null) %}
                     {% if basePrice is not null %}{{ format_price(basePrice)|replace({'₽':'руб.'}) }}{% endif %}
                   {% endif %}
                 {% elseif p.effectivePrice %}
@@ -147,12 +159,12 @@
             </div>
             </div>
           
-          {% if p.type == 'variable' and setPriceVariation and not (isInSlider is defined and isInSlider) %}
-          {% set optionLabel = setPriceVariation.option is not null ? setPriceVariation.option.name : null %}
-          {% set valueLabel = setPriceVariation.value is not null ? setPriceVariation.value.value : null %}
+          {% if p.type == 'variable' and primaryVariation and not (isInSlider is defined and isInSlider) %}
+          {% set optionLabel = primaryVariation.option is not null ? primaryVariation.option.name : null %}
+          {% set valueLabel = primaryVariation.value is not null ? primaryVariation.value.value : null %}
           {% set hasLabel = optionLabel or valueLabel %}
-          {% set hasHeight = setPriceVariation.height is not null %}
-          {% set hasBulbs = setPriceVariation.bulbsCount is not null %}
+          {% set hasHeight = primaryVariation.height is not null %}
+          {% set hasBulbs = primaryVariation.bulbsCount is not null %}
           {% set hasSpecs = hasHeight or hasBulbs %}
           <div class="flex justify-between">
               <p class="text-xs text-gray-700">
@@ -162,9 +174,9 @@
                       {% if valueLabel %}{{ valueLabel }}{% endif %}
                       
                     {% endif %}
-                    {% if hasHeight %}Высота: {{ setPriceVariation.height }} см{% endif %}
+                    {% if hasHeight %}Высота: {{ primaryVariation.height }} см{% endif %}
                     
-                    {% if hasBulbs %}Лампочки: {{ setPriceVariation.bulbsCount }}{% endif %}
+                    {% if hasBulbs %}Лампочки: {{ primaryVariation.bulbsCount }}{% endif %}
               </p>
             </div>
             {% endif %}
