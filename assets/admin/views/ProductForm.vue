@@ -129,7 +129,21 @@
       </TabsContent>
 
       <TabsContent value="photos" class="pt-6">
-        <ProductPhotos v-if="activeTab === 'photos'" :product-id="String(id)" :is-creating="isCreating" :initial-photos="initialPhotos" @toast="publishToast" />
+        <ProductPhotos
+          v-if="activeTab === 'photos'"
+          :product-id="String(id)"
+          :is-creating="isCreating"
+          :initial-photos="initialPhotos"
+          @toast="publishToast"
+        />
+      </TabsContent>
+
+      <TabsContent value="related" class="pt-6">
+        <ProductRelatedProducts
+          v-if="activeTab === 'related'"
+          :product-id="String(id)"
+          :is-creating="isCreating"
+        />
       </TabsContent>
     </TabsRoot>
 
@@ -150,6 +164,7 @@ import ProductCategoryTree from '@admin/components/ProductCategoryTree.vue'
 import ProductPhotos from '@admin/components/forms/ProductPhotos.vue'
 import ProductAttributeAssignments from '@admin/components/forms/ProductAttributeAssignments.vue'
 import ProductOptionAssignments from '@admin/components/forms/ProductOptionAssignments.vue'
+import ProductRelatedProducts from '@admin/components/forms/ProductRelatedProducts.vue'
 import { useProductForm } from '@admin/composables/useProductForm'
 import { useProductSave } from '@admin/composables/useProductSave'
 import type { ProductTab, ProductFormModel } from '@admin/types/product'
@@ -168,6 +183,7 @@ const tabs = computed<ProductTab[]>(() => {
     { value: 'categories', label: 'Категории' },
     { value: 'attributes', label: 'Аттрибуты' },
     { value: 'photos', label: 'Фотографии' },
+    { value: 'related', label: 'Похожие товары' },
   ]
 
   // Добавляем вкладку опций только для вариативных товаров (включая подтип без цен)
@@ -182,7 +198,7 @@ const route = useRoute()
 const router = useRouter()
 const id = computed(() => route.params.id as string)
 const isCreating = computed(() => !id.value || id.value === 'new')
-type ProductTabValue = 'description' | 'categories' | 'attributes' | 'options' | 'photos'
+type ProductTabValue = 'description' | 'categories' | 'attributes' | 'options' | 'photos' | 'related'
 const activeTab = ref<ProductTabValue>('description')
 const tabParamKey = 'tab'
 const validTabs = computed(() => new Set(tabs.value.map(t => t.value)))

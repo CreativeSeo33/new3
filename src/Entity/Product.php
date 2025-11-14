@@ -32,6 +32,7 @@ use App\Entity\Embeddable\ProductTimestamps;
 use App\Entity\Manufacturer;
 use App\Entity\ProductOptionValueAssignment;
 use App\Entity\ProductAttributeAssignment;
+use App\Entity\RelatedProduct;
 
 #[ORM\Entity(repositoryClass: ProductRepository::class)]
 #[ORM\Index(columns: ["name"], name: 'name')]
@@ -210,6 +211,9 @@ class Product
     #[Groups(['product:read','product:create','product:update'])]
     private Collection $attributeAssignments;
 
+    #[ORM\OneToMany(mappedBy: 'product', targetEntity: RelatedProduct::class, cascade: ['persist', 'remove'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
+    private Collection $relatedProducts;
+
     public function __construct()
     {
         
@@ -220,6 +224,7 @@ class Product
         $this->timestamps = new ProductTimestamps();
         $this->optionAssignments = new ArrayCollection();
         $this->attributeAssignments = new ArrayCollection();
+        $this->relatedProducts = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -655,6 +660,35 @@ class Product
     public function removeAttributeAssignment(ProductAttributeAssignment $a): self
     {
         $this->attributeAssignments->removeElement($a);
+        return $this;
+    }
+
+    /**
+     * @return Collection|RelatedProduct[]
+     */
+    public function getRelatedProducts(): Collection
+    {
+        return $this->relatedProducts;
+    }
+
+    public function addRelatedProduct(RelatedProduct $relatedProduct): self
+    {
+        if (!$this->relatedProducts->contains($relatedProduct)) {
+            $this->relatedProducts[] = $relatedProduct;
+            $relatedProduct->setProduct($this);
+        }
+
+        return $this;
+    }
+
+    public function removeRelatedProduct(RelatedProduct $relatedProduct): self
+    {
+        if ($this->relatedProducts->removeElement($relatedProduct)) {
+            if ($relatedProduct->getProduct() === $this) {
+                $relatedProduct->setProduct($this);
+            }
+        }
+
         return $this;
     }
 

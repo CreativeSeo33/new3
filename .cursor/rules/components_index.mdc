@@ -11,8 +11,8 @@ globs:
 - @component_delivery-selector_map.mdc — выбор способа доставки; root: `#delivery`
 - @component_spinner_map.mdc — индикатор загрузки; root: `[data-module="spinner"]`
 - @component_cart-counter_map.mdc — счетчик корзины; root: `[data-testid="cart-counter"]`
-
 - @component_city-modal_map.mdc — выбор города; root: `#city-modal[data-testid="city-modal-root"]`
+- @component_product-slider_map.mdc — слайдер товаров; root: `div[data-module="product-slider"]`
 
 ### Checkout page components
 - @component_checkout_contact_form_map.mdc — контактная форма; root: `[data-testid="contact-form-section"]`

@@ -41,6 +41,7 @@ globs:
 | `App\Entity\CartItem` | `id`, `productName`, `unitPrice`, `qty`, `rowTotal`, `optionsPriceModifier`, `effectiveUnitPrice`, `optionsHash`, `selectedOptionsData`(json), `optionsSnapshot`(json), `pricedAt`, `version` | `ManyToOne` → `Cart`; `ManyToOne` → `Product`; `ManyToMany` ↔ `ProductOptionValueAssignment` | Позиция корзины с зафиксированными ценами/опциями. |
 | `App\Entity\CartIdempotency` | `id`, `idempotencyKey`(unique), `cartId`(string ulid), `endpoint`, `requestHash`, `status`, `httpStatus`, `responseData`(json), `instanceId`, `createdAt`, `expiresAt` | — | Идемпотентность операций корзины/чекаута. |
 | `App\Entity\Bestseller` | `id`, `sortOrder` | `ManyToOne` → `Product` (CASCADE DELETE) | Хиты продаж. Уникальность по `product`. Индексы: `idx_bestseller_product`, `idx_bestseller_sort_order`. |
+| `App\Entity\RelatedProduct` | `id`, `sortOrder` | `ManyToOne` → `Product` (CASCADE DELETE) | Похожие товары. Уникальность по `product`. Индексы: `idx_related_product_product`, `idx_related_product_sort_order`. |
 | `App\Entity\FacetConfig` | `id`, `scope` (GLOBAL/CATEGORY), `attributes`(json), `options`(json), `showZeros`, `collapsedByDefault`, `valuesLimit`, `valuesSort` | `ManyToOne` → `Category` (nullable, CASCADE DELETE) | Конфигурация фасетных фильтров. Уникальность по `category`. Индекс: `idx_fc_scope`. |
 | `App\Entity\FacetDictionary` | `id`, `attributesJson`(json), `optionsJson`(json), `priceMin`, `priceMax`, `updatedAt` | `ManyToOne` → `Category` (nullable, CASCADE DELETE) | Словарь фасетных значений (кеш для фильтров). Уникальность по `category_id`. |
 | `App\Entity\UserOneTimeToken` | `id`, `type` (verify_email/reset_password), `tokenHash`, `salt`, `used`, `expiresAt`, `createdAt` | `ManyToOne` → `User` (CASCADE DELETE) | Одноразовые токены для верификации email и сброса пароля. Индексы: `type`, `expires_at`. |
@@ -61,6 +62,7 @@ globs:
 - Product ↔ ProductImage: `OneToMany`
 - Product ↔ Carousel: `OneToMany`
 - Product ↔ Bestseller: `OneToMany` (CASCADE DELETE)
+- Product ↔ RelatedProduct: `OneToMany` (CASCADE DELETE)
 - Product ↔ Option/OptionValue: через `ProductOptionValueAssignment` (`ManyToOne` к обоим)
 - Product ↔ Attribute/AttributeGroup: через `ProductAttributeAssignment`
 - Category ↔ FacetConfig: `OneToMany` (CASCADE DELETE)
@@ -76,7 +78,7 @@ globs:
 
 ## Примечания
 
-- Уникальные ограничения: `Product.slug`, `Product.code` (Ulid), `Manufacturer.name`, `Option.code`, `ProductToCategory(product,category)`, `OptionValue(code within option)`, `CartItem(uniq_cart_product_options)`, `Bestseller.product`, `FacetConfig.category`, `FacetDictionary.category_id`.
+- Уникальные ограничения: `Product.slug`, `Product.code` (Ulid), `Manufacturer.name`, `Option.code`, `ProductToCategory(product,category)`, `OptionValue(code within option)`, `CartItem(uniq_cart_product_options)`, `Bestseller.product`, `RelatedProduct.product`, `FacetConfig.category`, `FacetDictionary.category_id`.
 - Индексы и фильтры настроены под API Platform (по ценам/атрибутам/опциям/сортировкам).
 - Источник истины по корзине/ценам — серверные `Cart`/`CartItem`/`Product*Assignment` (без клиентских пересчётов).
 - Фасетные фильтры: `FacetConfig` хранит конфигурацию (какие атрибуты/опции показывать), `FacetDictionary` — кеш возможных значений по категории.

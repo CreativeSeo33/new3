@@ -1,0 +1,28 @@
+---
+alwaysApply: false
+---
+
+# Component: product-slider
+
+Назначение: витринный Twig-компонент слайдера товаров, обёртка над JS-виджетом `product-slider`.
+
+Файлы
+- Twig: `templates/components/product-slider.html.twig`
+- FSD widget: `assets/catalog/src/widgets/product-slider`
+- Реестр модулей: `assets/catalog/src/app/registry.ts` (ключ `'product-slider'`)
+
+Корневой селектор
+- `div[data-module="product-slider"]`
+
+Стабильные якоря
+- `data-product-slider-skeleton` — слой скелетона
+- `data-product-slider-content` — основной контент (сетka товаров и навигация)
+
+Props/контекст
+- `products` (обязателен) — коллекция товаров для грида
+- `gridTitle` (опционален) — заголовок блока
+- `isInSlider` (опционален, по умолчанию `true`) — флаг для `_grid.html.twig`
+
+Примечания
+- Без inline `<script>`; инициализация через FSD‑реестр по `data-module="product-slider"`.
+
