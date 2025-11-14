@@ -192,5 +192,7 @@ scope: catalog|admin|config — показывай только соответс
 
 # Черновик
 === DRAFT_PROMPT_START ===
-цель реализовать Прелоадер / Skeleton для слайдера на странице @index.html.twig <div data-module="product-slider" class="relative"> для шаблона skeleton использовать https://flyonui.com/docs/components/skeleton/#rectangle-with-content flyonui уже установлен в проекте
+
+надо вывести похожие товары из коллекции @RelatedProduct.php на страницу товара @show.html.twig для вывода товаров использовать @product-slider.html.twig 
+
 === DRAFT_PROMPT_END ===
