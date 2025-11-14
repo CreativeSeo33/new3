@@ -44,24 +44,35 @@ export function init(rootEl: HTMLElement, opts: ProductSliderOptions = {}): () =
   navNext.className = 'swiper-button-next';
   navNext.setAttribute('aria-label', 'Следующий слайд');
 
-  // Добавляем кнопки рядом со слайдером (важно до initialize)
+  // Пагинация
+  const pagination = document.createElement('div');
+  pagination.className = 'swiper-pagination';
+
+  // Добавляем кнопки и пагинацию рядом со слайдером (важно до initialize)
   try {
     parent?.appendChild(navPrev);
     parent?.appendChild(navNext);
+    parent?.appendChild(pagination);
   } catch {}
 
   // Параметры Swiper (Element API — через свойства)
   Object.assign(swiperContainer, {
     slidesPerView: 1,
-    spaceBetween: 16,
+    spaceBetween: 8,
     navigation: {
       enabled: true,
       nextEl: '.swiper-button-next',
       prevEl: '.swiper-button-prev',
     },
+    pagination: {
+      enabled: true,
+      el: '.swiper-pagination',
+      clickable: true,
+      dynamicBullets: false,
+    },
     breakpoints: {
-      640: { slidesPerView: 2, spaceBetween: 20 },
-      1024: { slidesPerView: 6, spaceBetween: 24 },
+      640: { slidesPerView: 2, spaceBetween: 12 },
+      1024: { slidesPerView: 5, spaceBetween: 16 },
     },
   });
 
@@ -79,9 +90,10 @@ export function init(rootEl: HTMLElement, opts: ProductSliderOptions = {}): () =
       try { console.error('Swiper cleanup error:', e); } catch {}
     }
 
-    // Удаляем кнопки навигации, созданные виджетом
+    // Удаляем кнопки навигации и пагинацию, созданные виджетом
     try { navPrev.remove(); } catch {}
     try { navNext.remove(); } catch {}
+    try { pagination.remove(); } catch {}
   };
 }
 

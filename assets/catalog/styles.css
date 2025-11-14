@@ -200,6 +200,36 @@ ease .3s;
   }
 }
 
+/* Стили для пагинации слайдера товаров */
+[data-module="product-slider"] .swiper-pagination {
+  position: relative;
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+[data-module="product-slider"] .swiper-pagination-bullet {
+  width: 10px;
+  height: 10px;
+  display: inline-block;
+  border-radius: 50%;
+  background: #d1d5db;
+  opacity: 0.7;
+  margin: 0 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+[data-module="product-slider"] .swiper-pagination-bullet:hover {
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+[data-module="product-slider"] .swiper-pagination-bullet-active {
+  background: #3b82f6;
+  opacity: 1;
+  transform: scale(1.2);
+}
+
 /* Стили для компонента Spinner */
 .spinner-container {
   display: flex;
