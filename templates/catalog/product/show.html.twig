@@ -212,7 +212,7 @@
                       {% for a in optionValues %}
                         {% set isOut = a.getQuantity() is null or a.getQuantity() == 0 %}
                         <li>
-                          <label class="flex items-center gap-3 p-3">
+                          <label class="flex items-center gap-1 px-3 py-2">
                             <input
                               type="radio"
                               id="option-{{ a.id }}"
@@ -231,29 +231,38 @@
                               {% if isOut %}disabled{% endif %}
                               {% if not isOut and defaultOption and a.id == defaultOption.id %}checked{% endif %}
                             >
-                            <span class="label-text text-base">
-                              {{ a.value.value ?? ('Значение #' ~ a.value.id) }}
+                            <span class="label-text text-base pl-3">
+                              
                               {% if isOut %}
                                 <span class="text-red-600 ml-2">Нет в наличии</span>
                               {% elseif product.getType() != 'variable_no_prices' and a.price is not null and a.price > 0 %}
                                 {% if a.salePrice is not null and a.salePrice > 0 %}
-                                  <span class="text-gray-500 line-through ml-2">{{ a.price }} руб.</span>
-                                  <span class="text-red-600 ml-1">{{ a.salePrice }} руб.</span>
+                                  <span class="text-gray-500 line-through text-sm">{{ a.price }} руб.</span>
+                                  <span class="text-red-600 ml-1 text-lg font-medium ">{{ a.salePrice }} руб.</span>
                                 {% else %}
-                                  <span class="text-gray-900 ml-2">{{ a.price }} руб.</span>
+                                  <span class="text-gray-900 text-lg font-medium">{{ a.price }} руб.</span>
                                 {% endif %}
                               {% endif %}
+                              {% if a.option.code == 'diametr' %}
+                                <img src="{{ asset('/img/diameter1.png') }}" alt="Диаметр" class="inline-block w-6 h-6 ml-1 align-middle" />
+                              {% endif %}
+                              <span class="text-gray-600 align-middle">
+                              {{ a.value.value ?? ('Значение #' ~ a.value.id) }} {% if a.option.code == 'diametr' %} мм {% endif %}
+                              </span>
                               {% if a.height is not null %}
-                                <span class="text-gray-600 text-sm ml-2">Высота: {{ a.height }} мм</span>
+                              <img src="{{ asset('/img/height.png') }}" alt="Высота" class="inline-block w-6 h-6 ml-1 align-middle" />
+                                <span class="text-gray-600 align-middle">{{ a.height }} мм</span>
                               {% endif %}
                               {% if a.bulbsCount is not null %}
-                                <span class="text-gray-600 text-sm ml-2">Ламп: {{ a.bulbsCount }}</span>
+                              <img src="{{ asset('/img/lampa.png') }}" alt="Лампочки" class="inline-block w-6 h-6 ml-1 align-middle" />
+                                <span class="text-gray-600 align-middle">{{ a.bulbsCount }}</span>
                               {% endif %}
                               {% if a.lightingArea is not null %}
                                 <span class="text-gray-600 text-sm ml-2">Площадь: {{ a.lightingArea }} м²</span>
                               {% endif %}
                               {% if a.sku is not null and a.sku != '' %}
-                                <span class="text-gray-500 text-xs ml-2">Арт: {{ a.sku }}</span>
+                                <span class="text-gray-500 text-xs ml-2 align-middle">Арт: </span>
+                                <span class="text-gray-500 text-sm align-middle">{{ a.sku }}</span>
                               {% endif %}
                             </span>
                           </label>
